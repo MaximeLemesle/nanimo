@@ -1,0 +1,63 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:nanimo/config/router/route_guard.dart';
+import 'package:nanimo/config/router/route_names.dart';
+import 'package:nanimo/core/widgets/app_shell.dart';
+import 'package:nanimo/core/widgets/error_screen.dart';
+import 'package:nanimo/features/auth/presentation/cubit/auth.cubit.dart';
+import 'package:nanimo/features/auth/presentation/page/login.page.dart';
+import 'package:nanimo/features/home/presentation/page/home.page.dart';
+import 'package:nanimo/features/home/presentation/page/profile.page.dart';
+import 'package:nanimo/features/onboarding/presentation/page/onboarding.page.dart';
+import 'package:nanimo/features/onboarding/presentation/page/splash.page.dart';
+
+class _AuthCubitListenable extends ChangeNotifier {
+  _AuthCubitListenable(AuthCubit cubit) {
+    /// Notify change to GoRouter
+    cubit.stream.listen((_) => notifyListeners());
+  }
+}
+
+GoRouter createRouter(AuthCubit authCubit) {
+  return GoRouter(
+    initialLocation: RouteNames.splash,
+    refreshListenable: _AuthCubitListenable(authCubit),
+    debugLogDiagnostics: true, 
+    
+    redirect: (context, state) {
+      return handleRedirect(state, authCubit.state.status);
+    },
+
+    routes: [
+      GoRoute(
+        path: RouteNames.splash,
+        builder: (_,__) => const SplashPage(), 
+      ),
+      GoRoute(
+        path: RouteNames.onboarding,
+        builder: (_,__) => const OnboardingPage(), 
+      ),
+      GoRoute(
+        path: RouteNames.login,
+        builder: (_,__) => const LoginPage(), 
+      ),
+      ShellRoute(
+        builder: (context, state, child) => AppShell(child: child),
+        routes: [
+          GoRoute(
+            path: RouteNames.home,
+            builder: (_, __) => const HomePage(),
+            routes: [
+              GoRoute(
+                path: 'profile',
+                builder: (_, __) => const ProfilePage(),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ],
+      
+    errorBuilder: (context, state) => ErrorScreen(error: state.error),
+  );
+}
