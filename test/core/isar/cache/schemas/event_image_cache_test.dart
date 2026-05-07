@@ -1,0 +1,20 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:nanimo/core/isar/cache/schemas/event_image_cache.dart';
+
+void main() {
+  group('EventImageCache.fromJson', () {
+    test('maps all fields correctly', () {
+      final json = {
+        'id_event_image': 'img-uuid',
+        'asset_path': 'journal-media/image.jpg',
+        'id_event': 'event-uuid',
+      };
+
+      final cache = EventImageCache.fromJson(json);
+
+      expect(cache.idEventImage, 'img-uuid');
+      expect(cache.assetPath, 'journal-media/image.jpg');
+      expect(cache.idEvent, 'event-uuid');
+    });
+  });
+}

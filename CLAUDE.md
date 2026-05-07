@@ -210,11 +210,23 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 ```bash
 # Clone + setup
 flutter pub get
-flutter pub run isar_generator build  # Isar codegen
+flutter pub run build_runner build --delete-conflicting-outputs
 
 # Lancer
 flutter run
 ```
+
+## 9. Tests
+
+```bash
+# Tous les tests
+flutter test
+
+# Un fichier spécifique
+flutter test test/core/isar/cache/schemas/pet_cache_test.dart
+```
+
+> **Note** : les tests Isar téléchargent automatiquement `libisar.dylib` au premier lancement (`Isar.initializeIsarCore(download: true)`).
 
 ---
 
