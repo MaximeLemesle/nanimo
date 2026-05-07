@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:nanimo/config/router/app_router.dart';
-import 'package:nanimo/features/auth/data/auth.repository.dart';
-import 'package:nanimo/features/auth/presentation/cubit/auth.cubit.dart';
+import 'package:nanimo/features/auth/data/auth_repository.dart';
+import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
@@ -13,8 +13,7 @@ void main() async {
   String? url = dotenv.env['SUPABASE_URL'];
   String? anonKey = dotenv.env['SUPABASE_ANON_KEY'];
   if (url == null || anonKey == null) {
-    throw Exception(
-        'Please add SUPABASE_URL and SUPABASE_ANON_KEY to your .env file');
+    throw Exception('Please add SUPABASE_URL and SUPABASE_ANON_KEY to your .env file');
   }
 
   await Supabase.initialize(url: url, anonKey: anonKey);

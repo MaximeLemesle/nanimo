@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:nanimo/features/auth/presentation/cubit/auth.cubit.dart';
+import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 
 
 class LoginPage extends StatefulWidget {

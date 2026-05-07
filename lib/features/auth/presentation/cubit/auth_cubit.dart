@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
-import 'package:nanimo/features/auth/data/auth.repository.dart';
+import 'package:nanimo/features/auth/data/auth_repository.dart';
 
-part 'auth.state.dart';
+part 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _repository;

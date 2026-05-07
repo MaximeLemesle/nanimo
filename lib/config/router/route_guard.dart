@@ -1,6 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:nanimo/config/router/route_names.dart';
-import 'package:nanimo/features/auth/presentation/cubit/auth.cubit.dart';
+import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 
 String? handleRedirect(GoRouterState state, AuthStatus status) {
   final location = state.matchedLocation;

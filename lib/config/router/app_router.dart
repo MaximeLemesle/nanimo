@@ -4,12 +4,12 @@ import 'package:nanimo/config/router/route_guard.dart';
 import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/core/widgets/app_shell.dart';
 import 'package:nanimo/core/widgets/error_screen.dart';
-import 'package:nanimo/features/auth/presentation/cubit/auth.cubit.dart';
-import 'package:nanimo/features/auth/presentation/page/login.page.dart';
-import 'package:nanimo/features/home/presentation/page/home.page.dart';
-import 'package:nanimo/features/home/presentation/page/profile.page.dart';
-import 'package:nanimo/features/onboarding/presentation/page/onboarding.page.dart';
-import 'package:nanimo/features/onboarding/presentation/page/splash.page.dart';
+import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:nanimo/features/auth/presentation/page/login_page.dart';
+import 'package:nanimo/features/home/presentation/page/home_page.dart';
+import 'package:nanimo/features/home/presentation/page/profile_page.dart';
+import 'package:nanimo/features/onboarding/presentation/page/onboarding_page.dart';
+import 'package:nanimo/features/onboarding/presentation/page/splash_page.dart';
 
 class _AuthCubitListenable extends ChangeNotifier {
   _AuthCubitListenable(AuthCubit cubit) {
