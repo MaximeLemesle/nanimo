@@ -80,9 +80,9 @@ lib/
 
 ### ENUMs
 - `gender_enum` : male, female, unknown
-- `weight_unit_enum` : kg, g, lb
+- `weight_unit_enum` : kg, g
 - `subscription_status_enum` : free, premium
-- `notification_type_enum` : birthday, vaccine, vet, deworming, anniversary, custom
+- `notification_type_enum` : anniversary, vaccine, vet, deworming, custom
 
 ### Règles critiques
 - RLS activé sur toutes les tables
