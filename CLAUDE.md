@@ -69,12 +69,12 @@ lib/
 | Table | Colonnes clés | Notes |
 |-------|---|---|
 | `users` | id_user (UUID PK), user_name, mail (unique), subscription_status, subscription_expires_at, id_subscription_config FK | Auth Supabase |
-| `pets` | id_pet (UUID PK), pet_name, birthdate (DATE), gender (enum), created_at, id_race FK, id_species FK, id_icon FK | RLS: user_id |
-| `events` | id_event (UUID PK), title, description, created_at, entry_date (DATE), id_event_type, user_id FK | Photos peut être future (rappel) |
-| `event_image` | id_event_image (UUID PK), asset_path (Storage path), id_event FK | Une ou plusieurs images |
-| `health_diary` | id_health_diary (UUID PK), is_sterilized, is_chipped, chip_number, last_deworming_at, last_vet_appointment, id_pet FK (UNIQUE 1:1) | Lié au pet |
-| `health_diary_vaccines` | id_health_diary_vaccine (UUID PK), vaccine_name, last_date, next_date, recurrence (days), dose_number, total_dose_number,  id_health_diary FK | Historique vaccins |
-| `weight_logs` | id_weight_log (UUID PK), weight (DECIMAL), logged_at (TIMESTAMPTZ), id_pet FK | Graphique 6 mois |
+| `pets` | id_pet (UUID PK), pet_name, birthdate (DATE), gender (enum), created_at, pet_race_id FK, pet_species_id FK, pet_icon_id FK | RLS: user_id |
+| `events` | id_event (UUID PK), title, description, created_at, entry_date (DATE), event_type_id FK | Photos peut être future (rappel) |
+| `event_image` | id_event_image (UUID PK), asset_path (Storage path), event_id FK | Une ou plusieurs images |
+| `health_diary` | id_health_diary (UUID PK), is_sterilized, is_chipped, chip_number, last_deworming_at, last_vet_appointment, pet_id FK (UNIQUE 1:1) | Lié au pet |
+| `health_diary_vaccines` | id_health_diary_vaccine (UUID PK), vaccine_name, last_date, next_date, recurrence (days), dose_number, total_dose_number, health_diary_id FK | Historique vaccins |
+| `weight_logs` | id_health_diary_weight_log (UUID PK), weight (DECIMAL), logged_at (TIMESTAMPTZ), pet_id FK | Graphique 6 mois |
 | `notifications` | id_notification (UUID PK), type (enum), title, description, sending_at (TIMESTAMPTZ), id_pet FK | Push Firebase FCM |
 | `subscription_config` | id_subscription_config (SERIAL PK), plan_name, max_images_per_event, max_pets, max_storage_mb, can_access_premium_icons | Quotas freemium |
 
