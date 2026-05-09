@@ -50,13 +50,14 @@ void main() {
         'mail': 'test@example.com',
         'subscription_status': 'free',
         'subscription_expires_at': null,
+        'id_subscription_config': 'sub-cfg-1',
       });
 
       await isar.writeTxn(() async {
-        await isar.userCaches.putByIdUser(user);
+        await isar.userCaches.putByUserId(user);
       });
 
-      final result = await isar.userCaches.getByIdUser('test-uuid');
+      final result = await isar.userCaches.getByUserId('test-uuid');
       expect(result, isNotNull);
       expect(result!.mail, 'test@example.com');
     });
@@ -74,10 +75,10 @@ void main() {
       });
 
       await isar.writeTxn(() async {
-        await isar.petCaches.putByIdPet(pet);
+        await isar.petCaches.putByPetId(pet);
       });
 
-      final result = await isar.petCaches.getByIdPet('pet-uuid');
+      final result = await isar.petCaches.getByPetId('pet-uuid');
       expect(result, isNotNull);
       expect(result!.petName, 'Buddy');
     });

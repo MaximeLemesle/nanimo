@@ -14,8 +14,8 @@ class HealthDiaryWeightLogModel {
   factory HealthDiaryWeightLogModel.fromJson(Map<String, dynamic> json) {
     return HealthDiaryWeightLogModel(
       healthDiaryWeightLogId: json['id_health_diary_weight_log'],
-      weight: json['weight'],
-      loggedAt: json['logged_at'],
+      weight: (json['weight'] as num).toDouble(),
+      loggedAt: DateTime.parse(json['logged_at'] as String),
       petId: json['pet_id'],
     );
   }
@@ -23,7 +23,7 @@ class HealthDiaryWeightLogModel {
   Map<String, dynamic> toJson() => {
         'id_health_diary_weight_log': healthDiaryWeightLogId,
         'weight': weight,
-        'logged_at': loggedAt,
+        'logged_at': loggedAt.toIso8601String(),
         'pet_id': petId,
       };
 }

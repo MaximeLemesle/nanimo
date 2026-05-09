@@ -16,13 +16,13 @@ void main() {
 
       final cache = HealthDiaryCache.fromJson(json);
 
-      expect(cache.idHealthDiary, 'hd-uuid');
+      expect(cache.healthDiaryId, 'hd-uuid');
       expect(cache.isSterilized, true);
       expect(cache.isChipped, true);
       expect(cache.chipNumber, '985141001234567');
-      expect(cache.lastDewormingAt, DateTime.parse('2024-03-01T00:00:00.000Z'));
+      expect(cache.lastDeworming, DateTime.parse('2024-03-01T00:00:00.000Z'));
       expect(cache.lastVetAppointment, DateTime.parse('2024-05-10T00:00:00.000Z'));
-      expect(cache.idPet, 'pet-uuid');
+      expect(cache.petId, 'pet-uuid');
     });
 
     test('handles null optional fields', () {
@@ -39,7 +39,7 @@ void main() {
       final cache = HealthDiaryCache.fromJson(json);
 
       expect(cache.chipNumber, isNull);
-      expect(cache.lastDewormingAt, isNull);
+      expect(cache.lastDeworming, isNull);
       expect(cache.lastVetAppointment, isNull);
     });
   });

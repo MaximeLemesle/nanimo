@@ -16,12 +16,12 @@ void main() {
 
       final cache = EventCache.fromJson(json);
 
-      expect(cache.idEvent, 'event-uuid');
+      expect(cache.eventId, 'event-uuid');
       expect(cache.title, 'First Walk');
       expect(cache.description, 'Great walk in the park');
       expect(cache.createdAt, DateTime.parse('2024-06-01T08:00:00.000Z'));
       expect(cache.entryDate, DateTime.parse('2024-06-01'));
-      expect(cache.idEventType, 'type-uuid');
+      expect(cache.eventTypeId, 'type-uuid');
       expect(cache.userId, 'user-uuid');
     });
 
@@ -39,7 +39,7 @@ void main() {
       final cache = EventCache.fromJson(json);
 
       expect(cache.description, isNull);
-      expect(cache.idEventType, isNull);
+      expect(cache.eventTypeId, '');
     });
   });
 }

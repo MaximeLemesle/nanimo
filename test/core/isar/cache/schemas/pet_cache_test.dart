@@ -17,13 +17,13 @@ void main() {
 
       final cache = PetCache.fromJson(json);
 
-      expect(cache.idPet, 'pet-uuid');
+      expect(cache.petId, 'pet-uuid');
       expect(cache.petName, 'Buddy');
       expect(cache.birthdate, DateTime.parse('2020-03-15'));
       expect(cache.gender, 'male');
-      expect(cache.idRace, 'race-uuid');
-      expect(cache.idSpecies, 'species-uuid');
-      expect(cache.idIcon, 'icon-uuid');
+      expect(cache.petRaceId, 'race-uuid');
+      expect(cache.petSpeciesId, 'species-uuid');
+      expect(cache.petIconId, 'icon-uuid');
       expect(cache.createdAt, DateTime.parse('2024-01-01T10:00:00.000Z'));
     });
 
@@ -42,9 +42,9 @@ void main() {
       final cache = PetCache.fromJson(json);
 
       expect(cache.birthdate, isNull);
-      expect(cache.idRace, isNull);
-      expect(cache.idSpecies, isNull);
-      expect(cache.idIcon, isNull);
+      expect(cache.petRaceId, isNull);
+      expect(cache.petSpeciesId, isNull);
+      expect(cache.petIconId, isNull);
     });
   });
 }

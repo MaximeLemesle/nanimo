@@ -7,11 +7,12 @@ import 'package:nanimo/core/isar/cache/schemas/health_diary_vaccine_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/user_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/weight_log_cache.dart';
-import 'package:nanimo/core/isar/database/isar_service.dart';
 
 class SyncService {
-  final SupabaseClient _supabase = Supabase.instance.client;
-  final Isar _isar = IsarService.instance;
+  final SupabaseClient _supabase;
+  final Isar _isar;
+
+  SyncService(this._supabase, this._isar);
 
   /// Wave 1 — awaited before Home renders. Syncs user and pets.
   Future<void> syncCritical() async {
@@ -42,7 +43,7 @@ class SyncService {
 
       final user = UserCache.fromJson(data);
       await _isar.writeTxn(() async {
-        await _isar.userCaches.putByIdUser(user);
+        await _isar.userCaches.putByUserId(user);
       });
     } catch (_) {}
   }
@@ -54,7 +55,7 @@ class SyncService {
           .map((e) => PetCache.fromJson(e as Map<String, dynamic>))
           .toList();
       await _isar.writeTxn(() async {
-        await _isar.petCaches.putAllByIdPet(pets);
+        await _isar.petCaches.putAllByPetId(pets);
       });
     } catch (_) {}
   }
@@ -66,7 +67,7 @@ class SyncService {
           .map((e) => EventCache.fromJson(e as Map<String, dynamic>))
           .toList();
       await _isar.writeTxn(() async {
-        await _isar.eventCaches.putAllByIdEvent(events);
+        await _isar.eventCaches.putAllByEventId(events);
       });
     } catch (_) {}
   }
@@ -78,7 +79,7 @@ class SyncService {
           .map((e) => EventImageCache.fromJson(e as Map<String, dynamic>))
           .toList();
       await _isar.writeTxn(() async {
-        await _isar.eventImageCaches.putAllByIdEventImage(images);
+        await _isar.eventImageCaches.putAllByEventImageId(images);
       });
     } catch (_) {}
   }
@@ -90,7 +91,7 @@ class SyncService {
           .map((e) => HealthDiaryCache.fromJson(e as Map<String, dynamic>))
           .toList();
       await _isar.writeTxn(() async {
-        await _isar.healthDiaryCaches.putAllByIdHealthDiary(diaries);
+        await _isar.healthDiaryCaches.putAllByHealthDiaryId(diaries);
       });
     } catch (_) {}
   }
@@ -102,7 +103,7 @@ class SyncService {
           .map((e) => HealthDiaryVaccineCache.fromJson(e as Map<String, dynamic>))
           .toList();
       await _isar.writeTxn(() async {
-        await _isar.healthDiaryVaccineCaches.putAllByIdHealthDiaryVaccine(vaccines);
+        await _isar.healthDiaryVaccineCaches.putAllByHealthDiaryVaccineId(vaccines);
       });
     } catch (_) {}
   }
@@ -114,7 +115,7 @@ class SyncService {
           .map((e) => WeightLogCache.fromJson(e as Map<String, dynamic>))
           .toList();
       await _isar.writeTxn(() async {
-        await _isar.weightLogCaches.putAllByIdWeightLog(logs);
+        await _isar.weightLogCaches.putAllByHealthDiaryWeightLogId(logs);
       });
     } catch (_) {}
   }
