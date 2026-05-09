@@ -12,9 +12,9 @@ void main() {
 
       final cache = EventImageCache.fromJson(json);
 
-      expect(cache.idEventImage, 'img-uuid');
+      expect(cache.eventImageId, 'img-uuid');
       expect(cache.assetPath, 'journal-media/image.jpg');
-      expect(cache.idEvent, 'event-uuid');
+      expect(cache.eventId, 'event-uuid');
     });
   });
 }

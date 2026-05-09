@@ -10,15 +10,17 @@ void main() {
         'mail': 'alice@example.com',
         'subscription_status': 'free',
         'subscription_expires_at': '2026-12-31T00:00:00.000Z',
+        'id_subscription_config': 'sub-cfg-1',
       };
 
       final cache = UserCache.fromJson(json);
 
-      expect(cache.idUser, 'abc-123');
+      expect(cache.userId, 'abc-123');
       expect(cache.userName, 'Alice');
       expect(cache.mail, 'alice@example.com');
       expect(cache.subscriptionStatus, 'free');
       expect(cache.subscriptionExpiresAt, DateTime.parse('2026-12-31T00:00:00.000Z'));
+      expect(cache.subscriptionConfigId, 'sub-cfg-1');
     });
 
     test('handles null optional fields', () {
@@ -28,6 +30,7 @@ void main() {
         'mail': 'alice@example.com',
         'subscription_status': 'free',
         'subscription_expires_at': null,
+        'id_subscription_config': 'sub-cfg-1',
       };
 
       final cache = UserCache.fromJson(json);

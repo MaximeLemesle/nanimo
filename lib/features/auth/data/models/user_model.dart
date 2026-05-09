@@ -23,7 +23,9 @@ class UserModel {
       userName: json['user_name'],
       mail: json['mail'],
       subscriptionStatus: _parseSubscriptionStatus(json['subscription_status']),
-      subscriptionExpiresAt: json['subscription_expires_at'],
+      subscriptionExpiresAt: json['subscription_expires_at'] != null
+          ? DateTime.parse(json['subscription_expires_at'] as String)
+          : null,
       subscriptionConfigId: json['id_subscription_config'],
     );
   }
@@ -33,7 +35,7 @@ class UserModel {
         'user_name': userName,
         'mail': mail,
         'subscription_status': _subscriptionStatusToString(subscriptionStatus),
-        'subscription_expires_at': subscriptionExpiresAt,
+        'subscription_expires_at': subscriptionExpiresAt?.toIso8601String(),
         'id_subscription_config': subscriptionConfigId,
       };
 }

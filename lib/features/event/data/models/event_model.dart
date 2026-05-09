@@ -34,8 +34,8 @@ class EventModel {
         'id_event': eventId,
         'title': title,
         'description': description,
-        'created_at': createdAt,
-        'entry_date': entryDate,
+        'created_at': createdAt?.toIso8601String(),
+        'entry_date': entryDate?.toIso8601String(),
         'event_type_id': eventTypeId,
       };
 }

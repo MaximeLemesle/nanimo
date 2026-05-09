@@ -17,14 +17,14 @@ void main() {
 
       final cache = HealthDiaryVaccineCache.fromJson(json);
 
-      expect(cache.idHealthDiaryVaccine, 'vax-uuid');
+      expect(cache.healthDiaryVaccineId, 'vax-uuid');
       expect(cache.vaccineName, 'Rabies');
       expect(cache.lastDate, DateTime.parse('2024-01-15'));
       expect(cache.nextDate, DateTime.parse('2025-01-15'));
       expect(cache.recurrence, 365);
       expect(cache.doseNumber, 2);
       expect(cache.totalDoseNumber, 3);
-      expect(cache.idHealthDiary, 'hd-uuid');
+      expect(cache.healthDiaryId, 'hd-uuid');
     });
 
     test('handles null optional fields', () {

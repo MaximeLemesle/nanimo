@@ -21,9 +21,12 @@ void main() async {
   await Supabase.initialize(url: url, anonKey: anonKey);
   await IsarService.initialize();
 
+  final supabase = Supabase.instance.client;
+  final isar = IsarService.instance;
+
   final authCubit = AuthCubit(
-    repository: AuthRepository(),
-    syncService: SyncService(),
+    repository: AuthRepository(supabase),
+    syncService: SyncService(supabase, isar),
   );
   runApp(MyApp(authCubit: authCubit));
 }

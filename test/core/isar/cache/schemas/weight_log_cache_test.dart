@@ -13,10 +13,10 @@ void main() {
 
       final cache = WeightLogCache.fromJson(json);
 
-      expect(cache.idWeightLog, 'wl-uuid');
+      expect(cache.healthDiaryWeightLogId, 'wl-uuid');
       expect(cache.weight, 5.2);
       expect(cache.loggedAt, DateTime.parse('2024-06-15T09:30:00.000Z'));
-      expect(cache.idPet, 'pet-uuid');
+      expect(cache.petId, 'pet-uuid');
     });
 
     test('casts weight from int to double when Supabase returns int', () {

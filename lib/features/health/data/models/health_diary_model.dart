@@ -23,8 +23,12 @@ class HealthDiaryModel {
       isSterilized: json['is_sterilized'],
       isChipped: json['is_chipped'],
       chipNumber: json['chip_number'],
-      lastDeworming: json['last_deworming_at'],
-      lastVetAppointment: json['last_vet_appointment'],
+      lastDeworming: json['last_deworming_at'] != null
+          ? DateTime.parse(json['last_deworming_at'] as String)
+          : null,
+      lastVetAppointment: json['last_vet_appointment'] != null
+          ? DateTime.parse(json['last_vet_appointment'] as String)
+          : null,
       petId: json['pet_id'],
     );
   }
@@ -34,8 +38,8 @@ class HealthDiaryModel {
         'is_sterilized': isSterilized,
         'is_chipped': isChipped,
         'chip_number': chipNumber,
-        'last_deworming_at': lastDeworming,
-        'last_vet_appointment': lastVetAppointment,
+        'last_deworming_at': lastDeworming?.toIso8601String(),
+        'last_vet_appointment': lastVetAppointment?.toIso8601String(),
         'pet_id': petId,
       };
 }
