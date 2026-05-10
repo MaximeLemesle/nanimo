@@ -22,35 +22,35 @@ const HealthDiaryCacheSchema = CollectionSchema(
       name: r'chipNumber',
       type: IsarType.string,
     ),
-    r'idHealthDiary': PropertySchema(
+    r'healthDiaryId': PropertySchema(
       id: 1,
-      name: r'idHealthDiary',
-      type: IsarType.string,
-    ),
-    r'idPet': PropertySchema(
-      id: 2,
-      name: r'idPet',
+      name: r'healthDiaryId',
       type: IsarType.string,
     ),
     r'isChipped': PropertySchema(
-      id: 3,
+      id: 2,
       name: r'isChipped',
       type: IsarType.bool,
     ),
     r'isSterilized': PropertySchema(
-      id: 4,
+      id: 3,
       name: r'isSterilized',
       type: IsarType.bool,
     ),
-    r'lastDewormingAt': PropertySchema(
-      id: 5,
-      name: r'lastDewormingAt',
+    r'lastDeworming': PropertySchema(
+      id: 4,
+      name: r'lastDeworming',
       type: IsarType.dateTime,
     ),
     r'lastVetAppointment': PropertySchema(
-      id: 6,
+      id: 5,
       name: r'lastVetAppointment',
       type: IsarType.dateTime,
+    ),
+    r'petId': PropertySchema(
+      id: 6,
+      name: r'petId',
+      type: IsarType.string,
     )
   },
   estimateSize: _healthDiaryCacheEstimateSize,
@@ -59,27 +59,27 @@ const HealthDiaryCacheSchema = CollectionSchema(
   deserializeProp: _healthDiaryCacheDeserializeProp,
   idName: r'id',
   indexes: {
-    r'idHealthDiary': IndexSchema(
-      id: -5690220367706079709,
-      name: r'idHealthDiary',
+    r'healthDiaryId': IndexSchema(
+      id: -7547671222084665630,
+      name: r'healthDiaryId',
       unique: true,
       replace: false,
       properties: [
         IndexPropertySchema(
-          name: r'idHealthDiary',
+          name: r'healthDiaryId',
           type: IndexType.hash,
           caseSensitive: true,
         )
       ],
     ),
-    r'idPet': IndexSchema(
-      id: 4974873299035081535,
-      name: r'idPet',
+    r'petId': IndexSchema(
+      id: -7951607706841349632,
+      name: r'petId',
       unique: true,
       replace: false,
       properties: [
         IndexPropertySchema(
-          name: r'idPet',
+          name: r'petId',
           type: IndexType.hash,
           caseSensitive: true,
         )
@@ -106,8 +106,8 @@ int _healthDiaryCacheEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
-  bytesCount += 3 + object.idHealthDiary.length * 3;
-  bytesCount += 3 + object.idPet.length * 3;
+  bytesCount += 3 + object.healthDiaryId.length * 3;
+  bytesCount += 3 + object.petId.length * 3;
   return bytesCount;
 }
 
@@ -118,12 +118,12 @@ void _healthDiaryCacheSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeString(offsets[0], object.chipNumber);
-  writer.writeString(offsets[1], object.idHealthDiary);
-  writer.writeString(offsets[2], object.idPet);
-  writer.writeBool(offsets[3], object.isChipped);
-  writer.writeBool(offsets[4], object.isSterilized);
-  writer.writeDateTime(offsets[5], object.lastDewormingAt);
-  writer.writeDateTime(offsets[6], object.lastVetAppointment);
+  writer.writeString(offsets[1], object.healthDiaryId);
+  writer.writeBool(offsets[2], object.isChipped);
+  writer.writeBool(offsets[3], object.isSterilized);
+  writer.writeDateTime(offsets[4], object.lastDeworming);
+  writer.writeDateTime(offsets[5], object.lastVetAppointment);
+  writer.writeString(offsets[6], object.petId);
 }
 
 HealthDiaryCache _healthDiaryCacheDeserialize(
@@ -134,13 +134,13 @@ HealthDiaryCache _healthDiaryCacheDeserialize(
 ) {
   final object = HealthDiaryCache();
   object.chipNumber = reader.readStringOrNull(offsets[0]);
+  object.healthDiaryId = reader.readString(offsets[1]);
   object.id = id;
-  object.idHealthDiary = reader.readString(offsets[1]);
-  object.idPet = reader.readString(offsets[2]);
-  object.isChipped = reader.readBool(offsets[3]);
-  object.isSterilized = reader.readBool(offsets[4]);
-  object.lastDewormingAt = reader.readDateTimeOrNull(offsets[5]);
-  object.lastVetAppointment = reader.readDateTimeOrNull(offsets[6]);
+  object.isChipped = reader.readBoolOrNull(offsets[2]);
+  object.isSterilized = reader.readBoolOrNull(offsets[3]);
+  object.lastDeworming = reader.readDateTimeOrNull(offsets[4]);
+  object.lastVetAppointment = reader.readDateTimeOrNull(offsets[5]);
+  object.petId = reader.readString(offsets[6]);
   return object;
 }
 
@@ -156,15 +156,15 @@ P _healthDiaryCacheDeserializeProp<P>(
     case 1:
       return (reader.readString(offset)) as P;
     case 2:
-      return (reader.readString(offset)) as P;
+      return (reader.readBoolOrNull(offset)) as P;
     case 3:
-      return (reader.readBool(offset)) as P;
+      return (reader.readBoolOrNull(offset)) as P;
     case 4:
-      return (reader.readBool(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 5:
       return (reader.readDateTimeOrNull(offset)) as P;
     case 6:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -184,112 +184,112 @@ void _healthDiaryCacheAttach(
 }
 
 extension HealthDiaryCacheByIndex on IsarCollection<HealthDiaryCache> {
-  Future<HealthDiaryCache?> getByIdHealthDiary(String idHealthDiary) {
-    return getByIndex(r'idHealthDiary', [idHealthDiary]);
+  Future<HealthDiaryCache?> getByHealthDiaryId(String healthDiaryId) {
+    return getByIndex(r'healthDiaryId', [healthDiaryId]);
   }
 
-  HealthDiaryCache? getByIdHealthDiarySync(String idHealthDiary) {
-    return getByIndexSync(r'idHealthDiary', [idHealthDiary]);
+  HealthDiaryCache? getByHealthDiaryIdSync(String healthDiaryId) {
+    return getByIndexSync(r'healthDiaryId', [healthDiaryId]);
   }
 
-  Future<bool> deleteByIdHealthDiary(String idHealthDiary) {
-    return deleteByIndex(r'idHealthDiary', [idHealthDiary]);
+  Future<bool> deleteByHealthDiaryId(String healthDiaryId) {
+    return deleteByIndex(r'healthDiaryId', [healthDiaryId]);
   }
 
-  bool deleteByIdHealthDiarySync(String idHealthDiary) {
-    return deleteByIndexSync(r'idHealthDiary', [idHealthDiary]);
+  bool deleteByHealthDiaryIdSync(String healthDiaryId) {
+    return deleteByIndexSync(r'healthDiaryId', [healthDiaryId]);
   }
 
-  Future<List<HealthDiaryCache?>> getAllByIdHealthDiary(
-      List<String> idHealthDiaryValues) {
-    final values = idHealthDiaryValues.map((e) => [e]).toList();
-    return getAllByIndex(r'idHealthDiary', values);
+  Future<List<HealthDiaryCache?>> getAllByHealthDiaryId(
+      List<String> healthDiaryIdValues) {
+    final values = healthDiaryIdValues.map((e) => [e]).toList();
+    return getAllByIndex(r'healthDiaryId', values);
   }
 
-  List<HealthDiaryCache?> getAllByIdHealthDiarySync(
-      List<String> idHealthDiaryValues) {
-    final values = idHealthDiaryValues.map((e) => [e]).toList();
-    return getAllByIndexSync(r'idHealthDiary', values);
+  List<HealthDiaryCache?> getAllByHealthDiaryIdSync(
+      List<String> healthDiaryIdValues) {
+    final values = healthDiaryIdValues.map((e) => [e]).toList();
+    return getAllByIndexSync(r'healthDiaryId', values);
   }
 
-  Future<int> deleteAllByIdHealthDiary(List<String> idHealthDiaryValues) {
-    final values = idHealthDiaryValues.map((e) => [e]).toList();
-    return deleteAllByIndex(r'idHealthDiary', values);
+  Future<int> deleteAllByHealthDiaryId(List<String> healthDiaryIdValues) {
+    final values = healthDiaryIdValues.map((e) => [e]).toList();
+    return deleteAllByIndex(r'healthDiaryId', values);
   }
 
-  int deleteAllByIdHealthDiarySync(List<String> idHealthDiaryValues) {
-    final values = idHealthDiaryValues.map((e) => [e]).toList();
-    return deleteAllByIndexSync(r'idHealthDiary', values);
+  int deleteAllByHealthDiaryIdSync(List<String> healthDiaryIdValues) {
+    final values = healthDiaryIdValues.map((e) => [e]).toList();
+    return deleteAllByIndexSync(r'healthDiaryId', values);
   }
 
-  Future<Id> putByIdHealthDiary(HealthDiaryCache object) {
-    return putByIndex(r'idHealthDiary', object);
+  Future<Id> putByHealthDiaryId(HealthDiaryCache object) {
+    return putByIndex(r'healthDiaryId', object);
   }
 
-  Id putByIdHealthDiarySync(HealthDiaryCache object, {bool saveLinks = true}) {
-    return putByIndexSync(r'idHealthDiary', object, saveLinks: saveLinks);
+  Id putByHealthDiaryIdSync(HealthDiaryCache object, {bool saveLinks = true}) {
+    return putByIndexSync(r'healthDiaryId', object, saveLinks: saveLinks);
   }
 
-  Future<List<Id>> putAllByIdHealthDiary(List<HealthDiaryCache> objects) {
-    return putAllByIndex(r'idHealthDiary', objects);
+  Future<List<Id>> putAllByHealthDiaryId(List<HealthDiaryCache> objects) {
+    return putAllByIndex(r'healthDiaryId', objects);
   }
 
-  List<Id> putAllByIdHealthDiarySync(List<HealthDiaryCache> objects,
+  List<Id> putAllByHealthDiaryIdSync(List<HealthDiaryCache> objects,
       {bool saveLinks = true}) {
-    return putAllByIndexSync(r'idHealthDiary', objects, saveLinks: saveLinks);
+    return putAllByIndexSync(r'healthDiaryId', objects, saveLinks: saveLinks);
   }
 
-  Future<HealthDiaryCache?> getByIdPet(String idPet) {
-    return getByIndex(r'idPet', [idPet]);
+  Future<HealthDiaryCache?> getByPetId(String petId) {
+    return getByIndex(r'petId', [petId]);
   }
 
-  HealthDiaryCache? getByIdPetSync(String idPet) {
-    return getByIndexSync(r'idPet', [idPet]);
+  HealthDiaryCache? getByPetIdSync(String petId) {
+    return getByIndexSync(r'petId', [petId]);
   }
 
-  Future<bool> deleteByIdPet(String idPet) {
-    return deleteByIndex(r'idPet', [idPet]);
+  Future<bool> deleteByPetId(String petId) {
+    return deleteByIndex(r'petId', [petId]);
   }
 
-  bool deleteByIdPetSync(String idPet) {
-    return deleteByIndexSync(r'idPet', [idPet]);
+  bool deleteByPetIdSync(String petId) {
+    return deleteByIndexSync(r'petId', [petId]);
   }
 
-  Future<List<HealthDiaryCache?>> getAllByIdPet(List<String> idPetValues) {
-    final values = idPetValues.map((e) => [e]).toList();
-    return getAllByIndex(r'idPet', values);
+  Future<List<HealthDiaryCache?>> getAllByPetId(List<String> petIdValues) {
+    final values = petIdValues.map((e) => [e]).toList();
+    return getAllByIndex(r'petId', values);
   }
 
-  List<HealthDiaryCache?> getAllByIdPetSync(List<String> idPetValues) {
-    final values = idPetValues.map((e) => [e]).toList();
-    return getAllByIndexSync(r'idPet', values);
+  List<HealthDiaryCache?> getAllByPetIdSync(List<String> petIdValues) {
+    final values = petIdValues.map((e) => [e]).toList();
+    return getAllByIndexSync(r'petId', values);
   }
 
-  Future<int> deleteAllByIdPet(List<String> idPetValues) {
-    final values = idPetValues.map((e) => [e]).toList();
-    return deleteAllByIndex(r'idPet', values);
+  Future<int> deleteAllByPetId(List<String> petIdValues) {
+    final values = petIdValues.map((e) => [e]).toList();
+    return deleteAllByIndex(r'petId', values);
   }
 
-  int deleteAllByIdPetSync(List<String> idPetValues) {
-    final values = idPetValues.map((e) => [e]).toList();
-    return deleteAllByIndexSync(r'idPet', values);
+  int deleteAllByPetIdSync(List<String> petIdValues) {
+    final values = petIdValues.map((e) => [e]).toList();
+    return deleteAllByIndexSync(r'petId', values);
   }
 
-  Future<Id> putByIdPet(HealthDiaryCache object) {
-    return putByIndex(r'idPet', object);
+  Future<Id> putByPetId(HealthDiaryCache object) {
+    return putByIndex(r'petId', object);
   }
 
-  Id putByIdPetSync(HealthDiaryCache object, {bool saveLinks = true}) {
-    return putByIndexSync(r'idPet', object, saveLinks: saveLinks);
+  Id putByPetIdSync(HealthDiaryCache object, {bool saveLinks = true}) {
+    return putByIndexSync(r'petId', object, saveLinks: saveLinks);
   }
 
-  Future<List<Id>> putAllByIdPet(List<HealthDiaryCache> objects) {
-    return putAllByIndex(r'idPet', objects);
+  Future<List<Id>> putAllByPetId(List<HealthDiaryCache> objects) {
+    return putAllByIndex(r'petId', objects);
   }
 
-  List<Id> putAllByIdPetSync(List<HealthDiaryCache> objects,
+  List<Id> putAllByPetIdSync(List<HealthDiaryCache> objects,
       {bool saveLinks = true}) {
-    return putAllByIndexSync(r'idPet', objects, saveLinks: saveLinks);
+    return putAllByIndexSync(r'petId', objects, saveLinks: saveLinks);
   }
 }
 
@@ -372,44 +372,44 @@ extension HealthDiaryCacheQueryWhere
   }
 
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterWhereClause>
-      idHealthDiaryEqualTo(String idHealthDiary) {
+      healthDiaryIdEqualTo(String healthDiaryId) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'idHealthDiary',
-        value: [idHealthDiary],
+        indexName: r'healthDiaryId',
+        value: [healthDiaryId],
       ));
     });
   }
 
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterWhereClause>
-      idHealthDiaryNotEqualTo(String idHealthDiary) {
+      healthDiaryIdNotEqualTo(String healthDiaryId) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idHealthDiary',
+              indexName: r'healthDiaryId',
               lower: [],
-              upper: [idHealthDiary],
+              upper: [healthDiaryId],
               includeUpper: false,
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idHealthDiary',
-              lower: [idHealthDiary],
+              indexName: r'healthDiaryId',
+              lower: [healthDiaryId],
               includeLower: false,
               upper: [],
             ));
       } else {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idHealthDiary',
-              lower: [idHealthDiary],
+              indexName: r'healthDiaryId',
+              lower: [healthDiaryId],
               includeLower: false,
               upper: [],
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idHealthDiary',
+              indexName: r'healthDiaryId',
               lower: [],
-              upper: [idHealthDiary],
+              upper: [healthDiaryId],
               includeUpper: false,
             ));
       }
@@ -417,44 +417,44 @@ extension HealthDiaryCacheQueryWhere
   }
 
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterWhereClause>
-      idPetEqualTo(String idPet) {
+      petIdEqualTo(String petId) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'idPet',
-        value: [idPet],
+        indexName: r'petId',
+        value: [petId],
       ));
     });
   }
 
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterWhereClause>
-      idPetNotEqualTo(String idPet) {
+      petIdNotEqualTo(String petId) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idPet',
+              indexName: r'petId',
               lower: [],
-              upper: [idPet],
+              upper: [petId],
               includeUpper: false,
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idPet',
-              lower: [idPet],
+              indexName: r'petId',
+              lower: [petId],
               includeLower: false,
               upper: [],
             ));
       } else {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idPet',
-              lower: [idPet],
+              indexName: r'petId',
+              lower: [petId],
               includeLower: false,
               upper: [],
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idPet',
+              indexName: r'petId',
               lower: [],
-              upper: [idPet],
+              upper: [petId],
               includeUpper: false,
             ));
       }
@@ -619,6 +619,142 @@ extension HealthDiaryCacheQueryFilter
   }
 
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      healthDiaryIdEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'healthDiaryId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      healthDiaryIdGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'healthDiaryId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      healthDiaryIdLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'healthDiaryId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      healthDiaryIdBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'healthDiaryId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      healthDiaryIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'healthDiaryId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      healthDiaryIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'healthDiaryId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      healthDiaryIdContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'healthDiaryId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      healthDiaryIdMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'healthDiaryId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      healthDiaryIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'healthDiaryId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      healthDiaryIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'healthDiaryId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
       idEqualTo(Id value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -675,279 +811,25 @@ extension HealthDiaryCacheQueryFilter
   }
 
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      idHealthDiaryEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+      isChippedIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'idHealthDiary',
-        value: value,
-        caseSensitive: caseSensitive,
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'isChipped',
       ));
     });
   }
 
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      idHealthDiaryGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
+      isChippedIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'idHealthDiary',
-        value: value,
-        caseSensitive: caseSensitive,
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'isChipped',
       ));
     });
   }
 
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      idHealthDiaryLessThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'idHealthDiary',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      idHealthDiaryBetween(
-    String lower,
-    String upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'idHealthDiary',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      idHealthDiaryStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'idHealthDiary',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      idHealthDiaryEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'idHealthDiary',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      idHealthDiaryContains(String value, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'idHealthDiary',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      idHealthDiaryMatches(String pattern, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'idHealthDiary',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      idHealthDiaryIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'idHealthDiary',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      idHealthDiaryIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'idHealthDiary',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      idPetEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'idPet',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      idPetGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'idPet',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      idPetLessThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'idPet',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      idPetBetween(
-    String lower,
-    String upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'idPet',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      idPetStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'idPet',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      idPetEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'idPet',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      idPetContains(String value, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'idPet',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      idPetMatches(String pattern, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'idPet',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      idPetIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'idPet',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      idPetIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'idPet',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      isChippedEqualTo(bool value) {
+      isChippedEqualTo(bool? value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'isChipped',
@@ -957,7 +839,25 @@ extension HealthDiaryCacheQueryFilter
   }
 
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      isSterilizedEqualTo(bool value) {
+      isSterilizedIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'isSterilized',
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      isSterilizedIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'isSterilized',
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      isSterilizedEqualTo(bool? value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'isSterilized',
@@ -967,63 +867,63 @@ extension HealthDiaryCacheQueryFilter
   }
 
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      lastDewormingAtIsNull() {
+      lastDewormingIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'lastDewormingAt',
+        property: r'lastDeworming',
       ));
     });
   }
 
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      lastDewormingAtIsNotNull() {
+      lastDewormingIsNotNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'lastDewormingAt',
+        property: r'lastDeworming',
       ));
     });
   }
 
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      lastDewormingAtEqualTo(DateTime? value) {
+      lastDewormingEqualTo(DateTime? value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'lastDewormingAt',
+        property: r'lastDeworming',
         value: value,
       ));
     });
   }
 
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      lastDewormingAtGreaterThan(
+      lastDewormingGreaterThan(
     DateTime? value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         include: include,
-        property: r'lastDewormingAt',
+        property: r'lastDeworming',
         value: value,
       ));
     });
   }
 
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      lastDewormingAtLessThan(
+      lastDewormingLessThan(
     DateTime? value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.lessThan(
         include: include,
-        property: r'lastDewormingAt',
+        property: r'lastDeworming',
         value: value,
       ));
     });
   }
 
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
-      lastDewormingAtBetween(
+      lastDewormingBetween(
     DateTime? lower,
     DateTime? upper, {
     bool includeLower = true,
@@ -1031,7 +931,7 @@ extension HealthDiaryCacheQueryFilter
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
-        property: r'lastDewormingAt',
+        property: r'lastDeworming',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -1113,6 +1013,142 @@ extension HealthDiaryCacheQueryFilter
       ));
     });
   }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      petIdEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'petId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      petIdGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'petId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      petIdLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'petId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      petIdBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'petId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      petIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'petId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      petIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'petId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      petIdContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'petId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      petIdMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'petId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      petIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'petId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      petIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'petId',
+        value: '',
+      ));
+    });
+  }
 }
 
 extension HealthDiaryCacheQueryObject
@@ -1138,29 +1174,16 @@ extension HealthDiaryCacheQuerySortBy
   }
 
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy>
-      sortByIdHealthDiary() {
+      sortByHealthDiaryId() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idHealthDiary', Sort.asc);
+      return query.addSortBy(r'healthDiaryId', Sort.asc);
     });
   }
 
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy>
-      sortByIdHealthDiaryDesc() {
+      sortByHealthDiaryIdDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idHealthDiary', Sort.desc);
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy> sortByIdPet() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idPet', Sort.asc);
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy>
-      sortByIdPetDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idPet', Sort.desc);
+      return query.addSortBy(r'healthDiaryId', Sort.desc);
     });
   }
 
@@ -1193,16 +1216,16 @@ extension HealthDiaryCacheQuerySortBy
   }
 
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy>
-      sortByLastDewormingAt() {
+      sortByLastDeworming() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'lastDewormingAt', Sort.asc);
+      return query.addSortBy(r'lastDeworming', Sort.asc);
     });
   }
 
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy>
-      sortByLastDewormingAtDesc() {
+      sortByLastDewormingDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'lastDewormingAt', Sort.desc);
+      return query.addSortBy(r'lastDeworming', Sort.desc);
     });
   }
 
@@ -1217,6 +1240,19 @@ extension HealthDiaryCacheQuerySortBy
       sortByLastVetAppointmentDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastVetAppointment', Sort.desc);
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy> sortByPetId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'petId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy>
+      sortByPetIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'petId', Sort.desc);
     });
   }
 }
@@ -1237,6 +1273,20 @@ extension HealthDiaryCacheQuerySortThenBy
     });
   }
 
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy>
+      thenByHealthDiaryId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'healthDiaryId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy>
+      thenByHealthDiaryIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'healthDiaryId', Sort.desc);
+    });
+  }
+
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -1247,33 +1297,6 @@ extension HealthDiaryCacheQuerySortThenBy
       thenByIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.desc);
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy>
-      thenByIdHealthDiary() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idHealthDiary', Sort.asc);
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy>
-      thenByIdHealthDiaryDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idHealthDiary', Sort.desc);
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy> thenByIdPet() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idPet', Sort.asc);
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy>
-      thenByIdPetDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idPet', Sort.desc);
     });
   }
 
@@ -1306,16 +1329,16 @@ extension HealthDiaryCacheQuerySortThenBy
   }
 
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy>
-      thenByLastDewormingAt() {
+      thenByLastDeworming() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'lastDewormingAt', Sort.asc);
+      return query.addSortBy(r'lastDeworming', Sort.asc);
     });
   }
 
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy>
-      thenByLastDewormingAtDesc() {
+      thenByLastDewormingDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'lastDewormingAt', Sort.desc);
+      return query.addSortBy(r'lastDeworming', Sort.desc);
     });
   }
 
@@ -1332,6 +1355,19 @@ extension HealthDiaryCacheQuerySortThenBy
       return query.addSortBy(r'lastVetAppointment', Sort.desc);
     });
   }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy> thenByPetId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'petId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy>
+      thenByPetIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'petId', Sort.desc);
+    });
+  }
 }
 
 extension HealthDiaryCacheQueryWhereDistinct
@@ -1344,17 +1380,10 @@ extension HealthDiaryCacheQueryWhereDistinct
   }
 
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QDistinct>
-      distinctByIdHealthDiary({bool caseSensitive = true}) {
+      distinctByHealthDiaryId({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'idHealthDiary',
+      return query.addDistinctBy(r'healthDiaryId',
           caseSensitive: caseSensitive);
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QDistinct> distinctByIdPet(
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'idPet', caseSensitive: caseSensitive);
     });
   }
 
@@ -1373,9 +1402,9 @@ extension HealthDiaryCacheQueryWhereDistinct
   }
 
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QDistinct>
-      distinctByLastDewormingAt() {
+      distinctByLastDeworming() {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'lastDewormingAt');
+      return query.addDistinctBy(r'lastDeworming');
     });
   }
 
@@ -1383,6 +1412,13 @@ extension HealthDiaryCacheQueryWhereDistinct
       distinctByLastVetAppointment() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'lastVetAppointment');
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QDistinct> distinctByPetId(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'petId', caseSensitive: caseSensitive);
     });
   }
 }
@@ -1403,25 +1439,19 @@ extension HealthDiaryCacheQueryProperty
   }
 
   QueryBuilder<HealthDiaryCache, String, QQueryOperations>
-      idHealthDiaryProperty() {
+      healthDiaryIdProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'idHealthDiary');
+      return query.addPropertyName(r'healthDiaryId');
     });
   }
 
-  QueryBuilder<HealthDiaryCache, String, QQueryOperations> idPetProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'idPet');
-    });
-  }
-
-  QueryBuilder<HealthDiaryCache, bool, QQueryOperations> isChippedProperty() {
+  QueryBuilder<HealthDiaryCache, bool?, QQueryOperations> isChippedProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isChipped');
     });
   }
 
-  QueryBuilder<HealthDiaryCache, bool, QQueryOperations>
+  QueryBuilder<HealthDiaryCache, bool?, QQueryOperations>
       isSterilizedProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isSterilized');
@@ -1429,9 +1459,9 @@ extension HealthDiaryCacheQueryProperty
   }
 
   QueryBuilder<HealthDiaryCache, DateTime?, QQueryOperations>
-      lastDewormingAtProperty() {
+      lastDewormingProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'lastDewormingAt');
+      return query.addPropertyName(r'lastDeworming');
     });
   }
 
@@ -1439,6 +1469,12 @@ extension HealthDiaryCacheQueryProperty
       lastVetAppointmentProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'lastVetAppointment');
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, String, QQueryOperations> petIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'petId');
     });
   }
 }

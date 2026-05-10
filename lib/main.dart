@@ -25,7 +25,7 @@ void main() async {
   final isar = IsarService.instance;
 
   final authCubit = AuthCubit(
-    repository: AuthRepository(supabase),
+    repository: AuthRepository(supabase, isar),
     syncService: SyncService(supabase, isar),
   );
   runApp(MyApp(authCubit: authCubit));

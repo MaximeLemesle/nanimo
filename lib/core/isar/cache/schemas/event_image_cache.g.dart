@@ -22,14 +22,14 @@ const EventImageCacheSchema = CollectionSchema(
       name: r'assetPath',
       type: IsarType.string,
     ),
-    r'idEvent': PropertySchema(
+    r'eventId': PropertySchema(
       id: 1,
-      name: r'idEvent',
+      name: r'eventId',
       type: IsarType.string,
     ),
-    r'idEventImage': PropertySchema(
+    r'eventImageId': PropertySchema(
       id: 2,
-      name: r'idEventImage',
+      name: r'eventImageId',
       type: IsarType.string,
     )
   },
@@ -39,27 +39,27 @@ const EventImageCacheSchema = CollectionSchema(
   deserializeProp: _eventImageCacheDeserializeProp,
   idName: r'id',
   indexes: {
-    r'idEventImage': IndexSchema(
-      id: 7888011538358742443,
-      name: r'idEventImage',
+    r'eventImageId': IndexSchema(
+      id: 6782498299685691037,
+      name: r'eventImageId',
       unique: true,
       replace: false,
       properties: [
         IndexPropertySchema(
-          name: r'idEventImage',
+          name: r'eventImageId',
           type: IndexType.hash,
           caseSensitive: true,
         )
       ],
     ),
-    r'idEvent': IndexSchema(
-      id: -72996493576358891,
-      name: r'idEvent',
+    r'eventId': IndexSchema(
+      id: -2707901133518603130,
+      name: r'eventId',
       unique: false,
       replace: false,
       properties: [
         IndexPropertySchema(
-          name: r'idEvent',
+          name: r'eventId',
           type: IndexType.hash,
           caseSensitive: true,
         )
@@ -81,8 +81,8 @@ int _eventImageCacheEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.assetPath.length * 3;
-  bytesCount += 3 + object.idEvent.length * 3;
-  bytesCount += 3 + object.idEventImage.length * 3;
+  bytesCount += 3 + object.eventId.length * 3;
+  bytesCount += 3 + object.eventImageId.length * 3;
   return bytesCount;
 }
 
@@ -93,8 +93,8 @@ void _eventImageCacheSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeString(offsets[0], object.assetPath);
-  writer.writeString(offsets[1], object.idEvent);
-  writer.writeString(offsets[2], object.idEventImage);
+  writer.writeString(offsets[1], object.eventId);
+  writer.writeString(offsets[2], object.eventImageId);
 }
 
 EventImageCache _eventImageCacheDeserialize(
@@ -105,9 +105,9 @@ EventImageCache _eventImageCacheDeserialize(
 ) {
   final object = EventImageCache();
   object.assetPath = reader.readString(offsets[0]);
+  object.eventId = reader.readString(offsets[1]);
+  object.eventImageId = reader.readString(offsets[2]);
   object.id = id;
-  object.idEvent = reader.readString(offsets[1]);
-  object.idEventImage = reader.readString(offsets[2]);
   return object;
 }
 
@@ -143,59 +143,59 @@ void _eventImageCacheAttach(
 }
 
 extension EventImageCacheByIndex on IsarCollection<EventImageCache> {
-  Future<EventImageCache?> getByIdEventImage(String idEventImage) {
-    return getByIndex(r'idEventImage', [idEventImage]);
+  Future<EventImageCache?> getByEventImageId(String eventImageId) {
+    return getByIndex(r'eventImageId', [eventImageId]);
   }
 
-  EventImageCache? getByIdEventImageSync(String idEventImage) {
-    return getByIndexSync(r'idEventImage', [idEventImage]);
+  EventImageCache? getByEventImageIdSync(String eventImageId) {
+    return getByIndexSync(r'eventImageId', [eventImageId]);
   }
 
-  Future<bool> deleteByIdEventImage(String idEventImage) {
-    return deleteByIndex(r'idEventImage', [idEventImage]);
+  Future<bool> deleteByEventImageId(String eventImageId) {
+    return deleteByIndex(r'eventImageId', [eventImageId]);
   }
 
-  bool deleteByIdEventImageSync(String idEventImage) {
-    return deleteByIndexSync(r'idEventImage', [idEventImage]);
+  bool deleteByEventImageIdSync(String eventImageId) {
+    return deleteByIndexSync(r'eventImageId', [eventImageId]);
   }
 
-  Future<List<EventImageCache?>> getAllByIdEventImage(
-      List<String> idEventImageValues) {
-    final values = idEventImageValues.map((e) => [e]).toList();
-    return getAllByIndex(r'idEventImage', values);
+  Future<List<EventImageCache?>> getAllByEventImageId(
+      List<String> eventImageIdValues) {
+    final values = eventImageIdValues.map((e) => [e]).toList();
+    return getAllByIndex(r'eventImageId', values);
   }
 
-  List<EventImageCache?> getAllByIdEventImageSync(
-      List<String> idEventImageValues) {
-    final values = idEventImageValues.map((e) => [e]).toList();
-    return getAllByIndexSync(r'idEventImage', values);
+  List<EventImageCache?> getAllByEventImageIdSync(
+      List<String> eventImageIdValues) {
+    final values = eventImageIdValues.map((e) => [e]).toList();
+    return getAllByIndexSync(r'eventImageId', values);
   }
 
-  Future<int> deleteAllByIdEventImage(List<String> idEventImageValues) {
-    final values = idEventImageValues.map((e) => [e]).toList();
-    return deleteAllByIndex(r'idEventImage', values);
+  Future<int> deleteAllByEventImageId(List<String> eventImageIdValues) {
+    final values = eventImageIdValues.map((e) => [e]).toList();
+    return deleteAllByIndex(r'eventImageId', values);
   }
 
-  int deleteAllByIdEventImageSync(List<String> idEventImageValues) {
-    final values = idEventImageValues.map((e) => [e]).toList();
-    return deleteAllByIndexSync(r'idEventImage', values);
+  int deleteAllByEventImageIdSync(List<String> eventImageIdValues) {
+    final values = eventImageIdValues.map((e) => [e]).toList();
+    return deleteAllByIndexSync(r'eventImageId', values);
   }
 
-  Future<Id> putByIdEventImage(EventImageCache object) {
-    return putByIndex(r'idEventImage', object);
+  Future<Id> putByEventImageId(EventImageCache object) {
+    return putByIndex(r'eventImageId', object);
   }
 
-  Id putByIdEventImageSync(EventImageCache object, {bool saveLinks = true}) {
-    return putByIndexSync(r'idEventImage', object, saveLinks: saveLinks);
+  Id putByEventImageIdSync(EventImageCache object, {bool saveLinks = true}) {
+    return putByIndexSync(r'eventImageId', object, saveLinks: saveLinks);
   }
 
-  Future<List<Id>> putAllByIdEventImage(List<EventImageCache> objects) {
-    return putAllByIndex(r'idEventImage', objects);
+  Future<List<Id>> putAllByEventImageId(List<EventImageCache> objects) {
+    return putAllByIndex(r'eventImageId', objects);
   }
 
-  List<Id> putAllByIdEventImageSync(List<EventImageCache> objects,
+  List<Id> putAllByEventImageIdSync(List<EventImageCache> objects,
       {bool saveLinks = true}) {
-    return putAllByIndexSync(r'idEventImage', objects, saveLinks: saveLinks);
+    return putAllByIndexSync(r'eventImageId', objects, saveLinks: saveLinks);
   }
 }
 
@@ -279,44 +279,44 @@ extension EventImageCacheQueryWhere
   }
 
   QueryBuilder<EventImageCache, EventImageCache, QAfterWhereClause>
-      idEventImageEqualTo(String idEventImage) {
+      eventImageIdEqualTo(String eventImageId) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'idEventImage',
-        value: [idEventImage],
+        indexName: r'eventImageId',
+        value: [eventImageId],
       ));
     });
   }
 
   QueryBuilder<EventImageCache, EventImageCache, QAfterWhereClause>
-      idEventImageNotEqualTo(String idEventImage) {
+      eventImageIdNotEqualTo(String eventImageId) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idEventImage',
+              indexName: r'eventImageId',
               lower: [],
-              upper: [idEventImage],
+              upper: [eventImageId],
               includeUpper: false,
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idEventImage',
-              lower: [idEventImage],
+              indexName: r'eventImageId',
+              lower: [eventImageId],
               includeLower: false,
               upper: [],
             ));
       } else {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idEventImage',
-              lower: [idEventImage],
+              indexName: r'eventImageId',
+              lower: [eventImageId],
               includeLower: false,
               upper: [],
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idEventImage',
+              indexName: r'eventImageId',
               lower: [],
-              upper: [idEventImage],
+              upper: [eventImageId],
               includeUpper: false,
             ));
       }
@@ -324,44 +324,44 @@ extension EventImageCacheQueryWhere
   }
 
   QueryBuilder<EventImageCache, EventImageCache, QAfterWhereClause>
-      idEventEqualTo(String idEvent) {
+      eventIdEqualTo(String eventId) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'idEvent',
-        value: [idEvent],
+        indexName: r'eventId',
+        value: [eventId],
       ));
     });
   }
 
   QueryBuilder<EventImageCache, EventImageCache, QAfterWhereClause>
-      idEventNotEqualTo(String idEvent) {
+      eventIdNotEqualTo(String eventId) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idEvent',
+              indexName: r'eventId',
               lower: [],
-              upper: [idEvent],
+              upper: [eventId],
               includeUpper: false,
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idEvent',
-              lower: [idEvent],
+              indexName: r'eventId',
+              lower: [eventId],
               includeLower: false,
               upper: [],
             ));
       } else {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idEvent',
-              lower: [idEvent],
+              indexName: r'eventId',
+              lower: [eventId],
               includeLower: false,
               upper: [],
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idEvent',
+              indexName: r'eventId',
               lower: [],
-              upper: [idEvent],
+              upper: [eventId],
               includeUpper: false,
             ));
       }
@@ -508,6 +508,278 @@ extension EventImageCacheQueryFilter
   }
 
   QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
+      eventIdEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'eventId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
+      eventIdGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'eventId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
+      eventIdLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'eventId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
+      eventIdBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'eventId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
+      eventIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'eventId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
+      eventIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'eventId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
+      eventIdContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'eventId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
+      eventIdMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'eventId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
+      eventIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'eventId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
+      eventIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'eventId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
+      eventImageIdEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'eventImageId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
+      eventImageIdGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'eventImageId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
+      eventImageIdLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'eventImageId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
+      eventImageIdBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'eventImageId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
+      eventImageIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'eventImageId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
+      eventImageIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'eventImageId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
+      eventImageIdContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'eventImageId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
+      eventImageIdMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'eventImageId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
+      eventImageIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'eventImageId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
+      eventImageIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'eventImageId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
       idEqualTo(Id value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -562,278 +834,6 @@ extension EventImageCacheQueryFilter
       ));
     });
   }
-
-  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
-      idEventEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'idEvent',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
-      idEventGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'idEvent',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
-      idEventLessThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'idEvent',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
-      idEventBetween(
-    String lower,
-    String upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'idEvent',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
-      idEventStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'idEvent',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
-      idEventEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'idEvent',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
-      idEventContains(String value, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'idEvent',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
-      idEventMatches(String pattern, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'idEvent',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
-      idEventIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'idEvent',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
-      idEventIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'idEvent',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
-      idEventImageEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'idEventImage',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
-      idEventImageGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'idEventImage',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
-      idEventImageLessThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'idEventImage',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
-      idEventImageBetween(
-    String lower,
-    String upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'idEventImage',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
-      idEventImageStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'idEventImage',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
-      idEventImageEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'idEventImage',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
-      idEventImageContains(String value, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'idEventImage',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
-      idEventImageMatches(String pattern, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'idEventImage',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
-      idEventImageIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'idEventImage',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<EventImageCache, EventImageCache, QAfterFilterCondition>
-      idEventImageIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'idEventImage',
-        value: '',
-      ));
-    });
-  }
 }
 
 extension EventImageCacheQueryObject
@@ -858,30 +858,30 @@ extension EventImageCacheQuerySortBy
     });
   }
 
-  QueryBuilder<EventImageCache, EventImageCache, QAfterSortBy> sortByIdEvent() {
+  QueryBuilder<EventImageCache, EventImageCache, QAfterSortBy> sortByEventId() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idEvent', Sort.asc);
+      return query.addSortBy(r'eventId', Sort.asc);
     });
   }
 
   QueryBuilder<EventImageCache, EventImageCache, QAfterSortBy>
-      sortByIdEventDesc() {
+      sortByEventIdDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idEvent', Sort.desc);
+      return query.addSortBy(r'eventId', Sort.desc);
     });
   }
 
   QueryBuilder<EventImageCache, EventImageCache, QAfterSortBy>
-      sortByIdEventImage() {
+      sortByEventImageId() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idEventImage', Sort.asc);
+      return query.addSortBy(r'eventImageId', Sort.asc);
     });
   }
 
   QueryBuilder<EventImageCache, EventImageCache, QAfterSortBy>
-      sortByIdEventImageDesc() {
+      sortByEventImageIdDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idEventImage', Sort.desc);
+      return query.addSortBy(r'eventImageId', Sort.desc);
     });
   }
 }
@@ -902,6 +902,33 @@ extension EventImageCacheQuerySortThenBy
     });
   }
 
+  QueryBuilder<EventImageCache, EventImageCache, QAfterSortBy> thenByEventId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'eventId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventImageCache, EventImageCache, QAfterSortBy>
+      thenByEventIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'eventId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EventImageCache, EventImageCache, QAfterSortBy>
+      thenByEventImageId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'eventImageId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventImageCache, EventImageCache, QAfterSortBy>
+      thenByEventImageIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'eventImageId', Sort.desc);
+    });
+  }
+
   QueryBuilder<EventImageCache, EventImageCache, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -911,33 +938,6 @@ extension EventImageCacheQuerySortThenBy
   QueryBuilder<EventImageCache, EventImageCache, QAfterSortBy> thenByIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.desc);
-    });
-  }
-
-  QueryBuilder<EventImageCache, EventImageCache, QAfterSortBy> thenByIdEvent() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idEvent', Sort.asc);
-    });
-  }
-
-  QueryBuilder<EventImageCache, EventImageCache, QAfterSortBy>
-      thenByIdEventDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idEvent', Sort.desc);
-    });
-  }
-
-  QueryBuilder<EventImageCache, EventImageCache, QAfterSortBy>
-      thenByIdEventImage() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idEventImage', Sort.asc);
-    });
-  }
-
-  QueryBuilder<EventImageCache, EventImageCache, QAfterSortBy>
-      thenByIdEventImageDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idEventImage', Sort.desc);
     });
   }
 }
@@ -951,17 +951,17 @@ extension EventImageCacheQueryWhereDistinct
     });
   }
 
-  QueryBuilder<EventImageCache, EventImageCache, QDistinct> distinctByIdEvent(
+  QueryBuilder<EventImageCache, EventImageCache, QDistinct> distinctByEventId(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'idEvent', caseSensitive: caseSensitive);
+      return query.addDistinctBy(r'eventId', caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<EventImageCache, EventImageCache, QDistinct>
-      distinctByIdEventImage({bool caseSensitive = true}) {
+      distinctByEventImageId({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'idEventImage', caseSensitive: caseSensitive);
+      return query.addDistinctBy(r'eventImageId', caseSensitive: caseSensitive);
     });
   }
 }
@@ -980,16 +980,16 @@ extension EventImageCacheQueryProperty
     });
   }
 
-  QueryBuilder<EventImageCache, String, QQueryOperations> idEventProperty() {
+  QueryBuilder<EventImageCache, String, QQueryOperations> eventIdProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'idEvent');
+      return query.addPropertyName(r'eventId');
     });
   }
 
   QueryBuilder<EventImageCache, String, QQueryOperations>
-      idEventImageProperty() {
+      eventImageIdProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'idEventImage');
+      return query.addPropertyName(r'eventImageId');
     });
   }
 }

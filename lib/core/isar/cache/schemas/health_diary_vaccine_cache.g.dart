@@ -23,14 +23,14 @@ const HealthDiaryVaccineCacheSchema = CollectionSchema(
       name: r'doseNumber',
       type: IsarType.long,
     ),
-    r'idHealthDiary': PropertySchema(
+    r'healthDiaryId': PropertySchema(
       id: 1,
-      name: r'idHealthDiary',
+      name: r'healthDiaryId',
       type: IsarType.string,
     ),
-    r'idHealthDiaryVaccine': PropertySchema(
+    r'healthDiaryVaccineId': PropertySchema(
       id: 2,
-      name: r'idHealthDiaryVaccine',
+      name: r'healthDiaryVaccineId',
       type: IsarType.string,
     ),
     r'lastDate': PropertySchema(
@@ -65,14 +65,14 @@ const HealthDiaryVaccineCacheSchema = CollectionSchema(
   deserializeProp: _healthDiaryVaccineCacheDeserializeProp,
   idName: r'id',
   indexes: {
-    r'idHealthDiaryVaccine': IndexSchema(
-      id: -6451809160525202054,
-      name: r'idHealthDiaryVaccine',
+    r'healthDiaryVaccineId': IndexSchema(
+      id: -3004541809343265158,
+      name: r'healthDiaryVaccineId',
       unique: true,
       replace: false,
       properties: [
         IndexPropertySchema(
-          name: r'idHealthDiaryVaccine',
+          name: r'healthDiaryVaccineId',
           type: IndexType.hash,
           caseSensitive: true,
         )
@@ -91,14 +91,14 @@ const HealthDiaryVaccineCacheSchema = CollectionSchema(
         )
       ],
     ),
-    r'idHealthDiary': IndexSchema(
-      id: -5690220367706079709,
-      name: r'idHealthDiary',
+    r'healthDiaryId': IndexSchema(
+      id: -7547671222084665630,
+      name: r'healthDiaryId',
       unique: false,
       replace: false,
       properties: [
         IndexPropertySchema(
-          name: r'idHealthDiary',
+          name: r'healthDiaryId',
           type: IndexType.hash,
           caseSensitive: true,
         )
@@ -119,8 +119,8 @@ int _healthDiaryVaccineCacheEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
-  bytesCount += 3 + object.idHealthDiary.length * 3;
-  bytesCount += 3 + object.idHealthDiaryVaccine.length * 3;
+  bytesCount += 3 + object.healthDiaryId.length * 3;
+  bytesCount += 3 + object.healthDiaryVaccineId.length * 3;
   bytesCount += 3 + object.vaccineName.length * 3;
   return bytesCount;
 }
@@ -132,8 +132,8 @@ void _healthDiaryVaccineCacheSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeLong(offsets[0], object.doseNumber);
-  writer.writeString(offsets[1], object.idHealthDiary);
-  writer.writeString(offsets[2], object.idHealthDiaryVaccine);
+  writer.writeString(offsets[1], object.healthDiaryId);
+  writer.writeString(offsets[2], object.healthDiaryVaccineId);
   writer.writeDateTime(offsets[3], object.lastDate);
   writer.writeDateTime(offsets[4], object.nextDate);
   writer.writeLong(offsets[5], object.recurrence);
@@ -149,9 +149,9 @@ HealthDiaryVaccineCache _healthDiaryVaccineCacheDeserialize(
 ) {
   final object = HealthDiaryVaccineCache();
   object.doseNumber = reader.readLongOrNull(offsets[0]);
+  object.healthDiaryId = reader.readString(offsets[1]);
+  object.healthDiaryVaccineId = reader.readString(offsets[2]);
   object.id = id;
-  object.idHealthDiary = reader.readString(offsets[1]);
-  object.idHealthDiaryVaccine = reader.readString(offsets[2]);
   object.lastDate = reader.readDateTimeOrNull(offsets[3]);
   object.nextDate = reader.readDateTimeOrNull(offsets[4]);
   object.recurrence = reader.readLongOrNull(offsets[5]);
@@ -204,67 +204,67 @@ void _healthDiaryVaccineCacheAttach(
 
 extension HealthDiaryVaccineCacheByIndex
     on IsarCollection<HealthDiaryVaccineCache> {
-  Future<HealthDiaryVaccineCache?> getByIdHealthDiaryVaccine(
-      String idHealthDiaryVaccine) {
-    return getByIndex(r'idHealthDiaryVaccine', [idHealthDiaryVaccine]);
+  Future<HealthDiaryVaccineCache?> getByHealthDiaryVaccineId(
+      String healthDiaryVaccineId) {
+    return getByIndex(r'healthDiaryVaccineId', [healthDiaryVaccineId]);
   }
 
-  HealthDiaryVaccineCache? getByIdHealthDiaryVaccineSync(
-      String idHealthDiaryVaccine) {
-    return getByIndexSync(r'idHealthDiaryVaccine', [idHealthDiaryVaccine]);
+  HealthDiaryVaccineCache? getByHealthDiaryVaccineIdSync(
+      String healthDiaryVaccineId) {
+    return getByIndexSync(r'healthDiaryVaccineId', [healthDiaryVaccineId]);
   }
 
-  Future<bool> deleteByIdHealthDiaryVaccine(String idHealthDiaryVaccine) {
-    return deleteByIndex(r'idHealthDiaryVaccine', [idHealthDiaryVaccine]);
+  Future<bool> deleteByHealthDiaryVaccineId(String healthDiaryVaccineId) {
+    return deleteByIndex(r'healthDiaryVaccineId', [healthDiaryVaccineId]);
   }
 
-  bool deleteByIdHealthDiaryVaccineSync(String idHealthDiaryVaccine) {
-    return deleteByIndexSync(r'idHealthDiaryVaccine', [idHealthDiaryVaccine]);
+  bool deleteByHealthDiaryVaccineIdSync(String healthDiaryVaccineId) {
+    return deleteByIndexSync(r'healthDiaryVaccineId', [healthDiaryVaccineId]);
   }
 
-  Future<List<HealthDiaryVaccineCache?>> getAllByIdHealthDiaryVaccine(
-      List<String> idHealthDiaryVaccineValues) {
-    final values = idHealthDiaryVaccineValues.map((e) => [e]).toList();
-    return getAllByIndex(r'idHealthDiaryVaccine', values);
+  Future<List<HealthDiaryVaccineCache?>> getAllByHealthDiaryVaccineId(
+      List<String> healthDiaryVaccineIdValues) {
+    final values = healthDiaryVaccineIdValues.map((e) => [e]).toList();
+    return getAllByIndex(r'healthDiaryVaccineId', values);
   }
 
-  List<HealthDiaryVaccineCache?> getAllByIdHealthDiaryVaccineSync(
-      List<String> idHealthDiaryVaccineValues) {
-    final values = idHealthDiaryVaccineValues.map((e) => [e]).toList();
-    return getAllByIndexSync(r'idHealthDiaryVaccine', values);
+  List<HealthDiaryVaccineCache?> getAllByHealthDiaryVaccineIdSync(
+      List<String> healthDiaryVaccineIdValues) {
+    final values = healthDiaryVaccineIdValues.map((e) => [e]).toList();
+    return getAllByIndexSync(r'healthDiaryVaccineId', values);
   }
 
-  Future<int> deleteAllByIdHealthDiaryVaccine(
-      List<String> idHealthDiaryVaccineValues) {
-    final values = idHealthDiaryVaccineValues.map((e) => [e]).toList();
-    return deleteAllByIndex(r'idHealthDiaryVaccine', values);
+  Future<int> deleteAllByHealthDiaryVaccineId(
+      List<String> healthDiaryVaccineIdValues) {
+    final values = healthDiaryVaccineIdValues.map((e) => [e]).toList();
+    return deleteAllByIndex(r'healthDiaryVaccineId', values);
   }
 
-  int deleteAllByIdHealthDiaryVaccineSync(
-      List<String> idHealthDiaryVaccineValues) {
-    final values = idHealthDiaryVaccineValues.map((e) => [e]).toList();
-    return deleteAllByIndexSync(r'idHealthDiaryVaccine', values);
+  int deleteAllByHealthDiaryVaccineIdSync(
+      List<String> healthDiaryVaccineIdValues) {
+    final values = healthDiaryVaccineIdValues.map((e) => [e]).toList();
+    return deleteAllByIndexSync(r'healthDiaryVaccineId', values);
   }
 
-  Future<Id> putByIdHealthDiaryVaccine(HealthDiaryVaccineCache object) {
-    return putByIndex(r'idHealthDiaryVaccine', object);
+  Future<Id> putByHealthDiaryVaccineId(HealthDiaryVaccineCache object) {
+    return putByIndex(r'healthDiaryVaccineId', object);
   }
 
-  Id putByIdHealthDiaryVaccineSync(HealthDiaryVaccineCache object,
+  Id putByHealthDiaryVaccineIdSync(HealthDiaryVaccineCache object,
       {bool saveLinks = true}) {
-    return putByIndexSync(r'idHealthDiaryVaccine', object,
+    return putByIndexSync(r'healthDiaryVaccineId', object,
         saveLinks: saveLinks);
   }
 
-  Future<List<Id>> putAllByIdHealthDiaryVaccine(
+  Future<List<Id>> putAllByHealthDiaryVaccineId(
       List<HealthDiaryVaccineCache> objects) {
-    return putAllByIndex(r'idHealthDiaryVaccine', objects);
+    return putAllByIndex(r'healthDiaryVaccineId', objects);
   }
 
-  List<Id> putAllByIdHealthDiaryVaccineSync(
+  List<Id> putAllByHealthDiaryVaccineIdSync(
       List<HealthDiaryVaccineCache> objects,
       {bool saveLinks = true}) {
-    return putAllByIndexSync(r'idHealthDiaryVaccine', objects,
+    return putAllByIndexSync(r'healthDiaryVaccineId', objects,
         saveLinks: saveLinks);
   }
 }
@@ -360,45 +360,45 @@ extension HealthDiaryVaccineCacheQueryWhere on QueryBuilder<
 
   QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
           QAfterWhereClause>
-      idHealthDiaryVaccineEqualTo(String idHealthDiaryVaccine) {
+      healthDiaryVaccineIdEqualTo(String healthDiaryVaccineId) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'idHealthDiaryVaccine',
-        value: [idHealthDiaryVaccine],
+        indexName: r'healthDiaryVaccineId',
+        value: [healthDiaryVaccineId],
       ));
     });
   }
 
   QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
           QAfterWhereClause>
-      idHealthDiaryVaccineNotEqualTo(String idHealthDiaryVaccine) {
+      healthDiaryVaccineIdNotEqualTo(String healthDiaryVaccineId) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idHealthDiaryVaccine',
+              indexName: r'healthDiaryVaccineId',
               lower: [],
-              upper: [idHealthDiaryVaccine],
+              upper: [healthDiaryVaccineId],
               includeUpper: false,
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idHealthDiaryVaccine',
-              lower: [idHealthDiaryVaccine],
+              indexName: r'healthDiaryVaccineId',
+              lower: [healthDiaryVaccineId],
               includeLower: false,
               upper: [],
             ));
       } else {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idHealthDiaryVaccine',
-              lower: [idHealthDiaryVaccine],
+              indexName: r'healthDiaryVaccineId',
+              lower: [healthDiaryVaccineId],
               includeLower: false,
               upper: [],
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idHealthDiaryVaccine',
+              indexName: r'healthDiaryVaccineId',
               lower: [],
-              upper: [idHealthDiaryVaccine],
+              upper: [healthDiaryVaccineId],
               includeUpper: false,
             ));
       }
@@ -521,44 +521,44 @@ extension HealthDiaryVaccineCacheQueryWhere on QueryBuilder<
   }
 
   QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
-      QAfterWhereClause> idHealthDiaryEqualTo(String idHealthDiary) {
+      QAfterWhereClause> healthDiaryIdEqualTo(String healthDiaryId) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'idHealthDiary',
-        value: [idHealthDiary],
+        indexName: r'healthDiaryId',
+        value: [healthDiaryId],
       ));
     });
   }
 
   QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
-      QAfterWhereClause> idHealthDiaryNotEqualTo(String idHealthDiary) {
+      QAfterWhereClause> healthDiaryIdNotEqualTo(String healthDiaryId) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idHealthDiary',
+              indexName: r'healthDiaryId',
               lower: [],
-              upper: [idHealthDiary],
+              upper: [healthDiaryId],
               includeUpper: false,
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idHealthDiary',
-              lower: [idHealthDiary],
+              indexName: r'healthDiaryId',
+              lower: [healthDiaryId],
               includeLower: false,
               upper: [],
             ));
       } else {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idHealthDiary',
-              lower: [idHealthDiary],
+              indexName: r'healthDiaryId',
+              lower: [healthDiaryId],
               includeLower: false,
               upper: [],
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idHealthDiary',
+              indexName: r'healthDiaryId',
               lower: [],
-              upper: [idHealthDiary],
+              upper: [healthDiaryId],
               includeUpper: false,
             ));
       }
@@ -643,6 +643,282 @@ extension HealthDiaryVaccineCacheQueryFilter on QueryBuilder<
   }
 
   QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
+      QAfterFilterCondition> healthDiaryIdEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'healthDiaryId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
+      QAfterFilterCondition> healthDiaryIdGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'healthDiaryId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
+      QAfterFilterCondition> healthDiaryIdLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'healthDiaryId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
+      QAfterFilterCondition> healthDiaryIdBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'healthDiaryId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
+      QAfterFilterCondition> healthDiaryIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'healthDiaryId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
+      QAfterFilterCondition> healthDiaryIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'healthDiaryId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
+          QAfterFilterCondition>
+      healthDiaryIdContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'healthDiaryId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
+          QAfterFilterCondition>
+      healthDiaryIdMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'healthDiaryId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
+      QAfterFilterCondition> healthDiaryIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'healthDiaryId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
+      QAfterFilterCondition> healthDiaryIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'healthDiaryId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
+      QAfterFilterCondition> healthDiaryVaccineIdEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'healthDiaryVaccineId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
+      QAfterFilterCondition> healthDiaryVaccineIdGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'healthDiaryVaccineId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
+      QAfterFilterCondition> healthDiaryVaccineIdLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'healthDiaryVaccineId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
+      QAfterFilterCondition> healthDiaryVaccineIdBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'healthDiaryVaccineId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
+      QAfterFilterCondition> healthDiaryVaccineIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'healthDiaryVaccineId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
+      QAfterFilterCondition> healthDiaryVaccineIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'healthDiaryVaccineId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
+          QAfterFilterCondition>
+      healthDiaryVaccineIdContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'healthDiaryVaccineId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
+          QAfterFilterCondition>
+      healthDiaryVaccineIdMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'healthDiaryVaccineId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
+      QAfterFilterCondition> healthDiaryVaccineIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'healthDiaryVaccineId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
+      QAfterFilterCondition> healthDiaryVaccineIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'healthDiaryVaccineId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
       QAfterFilterCondition> idEqualTo(Id value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -694,282 +970,6 @@ extension HealthDiaryVaccineCacheQueryFilter on QueryBuilder<
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
-      QAfterFilterCondition> idHealthDiaryEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'idHealthDiary',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
-      QAfterFilterCondition> idHealthDiaryGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'idHealthDiary',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
-      QAfterFilterCondition> idHealthDiaryLessThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'idHealthDiary',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
-      QAfterFilterCondition> idHealthDiaryBetween(
-    String lower,
-    String upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'idHealthDiary',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
-      QAfterFilterCondition> idHealthDiaryStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'idHealthDiary',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
-      QAfterFilterCondition> idHealthDiaryEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'idHealthDiary',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
-          QAfterFilterCondition>
-      idHealthDiaryContains(String value, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'idHealthDiary',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
-          QAfterFilterCondition>
-      idHealthDiaryMatches(String pattern, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'idHealthDiary',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
-      QAfterFilterCondition> idHealthDiaryIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'idHealthDiary',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
-      QAfterFilterCondition> idHealthDiaryIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'idHealthDiary',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
-      QAfterFilterCondition> idHealthDiaryVaccineEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'idHealthDiaryVaccine',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
-      QAfterFilterCondition> idHealthDiaryVaccineGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'idHealthDiaryVaccine',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
-      QAfterFilterCondition> idHealthDiaryVaccineLessThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'idHealthDiaryVaccine',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
-      QAfterFilterCondition> idHealthDiaryVaccineBetween(
-    String lower,
-    String upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'idHealthDiaryVaccine',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
-      QAfterFilterCondition> idHealthDiaryVaccineStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'idHealthDiaryVaccine',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
-      QAfterFilterCondition> idHealthDiaryVaccineEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'idHealthDiaryVaccine',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
-          QAfterFilterCondition>
-      idHealthDiaryVaccineContains(String value, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'idHealthDiaryVaccine',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
-          QAfterFilterCondition>
-      idHealthDiaryVaccineMatches(String pattern, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'idHealthDiaryVaccine',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
-      QAfterFilterCondition> idHealthDiaryVaccineIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'idHealthDiaryVaccine',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache,
-      QAfterFilterCondition> idHealthDiaryVaccineIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'idHealthDiaryVaccine',
-        value: '',
       ));
     });
   }
@@ -1432,30 +1432,30 @@ extension HealthDiaryVaccineCacheQuerySortBy
   }
 
   QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache, QAfterSortBy>
-      sortByIdHealthDiary() {
+      sortByHealthDiaryId() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idHealthDiary', Sort.asc);
+      return query.addSortBy(r'healthDiaryId', Sort.asc);
     });
   }
 
   QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache, QAfterSortBy>
-      sortByIdHealthDiaryDesc() {
+      sortByHealthDiaryIdDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idHealthDiary', Sort.desc);
+      return query.addSortBy(r'healthDiaryId', Sort.desc);
     });
   }
 
   QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache, QAfterSortBy>
-      sortByIdHealthDiaryVaccine() {
+      sortByHealthDiaryVaccineId() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idHealthDiaryVaccine', Sort.asc);
+      return query.addSortBy(r'healthDiaryVaccineId', Sort.asc);
     });
   }
 
   QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache, QAfterSortBy>
-      sortByIdHealthDiaryVaccineDesc() {
+      sortByHealthDiaryVaccineIdDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idHealthDiaryVaccine', Sort.desc);
+      return query.addSortBy(r'healthDiaryVaccineId', Sort.desc);
     });
   }
 
@@ -1547,6 +1547,34 @@ extension HealthDiaryVaccineCacheQuerySortThenBy on QueryBuilder<
   }
 
   QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache, QAfterSortBy>
+      thenByHealthDiaryId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'healthDiaryId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache, QAfterSortBy>
+      thenByHealthDiaryIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'healthDiaryId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache, QAfterSortBy>
+      thenByHealthDiaryVaccineId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'healthDiaryVaccineId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache, QAfterSortBy>
+      thenByHealthDiaryVaccineIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'healthDiaryVaccineId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache, QAfterSortBy>
       thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -1557,34 +1585,6 @@ extension HealthDiaryVaccineCacheQuerySortThenBy on QueryBuilder<
       thenByIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.desc);
-    });
-  }
-
-  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache, QAfterSortBy>
-      thenByIdHealthDiary() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idHealthDiary', Sort.asc);
-    });
-  }
-
-  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache, QAfterSortBy>
-      thenByIdHealthDiaryDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idHealthDiary', Sort.desc);
-    });
-  }
-
-  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache, QAfterSortBy>
-      thenByIdHealthDiaryVaccine() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idHealthDiaryVaccine', Sort.asc);
-    });
-  }
-
-  QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache, QAfterSortBy>
-      thenByIdHealthDiaryVaccineDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idHealthDiaryVaccine', Sort.desc);
     });
   }
 
@@ -1669,17 +1669,17 @@ extension HealthDiaryVaccineCacheQueryWhereDistinct on QueryBuilder<
   }
 
   QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache, QDistinct>
-      distinctByIdHealthDiary({bool caseSensitive = true}) {
+      distinctByHealthDiaryId({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'idHealthDiary',
+      return query.addDistinctBy(r'healthDiaryId',
           caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<HealthDiaryVaccineCache, HealthDiaryVaccineCache, QDistinct>
-      distinctByIdHealthDiaryVaccine({bool caseSensitive = true}) {
+      distinctByHealthDiaryVaccineId({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'idHealthDiaryVaccine',
+      return query.addDistinctBy(r'healthDiaryVaccineId',
           caseSensitive: caseSensitive);
     });
   }
@@ -1736,16 +1736,16 @@ extension HealthDiaryVaccineCacheQueryProperty on QueryBuilder<
   }
 
   QueryBuilder<HealthDiaryVaccineCache, String, QQueryOperations>
-      idHealthDiaryProperty() {
+      healthDiaryIdProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'idHealthDiary');
+      return query.addPropertyName(r'healthDiaryId');
     });
   }
 
   QueryBuilder<HealthDiaryVaccineCache, String, QQueryOperations>
-      idHealthDiaryVaccineProperty() {
+      healthDiaryVaccineIdProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'idHealthDiaryVaccine');
+      return query.addPropertyName(r'healthDiaryVaccineId');
     });
   }
 

@@ -1,24 +1,12 @@
 import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:nanimo/core/errors/repository_network_exception.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_cache.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 
-/// Thrown when a repository write needs the network and the device is offline
-/// (or Supabase rejects the call). The [message] is safe to show to the user.
-class RepositoryNetworkException implements Exception {
-  final String message;
-  const RepositoryNetworkException(this.message);
-
-  @override
-  String toString() => message;
-}
-
-/// Pattern A — cache-first reads, write-through writes.
-///
 /// Reads always hit Isar so the UI is instant and works offline. Supabase is
 /// kept fresh by [SyncService] at app start. Writes go to Supabase first; on
-/// success the cache is updated, on failure a [RepositoryNetworkException] is
-/// thrown so the Cubit can surface a "vous devez être connecté" message.
+/// success the cache is updated, on failure a [RepositoryNetworkException] is thrown.
 class PetRepository {
   final SupabaseClient _supabase;
   final Isar _isar;
