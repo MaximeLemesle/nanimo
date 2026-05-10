@@ -17,20 +17,20 @@ const WeightLogCacheSchema = CollectionSchema(
   name: r'WeightLogCache',
   id: 681148501513933406,
   properties: {
-    r'idPet': PropertySchema(
+    r'healthDiaryWeightLogId': PropertySchema(
       id: 0,
-      name: r'idPet',
-      type: IsarType.string,
-    ),
-    r'idWeightLog': PropertySchema(
-      id: 1,
-      name: r'idWeightLog',
+      name: r'healthDiaryWeightLogId',
       type: IsarType.string,
     ),
     r'loggedAt': PropertySchema(
-      id: 2,
+      id: 1,
       name: r'loggedAt',
       type: IsarType.dateTime,
+    ),
+    r'petId': PropertySchema(
+      id: 2,
+      name: r'petId',
+      type: IsarType.string,
     ),
     r'weight': PropertySchema(
       id: 3,
@@ -44,14 +44,14 @@ const WeightLogCacheSchema = CollectionSchema(
   deserializeProp: _weightLogCacheDeserializeProp,
   idName: r'id',
   indexes: {
-    r'idWeightLog': IndexSchema(
-      id: -3071114064124797865,
-      name: r'idWeightLog',
+    r'healthDiaryWeightLogId': IndexSchema(
+      id: -8418231218117005332,
+      name: r'healthDiaryWeightLogId',
       unique: true,
       replace: false,
       properties: [
         IndexPropertySchema(
-          name: r'idWeightLog',
+          name: r'healthDiaryWeightLogId',
           type: IndexType.hash,
           caseSensitive: true,
         )
@@ -70,14 +70,14 @@ const WeightLogCacheSchema = CollectionSchema(
         )
       ],
     ),
-    r'idPet': IndexSchema(
-      id: 4974873299035081535,
-      name: r'idPet',
+    r'petId': IndexSchema(
+      id: -7951607706841349632,
+      name: r'petId',
       unique: false,
       replace: false,
       properties: [
         IndexPropertySchema(
-          name: r'idPet',
+          name: r'petId',
           type: IndexType.hash,
           caseSensitive: true,
         )
@@ -98,8 +98,8 @@ int _weightLogCacheEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
-  bytesCount += 3 + object.idPet.length * 3;
-  bytesCount += 3 + object.idWeightLog.length * 3;
+  bytesCount += 3 + object.healthDiaryWeightLogId.length * 3;
+  bytesCount += 3 + object.petId.length * 3;
   return bytesCount;
 }
 
@@ -109,9 +109,9 @@ void _weightLogCacheSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.idPet);
-  writer.writeString(offsets[1], object.idWeightLog);
-  writer.writeDateTime(offsets[2], object.loggedAt);
+  writer.writeString(offsets[0], object.healthDiaryWeightLogId);
+  writer.writeDateTime(offsets[1], object.loggedAt);
+  writer.writeString(offsets[2], object.petId);
   writer.writeDouble(offsets[3], object.weight);
 }
 
@@ -122,10 +122,10 @@ WeightLogCache _weightLogCacheDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = WeightLogCache();
+  object.healthDiaryWeightLogId = reader.readString(offsets[0]);
   object.id = id;
-  object.idPet = reader.readString(offsets[0]);
-  object.idWeightLog = reader.readString(offsets[1]);
-  object.loggedAt = reader.readDateTime(offsets[2]);
+  object.loggedAt = reader.readDateTime(offsets[1]);
+  object.petId = reader.readString(offsets[2]);
   object.weight = reader.readDouble(offsets[3]);
   return object;
 }
@@ -140,9 +140,9 @@ P _weightLogCacheDeserializeProp<P>(
     case 0:
       return (reader.readString(offset)) as P;
     case 1:
-      return (reader.readString(offset)) as P;
-    case 2:
       return (reader.readDateTime(offset)) as P;
+    case 2:
+      return (reader.readString(offset)) as P;
     case 3:
       return (reader.readDouble(offset)) as P;
     default:
@@ -164,59 +164,68 @@ void _weightLogCacheAttach(
 }
 
 extension WeightLogCacheByIndex on IsarCollection<WeightLogCache> {
-  Future<WeightLogCache?> getByIdWeightLog(String idWeightLog) {
-    return getByIndex(r'idWeightLog', [idWeightLog]);
+  Future<WeightLogCache?> getByHealthDiaryWeightLogId(
+      String healthDiaryWeightLogId) {
+    return getByIndex(r'healthDiaryWeightLogId', [healthDiaryWeightLogId]);
   }
 
-  WeightLogCache? getByIdWeightLogSync(String idWeightLog) {
-    return getByIndexSync(r'idWeightLog', [idWeightLog]);
+  WeightLogCache? getByHealthDiaryWeightLogIdSync(
+      String healthDiaryWeightLogId) {
+    return getByIndexSync(r'healthDiaryWeightLogId', [healthDiaryWeightLogId]);
   }
 
-  Future<bool> deleteByIdWeightLog(String idWeightLog) {
-    return deleteByIndex(r'idWeightLog', [idWeightLog]);
+  Future<bool> deleteByHealthDiaryWeightLogId(String healthDiaryWeightLogId) {
+    return deleteByIndex(r'healthDiaryWeightLogId', [healthDiaryWeightLogId]);
   }
 
-  bool deleteByIdWeightLogSync(String idWeightLog) {
-    return deleteByIndexSync(r'idWeightLog', [idWeightLog]);
+  bool deleteByHealthDiaryWeightLogIdSync(String healthDiaryWeightLogId) {
+    return deleteByIndexSync(
+        r'healthDiaryWeightLogId', [healthDiaryWeightLogId]);
   }
 
-  Future<List<WeightLogCache?>> getAllByIdWeightLog(
-      List<String> idWeightLogValues) {
-    final values = idWeightLogValues.map((e) => [e]).toList();
-    return getAllByIndex(r'idWeightLog', values);
+  Future<List<WeightLogCache?>> getAllByHealthDiaryWeightLogId(
+      List<String> healthDiaryWeightLogIdValues) {
+    final values = healthDiaryWeightLogIdValues.map((e) => [e]).toList();
+    return getAllByIndex(r'healthDiaryWeightLogId', values);
   }
 
-  List<WeightLogCache?> getAllByIdWeightLogSync(
-      List<String> idWeightLogValues) {
-    final values = idWeightLogValues.map((e) => [e]).toList();
-    return getAllByIndexSync(r'idWeightLog', values);
+  List<WeightLogCache?> getAllByHealthDiaryWeightLogIdSync(
+      List<String> healthDiaryWeightLogIdValues) {
+    final values = healthDiaryWeightLogIdValues.map((e) => [e]).toList();
+    return getAllByIndexSync(r'healthDiaryWeightLogId', values);
   }
 
-  Future<int> deleteAllByIdWeightLog(List<String> idWeightLogValues) {
-    final values = idWeightLogValues.map((e) => [e]).toList();
-    return deleteAllByIndex(r'idWeightLog', values);
+  Future<int> deleteAllByHealthDiaryWeightLogId(
+      List<String> healthDiaryWeightLogIdValues) {
+    final values = healthDiaryWeightLogIdValues.map((e) => [e]).toList();
+    return deleteAllByIndex(r'healthDiaryWeightLogId', values);
   }
 
-  int deleteAllByIdWeightLogSync(List<String> idWeightLogValues) {
-    final values = idWeightLogValues.map((e) => [e]).toList();
-    return deleteAllByIndexSync(r'idWeightLog', values);
+  int deleteAllByHealthDiaryWeightLogIdSync(
+      List<String> healthDiaryWeightLogIdValues) {
+    final values = healthDiaryWeightLogIdValues.map((e) => [e]).toList();
+    return deleteAllByIndexSync(r'healthDiaryWeightLogId', values);
   }
 
-  Future<Id> putByIdWeightLog(WeightLogCache object) {
-    return putByIndex(r'idWeightLog', object);
+  Future<Id> putByHealthDiaryWeightLogId(WeightLogCache object) {
+    return putByIndex(r'healthDiaryWeightLogId', object);
   }
 
-  Id putByIdWeightLogSync(WeightLogCache object, {bool saveLinks = true}) {
-    return putByIndexSync(r'idWeightLog', object, saveLinks: saveLinks);
-  }
-
-  Future<List<Id>> putAllByIdWeightLog(List<WeightLogCache> objects) {
-    return putAllByIndex(r'idWeightLog', objects);
-  }
-
-  List<Id> putAllByIdWeightLogSync(List<WeightLogCache> objects,
+  Id putByHealthDiaryWeightLogIdSync(WeightLogCache object,
       {bool saveLinks = true}) {
-    return putAllByIndexSync(r'idWeightLog', objects, saveLinks: saveLinks);
+    return putByIndexSync(r'healthDiaryWeightLogId', object,
+        saveLinks: saveLinks);
+  }
+
+  Future<List<Id>> putAllByHealthDiaryWeightLogId(
+      List<WeightLogCache> objects) {
+    return putAllByIndex(r'healthDiaryWeightLogId', objects);
+  }
+
+  List<Id> putAllByHealthDiaryWeightLogIdSync(List<WeightLogCache> objects,
+      {bool saveLinks = true}) {
+    return putAllByIndexSync(r'healthDiaryWeightLogId', objects,
+        saveLinks: saveLinks);
   }
 }
 
@@ -309,44 +318,44 @@ extension WeightLogCacheQueryWhere
   }
 
   QueryBuilder<WeightLogCache, WeightLogCache, QAfterWhereClause>
-      idWeightLogEqualTo(String idWeightLog) {
+      healthDiaryWeightLogIdEqualTo(String healthDiaryWeightLogId) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'idWeightLog',
-        value: [idWeightLog],
+        indexName: r'healthDiaryWeightLogId',
+        value: [healthDiaryWeightLogId],
       ));
     });
   }
 
   QueryBuilder<WeightLogCache, WeightLogCache, QAfterWhereClause>
-      idWeightLogNotEqualTo(String idWeightLog) {
+      healthDiaryWeightLogIdNotEqualTo(String healthDiaryWeightLogId) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idWeightLog',
+              indexName: r'healthDiaryWeightLogId',
               lower: [],
-              upper: [idWeightLog],
+              upper: [healthDiaryWeightLogId],
               includeUpper: false,
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idWeightLog',
-              lower: [idWeightLog],
+              indexName: r'healthDiaryWeightLogId',
+              lower: [healthDiaryWeightLogId],
               includeLower: false,
               upper: [],
             ));
       } else {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idWeightLog',
-              lower: [idWeightLog],
+              indexName: r'healthDiaryWeightLogId',
+              lower: [healthDiaryWeightLogId],
               includeLower: false,
               upper: [],
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idWeightLog',
+              indexName: r'healthDiaryWeightLogId',
               lower: [],
-              upper: [idWeightLog],
+              upper: [healthDiaryWeightLogId],
               includeUpper: false,
             ));
       }
@@ -446,45 +455,45 @@ extension WeightLogCacheQueryWhere
     });
   }
 
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterWhereClause> idPetEqualTo(
-      String idPet) {
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterWhereClause> petIdEqualTo(
+      String petId) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'idPet',
-        value: [idPet],
+        indexName: r'petId',
+        value: [petId],
       ));
     });
   }
 
   QueryBuilder<WeightLogCache, WeightLogCache, QAfterWhereClause>
-      idPetNotEqualTo(String idPet) {
+      petIdNotEqualTo(String petId) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idPet',
+              indexName: r'petId',
               lower: [],
-              upper: [idPet],
+              upper: [petId],
               includeUpper: false,
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idPet',
-              lower: [idPet],
+              indexName: r'petId',
+              lower: [petId],
               includeLower: false,
               upper: [],
             ));
       } else {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idPet',
-              lower: [idPet],
+              indexName: r'petId',
+              lower: [petId],
               includeLower: false,
               upper: [],
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'idPet',
+              indexName: r'petId',
               lower: [],
-              upper: [idPet],
+              upper: [petId],
               includeUpper: false,
             ));
       }
@@ -494,6 +503,144 @@ extension WeightLogCacheQueryWhere
 
 extension WeightLogCacheQueryFilter
     on QueryBuilder<WeightLogCache, WeightLogCache, QFilterCondition> {
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
+      healthDiaryWeightLogIdEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'healthDiaryWeightLogId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
+      healthDiaryWeightLogIdGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'healthDiaryWeightLogId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
+      healthDiaryWeightLogIdLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'healthDiaryWeightLogId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
+      healthDiaryWeightLogIdBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'healthDiaryWeightLogId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
+      healthDiaryWeightLogIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'healthDiaryWeightLogId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
+      healthDiaryWeightLogIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'healthDiaryWeightLogId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
+      healthDiaryWeightLogIdContains(String value,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'healthDiaryWeightLogId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
+      healthDiaryWeightLogIdMatches(String pattern,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'healthDiaryWeightLogId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
+      healthDiaryWeightLogIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'healthDiaryWeightLogId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
+      healthDiaryWeightLogIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'healthDiaryWeightLogId',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition> idEqualTo(
       Id value) {
     return QueryBuilder.apply(this, (query) {
@@ -550,278 +697,6 @@ extension WeightLogCacheQueryFilter
   }
 
   QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
-      idPetEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'idPet',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
-      idPetGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'idPet',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
-      idPetLessThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'idPet',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
-      idPetBetween(
-    String lower,
-    String upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'idPet',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
-      idPetStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'idPet',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
-      idPetEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'idPet',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
-      idPetContains(String value, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'idPet',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
-      idPetMatches(String pattern, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'idPet',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
-      idPetIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'idPet',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
-      idPetIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'idPet',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
-      idWeightLogEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'idWeightLog',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
-      idWeightLogGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'idWeightLog',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
-      idWeightLogLessThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'idWeightLog',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
-      idWeightLogBetween(
-    String lower,
-    String upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'idWeightLog',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
-      idWeightLogStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'idWeightLog',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
-      idWeightLogEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'idWeightLog',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
-      idWeightLogContains(String value, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'idWeightLog',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
-      idWeightLogMatches(String pattern, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'idWeightLog',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
-      idWeightLogIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'idWeightLog',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
-      idWeightLogIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'idWeightLog',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
       loggedAtEqualTo(DateTime value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -873,6 +748,142 @@ extension WeightLogCacheQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
+      petIdEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'petId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
+      petIdGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'petId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
+      petIdLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'petId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
+      petIdBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'petId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
+      petIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'petId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
+      petIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'petId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
+      petIdContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'petId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
+      petIdMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'petId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
+      petIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'petId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterFilterCondition>
+      petIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'petId',
+        value: '',
       ));
     });
   }
@@ -952,29 +963,17 @@ extension WeightLogCacheQueryLinks
 
 extension WeightLogCacheQuerySortBy
     on QueryBuilder<WeightLogCache, WeightLogCache, QSortBy> {
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterSortBy> sortByIdPet() {
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterSortBy>
+      sortByHealthDiaryWeightLogId() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idPet', Sort.asc);
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterSortBy> sortByIdPetDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idPet', Sort.desc);
+      return query.addSortBy(r'healthDiaryWeightLogId', Sort.asc);
     });
   }
 
   QueryBuilder<WeightLogCache, WeightLogCache, QAfterSortBy>
-      sortByIdWeightLog() {
+      sortByHealthDiaryWeightLogIdDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idWeightLog', Sort.asc);
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterSortBy>
-      sortByIdWeightLogDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idWeightLog', Sort.desc);
+      return query.addSortBy(r'healthDiaryWeightLogId', Sort.desc);
     });
   }
 
@@ -988,6 +987,18 @@ extension WeightLogCacheQuerySortBy
       sortByLoggedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'loggedAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterSortBy> sortByPetId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'petId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterSortBy> sortByPetIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'petId', Sort.desc);
     });
   }
 
@@ -1007,6 +1018,20 @@ extension WeightLogCacheQuerySortBy
 
 extension WeightLogCacheQuerySortThenBy
     on QueryBuilder<WeightLogCache, WeightLogCache, QSortThenBy> {
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterSortBy>
+      thenByHealthDiaryWeightLogId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'healthDiaryWeightLogId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterSortBy>
+      thenByHealthDiaryWeightLogIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'healthDiaryWeightLogId', Sort.desc);
+    });
+  }
+
   QueryBuilder<WeightLogCache, WeightLogCache, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -1016,32 +1041,6 @@ extension WeightLogCacheQuerySortThenBy
   QueryBuilder<WeightLogCache, WeightLogCache, QAfterSortBy> thenByIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.desc);
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterSortBy> thenByIdPet() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idPet', Sort.asc);
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterSortBy> thenByIdPetDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idPet', Sort.desc);
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterSortBy>
-      thenByIdWeightLog() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idWeightLog', Sort.asc);
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QAfterSortBy>
-      thenByIdWeightLogDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'idWeightLog', Sort.desc);
     });
   }
 
@@ -1055,6 +1054,18 @@ extension WeightLogCacheQuerySortThenBy
       thenByLoggedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'loggedAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterSortBy> thenByPetId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'petId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<WeightLogCache, WeightLogCache, QAfterSortBy> thenByPetIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'petId', Sort.desc);
     });
   }
 
@@ -1074,23 +1085,24 @@ extension WeightLogCacheQuerySortThenBy
 
 extension WeightLogCacheQueryWhereDistinct
     on QueryBuilder<WeightLogCache, WeightLogCache, QDistinct> {
-  QueryBuilder<WeightLogCache, WeightLogCache, QDistinct> distinctByIdPet(
-      {bool caseSensitive = true}) {
+  QueryBuilder<WeightLogCache, WeightLogCache, QDistinct>
+      distinctByHealthDiaryWeightLogId({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'idPet', caseSensitive: caseSensitive);
-    });
-  }
-
-  QueryBuilder<WeightLogCache, WeightLogCache, QDistinct> distinctByIdWeightLog(
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'idWeightLog', caseSensitive: caseSensitive);
+      return query.addDistinctBy(r'healthDiaryWeightLogId',
+          caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<WeightLogCache, WeightLogCache, QDistinct> distinctByLoggedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'loggedAt');
+    });
+  }
+
+  QueryBuilder<WeightLogCache, WeightLogCache, QDistinct> distinctByPetId(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'petId', caseSensitive: caseSensitive);
     });
   }
 
@@ -1109,21 +1121,22 @@ extension WeightLogCacheQueryProperty
     });
   }
 
-  QueryBuilder<WeightLogCache, String, QQueryOperations> idPetProperty() {
+  QueryBuilder<WeightLogCache, String, QQueryOperations>
+      healthDiaryWeightLogIdProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'idPet');
-    });
-  }
-
-  QueryBuilder<WeightLogCache, String, QQueryOperations> idWeightLogProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'idWeightLog');
+      return query.addPropertyName(r'healthDiaryWeightLogId');
     });
   }
 
   QueryBuilder<WeightLogCache, DateTime, QQueryOperations> loggedAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'loggedAt');
+    });
+  }
+
+  QueryBuilder<WeightLogCache, String, QQueryOperations> petIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'petId');
     });
   }
 
