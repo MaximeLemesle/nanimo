@@ -1,0 +1,32 @@
+name: Commit Lint
+
+on:
+  pull_request:
+
+jobs:
+  commitlint:
+    name: Validate commit messages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch base branch
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: git fetch origin "$BASE_REF":"refs/remotes/origin/$BASE_REF"
+
+      - name: Lint each commit in the PR
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          failed=0
+          while IFS= read -r msg; do
+            if ! bash scripts/commit-msg-lint.sh "$msg"; then
+              failed=1
+            fi
+          done < <(git log "origin/$BASE_REF..HEAD" --pretty=%s)
+          exit "$failed"

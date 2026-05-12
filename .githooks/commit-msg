@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# git commit-msg hook — delegates to the shared linter so the same logic runs
+# locally (here) and in CI (.github/workflows/commitlint.yml).
+
+exec "$(dirname "$0")/../scripts/commit-msg-lint.sh" "$1"

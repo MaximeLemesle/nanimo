@@ -235,9 +235,14 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 flutter pub get
 flutter pub run build_runner build --delete-conflicting-outputs
 
+# Activer les hooks git versionnés (une seule fois après clone)
+git config core.hooksPath .githooks
+
 # Lancer
 flutter run
 ```
+
+**Convention de commit** : `<type>(<scope>): <description> NAN-<id>` (ex : `feat(subscription): add cubit NAN-008`). Types autorisés : `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `perf`, `ci`, `build`, `revert`. Le hook `commit-msg` bloque les messages non conformes en local ; la CI le revérifie sur chaque PR.
 
 ## 9. Tests
 
