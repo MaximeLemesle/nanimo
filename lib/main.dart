@@ -6,6 +6,8 @@ import 'package:nanimo/core/isar/database/isar_service.dart';
 import 'package:nanimo/core/isar/database/sync_service.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:nanimo/features/subscription/data/subscription_repository.dart';
+import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
@@ -24,27 +26,41 @@ void main() async {
   final supabase = Supabase.instance.client;
   final isar = IsarService.instance;
 
+  final authRepository = AuthRepository(supabase, isar);
+  final subscriptionRepository = SubscriptionRepository(supabase, isar);
+
   final authCubit = AuthCubit(
-    repository: AuthRepository(supabase, isar),
+    repository: authRepository,
     syncService: SyncService(supabase, isar),
   );
-  runApp(MyApp(authCubit: authCubit));
+
+  final subscriptionCubit = SubscriptionCubit(
+    authCubit: authCubit,
+    authRepository: authRepository,
+    subscriptionRepository: subscriptionRepository,
+  );
+
+  runApp(MyApp(authCubit: authCubit, subscriptionCubit: subscriptionCubit));
 }
 
 class MyApp extends StatelessWidget {
   final AuthCubit authCubit;
-  const MyApp({super.key, required this.authCubit});
+  final SubscriptionCubit subscriptionCubit;
+  const MyApp({
+    super.key,
+    required this.authCubit,
+    required this.subscriptionCubit,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: authCubit,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: authCubit),
+        BlocProvider.value(value: subscriptionCubit),
+      ],
       child: MaterialApp.router(
         title: 'Nanimo',
-        // theme: ThemeData(
-        //   colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        //   useMaterial3: true,
-        // ),
         routerConfig: createRouter(authCubit),
       ),
     );

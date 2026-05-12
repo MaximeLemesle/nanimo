@@ -5,6 +5,7 @@ import 'package:nanimo/core/isar/cache/schemas/event_image_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_vaccine_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_cache.dart';
+import 'package:nanimo/core/isar/cache/schemas/subscription_config_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/user_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/weight_log_cache.dart';
 
@@ -14,9 +15,9 @@ class SyncService {
 
   SyncService(this._supabase, this._isar);
 
-  /// Wave 1 — awaited before Home renders. Syncs user and pets.
+  /// Wave 1 — awaited before Home renders. Syncs user, pets and subscription config.
   Future<void> syncCritical() async {
-    await Future.wait([_syncUser(), _syncPets()]);
+    await Future.wait([_syncUser(), _syncPets(), _syncSubscriptionConfig()]);
   }
 
   /// Wave 2 — fire and forget after Home renders.
@@ -44,6 +45,27 @@ class SyncService {
       final user = UserCache.fromJson(data);
       await _isar.writeTxn(() async {
         await _isar.userCaches.putByUserId(user);
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _syncSubscriptionConfig() async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      final data = await _supabase
+          .from('users')
+          .select('id_subscription_config, subscription_config(*)')
+          .eq('id_user', userId)
+          .single();
+
+      final configJson = data['subscription_config'];
+      if (configJson is! Map<String, dynamic>) return;
+
+      final cache = SubscriptionConfigCache.fromJson(configJson);
+      await _isar.writeTxn(() async {
+        await _isar.subscriptionConfigCaches.putByConfigId(cache);
       });
     } catch (_) {}
   }
