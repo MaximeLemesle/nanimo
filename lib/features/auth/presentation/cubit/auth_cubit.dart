@@ -29,8 +29,7 @@ class AuthCubit extends Cubit<AuthState> {
       final session = data.session;
 
       if (session != null) {
-        final isNewSession =
-            data.event == supabase.AuthChangeEvent.signedIn ||
+        final isNewSession = data.event == supabase.AuthChangeEvent.signedIn ||
             data.event == supabase.AuthChangeEvent.initialSession;
 
         if (isNewSession) {
@@ -39,25 +38,83 @@ class AuthCubit extends Cubit<AuthState> {
           } catch (_) {}
           _syncService.syncSecondary();
         }
-        emit(const AuthState.authenticated());
+        emit(state.copyWith(
+          status: AuthStatus.authenticated,
+          isSubmitting: false,
+          clearError: true,
+        ));
       } else {
-        emit(const AuthState.unauthenticated());
+        emit(state.copyWith(
+          status: AuthStatus.unauthenticated,
+          isSubmitting: false,
+        ));
       }
     });
   }
 
   /// Signs in with [email] and [password]
   Future<void> login(String email, String password) async {
+    emit(state.copyWith(isSubmitting: true, clearError: true));
     try {
       await _repository.login(email, password);
     } catch (e) {
-      emit(AuthState.error(e.toString()));
+      emit(state.copyWith(
+        isSubmitting: false,
+        errorMessage: _formatError(e),
+      ));
+    }
+  }
+
+  /// Creates a new account with [email] and [password]
+  Future<void> register(String email, String password) async {
+    emit(state.copyWith(isSubmitting: true, clearError: true));
+    try {
+      await _repository.register(email, password);
+    } catch (e) {
+      emit(state.copyWith(
+        isSubmitting: false,
+        errorMessage: _formatError(e),
+      ));
     }
   }
 
   /// Signs out the current user
   Future<void> logout() async {
     await _repository.logout();
+  }
+
+  /// Clears the current error message (called when user edits a field)
+  void clearError() {
+    if (state.errorMessage != null) {
+      emit(state.copyWith(clearError: true));
+    }
+  }
+
+  static const _supabaseErrorMessages = {
+    'invalid login credentials': 'Email ou mot de passe incorrect.',
+    'email not confirmed':
+        'Veuillez confirmer votre email avant de vous connecter.',
+    'too many requests': 'Trop de tentatives. Réessayez dans quelques minutes.',
+    'user already registered': 'Un compte existe déjà avec cet email.',
+    'email rate limit exceeded': 'Trop d\'emails envoyés. Réessayez plus tard.',
+    'password should be at least 6 characters':
+        'Le mot de passe doit contenir au moins 6 caractères.',
+    'unable to validate email address: invalid format':
+        'Adresse email invalide.',
+    'signup disabled': 'Les inscriptions sont désactivées.',
+    'email link is invalid or has expired': 'Le lien est invalide ou expiré.',
+  };
+
+  String _formatError(Object error) {
+    if (error is supabase.AuthException) {
+      final key = error.message.toLowerCase();
+      return _supabaseErrorMessages[key] ?? error.message;
+    }
+    if (error is Exception) {
+      final raw = error.toString();
+      return raw.startsWith('Exception: ') ? raw.substring(11) : raw;
+    }
+    return error.toString();
   }
 
   @override

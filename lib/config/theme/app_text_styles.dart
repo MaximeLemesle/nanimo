@@ -1,66 +1,55 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_font_size.dart';
 import 'package:nanimo/config/theme/app_font_weight.dart';
 
 class AppTextStyles {
-  static const String fontTitle = 'Gluten';
-  static const String fontBody = 'Geologica';
-  static const String fontNumber = 'Comfortaa';
-
   /// Headings ///
-  static const TextStyle title01 = TextStyle(
-    fontFamily: fontTitle,
+  static TextStyle title01 = GoogleFonts.gluten(
     fontSize: AppFontSize.xxl,
     fontWeight: AppFontWeight.black,
     color: AppColors.textPrimary,
   );
 
-  static const TextStyle title02 = TextStyle(
-    fontFamily: fontTitle,
+  static TextStyle title02 = GoogleFonts.gluten(
     fontSize: AppFontSize.xl,
     fontWeight: AppFontWeight.extraBold,
     color: AppColors.textPrimary,
   );
 
-  static const TextStyle title03 = TextStyle(
-    fontFamily: fontBody,
+  static TextStyle title03 = GoogleFonts.geologica(
     fontSize: AppFontSize.lg,
     fontWeight: AppFontWeight.semiBold,
     color: AppColors.textPrimary,
   );
 
   /// Texts ///
-  static const TextStyle text = TextStyle(
-    fontFamily: fontBody,
+  static TextStyle text = GoogleFonts.geologica(
     fontSize: AppFontSize.md,
     fontWeight: AppFontWeight.light,
     color: AppColors.textPrimary,
   );
 
-  static const TextStyle textBold = TextStyle(
-    fontFamily: fontBody,
+  static TextStyle textBold = GoogleFonts.geologica(
     fontSize: AppFontSize.md,
     fontWeight: AppFontWeight.medium,
     color: AppColors.textPrimary,
   );
 
-  static const TextStyle textSmall = TextStyle(
-    fontFamily: fontBody,
+  static TextStyle textSmall = GoogleFonts.geologica(
     fontSize: AppFontSize.sm,
     fontWeight: AppFontWeight.light,
     color: AppColors.textPrimary,
   );
 
-  static const TextStyle textSmallBold = TextStyle(
-    fontFamily: fontBody,
+  static TextStyle textSmallBold = GoogleFonts.geologica(
     fontSize: AppFontSize.sm,
     fontWeight: AppFontWeight.medium,
     color: AppColors.textPrimary,
   );
 
-  static const TextStyle textLabel = TextStyle(
-    fontFamily: fontBody,
+  static TextStyle textLabel = GoogleFonts.geologica(
     fontSize: AppFontSize.xs,
     fontWeight: AppFontWeight.light,
     fontStyle: FontStyle.italic,
@@ -68,19 +57,15 @@ class AppTextStyles {
   );
 
   /// Numbers ///
-  static const TextStyle numberBig = TextStyle(
-    fontFamily: fontNumber,
+  static TextStyle numberBig = GoogleFonts.comfortaa(
     fontSize: AppFontSize.lg,
     fontWeight: AppFontWeight.bold,
     color: AppColors.textPrimary,
   );
 
-  static const TextStyle numberSmall = TextStyle(
-    fontFamily: fontNumber,
+  static TextStyle numberSmall = GoogleFonts.comfortaa(
     fontSize: AppFontSize.md,
     fontWeight: AppFontWeight.bold,
     color: AppColors.textPrimary,
   );
-
-  /// Buttons ///
 }

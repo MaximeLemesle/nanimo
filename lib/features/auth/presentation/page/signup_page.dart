@@ -9,16 +9,17 @@ import 'package:nanimo/core/widgets/error_banner_widget.dart';
 import 'package:nanimo/core/widgets/text_field_widget.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class SignupPage extends StatefulWidget {
+  const SignupPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<SignupPage> createState() => _SignupPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _SignupPageState extends State<SignupPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isFormValid = false;
 
@@ -27,9 +28,7 @@ class _LoginPageState extends State<LoginPage> {
     super.initState();
     _emailController.addListener(_updateFormValidity);
     _passwordController.addListener(_updateFormValidity);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.read<AuthCubit>().clearError();
-    });
+    _confirmController.addListener(_updateFormValidity);
   }
 
   String? _emailValidator(String? validation) =>
@@ -45,9 +44,20 @@ class _LoginPageState extends State<LoginPage> {
     return null;
   }
 
+  String? _confirmValidator(String? validation) {
+    if (validation == null || validation.isEmpty) {
+      return 'Confirme ton mot de passe';
+    }
+    if (validation != _passwordController.text) {
+      return 'Les mots de passe ne correspondent pas';
+    }
+    return null;
+  }
+
   void _updateFormValidity() {
     final valid = _emailValidator(_emailController.text.trim()) == null &&
-        _passwordValidator(_passwordController.text.trim()) == null;
+        _passwordValidator(_passwordController.text.trim()) == null &&
+        _confirmValidator(_confirmController.text.trim()) == null;
     if (valid != _isFormValid) setState(() => _isFormValid = valid);
   }
 
@@ -55,14 +65,16 @@ class _LoginPageState extends State<LoginPage> {
   void dispose() {
     _emailController.removeListener(_updateFormValidity);
     _passwordController.removeListener(_updateFormValidity);
+    _confirmController.removeListener(_updateFormValidity);
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmController.dispose();
     super.dispose();
   }
 
-  void _onLogin() {
+  void _onRegister() {
     if (!_formKey.currentState!.validate()) return;
-    context.read<AuthCubit>().login(
+    context.read<AuthCubit>().register(
           _emailController.text.trim(),
           _passwordController.text.trim(),
         );
@@ -90,9 +102,10 @@ class _LoginPageState extends State<LoginPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: AppSpacing.xl),
-                Text('Connexion', style: textTheme.displayLarge),
+                Text('Inscription', style: textTheme.displayLarge),
+                const SizedBox(height: AppSpacing.sm),
                 Text(
-                  'Heureux de te revoir.',
+                  'Crée ton compte pour démarrer.',
                   style: textTheme.bodyLarge
                       ?.copyWith(color: AppColors.textSecondary),
                 ),
@@ -112,9 +125,19 @@ class _LoginPageState extends State<LoginPage> {
                   label: 'Mot de passe',
                   hint: 'Entrez votre mot de passe',
                   obscureText: true,
-                  textInputAction: TextInputAction.done,
+                  textInputAction: TextInputAction.next,
                   onChanged: _onFieldChanged,
                   validator: _passwordValidator,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                TextFieldWidget(
+                  controller: _confirmController,
+                  label: 'Confirmation du mot de passe',
+                  hint: 'Confirmer votre mot de passe',
+                  obscureText: true,
+                  textInputAction: TextInputAction.done,
+                  onChanged: _onFieldChanged,
+                  validator: _confirmValidator,
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 BlocBuilder<AuthCubit, AuthState>(
@@ -135,8 +158,8 @@ class _LoginPageState extends State<LoginPage> {
                       previous.isSubmitting != current.isSubmitting,
                   builder: (context, state) {
                     return ButtonWidget(
-                      label: 'Se connecter',
-                      onPressed: _onLogin,
+                      label: 'Créer mon compte',
+                      onPressed: _onRegister,
                       isLoading: state.isSubmitting,
                       state: _isFormValid
                           ? ButtonState.normal
@@ -148,14 +171,14 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: AppSpacing.sm),
                 Center(
                   child: TextButton(
-                    onPressed: () => context.go(RouteNames.signup),
+                    onPressed: () => context.go(RouteNames.login),
                     child: RichText(
                       text: TextSpan(
                         style: textTheme.bodyMedium,
                         children: [
-                          const TextSpan(text: 'Pas encore de compte ? '),
+                          const TextSpan(text: 'Déjà un compte ? '),
                           TextSpan(
-                            text: "S'inscrire",
+                            text: 'Se connecter',
                             style: textTheme.titleMedium?.copyWith(
                               color: AppColors.primary,
                             ),
