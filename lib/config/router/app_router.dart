@@ -6,6 +6,7 @@ import 'package:nanimo/core/widgets/app_shell.dart';
 import 'package:nanimo/core/widgets/error_screen.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nanimo/features/auth/presentation/page/login_page.dart';
+import 'package:nanimo/features/auth/presentation/page/signup_page.dart';
 import 'package:nanimo/features/home/presentation/page/home_page.dart';
 import 'package:nanimo/features/home/presentation/page/profile_page.dart';
 import 'package:nanimo/features/onboarding/presentation/page/onboarding_page.dart';
@@ -22,24 +23,26 @@ GoRouter createRouter(AuthCubit authCubit) {
   return GoRouter(
     initialLocation: RouteNames.splash,
     refreshListenable: _AuthCubitListenable(authCubit),
-    debugLogDiagnostics: true, 
-    
+    debugLogDiagnostics: true,
     redirect: (context, state) {
       return handleRedirect(state, authCubit.state.status);
     },
-
     routes: [
       GoRoute(
         path: RouteNames.splash,
-        builder: (_,__) => const SplashPage(), 
+        builder: (_, __) => const SplashPage(),
       ),
       GoRoute(
         path: RouteNames.onboarding,
-        builder: (_,__) => const OnboardingPage(), 
+        builder: (_, __) => const OnboardingPage(),
       ),
       GoRoute(
         path: RouteNames.login,
-        builder: (_,__) => const LoginPage(), 
+        builder: (_, __) => const LoginPage(),
+      ),
+      GoRoute(
+        path: RouteNames.signup,
+        builder: (_, __) => const SignupPage(),
       ),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
@@ -57,7 +60,6 @@ GoRouter createRouter(AuthCubit authCubit) {
         ],
       ),
     ],
-      
     errorBuilder: (context, state) => ErrorScreen(error: state.error),
   );
 }

@@ -39,25 +39,65 @@ class AuthCubit extends Cubit<AuthState> {
           } catch (_) {}
           _syncService.syncSecondary();
         }
-        emit(const AuthState.authenticated());
+        emit(state.copyWith(
+          status: AuthStatus.authenticated,
+          isSubmitting: false,
+          clearError: true,
+        ));
       } else {
-        emit(const AuthState.unauthenticated());
+        emit(state.copyWith(
+          status: AuthStatus.unauthenticated,
+          isSubmitting: false,
+        ));
       }
     });
   }
 
   /// Signs in with [email] and [password]
   Future<void> login(String email, String password) async {
+    emit(state.copyWith(isSubmitting: true, clearError: true));
     try {
       await _repository.login(email, password);
     } catch (e) {
-      emit(AuthState.error(e.toString()));
+      emit(state.copyWith(
+        isSubmitting: false,
+        errorMessage: _formatError(e),
+      ));
+    }
+  }
+
+  /// Creates a new account with [email] and [password]
+  Future<void> register(String email, String password) async {
+    emit(state.copyWith(isSubmitting: true, clearError: true));
+    try {
+      await _repository.register(email, password);
+    } catch (e) {
+      emit(state.copyWith(
+        isSubmitting: false,
+        errorMessage: _formatError(e),
+      ));
     }
   }
 
   /// Signs out the current user
   Future<void> logout() async {
     await _repository.logout();
+  }
+
+  /// Clears the current error message (called when user edits a field)
+  void clearError() {
+    if (state.errorMessage != null) {
+      emit(state.copyWith(clearError: true));
+    }
+  }
+
+  String _formatError(Object error) {
+    if (error is supabase.AuthException) return error.message;
+    if (error is Exception) {
+      final raw = error.toString();
+      return raw.startsWith('Exception: ') ? raw.substring(11) : raw;
+    }
+    return error.toString();
   }
 
   @override

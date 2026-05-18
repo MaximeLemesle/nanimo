@@ -27,5 +27,5 @@ String? handleRedirect(GoRouterState state, AuthStatus status) {
   return null;
 }
 
-const _publicRoutes = { RouteNames.onboarding, RouteNames.login };
+const _publicRoutes = { RouteNames.onboarding, RouteNames.login, RouteNames.signup };
 const _protectedRoutes = { RouteNames.home };

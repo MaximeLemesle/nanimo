@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:nanimo/config/router/app_router.dart';
+import 'package:nanimo/config/theme/app_theme.dart';
 import 'package:nanimo/core/isar/database/isar_service.dart';
 import 'package:nanimo/core/isar/database/sync_service.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
@@ -61,6 +62,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp.router(
         title: 'Nanimo',
+        theme: AppTheme.light,
         routerConfig: createRouter(authCubit),
       ),
     );
