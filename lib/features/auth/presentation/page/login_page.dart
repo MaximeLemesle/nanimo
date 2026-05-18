@@ -27,6 +27,9 @@ class _LoginPageState extends State<LoginPage> {
     super.initState();
     _emailController.addListener(_updateFormValidity);
     _passwordController.addListener(_updateFormValidity);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<AuthCubit>().clearError();
+    });
   }
 
   String? _emailValidator(String? validation) =>
@@ -113,7 +116,7 @@ class _LoginPageState extends State<LoginPage> {
                   onChanged: _onFieldChanged,
                   validator: _passwordValidator,
                 ),
-                const SizedBox(height: AppSpacing.xxl),
+                const SizedBox(height: AppSpacing.xl),
                 BlocBuilder<AuthCubit, AuthState>(
                   buildWhen: (previous, current) =>
                       previous.errorMessage != current.errorMessage,

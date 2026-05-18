@@ -139,7 +139,7 @@ class _SignupPageState extends State<SignupPage> {
                   onChanged: _onFieldChanged,
                   validator: _confirmValidator,
                 ),
-                const SizedBox(height: AppSpacing.xxl),
+                const SizedBox(height: AppSpacing.xl),
                 BlocBuilder<AuthCubit, AuthState>(
                   buildWhen: (previous, current) =>
                       previous.errorMessage != current.errorMessage,
