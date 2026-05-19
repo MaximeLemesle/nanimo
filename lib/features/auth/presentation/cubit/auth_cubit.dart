@@ -78,6 +78,32 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  /// Signs in with Google
+  Future<void> loginWithGoogle() async {
+    emit(state.copyWith(isSubmitting: true, clearError: true));
+    try {
+      await _repository.signInWithGoogle();
+    } catch (e) {
+      emit(state.copyWith(
+        isSubmitting: false,
+        errorMessage: _formatError(e),
+      ));
+    }
+  }
+
+  /// Signs in with Apple
+  Future<void> loginWithApple() async {
+    emit(state.copyWith(isSubmitting: true, clearError: true));
+    try {
+      await _repository.signInWithApple();
+    } catch (e) {
+      emit(state.copyWith(
+        isSubmitting: false,
+        errorMessage: _formatError(e),
+      ));
+    }
+  }
+
   /// Signs out the current user
   Future<void> logout() async {
     await _repository.logout();

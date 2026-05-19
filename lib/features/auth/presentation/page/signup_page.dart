@@ -8,6 +8,7 @@ import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/error_banner_widget.dart';
 import 'package:nanimo/core/widgets/text_field_widget.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:nanimo/features/auth/presentation/widgets/sso_buttons_widget.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -168,6 +169,30 @@ class _SignupPageState extends State<SignupPage> {
                     );
                   },
                 ),
+                const SizedBox(height: AppSpacing.lg),
+
+                /// Separator
+                Row(
+                  children: [
+                    const Expanded(
+                        child: Divider(color: AppColors.backgroundStroke)),
+                    Padding(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                      child: Text(
+                        'ou',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(color: AppColors.textSecondary),
+                      ),
+                    ),
+                    const Expanded(
+                        child: Divider(color: AppColors.backgroundStroke)),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                const SsoButtonsWidget(),
                 const SizedBox(height: AppSpacing.sm),
                 Center(
                   child: TextButton(
