@@ -17,7 +17,6 @@ class AuthRepository {
   final Isar _isar;
   final String? _googleIosClientId;
   final String? _googleWebClientId;
-  bool _googleInitialized = false;
 
   AuthRepository(
     this._supabase,
@@ -61,13 +60,13 @@ class AuthRepository {
       );
     }
     try {
-      if (!_googleInitialized) {
-        await GoogleSignIn.instance.initialize(
-          clientId: _googleIosClientId,
-          serverClientId: _googleWebClientId,
-        );
-        _googleInitialized = true;
-      }
+      final rawNonce = _supabase.auth.generateRawNonce();
+      final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
+      await GoogleSignIn.instance.initialize(
+        clientId: _googleIosClientId,
+        serverClientId: _googleWebClientId,
+        nonce: hashedNonce,
+      );
       final account = await GoogleSignIn.instance.authenticate();
       final idToken = account.authentication.idToken;
       if (idToken == null) {
@@ -76,6 +75,7 @@ class AuthRepository {
       await _supabase.auth.signInWithIdToken(
         provider: OAuthProvider.google,
         idToken: idToken,
+        nonce: rawNonce,
       );
     } on GoogleSignInException catch (error) {
       if (error.code == GoogleSignInExceptionCode.canceled) {
