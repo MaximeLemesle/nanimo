@@ -21,7 +21,8 @@ class _AuthCubitListenable extends ChangeNotifier {
 
 GoRouter createRouter(AuthCubit authCubit) {
   return GoRouter(
-    initialLocation: RouteNames.splash,
+    // initialLocation: RouteNames.splash,
+    initialLocation: RouteNames.login,
     refreshListenable: _AuthCubitListenable(authCubit),
     debugLogDiagnostics: true,
     redirect: (context, state) {

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:nanimo/core/errors/repository_network_exception.dart';
 import 'package:nanimo/core/isar/cache/schemas/user_cache.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
 import 'package:nanimo/features/auth/data/models/user_model.dart';
@@ -88,6 +89,17 @@ void main() {
 
       final result = await repo.getCurrentUser();
       expect(result?.userId, 'user-1');
+    });
+  });
+
+  group('signInWithGoogle', () {
+    test('throws RepositoryNetworkException when Google config is missing',
+        () async {
+      // Repo built without googleIosClientId/googleWebClientId
+      expect(
+        () => repo.signInWithGoogle(),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
     });
   });
 }

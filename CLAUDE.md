@@ -149,7 +149,18 @@ isar: ^3.1.0
 isar_flutter_libs: ^3.1.0
 cached_network_image: ^3.3.1
 image_picker: ^1.1.2
+google_sign_in: ^7.2.0
+sign_in_with_apple: ^8.0.0
+crypto: ^3.0.7
 ```
+
+### Auth SSO (Google + Apple)
+
+- **Flow** : natif via `google_sign_in` / `sign_in_with_apple` → on récupère un `idToken`, puis `supabase.auth.signInWithIdToken()`. Pas de navigateur in-app.
+- **Apple** : nonce SHA-256 généré côté client (`generateRawNonce` + `crypto.sha256`) — capability "Sign in with Apple" activée dans `ios/Runner/Runner.entitlements`. Bouton officiel `SignInWithAppleButton` du package.
+- **Google** : Client IDs (iOS, Web) lus depuis `.env` (`GOOGLE_IOS_CLIENT_ID`, `GOOGLE_WEB_CLIENT_ID`) et injectés dans `AuthRepository` au boot via `main.dart`. URL scheme inversée Google déclarée dans `ios/Runner/Info.plist`.
+- **Plateformes** : Apple visible uniquement sur iOS (`SsoButtonsWidget`), Google sur iOS et Android.
+- **Création user** : un trigger SQL existant sur `auth.users` insère la ligne `public.users` quel que soit le provider — aucun code Dart supplémentaire.
 
 ---
 

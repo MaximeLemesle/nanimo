@@ -1,4 +1,9 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:isar/isar.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:nanimo/core/errors/repository_network_exception.dart';
 import 'package:nanimo/core/isar/cache/schemas/user_cache.dart';
@@ -10,8 +15,16 @@ import 'package:nanimo/features/auth/data/models/user_model.dart';
 class AuthRepository {
   final SupabaseClient _supabase;
   final Isar _isar;
+  final String? _googleIosClientId;
+  final String? _googleWebClientId;
 
-  AuthRepository(this._supabase, this._isar);
+  AuthRepository(
+    this._supabase,
+    this._isar, {
+    String? googleIosClientId,
+    String? googleWebClientId,
+  })  : _googleIosClientId = googleIosClientId,
+        _googleWebClientId = googleWebClientId;
 
   /// Signs in an existing user with email and password.
   Future<void> login(String email, String password) async {
@@ -35,6 +48,84 @@ class AuthRepository {
     } catch (_) {
       throw const RepositoryNetworkException(
         'Une connexion internet est requise pour créer un compte.',
+      );
+    }
+  }
+
+  /// Signs in with Google
+  Future<void> signInWithGoogle() async {
+    if (_googleIosClientId == null || _googleWebClientId == null) {
+      throw const RepositoryNetworkException(
+        'Configuration Google manquante.',
+      );
+    }
+    try {
+      final rawNonce = _supabase.auth.generateRawNonce();
+      final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
+      await GoogleSignIn.instance.initialize(
+        clientId: _googleIosClientId,
+        serverClientId: _googleWebClientId,
+        nonce: hashedNonce,
+      );
+      final account = await GoogleSignIn.instance.authenticate();
+      final idToken = account.authentication.idToken;
+      if (idToken == null) {
+        throw const RepositoryNetworkException('Token Google introuvable.');
+      }
+      await _supabase.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: idToken,
+        nonce: rawNonce,
+      );
+    } on GoogleSignInException catch (error) {
+      if (error.code == GoogleSignInExceptionCode.canceled) {
+        throw const RepositoryNetworkException('Connexion Google annulée.');
+      }
+      rethrow;
+    } on AuthException {
+      rethrow;
+    } on RepositoryNetworkException {
+      rethrow;
+    } catch (_) {
+      throw const RepositoryNetworkException(
+        'Une connexion internet est requise pour se connecter avec Google.',
+      );
+    }
+  }
+
+  /// Signs in with Apple
+  Future<void> signInWithApple() async {
+    try {
+      final rawNonce = _supabase.auth.generateRawNonce();
+      final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: hashedNonce,
+      );
+      final idToken = credential.identityToken;
+      if (idToken == null) {
+        throw const RepositoryNetworkException('Token Apple introuvable.');
+      }
+      await _supabase.auth.signInWithIdToken(
+        provider: OAuthProvider.apple,
+        idToken: idToken,
+        nonce: rawNonce,
+      );
+    } on SignInWithAppleAuthorizationException catch (error) {
+      if (error.code == AuthorizationErrorCode.canceled) {
+        throw const RepositoryNetworkException('Connexion Apple annulée.');
+      }
+      rethrow;
+    } on AuthException {
+      rethrow;
+    } on RepositoryNetworkException {
+      rethrow;
+    } catch (_) {
+      throw const RepositoryNetworkException(
+        'Une connexion internet est requise pour se connecter avec Apple.',
       );
     }
   }

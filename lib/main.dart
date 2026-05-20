@@ -17,8 +17,18 @@ void main() async {
   await dotenv.load(fileName: ".env");
   final String? url = dotenv.env['SUPABASE_URL'];
   final String? anonKey = dotenv.env['SUPABASE_ANON_KEY'];
+  final String? iosClientId = dotenv.env['GOOGLE_IOS_CLIENT_ID'];
+  final String? webClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID'];
+  final String? appleServiceId = dotenv.env['APPLE_SERVICE_ID'];
   if (url == null || anonKey == null) {
-    throw Exception('Please add SUPABASE_URL and SUPABASE_ANON_KEY to your .env file');
+    throw Exception(
+      'Please add SUPABASE_URL and SUPABASE_ANON_KEY to your .env file',
+    );
+  }
+  if (iosClientId == null || webClientId == null || appleServiceId == null) {
+    throw Exception(
+      'Please add GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID and APPLE_SERVICE_ID to your .env file',
+    );
   }
 
   await Supabase.initialize(url: url, anonKey: anonKey);
@@ -27,7 +37,12 @@ void main() async {
   final supabase = Supabase.instance.client;
   final isar = IsarService.instance;
 
-  final authRepository = AuthRepository(supabase, isar);
+  final authRepository = AuthRepository(
+    supabase,
+    isar,
+    googleIosClientId: iosClientId,
+    googleWebClientId: webClientId,
+  );
   final subscriptionRepository = SubscriptionRepository(supabase, isar);
 
   final authCubit = AuthCubit(
