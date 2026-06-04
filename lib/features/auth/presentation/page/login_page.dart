@@ -80,10 +80,7 @@ class _LoginPageState extends State<LoginPage> {
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.xl,
-            vertical: AppSpacing.lg,
-          ),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           child: Form(
             key: _formKey,
             autovalidateMode: AutovalidateMode.onUnfocus,
@@ -107,7 +104,7 @@ class _LoginPageState extends State<LoginPage> {
                   onChanged: _onFieldChanged,
                   validator: _emailValidator,
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.sm),
                 TextFieldWidget(
                   controller: _passwordController,
                   label: 'Mot de passe',
@@ -146,7 +143,7 @@ class _LoginPageState extends State<LoginPage> {
                     );
                   },
                 ),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: AppSpacing.xl),
 
                 /// Separator
                 Row(
@@ -168,7 +165,7 @@ class _LoginPageState extends State<LoginPage> {
                         child: Divider(color: AppColors.backgroundStroke)),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: AppSpacing.xl),
 
                 /// Apple and Google button
                 const SsoButtonsWidget(),

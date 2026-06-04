@@ -32,28 +32,23 @@ const PetCacheSchema = CollectionSchema(
       name: r'gender',
       type: IsarType.string,
     ),
-    r'petIconId': PropertySchema(
-      id: 3,
-      name: r'petIconId',
-      type: IsarType.string,
-    ),
     r'petId': PropertySchema(
-      id: 4,
+      id: 3,
       name: r'petId',
       type: IsarType.string,
     ),
     r'petName': PropertySchema(
-      id: 5,
+      id: 4,
       name: r'petName',
       type: IsarType.string,
     ),
     r'petRaceId': PropertySchema(
-      id: 6,
+      id: 5,
       name: r'petRaceId',
       type: IsarType.string,
     ),
     r'petSpeciesId': PropertySchema(
-      id: 7,
+      id: 6,
       name: r'petSpeciesId',
       type: IsarType.string,
     )
@@ -93,12 +88,6 @@ int _petCacheEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.gender.length * 3;
-  {
-    final value = object.petIconId;
-    if (value != null) {
-      bytesCount += 3 + value.length * 3;
-    }
-  }
   bytesCount += 3 + object.petId.length * 3;
   bytesCount += 3 + object.petName.length * 3;
   {
@@ -125,11 +114,10 @@ void _petCacheSerialize(
   writer.writeDateTime(offsets[0], object.birthdate);
   writer.writeDateTime(offsets[1], object.createdAt);
   writer.writeString(offsets[2], object.gender);
-  writer.writeString(offsets[3], object.petIconId);
-  writer.writeString(offsets[4], object.petId);
-  writer.writeString(offsets[5], object.petName);
-  writer.writeString(offsets[6], object.petRaceId);
-  writer.writeString(offsets[7], object.petSpeciesId);
+  writer.writeString(offsets[3], object.petId);
+  writer.writeString(offsets[4], object.petName);
+  writer.writeString(offsets[5], object.petRaceId);
+  writer.writeString(offsets[6], object.petSpeciesId);
 }
 
 PetCache _petCacheDeserialize(
@@ -143,11 +131,10 @@ PetCache _petCacheDeserialize(
   object.createdAt = reader.readDateTime(offsets[1]);
   object.gender = reader.readString(offsets[2]);
   object.id = id;
-  object.petIconId = reader.readStringOrNull(offsets[3]);
-  object.petId = reader.readString(offsets[4]);
-  object.petName = reader.readString(offsets[5]);
-  object.petRaceId = reader.readStringOrNull(offsets[6]);
-  object.petSpeciesId = reader.readStringOrNull(offsets[7]);
+  object.petId = reader.readString(offsets[3]);
+  object.petName = reader.readString(offsets[4]);
+  object.petRaceId = reader.readStringOrNull(offsets[5]);
+  object.petSpeciesId = reader.readStringOrNull(offsets[6]);
   return object;
 }
 
@@ -165,14 +152,12 @@ P _petCacheDeserializeProp<P>(
     case 2:
       return (reader.readString(offset)) as P;
     case 3:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 4:
       return (reader.readString(offset)) as P;
     case 5:
-      return (reader.readString(offset)) as P;
-    case 6:
       return (reader.readStringOrNull(offset)) as P;
-    case 7:
+    case 6:
       return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -667,153 +652,6 @@ extension PetCacheQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
-      ));
-    });
-  }
-
-  QueryBuilder<PetCache, PetCache, QAfterFilterCondition> petIconIdIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'petIconId',
-      ));
-    });
-  }
-
-  QueryBuilder<PetCache, PetCache, QAfterFilterCondition> petIconIdIsNotNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'petIconId',
-      ));
-    });
-  }
-
-  QueryBuilder<PetCache, PetCache, QAfterFilterCondition> petIconIdEqualTo(
-    String? value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'petIconId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<PetCache, PetCache, QAfterFilterCondition> petIconIdGreaterThan(
-    String? value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'petIconId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<PetCache, PetCache, QAfterFilterCondition> petIconIdLessThan(
-    String? value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'petIconId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<PetCache, PetCache, QAfterFilterCondition> petIconIdBetween(
-    String? lower,
-    String? upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'petIconId',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<PetCache, PetCache, QAfterFilterCondition> petIconIdStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'petIconId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<PetCache, PetCache, QAfterFilterCondition> petIconIdEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'petIconId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<PetCache, PetCache, QAfterFilterCondition> petIconIdContains(
-      String value,
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'petIconId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<PetCache, PetCache, QAfterFilterCondition> petIconIdMatches(
-      String pattern,
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'petIconId',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<PetCache, PetCache, QAfterFilterCondition> petIconIdIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'petIconId',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<PetCache, PetCache, QAfterFilterCondition>
-      petIconIdIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'petIconId',
-        value: '',
       ));
     });
   }
@@ -1420,18 +1258,6 @@ extension PetCacheQuerySortBy on QueryBuilder<PetCache, PetCache, QSortBy> {
     });
   }
 
-  QueryBuilder<PetCache, PetCache, QAfterSortBy> sortByPetIconId() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'petIconId', Sort.asc);
-    });
-  }
-
-  QueryBuilder<PetCache, PetCache, QAfterSortBy> sortByPetIconIdDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'petIconId', Sort.desc);
-    });
-  }
-
   QueryBuilder<PetCache, PetCache, QAfterSortBy> sortByPetId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'petId', Sort.asc);
@@ -1531,18 +1357,6 @@ extension PetCacheQuerySortThenBy
     });
   }
 
-  QueryBuilder<PetCache, PetCache, QAfterSortBy> thenByPetIconId() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'petIconId', Sort.asc);
-    });
-  }
-
-  QueryBuilder<PetCache, PetCache, QAfterSortBy> thenByPetIconIdDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'petIconId', Sort.desc);
-    });
-  }
-
   QueryBuilder<PetCache, PetCache, QAfterSortBy> thenByPetId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'petId', Sort.asc);
@@ -1613,13 +1427,6 @@ extension PetCacheQueryWhereDistinct
     });
   }
 
-  QueryBuilder<PetCache, PetCache, QDistinct> distinctByPetIconId(
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'petIconId', caseSensitive: caseSensitive);
-    });
-  }
-
   QueryBuilder<PetCache, PetCache, QDistinct> distinctByPetId(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1672,12 +1479,6 @@ extension PetCacheQueryProperty
   QueryBuilder<PetCache, String, QQueryOperations> genderProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'gender');
-    });
-  }
-
-  QueryBuilder<PetCache, String?, QQueryOperations> petIconIdProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'petIconId');
     });
   }
 

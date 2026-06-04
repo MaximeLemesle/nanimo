@@ -4,11 +4,13 @@ class PetSpeciesModel {
   final String petSpeciesId;
   final String speciesName;
   final WeightUnit weightUnit;
+  final String iconKey;
 
   const PetSpeciesModel({
     required this.petSpeciesId,
     required this.speciesName,
     required this.weightUnit,
+    required this.iconKey,
   });
 
   factory PetSpeciesModel.fromJson(Map<String, dynamic> json) {
@@ -16,6 +18,7 @@ class PetSpeciesModel {
       petSpeciesId: json['id_pet_species'],
       speciesName: json['species_name'],
       weightUnit: _parseWeightUnit(json['weight_unit']),
+      iconKey: json['icon_key'],
     );
   }
 
@@ -23,6 +26,7 @@ class PetSpeciesModel {
         'id_pet_species': petSpeciesId,
         'species_name': speciesName,
         'weight_unit': _weightUnitToString(weightUnit),
+        'icon_key': iconKey,
       };
 }
 

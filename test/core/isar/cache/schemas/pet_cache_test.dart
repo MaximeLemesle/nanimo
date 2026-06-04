@@ -11,7 +11,6 @@ void main() {
         'gender': 'male',
         'id_race': 'race-uuid',
         'id_species': 'species-uuid',
-        'id_icon': 'icon-uuid',
         'created_at': '2024-01-01T10:00:00.000Z',
       };
 
@@ -23,7 +22,6 @@ void main() {
       expect(cache.gender, 'male');
       expect(cache.petRaceId, 'race-uuid');
       expect(cache.petSpeciesId, 'species-uuid');
-      expect(cache.petIconId, 'icon-uuid');
       expect(cache.createdAt, DateTime.parse('2024-01-01T10:00:00.000Z'));
     });
 
@@ -35,7 +33,6 @@ void main() {
         'gender': 'unknown',
         'id_race': null,
         'id_species': null,
-        'id_icon': null,
         'created_at': '2024-01-01T10:00:00.000Z',
       };
 
@@ -44,7 +41,6 @@ void main() {
       expect(cache.birthdate, isNull);
       expect(cache.petRaceId, isNull);
       expect(cache.petSpeciesId, isNull);
-      expect(cache.petIconId, isNull);
     });
   });
 }

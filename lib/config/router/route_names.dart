@@ -1,6 +1,7 @@
 class RouteNames {
   static const splash = '/';
   static const onboarding = '/onboarding';
+  static const createPet = '/onboarding/create-pet';
   static const login = '/login';
   static const signup = '/signup';
   static const home = '/home';

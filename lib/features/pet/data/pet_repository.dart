@@ -35,12 +35,23 @@ class PetRepository {
     return row?.toModel();
   }
 
-  /// Inserts a new pet. Supabase is the source of truth — if the call fails
-  /// (no network, RLS, etc.), the cache is left untouched and the caller gets
-  /// a [RepositoryNetworkException].
+  /// Inserts a new pet. Supabase is the source of truth.
+  /// If insert fails (no network, etc.), the cache is left 
+  /// untouched and the caller gets a [RepositoryNetworkException].
   Future<void> createPet(PetModel pet) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      throw const RepositoryNetworkException(
+        'Vous devez être connecté pour créer un animal.',
+      );
+    }
+
     try {
       await _supabase.from('pets').insert(pet.toJson());
+      await _supabase.from('users_pets').insert({
+        'user_id': userId,
+        'pet_id': pet.petId,
+      });
     } catch (_) {
       throw const RepositoryNetworkException(
         'Une connexion internet est requise pour créer un animal.',

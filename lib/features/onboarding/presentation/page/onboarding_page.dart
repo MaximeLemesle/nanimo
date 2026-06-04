@@ -37,7 +37,7 @@ class OnboardingPage extends StatelessWidget {
               const Spacer(),
               ButtonWidget(
                 label: 'Commencer',
-                onPressed: () => context.go(RouteNames.login),
+                onPressed: () => context.go(RouteNames.createPet),
                 fullWidth: true,
               ),
               const SizedBox(height: AppSpacing.lg),

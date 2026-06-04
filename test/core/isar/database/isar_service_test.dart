@@ -70,7 +70,6 @@ void main() {
         'gender': 'male',
         'id_race': null,
         'id_species': null,
-        'id_icon': null,
         'created_at': '2024-01-01T00:00:00.000Z',
       });
 

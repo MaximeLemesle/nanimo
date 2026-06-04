@@ -51,7 +51,7 @@ class _ButtonWidgetState extends State<ButtonWidget> {
       case ButtonType.primary:
         switch (effectiveState) {
           case ButtonState.normal:
-            backgroundColor = AppColors.primary500;
+            backgroundColor = AppColors.primary;
             textColor = AppColors.textInvert;
             break;
           case ButtonState.active:
@@ -94,8 +94,8 @@ class _ButtonWidgetState extends State<ButtonWidget> {
           style: FilledButton.styleFrom(
             backgroundColor: backgroundColor,
             splashFactory: NoSplash.splashFactory,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
+            shape: ContinuousRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md * 2),
             ),
           ),
           onPressed: (widget.state == ButtonState.disabled || widget.isLoading)

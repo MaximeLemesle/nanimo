@@ -9,6 +9,7 @@ import 'package:nanimo/features/auth/presentation/page/login_page.dart';
 import 'package:nanimo/features/auth/presentation/page/signup_page.dart';
 import 'package:nanimo/features/home/presentation/page/home_page.dart';
 import 'package:nanimo/features/home/presentation/page/profile_page.dart';
+import 'package:nanimo/features/pet/presentation/page/create_pet_page.dart';
 import 'package:nanimo/features/onboarding/presentation/page/onboarding_page.dart';
 import 'package:nanimo/features/onboarding/presentation/page/splash_page.dart';
 
@@ -21,8 +22,7 @@ class _AuthCubitListenable extends ChangeNotifier {
 
 GoRouter createRouter(AuthCubit authCubit) {
   return GoRouter(
-    // initialLocation: RouteNames.splash,
-    initialLocation: RouteNames.login,
+    initialLocation: RouteNames.splash,
     refreshListenable: _AuthCubitListenable(authCubit),
     debugLogDiagnostics: true,
     redirect: (context, state) {
@@ -36,6 +36,10 @@ GoRouter createRouter(AuthCubit authCubit) {
       GoRoute(
         path: RouteNames.onboarding,
         builder: (_, __) => const OnboardingPage(),
+      ),
+      GoRoute(
+        path: RouteNames.createPet,
+        builder: (_, __) => const CreatePetPage(),
       ),
       GoRoute(
         path: RouteNames.login,

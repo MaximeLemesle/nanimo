@@ -18,9 +18,9 @@ class AppTextStyles {
     color: AppColors.textPrimary,
   );
 
-  static TextStyle title03 = GoogleFonts.geologica(
+  static TextStyle title03 = GoogleFonts.comfortaa(
     fontSize: AppFontSize.lg,
-    fontWeight: AppFontWeight.semiBold,
+    fontWeight: AppFontWeight.bold,
     color: AppColors.textPrimary,
   );
 

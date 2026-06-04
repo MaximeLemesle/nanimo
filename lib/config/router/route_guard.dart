@@ -16,7 +16,7 @@ String? handleRedirect(GoRouterState state, AuthStatus status) {
   /// Protect the routes if the user is not authenticated
   if (!isAuthenticated && isProtected) return RouteNames.login;
 
-  /// Avoid login if user is already authenticated 
+  /// Avoid login if user is already authenticated
   if (isAuthenticated && isPublicRoute) return RouteNames.home;
 
   /// Redirection after the splash screen
@@ -27,5 +27,10 @@ String? handleRedirect(GoRouterState state, AuthStatus status) {
   return null;
 }
 
-const _publicRoutes = { RouteNames.onboarding, RouteNames.login, RouteNames.signup };
-const _protectedRoutes = { RouteNames.home };
+const _publicRoutes = {
+  RouteNames.onboarding,
+  RouteNames.createPet,
+  RouteNames.login,
+  RouteNames.signup,
+};
+const _protectedRoutes = {RouteNames.home};

@@ -8,7 +8,6 @@ class PetModel {
   final DateTime createdAt;
   final String petRaceId;
   final String petSpeciesId;
-  final String petIconId;
 
   const PetModel({
     required this.petId,
@@ -18,7 +17,6 @@ class PetModel {
     required this.createdAt,
     required this.petRaceId,
     required this.petSpeciesId,
-    required this.petIconId,
   });
 
   factory PetModel.fromJson(Map<String, dynamic> json) {
@@ -30,7 +28,6 @@ class PetModel {
       createdAt: DateTime.parse(json['created_at']),
       petRaceId: json['pet_race_id'],
       petSpeciesId: json['pet_species_id'],
-      petIconId: json['pet_icon_id'],
     );
   }
 
@@ -38,12 +35,11 @@ class PetModel {
     return {
       'id_pet': petId,
       'pet_name': petName,
-      'birthdate': birthdate.toIso8601String(),
+      'birthdate': birthdate.toIso8601String().split('T').first,
       'gender': _genderToString(gender),
       'created_at': createdAt.toIso8601String(),
       'pet_race_id': petRaceId,
       'pet_species_id': petSpeciesId,
-      'pet_icon_id': petIconId,
     };
   }
 }

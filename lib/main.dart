@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:nanimo/config/router/app_router.dart';
 import 'package:nanimo/config/theme/app_theme.dart';
 import 'package:nanimo/core/isar/database/isar_service.dart';
 import 'package:nanimo/core/isar/database/sync_service.dart';
+import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
+import 'package:nanimo/features/pet/data/pet_repository.dart';
+import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
 import 'package:nanimo/features/subscription/data/subscription_repository.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -44,6 +49,8 @@ void main() async {
     googleWebClientId: webClientId,
   );
   final subscriptionRepository = SubscriptionRepository(supabase, isar);
+  final referentialRepository = ReferentialRepository(supabase);
+  final petRepository = PetRepository(supabase, isar);
 
   final authCubit = AuthCubit(
     repository: authRepository,
@@ -56,16 +63,34 @@ void main() async {
     subscriptionRepository: subscriptionRepository,
   );
 
-  runApp(MyApp(authCubit: authCubit, subscriptionCubit: subscriptionCubit));
+  final onboardingCubit = OnboardingCubit(
+    referentialRepository: referentialRepository,
+  );
+
+  final petCreationCubit = PetCreationCubit(
+    authCubit: authCubit,
+    petRepository: petRepository,
+  );
+
+  runApp(MyApp(
+    authCubit: authCubit,
+    subscriptionCubit: subscriptionCubit,
+    onboardingCubit: onboardingCubit,
+    petCreationCubit: petCreationCubit,
+  ));
 }
 
 class MyApp extends StatelessWidget {
   final AuthCubit authCubit;
   final SubscriptionCubit subscriptionCubit;
+  final OnboardingCubit onboardingCubit;
+  final PetCreationCubit petCreationCubit;
   const MyApp({
     super.key,
     required this.authCubit,
     required this.subscriptionCubit,
+    required this.onboardingCubit,
+    required this.petCreationCubit,
   });
 
   @override
@@ -73,11 +98,20 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider.value(value: authCubit),
+        BlocProvider.value(value: onboardingCubit),
         BlocProvider.value(value: subscriptionCubit),
+        BlocProvider.value(value: petCreationCubit),
       ],
       child: MaterialApp.router(
         title: 'Nanimo',
         theme: AppTheme.light,
+        locale: const Locale('fr'),
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('fr')],
         routerConfig: createRouter(authCubit),
       ),
     );

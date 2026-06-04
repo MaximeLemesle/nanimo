@@ -92,10 +92,7 @@ class _SignupPageState extends State<SignupPage> {
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.xl,
-            vertical: AppSpacing.lg,
-          ),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           child: Form(
             key: _formKey,
             autovalidateMode: AutovalidateMode.onUnfocus,
@@ -104,7 +101,6 @@ class _SignupPageState extends State<SignupPage> {
               children: [
                 const SizedBox(height: AppSpacing.xl),
                 Text('Inscription', style: textTheme.displayLarge),
-                const SizedBox(height: AppSpacing.sm),
                 Text(
                   'Crée ton compte pour démarrer.',
                   style: textTheme.bodyLarge
@@ -120,7 +116,7 @@ class _SignupPageState extends State<SignupPage> {
                   onChanged: _onFieldChanged,
                   validator: _emailValidator,
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.sm),
                 TextFieldWidget(
                   controller: _passwordController,
                   label: 'Mot de passe',
@@ -130,7 +126,7 @@ class _SignupPageState extends State<SignupPage> {
                   onChanged: _onFieldChanged,
                   validator: _passwordValidator,
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.sm),
                 TextFieldWidget(
                   controller: _confirmController,
                   label: 'Confirmation du mot de passe',
@@ -169,7 +165,7 @@ class _SignupPageState extends State<SignupPage> {
                     );
                   },
                 ),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: AppSpacing.xl),
 
                 /// Separator
                 Row(
@@ -191,7 +187,7 @@ class _SignupPageState extends State<SignupPage> {
                         child: Divider(color: AppColors.backgroundStroke)),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: AppSpacing.xl),
                 const SsoButtonsWidget(),
                 const SizedBox(height: AppSpacing.sm),
                 Center(

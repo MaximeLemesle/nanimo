@@ -19,7 +19,6 @@ PetModel buildPet(
     createdAt: createdAt ?? DateTime.utc(2024, 1, 1),
     petRaceId: 'race-1',
     petSpeciesId: 'sp-1',
-    petIconId: 'icon-1',
   );
 }
 

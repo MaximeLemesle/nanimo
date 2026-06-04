@@ -15,7 +15,6 @@ class PetCache {
   late String gender;
   String? petRaceId;
   String? petSpeciesId;
-  String? petIconId;
   late DateTime createdAt;
 
   PetCache();
@@ -31,7 +30,6 @@ class PetCache {
       ..gender = json['gender'] as String
       ..petRaceId = json['id_race'] as String?
       ..petSpeciesId = json['id_species'] as String?
-      ..petIconId = json['id_icon'] as String?
       ..createdAt = DateTime.parse(json['created_at'] as String);
   }
 
@@ -44,7 +42,6 @@ class PetCache {
       ..gender = _genderToString(model.gender)
       ..petRaceId = model.petRaceId
       ..petSpeciesId = model.petSpeciesId
-      ..petIconId = model.petIconId
       ..createdAt = model.createdAt;
   }
 
@@ -58,7 +55,6 @@ class PetCache {
       createdAt: createdAt,
       petRaceId: petRaceId ?? '',
       petSpeciesId: petSpeciesId ?? '',
-      petIconId: petIconId ?? '',
     );
   }
 }

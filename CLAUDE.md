@@ -13,7 +13,7 @@
 
 ### Core (MVP)
 
-- **Onboarding** : Création du premier animal en 3 étapes (prénom + espèce, genre + race + date de naissance, avatar automatique)
+- **Onboarding** : Création du premier animal en 3 étapes avant signup (prénom + espèce, genre + race + date de naissance, avatar automatique) — le pet est inséré après la création du compte
 - **Home** : Salutation personalisée, widget "il y a 1 an", alertes santé, dernier souvenir
 - **Journal** : 2 vues (timeline + calendrier), filtres (animal + type)
 - **Pet Page** : Switch multi-animaux, identité, poids, santé, vaccins, CTA carnet
@@ -47,6 +47,14 @@ lib/
     │       │   └── login_page.dart
     │       └── widgets/
     │           └── login_button_widget.dart
+    ├── onboarding/
+    │   └── presentation/
+    │       ├── cubit/
+    │       │   ├── onboarding_cubit.dart
+    │       │   └── onboarding_state.dart
+    │       └── page/
+    │           ├── splash_page.dart
+    │           └── onboarding_page.dart
     ├── home/
     │   ├── data/
     │   └── presentation/
@@ -152,6 +160,8 @@ image_picker: ^1.1.2
 google_sign_in: ^7.2.0
 sign_in_with_apple: ^8.0.0
 crypto: ^3.0.7
+confetti: ^0.7.0
+uuid: ^4.5.1
 ```
 
 ### Auth SSO (Google + Apple)
@@ -172,11 +182,16 @@ crypto: ^3.0.7
 Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 ```
 
-**Create Pet steps** :
+**Create Pet steps** (route `/onboarding/create-pet`, `PageView` non-swipable) :
 
-1. Prénom + Espèce (grille 6 icônes)
-2. Genre + race + date naissance
-3. Avatar (automatique) + validation
+1. Prénom + Espèce (grille filtrée depuis `pet_species`)
+2. Genre + race (grille filtrée par species depuis `pet_race`) + date de naissance
+3. Écran de succès : confetti + aperçu de l'avatar **automatique de l'espèce** (asset local `assets/icons/species/<iconKey>.png`) + "Créer mon compte"
+
+**Pending Pet Strategy** — la table `pets` exige un user authentifié (RLS) et le lien passe par `users_pets`. Le pet ne peut donc pas être inséré pendant l'onboarding. Implémentation (`PetCreationCubit`, fourni au root à côté d'`AuthCubit`) :
+
+- Au tap "Créer mon compte", `CreatePetPage` construit le `PetModel` et le stocke comme `pendingPet`.
+- Sur un échec post-signup, le `pendingPet` reste en mémoire et un message pour retry s'affiche.
 
 ### Home
 
@@ -266,6 +281,34 @@ flutter test test/core/isar/cache/schemas/pet_cache_test.dart
 ```
 
 > **Note** : les tests Isar téléchargent automatiquement `libisar.dylib` au premier lancement (`Isar.initializeIsarCore(download: true)`).
+
+### 9.1 Couverture de tests
+
+Étant le seul dev sur le projet, j'ai concentré les tests sur la logique métier, les repositories, et les principaux flux utilisateur.
+
+### 9.2 Les 3 types de tests
+
+- **Les tests unitaires** pour les modèles et la logique métier.
+- **Les tests de widgets** pour maintenir le design de l'app.
+- **Les tests end to end** pour assurer la protection des flux critiques.
+
+### 9.3 Structure des fichiers
+
+Miroir à l'architecture du projet.
+
+```
+test/
+├── core/
+└── features/
+    └── pet/
+        ├── data/
+        │   └── pet_repository_test.dart
+        └── presentation/
+            ├── cubit/
+            │   └── pet_creation_cubit_test.dart
+            └── widgets/
+                └── pet_card_test.dart
+```
 
 ---
 
