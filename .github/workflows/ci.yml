@@ -12,31 +12,51 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: Analyze & Test
+  analyze:
+    name: Analyze
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
       - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: "3.41.9"
-          channel: stable
-          cache: true
-
-      - name: Create .env for CI
-        run: touch .env
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Generate code (Isar)
-        run: dart run build_runner build --delete-conflicting-outputs
+        uses: ./.github/actions/setup-flutter
 
       - name: Analyze
         run: flutter analyze --fatal-infos
 
-      - name: Test
-        run: flutter test
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Flutter
+        uses: ./.github/actions/setup-flutter
+
+      - name: Test with coverage
+        run: flutter test --coverage
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/lcov.info
+
+  coverage:
+    name: Coverage (objective 80%)
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage
+          path: coverage
+
+      - name: Check coverage threshold
+        uses: VeryGoodOpenSource/very_good_coverage@v3
+        with:
+          path: coverage/lcov.info
+          min_coverage: 80

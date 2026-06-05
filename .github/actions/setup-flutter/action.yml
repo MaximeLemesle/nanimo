@@ -1,0 +1,24 @@
+name: Setup Flutter
+description: Setup Flutter, install dependencies and run code generation
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: "3.41.9"
+        channel: stable
+        cache: true
+
+    - name: Create .env for CI
+      shell: bash
+      run: touch .env
+
+    - name: Install dependencies
+      shell: bash
+      run: flutter pub get
+
+    - name: Generate code (Isar)
+      shell: bash
+      run: dart run build_runner build --delete-conflicting-outputs

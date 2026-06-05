@@ -310,6 +310,14 @@ test/
                 └── pet_card_test.dart
 ```
 
+### 9.4 CI GitHub Actions
+
+Workflow `.github/workflows/ci.yml` découpé en 3 jobs :
+
+- **`analyze`** : analyse les erreurs de linter
+- **`test`** : check que tout les tests passent
+- **`coverage`** : vérifie que le coverage est au minimum à 80%
+
 ---
 
 ## 10. Conventions de Code
