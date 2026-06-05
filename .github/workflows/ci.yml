@@ -66,3 +66,13 @@ jobs:
           name: nanimo
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
+
+      - name: Enforce coverage threshold (min 80%)
+        run: |
+          pct=$(awk -F: '/^LF:/{f+=$2} /^LH:/{h+=$2} END{if (f>0) printf "%.2f", h/f*100; else print "0"}' coverage/lcov.info)
+          echo "Total line coverage: ${pct}%"
+          if awk -v p="$pct" 'BEGIN{exit !(p+0 < 80)}'; then
+            echo "::error::Coverage ${pct}% is below the required 80%"
+            exit 1
+          fi
+          echo "Coverage ${pct}% meets the 80% threshold"
