@@ -1,9 +1,12 @@
-name: Auto Release on Tag
+name: Release on Tag
 
 on:
   push:
     tags:
       - "v*"
+
+permissions:
+  contents: write
 
 jobs:
   release:
@@ -13,19 +16,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Generate Release Notes
+      - name: Create Github Release
         uses: actions/github-script@v7
         with:
           script: |
             const tag = context.ref.replace('refs/tags/', '');
-
-            // Récupère les commits depuis le tag précédent
-            const { data: commits } = await github.rest.repos.compareCommitsWithBasehead({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              basehead: `${context.payload.before}...${tag}`
-            });
-
+            
             await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
