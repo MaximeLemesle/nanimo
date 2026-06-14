@@ -9,6 +9,7 @@ import 'package:nanimo/core/isar/database/sync_service.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
 import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
@@ -72,11 +73,17 @@ void main() async {
     petRepository: petRepository,
   );
 
+  final homeCubit = HomeCubit(
+    petRepository: petRepository,
+    referentialRepository: referentialRepository,
+  );
+
   runApp(MyApp(
     authCubit: authCubit,
     subscriptionCubit: subscriptionCubit,
     onboardingCubit: onboardingCubit,
     petCreationCubit: petCreationCubit,
+    homeCubit: homeCubit,
   ));
 }
 
@@ -85,12 +92,14 @@ class MyApp extends StatelessWidget {
   final SubscriptionCubit subscriptionCubit;
   final OnboardingCubit onboardingCubit;
   final PetCreationCubit petCreationCubit;
+  final HomeCubit homeCubit;
   const MyApp({
     super.key,
     required this.authCubit,
     required this.subscriptionCubit,
     required this.onboardingCubit,
     required this.petCreationCubit,
+    required this.homeCubit,
   });
 
   @override
@@ -101,6 +110,7 @@ class MyApp extends StatelessWidget {
         BlocProvider.value(value: onboardingCubit),
         BlocProvider.value(value: subscriptionCubit),
         BlocProvider.value(value: petCreationCubit),
+        BlocProvider.value(value: homeCubit),
       ],
       child: MaterialApp.router(
         title: 'Nanimo',

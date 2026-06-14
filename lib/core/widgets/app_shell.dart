@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nanimo/config/router/route_names.dart';
+import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
 
 class AppShell extends StatelessWidget {
   final Widget child;
@@ -21,6 +23,29 @@ class AppShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final index = _currentIndex(context);
 
+    return BlocListener<PetCreationCubit, PetCreationState>(
+      listenWhen: (previous, current) => previous.status != current.status,
+      listener: _onPetCreationChanged,
+      child: _buildScaffold(context, index),
+    );
+  }
+
+  void _onPetCreationChanged(BuildContext context, PetCreationState state) {
+    if (state.status != PetCreationStatus.error) return;
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(state.error ?? 'Impossible de créer votre animal.'),
+          action: SnackBarAction(
+            label: 'Réessayer',
+            onPressed: () => context.read<PetCreationCubit>().retry(),
+          ),
+        ),
+      );
+  }
+
+  Widget _buildScaffold(BuildContext context, int index) {
     return Scaffold(
       body: child,
       bottomNavigationBar: NavigationBar(

@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:nanimo/core/errors/repository_network_exception.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_cache.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
@@ -25,6 +27,8 @@ PetModel buildPet(
 void main() {
   final harness = IsarTestHarness();
   late PetRepository repo;
+
+  setUpAll(registerSupabaseFallbacks);
 
   setUp(() async {
     await harness.setUp();
@@ -81,6 +85,87 @@ void main() {
       final result = await repo.getPetById('p1');
       expect(result, isNotNull);
       expect(result!.petName, 'Rex');
+    });
+  });
+
+  group('createPet', () {
+    late MockSupabaseClient supabase;
+    late PetRepository createRepo;
+
+    void buildAuthenticatedRepo({String userId = 'user-1'}) {
+      supabase = MockSupabaseClient();
+      final auth = MockGoTrueClient();
+      final user = MockUser();
+      when(() => supabase.auth).thenReturn(auth);
+      when(() => auth.currentUser).thenReturn(user);
+      when(() => user.id).thenReturn(userId);
+      createRepo = PetRepository(
+        supabase,
+        harness.isar,
+        writeRetryBackoff: Duration.zero,
+      );
+    }
+
+    test('throws when no user is authenticated', () async {
+      supabase = MockSupabaseClient();
+      final auth = MockGoTrueClient();
+      when(() => supabase.auth).thenReturn(auth);
+      when(() => auth.currentUser).thenReturn(null);
+      createRepo = PetRepository(supabase, harness.isar);
+
+      await expectLater(
+        createRepo.createPet(buildPet('p1', 'Rex')),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+      expect(await createRepo.getPetById('p1'), isNull);
+    });
+
+    test('inserts pet + link and caches it on the happy path', () async {
+      buildAuthenticatedRepo();
+      stubInsert(supabase, 'pets', resolver: () => null);
+      stubInsert(supabase, 'users_pets', resolver: () => null);
+
+      await createRepo.createPet(buildPet('p1', 'Milo'));
+
+      final cached = await createRepo.getPetById('p1');
+      expect(cached, isNotNull);
+      expect(cached!.petName, 'Milo');
+    });
+
+    test('retries past the post-signup race and succeeds, caching the pet',
+        () async {
+      buildAuthenticatedRepo();
+      stubInsert(supabase, 'pets', resolver: () => null);
+      var linkAttempts = 0;
+      stubInsert(supabase, 'users_pets', resolver: () {
+        linkAttempts++;
+        if (linkAttempts == 1) {
+          throw Exception('insert or update on table "users_pets" violates FK');
+        }
+        return null;
+      });
+
+      await createRepo.createPet(buildPet('p1', 'Milo'));
+
+      expect(linkAttempts, 2);
+      expect(await createRepo.getPetById('p1'), isNotNull);
+    });
+
+    test('throws and leaves the cache untouched after exhausting retries',
+        () async {
+      buildAuthenticatedRepo();
+      stubInsert(supabase, 'pets', resolver: () => null);
+      stubInsert(
+        supabase,
+        'users_pets',
+        resolver: () => throw Exception('FK violation'),
+      );
+
+      await expectLater(
+        createRepo.createPet(buildPet('p1', 'Milo')),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+      expect(await createRepo.getPetById('p1'), isNull);
     });
   });
 }

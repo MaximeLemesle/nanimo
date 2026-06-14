@@ -160,7 +160,7 @@ image_picker: ^1.1.2
 google_sign_in: ^7.2.0
 sign_in_with_apple: ^8.0.0
 crypto: ^3.0.7
-confetti: ^0.7.0
+flutter_confetti: ^0.5.1
 uuid: ^4.5.1
 ```
 
@@ -186,7 +186,7 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 
 1. Prénom + Espèce (grille filtrée depuis `pet_species`)
 2. Genre + race (grille filtrée par species depuis `pet_race`) + date de naissance
-3. Écran de succès : confetti + aperçu de l'avatar **automatique de l'espèce** (asset local `assets/icons/species/<iconKey>.png`) + "Créer mon compte"
+3. Écran de succès : confetti + aperçu de l'avatar **automatique de l'espèce** + "Créer mon compte"
 
 **Pending Pet Strategy** — la table `pets` exige un user authentifié (RLS) et le lien passe par `users_pets`. Le pet ne peut donc pas être inséré pendant l'onboarding. Implémentation (`PetCreationCubit`, fourni au root à côté d'`AuthCubit`) :
 

@@ -47,7 +47,7 @@ class _CreatePetPageState extends State<CreatePetPage> {
 
   /// Go to the next step or the signup page if it's the last step
   void _handleNext(BuildContext context, OnboardingState state) {
-    if (!state.canFinish) {
+    if (state.currentStep < 3) {
       context.read<OnboardingCubit>().nextStep();
     } else {
       context.read<PetCreationCubit>().prepare(

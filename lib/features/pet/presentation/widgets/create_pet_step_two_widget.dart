@@ -9,7 +9,6 @@ class CreatePetStepTwoWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
@@ -17,7 +16,7 @@ class CreatePetStepTwoWidget extends StatelessWidget {
         children: [
           Text(
             'Quelques détails',
-            style: textTheme.displaySmall,
+            style: Theme.of(context).textTheme.displaySmall,
           ),
           const SizedBox(height: AppSpacing.xl),
           PetGenderSelectorWidget(),

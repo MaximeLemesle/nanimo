@@ -111,8 +111,11 @@ FakePostgrestChain stubUpsert(
   final qb = MockSupabaseQueryBuilder();
   final chain = FakePostgrestChain(resolver);
   when(() => supabase.from(table)).thenAnswer((_) => qb);
-  when(() => qb.upsert(any(), onConflict: any(named: 'onConflict')))
-      .thenAnswer((_) => chain as dynamic);
+  when(() => qb.upsert(
+        any(),
+        onConflict: any(named: 'onConflict'),
+        ignoreDuplicates: any(named: 'ignoreDuplicates'),
+      )).thenAnswer((_) => chain as dynamic);
   return chain;
 }
 
