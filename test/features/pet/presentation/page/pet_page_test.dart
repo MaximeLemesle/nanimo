@@ -121,7 +121,7 @@ void main() {
     expect(find.text('Mâle'), findsOneWidget);
     expect(find.text('3,2 kg'), findsOneWidget);
     expect(find.text('Informations de santé'), findsOneWidget);
-    expect(find.text('Liste des vaccins (recommandés)'), findsOneWidget);
+    expect(find.text('Liste des vaccins'), findsOneWidget);
     expect(find.text('Voir le carnet de santé'), findsOneWidget);
 
     await cubit.close();

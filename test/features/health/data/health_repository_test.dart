@@ -206,17 +206,17 @@ void main() {
       expect(emission, isEmpty);
     });
 
-    test('emits logs within the window, sorted oldest first', () async {
+    test('emits logs sorted oldest first', () async {
       await seedWeight(buildWeightLog(
-        'w-old',
+        'w-2',
         loggedAt: DateTime.now().subtract(const Duration(days: 30)),
       ));
       await seedWeight(buildWeightLog(
-        'w-new',
+        'w-3',
         loggedAt: DateTime.now().subtract(const Duration(days: 5)),
       ));
       await seedWeight(buildWeightLog(
-        'w-out',
+        'w-1',
         loggedAt: DateTime.now().subtract(const Duration(days: 365)),
       ));
       await seedWeight(buildWeightLog('w-other', petId: 'pet-2'));
@@ -224,7 +224,7 @@ void main() {
       final emission = await repo.getWeightLogsForPet('pet-1').first;
       expect(
         emission.map((l) => l.healthDiaryWeightLogId).toList(),
-        ['w-old', 'w-new'],
+        ['w-1', 'w-2', 'w-3'],
       );
     });
   });
