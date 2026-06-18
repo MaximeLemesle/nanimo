@@ -4,7 +4,7 @@ import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
-import 'package:nanimo/features/pet/presentation/widgets/pet_card/pet_card_item_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_card_item_widget.dart';
 
 class PetCardWidget extends StatelessWidget {
   final String label;

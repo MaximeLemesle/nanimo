@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
-import 'package:nanimo/features/pet/presentation/widgets/health_diary/health_card_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/health_card_widget.dart';
 
 /// Récapitulatif card: label/value rows separated by dividers, with an
 /// edit affordance for the editable diary fields.

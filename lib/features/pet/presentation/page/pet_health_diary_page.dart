@@ -10,14 +10,14 @@ import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/health/data/models/health_diary_vaccine_model.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
-import 'package:nanimo/features/pet/presentation/widgets/health_diary/add_vaccine_modal_widget.dart';
-import 'package:nanimo/features/pet/presentation/widgets/health_diary/add_vet_visit_modal_widget.dart';
-import 'package:nanimo/features/pet/presentation/widgets/health_diary/edit_health_diary_modal_widget.dart';
-import 'package:nanimo/features/pet/presentation/widgets/health_diary/health_summary_card_widget.dart';
-import 'package:nanimo/features/pet/presentation/widgets/health_diary/vaccine_list_widget.dart';
-import 'package:nanimo/features/pet/presentation/widgets/health_diary/vet_visit_timeline_widget.dart';
-import 'package:nanimo/features/pet/presentation/widgets/health_diary/weight_chart_card_widget.dart';
-import 'package:nanimo/features/pet/presentation/widgets/pet_card/pet_card_modal/update_weight_modal_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/add_vaccine_modal_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/add_vet_visit_modal_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/edit_health_diary_modal_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/health_summary_card_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/vaccine_list_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/vet_visit_timeline_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/weight_chart_card_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/update_weight_modal_widget.dart';
 
 class PetHealthDiaryPage extends StatelessWidget {
   const PetHealthDiaryPage({super.key});

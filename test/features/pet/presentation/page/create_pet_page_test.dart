@@ -10,7 +10,7 @@ import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.d
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
 import 'package:nanimo/features/pet/presentation/page/create_pet_page.dart';
-import 'package:nanimo/features/pet/presentation/widgets/create_pet_step_three_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_creation/pet_creation_step_three_widget.dart';
 
 class _MockReferentialRepository extends Mock
     implements ReferentialRepository {}
@@ -74,7 +74,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(cubit.state.currentStep, 3);
-    expect(find.byType(CreatePetStepThreeWidget), findsOneWidget);
+    expect(find.byType(PetCreationStepThreeWidget), findsOneWidget);
     expect(find.text('Félicitations !'), findsOneWidget);
     expect(find.text('Créer mon compte'), findsOneWidget);
 

@@ -5,8 +5,8 @@ import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/features/health/data/models/health_diary_weight_log_model.dart';
-import 'package:nanimo/features/pet/presentation/widgets/health_diary/health_card_widget.dart';
-import 'package:nanimo/features/pet/presentation/widgets/health_diary/weight_chart_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/health_card_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/weight_chart_widget.dart';
 
 class WeightChartCardWidget extends StatelessWidget {
   final List<HealthDiaryWeightLogModel> logs;

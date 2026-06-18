@@ -4,7 +4,7 @@ import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
-import 'package:nanimo/features/pet/presentation/widgets/grid_tile_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_creation/grid_tile_widget.dart';
 
 class PetGenderSelectorWidget extends StatelessWidget {
   const PetGenderSelectorWidget({super.key});

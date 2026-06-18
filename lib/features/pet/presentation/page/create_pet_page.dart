@@ -8,9 +8,9 @@ import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/step_indicator_widget.dart';
 import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
-import 'package:nanimo/features/pet/presentation/widgets/create_pet_step_one_widget.dart';
-import 'package:nanimo/features/pet/presentation/widgets/create_pet_step_three_widget.dart';
-import 'package:nanimo/features/pet/presentation/widgets/create_pet_step_two_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_creation/pet_creation_step_one_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_creation/pet_creation_step_three_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_creation/pet_creation_step_two_widget.dart';
 
 class CreatePetPage extends StatefulWidget {
   const CreatePetPage({super.key});
@@ -121,9 +121,9 @@ class _CreatePetPageState extends State<CreatePetPage> {
                       controller: _pageController,
                       physics: const NeverScrollableScrollPhysics(),
                       children: const [
-                        CreatePetStepOneWidget(),
-                        CreatePetStepTwoWidget(),
-                        CreatePetStepThreeWidget(),
+                        PetCreationStepOneWidget(),
+                        PetCreationStepTwoWidget(),
+                        PetCreationStepThreeWidget(),
                       ],
                     ),
                   ),

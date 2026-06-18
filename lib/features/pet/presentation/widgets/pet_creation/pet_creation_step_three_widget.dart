@@ -6,14 +6,14 @@ import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/core/widgets/pet_avatar_widget.dart';
 import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 
-class CreatePetStepThreeWidget extends StatefulWidget {
-  const CreatePetStepThreeWidget({super.key});
+class PetCreationStepThreeWidget extends StatefulWidget {
+  const PetCreationStepThreeWidget({super.key});
 
   @override
-  State<CreatePetStepThreeWidget> createState() => _StepThreeWidgetState();
+  State<PetCreationStepThreeWidget> createState() => _StepThreeWidgetState();
 }
 
-class _StepThreeWidgetState extends State<CreatePetStepThreeWidget> {
+class _StepThreeWidgetState extends State<PetCreationStepThreeWidget> {
   static const _confettiColors = [
     AppColors.primary,
     AppColors.secondary,

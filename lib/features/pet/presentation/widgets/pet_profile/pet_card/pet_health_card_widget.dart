@@ -3,8 +3,8 @@ import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/core/utils/date_formatter.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/features/health/data/models/health_diary_model.dart';
-import 'package:nanimo/features/pet/presentation/widgets/pet_card/pet_card_item_widget.dart';
-import 'package:nanimo/features/pet/presentation/widgets/pet_card/pet_card_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_card_item_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_card_widget.dart';
 
 class PetHealthCardWidget extends StatelessWidget {
   final HealthDiaryModel? diary;

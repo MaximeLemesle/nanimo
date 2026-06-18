@@ -5,7 +5,7 @@ import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/utils/date_formatter.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
-import 'package:nanimo/features/pet/presentation/widgets/health_diary/health_card_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/health_card_widget.dart';
 
 /// Vet visits card: chronological timeline of visits plus an add action.
 class VetVisitTimelineWidget extends StatelessWidget {

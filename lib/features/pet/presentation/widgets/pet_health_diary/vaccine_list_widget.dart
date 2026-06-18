@@ -5,8 +5,8 @@ import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/utils/date_formatter.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/features/health/data/models/health_diary_vaccine_model.dart';
-import 'package:nanimo/features/pet/presentation/widgets/health_diary/health_card_widget.dart';
-import 'package:nanimo/features/pet/presentation/widgets/health_diary/vaccine_status_badge_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/health_card_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/vaccine_status_badge_widget.dart';
 
 /// Vaccines card: one row per vaccine with a status badge, plus an add action.
 class VaccineListWidget extends StatelessWidget {

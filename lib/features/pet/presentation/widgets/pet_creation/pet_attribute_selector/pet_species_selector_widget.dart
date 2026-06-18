@@ -5,7 +5,7 @@ import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/error_banner_widget.dart';
 import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
-import 'package:nanimo/features/pet/presentation/widgets/grid_tile_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_creation/grid_tile_widget.dart';
 
 class PetSpeciesSelectorWidget extends StatelessWidget {
   const PetSpeciesSelectorWidget({super.key});

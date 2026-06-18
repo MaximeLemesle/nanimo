@@ -10,11 +10,11 @@ import 'package:nanimo/core/utils/date_formatter.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
-import 'package:nanimo/features/pet/presentation/widgets/pet_card/pet_card_item_widget.dart';
-import 'package:nanimo/features/pet/presentation/widgets/pet_card/pet_card_widget.dart';
-import 'package:nanimo/features/pet/presentation/widgets/pet_card/pet_health_card_widget.dart';
-import 'package:nanimo/features/pet/presentation/widgets/pet_park_header_widget.dart';
-import 'package:nanimo/features/pet/presentation/widgets/pet_card/pet_weight_card_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_card_item_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_card_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_health_card_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_park_header_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_weight_card_widget.dart';
 
 class PetPage extends StatefulWidget {
   const PetPage({super.key});

@@ -3,16 +3,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/core/widgets/nanimo_text_field_widget.dart';
 import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
-import 'package:nanimo/features/pet/presentation/widgets/pet_attribute_selector/pet_species_selector_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_creation/pet_attribute_selector/pet_species_selector_widget.dart';
 
-class CreatePetStepOneWidget extends StatefulWidget {
-  const CreatePetStepOneWidget({super.key});
+class PetCreationStepOneWidget extends StatefulWidget {
+  const PetCreationStepOneWidget({super.key});
 
   @override
-  State<CreatePetStepOneWidget> createState() => _CreatePetStepOneWidgetState();
+  State<PetCreationStepOneWidget> createState() =>
+      _PetCreationStepOneWidgetState();
 }
 
-class _CreatePetStepOneWidgetState extends State<CreatePetStepOneWidget> {
+class _PetCreationStepOneWidgetState extends State<PetCreationStepOneWidget> {
   late final TextEditingController _nameController;
 
   @override
