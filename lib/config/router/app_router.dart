@@ -12,10 +12,11 @@ import 'package:nanimo/features/home/presentation/page/profile_page.dart';
 import 'package:nanimo/features/pet/presentation/page/create_pet_page.dart';
 import 'package:nanimo/features/onboarding/presentation/page/onboarding_page.dart';
 import 'package:nanimo/features/onboarding/presentation/page/splash_page.dart';
+import 'package:nanimo/features/pet/presentation/page/pet_page.dart';
+import 'package:nanimo/features/pet/presentation/page/pet_health_diary_page.dart';
 
 class _AuthCubitListenable extends ChangeNotifier {
   _AuthCubitListenable(AuthCubit cubit) {
-    /// Notify change to GoRouter
     cubit.stream.listen((_) => notifyListeners());
   }
 }
@@ -56,6 +57,16 @@ GoRouter createRouter(AuthCubit authCubit) {
             path: RouteNames.home,
             builder: (_, __) => const HomePage(),
             routes: [
+              GoRoute(
+                path: 'pet',
+                builder: (_, __) => const PetPage(),
+                routes: [
+                  GoRoute(
+                    path: 'health-diary',
+                    builder: (_, __) => const PetHealthDiaryPage(),
+                  ),
+                ],
+              ),
               GoRoute(
                 path: 'profile',
                 builder: (_, __) => const ProfilePage(),

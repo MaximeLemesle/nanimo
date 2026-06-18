@@ -12,7 +12,7 @@ void main() {
         'recurrence': 365,
         'dose_number': 2,
         'total_dose_number': 3,
-        'id_health_diary': 'hd-uuid',
+        'health_diary_id': 'hd-uuid',
       };
 
       final cache = HealthDiaryVaccineCache.fromJson(json);
@@ -36,7 +36,7 @@ void main() {
         'recurrence': null,
         'dose_number': null,
         'total_dose_number': null,
-        'id_health_diary': 'hd-uuid',
+        'health_diary_id': 'hd-uuid',
       };
 
       final cache = HealthDiaryVaccineCache.fromJson(json);

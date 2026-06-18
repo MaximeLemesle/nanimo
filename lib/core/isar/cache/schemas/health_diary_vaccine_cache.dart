@@ -39,7 +39,7 @@ class HealthDiaryVaccineCache {
       ..recurrence = json['recurrence'] as int?
       ..doseNumber = json['dose_number'] as int?
       ..totalDoseNumber = json['total_dose_number'] as int?
-      ..healthDiaryId = json['id_health_diary'] as String;
+      ..healthDiaryId = json['health_diary_id'] as String;
   }
 
   /// Builds a [HealthDiaryVaccineCache] from a [HealthDiaryVaccineModel]

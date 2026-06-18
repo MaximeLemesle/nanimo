@@ -84,6 +84,7 @@ lib/
 | `health_diary`          | id_health_diary (UUID PK), is_sterilized, is_chipped, chip_number, last_deworming_at, last_vet_appointment, pet_id FK (UNIQUE 1:1)           | Lié au pet                       |
 | `health_diary_vaccines` | id_health_diary_vaccine (UUID PK), vaccine_name, last_date, next_date, recurrence (days), dose_number, total_dose_number, health_diary_id FK | Historique vaccins               |
 | `weight_logs`           | id_health_diary_weight_log (UUID PK), weight (DECIMAL), logged_at (TIMESTAMPTZ), pet_id FK                                                   | Graphique 6 mois                 |
+| `vet_visits`            | id_vet_visit (UUID PK), title, visited_at (DATE), vet_name, clinic_name, pet_id FK (CASCADE)                                                 | Timeline visites véto (carnet)   |
 | `notifications`         | id_notification (UUID PK), type (enum), title, description, sending_at (TIMESTAMPTZ), id_pet FK                                              | Push Firebase FCM                |
 | `subscription_config`   | id_subscription_config (SERIAL PK), plan_name, max_images_per_event, max_pets, max_storage_mb, can_access_premium_icons                      | Quotas freemium                  |
 
@@ -162,6 +163,7 @@ sign_in_with_apple: ^8.0.0
 crypto: ^3.0.7
 flutter_confetti: ^0.5.1
 uuid: ^4.5.1
+fl_chart: ^0.69.2
 ```
 
 ### Auth SSO (Google + Apple)

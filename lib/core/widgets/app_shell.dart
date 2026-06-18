@@ -10,13 +10,21 @@ class AppShell extends StatelessWidget {
 
   static const _routes = [
     RouteNames.home,
+    RouteNames.pet,
     RouteNames.profile,
   ];
 
   int _currentIndex(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
-    final index = _routes.indexWhere((r) => location.startsWith(r));
-    return index < 0 ? 0 : index;
+    var index = 0;
+    var routeLength = -1;
+    for (var i = 0; i < _routes.length; i++) {
+      if (location.startsWith(_routes[i]) && _routes[i].length > routeLength) {
+        index = i;
+        routeLength = _routes[i].length;
+      }
+    }
+    return index;
   }
 
   @override
@@ -56,6 +64,11 @@ class AppShell extends StatelessWidget {
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home),
             label: 'Accueil',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.pets_outlined),
+            selectedIcon: Icon(Icons.pets),
+            label: 'Animal',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),

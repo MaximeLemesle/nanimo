@@ -8,6 +8,7 @@ import 'package:nanimo/core/isar/cache/schemas/health_diary_vaccine_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/subscription_config_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/user_cache.dart';
+import 'package:nanimo/core/isar/cache/schemas/vet_visit_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/weight_log_cache.dart';
 
 /// Spins up a temp-dir Isar instance with every cache schema. Repository tests
@@ -34,6 +35,7 @@ class IsarTestHarness {
         HealthDiaryVaccineCacheSchema,
         WeightLogCacheSchema,
         SubscriptionConfigCacheSchema,
+        VetVisitCacheSchema,
       ],
       directory: _tempDir.path,
     );

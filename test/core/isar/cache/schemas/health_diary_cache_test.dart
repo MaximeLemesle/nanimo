@@ -11,7 +11,7 @@ void main() {
         'chip_number': '985141001234567',
         'last_deworming_at': '2024-03-01T00:00:00.000Z',
         'last_vet_appointment': '2024-05-10T00:00:00.000Z',
-        'id_pet': 'pet-uuid',
+        'pet_id': 'pet-uuid',
       };
 
       final cache = HealthDiaryCache.fromJson(json);
@@ -33,7 +33,7 @@ void main() {
         'chip_number': null,
         'last_deworming_at': null,
         'last_vet_appointment': null,
-        'id_pet': 'pet-uuid',
+        'pet_id': 'pet-uuid',
       };
 
       final cache = HealthDiaryCache.fromJson(json);

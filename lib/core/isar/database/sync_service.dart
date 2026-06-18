@@ -7,6 +7,7 @@ import 'package:nanimo/core/isar/cache/schemas/health_diary_vaccine_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/subscription_config_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/user_cache.dart';
+import 'package:nanimo/core/isar/cache/schemas/vet_visit_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/weight_log_cache.dart';
 
 class SyncService {
@@ -28,6 +29,7 @@ class SyncService {
       await _syncHealthDiaries();
       await _syncHealthDiaryVaccines();
       await _syncWeightLogs();
+      await _syncVetVisits();
     });
   }
 
@@ -36,11 +38,8 @@ class SyncService {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      final data = await _supabase
-          .from('users')
-          .select()
-          .eq('id_user', userId)
-          .single();
+      final data =
+          await _supabase.from('users').select().eq('id_user', userId).single();
 
       final user = UserCache.fromJson(data);
       await _isar.writeTxn(() async {
@@ -122,22 +121,36 @@ class SyncService {
     try {
       final data = await _supabase.from('health_diary_vaccines').select();
       final vaccines = (data as List)
-          .map((e) => HealthDiaryVaccineCache.fromJson(e as Map<String, dynamic>))
+          .map((e) =>
+              HealthDiaryVaccineCache.fromJson(e as Map<String, dynamic>))
           .toList();
       await _isar.writeTxn(() async {
-        await _isar.healthDiaryVaccineCaches.putAllByHealthDiaryVaccineId(vaccines);
+        await _isar.healthDiaryVaccineCaches
+            .putAllByHealthDiaryVaccineId(vaccines);
       });
     } catch (_) {}
   }
 
   Future<void> _syncWeightLogs() async {
     try {
-      final data = await _supabase.from('weight_logs').select();
+      final data = await _supabase.from('health_diary_weight_log').select();
       final logs = (data as List)
           .map((e) => WeightLogCache.fromJson(e as Map<String, dynamic>))
           .toList();
       await _isar.writeTxn(() async {
         await _isar.weightLogCaches.putAllByHealthDiaryWeightLogId(logs);
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _syncVetVisits() async {
+    try {
+      final data = await _supabase.from('vet_visits').select();
+      final visits = (data as List)
+          .map((e) => VetVisitCache.fromJson(e as Map<String, dynamic>))
+          .toList();
+      await _isar.writeTxn(() async {
+        await _isar.vetVisitCaches.putAllByVetVisitId(visits);
       });
     } catch (_) {}
   }

@@ -9,8 +9,8 @@ void main() {
         'pet_name': 'Buddy',
         'birthdate': '2020-03-15',
         'gender': 'male',
-        'id_race': 'race-uuid',
-        'id_species': 'species-uuid',
+        'pet_race_id': 'race-uuid',
+        'pet_species_id': 'species-uuid',
         'created_at': '2024-01-01T10:00:00.000Z',
       };
 
@@ -31,8 +31,8 @@ void main() {
         'pet_name': 'Mimi',
         'birthdate': null,
         'gender': 'unknown',
-        'id_race': null,
-        'id_species': null,
+        'pet_race_id': null,
+        'pet_species_id': null,
         'created_at': '2024-01-01T10:00:00.000Z',
       };
 

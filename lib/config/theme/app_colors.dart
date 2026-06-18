@@ -11,6 +11,9 @@ class AppColors {
   static const Color backgroundSurface = AppColors.neutral0;
   static const Color backgroundInvert = AppColors.neutral800;
   static const Color backgroundStroke = AppColors.neutral100;
+  static const Color backgroundPrimary = AppColors.primary100;
+  static const Color backgroundSecondary = AppColors.secondary100;
+  static const Color backgroundTertiary = AppColors.tertiary100;
 
   /// Text colors ///
   static const Color textPrimary = AppColors.neutral800;
@@ -40,7 +43,6 @@ class AppColors {
   static const Color secondary700 = Color(0xFFC20E49);
   static const Color secondary800 = Color(0xFFA20F44);
   static const Color secondary900 = Color(0xFF8B1040);
-
 
   /// Tertiary colors ///
   static const Color tertiary50 = Color(0xFFFFFBEB);

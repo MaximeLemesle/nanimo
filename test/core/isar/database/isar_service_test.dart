@@ -7,6 +7,7 @@ import 'package:nanimo/core/isar/cache/schemas/event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_image_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_vaccine_cache.dart';
+import 'package:nanimo/core/isar/cache/schemas/vet_visit_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/weight_log_cache.dart';
 
 void main() {
@@ -28,6 +29,7 @@ void main() {
           EventImageCacheSchema,
           HealthDiaryCacheSchema,
           HealthDiaryVaccineCacheSchema,
+          VetVisitCacheSchema,
           WeightLogCacheSchema,
         ],
         directory: tempDir.path,
@@ -68,8 +70,8 @@ void main() {
         'pet_name': 'Buddy',
         'birthdate': null,
         'gender': 'male',
-        'id_race': null,
-        'id_species': null,
+        'pet_race_id': null,
+        'pet_species_id': null,
         'created_at': '2024-01-01T00:00:00.000Z',
       });
 
@@ -80,6 +82,25 @@ void main() {
       final result = await isar.petCaches.getByPetId('pet-uuid');
       expect(result, isNotNull);
       expect(result!.petName, 'Buddy');
+    });
+
+    test('can write and read a VetVisitCache', () async {
+      final visit = VetVisitCache.fromJson({
+        'id_vet_visit': 'visit-uuid',
+        'title': 'Bilan annuel',
+        'visited_at': '2026-01-14T00:00:00.000Z',
+        'vet_name': 'Dr.Martin',
+        'clinic_name': 'Clinique des Pins',
+        'pet_id': 'pet-uuid',
+      });
+
+      await isar.writeTxn(() async {
+        await isar.vetVisitCaches.putByVetVisitId(visit);
+      });
+
+      final result = await isar.vetVisitCaches.getByVetVisitId('visit-uuid');
+      expect(result, isNotNull);
+      expect(result!.title, 'Bilan annuel');
     });
   });
 }

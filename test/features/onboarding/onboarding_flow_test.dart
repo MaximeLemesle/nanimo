@@ -13,16 +13,22 @@ import 'package:nanimo/data/models/referential/pet_race_model.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:nanimo/features/health/data/health_repository.dart';
+import 'package:nanimo/features/health/data/models/health_diary_weight_log_model.dart';
+import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
 import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
 import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
+import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 
 class _MockReferentialRepository extends Mock
     implements ReferentialRepository {}
 
 class _MockPetRepository extends Mock implements PetRepository {}
+
+class _MockHealthRepository extends Mock implements HealthRepository {}
 
 class _FakeAuthCubit extends Cubit<AuthState> implements AuthCubit {
   _FakeAuthCubit() : super(const AuthState.unknown());
@@ -89,10 +95,12 @@ void main() {
   late _FakeAuthCubit authCubit;
   late _MockReferentialRepository referentialRepo;
   late _MockPetRepository petRepo;
+  late _MockHealthRepository healthRepo;
   late StreamController<List<PetModel>> petsController;
   late OnboardingCubit onboardingCubit;
   late PetCreationCubit petCreationCubit;
   late HomeCubit homeCubit;
+  late PetDetailsCubit petDetailsCubit;
   late GoRouter router;
 
   setUpAll(() {
@@ -113,7 +121,15 @@ void main() {
     authCubit = _FakeAuthCubit();
     referentialRepo = _MockReferentialRepository();
     petRepo = _MockPetRepository();
+    healthRepo = _MockHealthRepository();
     petsController = StreamController<List<PetModel>>.broadcast();
+
+    when(() => healthRepo.watchDiaryForPet(any()))
+        .thenAnswer((_) => Stream.value(null));
+    when(() => healthRepo.getWeightLogsForPet(any()))
+        .thenAnswer((_) => Stream.value(const <HealthDiaryWeightLogModel>[]));
+    when(() => healthRepo.getVetVisitsForPet(any()))
+        .thenAnswer((_) => Stream.value(const <VetVisitModel>[]));
 
     when(() => referentialRepo.fetchSpecies())
         .thenAnswer((_) async => [_chat, _chien]);
@@ -133,6 +149,7 @@ void main() {
   tearDown(() async {
     await petCreationCubit.close();
     await homeCubit.close();
+    await petDetailsCubit.close();
     await onboardingCubit.close();
     await authCubit.close();
     await petsController.close();
@@ -156,6 +173,11 @@ void main() {
       petRepository: petRepo,
       referentialRepository: referentialRepo,
     );
+    petDetailsCubit = PetDetailsCubit(
+      petRepository: petRepo,
+      healthRepository: healthRepo,
+      referentialRepository: referentialRepo,
+    );
     router = createRouter(authCubit);
     await tester.pumpWidget(
       MultiBlocProvider(
@@ -164,6 +186,7 @@ void main() {
           BlocProvider<OnboardingCubit>.value(value: onboardingCubit),
           BlocProvider<PetCreationCubit>.value(value: petCreationCubit),
           BlocProvider<HomeCubit>.value(value: homeCubit),
+          BlocProvider<PetDetailsCubit>.value(value: petDetailsCubit),
         ],
         child: MaterialApp.router(routerConfig: router),
       ),

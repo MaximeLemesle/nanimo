@@ -22,7 +22,7 @@ class EventImageCache {
     return EventImageCache()
       ..eventImageId = json['id_event_image'] as String
       ..assetPath = json['asset_path'] as String
-      ..eventId = json['id_event'] as String;
+      ..eventId = json['event_id'] as String;
   }
 
   /// Builds an [EventImageCache] from an [EventImageModel]

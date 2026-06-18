@@ -34,7 +34,7 @@ class HealthDiaryCache {
       ..lastVetAppointment = json['last_vet_appointment'] != null
           ? DateTime.parse(json['last_vet_appointment'] as String)
           : null
-      ..petId = json['id_pet'] as String;
+      ..petId = json['pet_id'] as String;
   }
 
   /// Builds a [HealthDiaryCache] from a [HealthDiaryModel]

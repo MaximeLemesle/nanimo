@@ -3,24 +3,20 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:nanimo/core/errors/repository_network_exception.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_vaccine_cache.dart';
+import 'package:nanimo/core/isar/cache/schemas/vet_visit_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/weight_log_cache.dart';
 import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/health/data/models/health_diary_vaccine_model.dart';
 import 'package:nanimo/features/health/data/models/health_diary_weight_log_model.dart';
+import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
 
-/// Wraps the three health collections (`health_diary`, `health_diary_vaccines`,
-/// `weight_logs`) behind a single repository.
 class HealthRepository {
   final SupabaseClient _supabase;
   final Isar _isar;
 
   HealthRepository(this._supabase, this._isar);
 
-  // ---------------------------------------------------------------------------
-  // Diary
-  // ---------------------------------------------------------------------------
-
-  /// Live diary for [petId], or null if none exists yet.
+  /// Diary
   Stream<HealthDiaryModel?> watchDiaryForPet(String petId) {
     return _isar.healthDiaryCaches
         .filter()
@@ -29,13 +25,11 @@ class HealthRepository {
         .map((rows) => rows.isEmpty ? null : rows.first.toModel());
   }
 
-  /// One-shot read of the diary for [petId].
   Future<HealthDiaryModel?> getDiaryForPet(String petId) async {
     final row = await _isar.healthDiaryCaches.getByPetId(petId);
     return row?.toModel();
   }
 
-  /// Inserts or updates the diary for a pet.
   Future<void> upsertDiary(HealthDiaryModel diary) async {
     try {
       await _supabase
@@ -53,12 +47,8 @@ class HealthRepository {
     });
   }
 
-  // ---------------------------------------------------------------------------
-  // Vaccines
-  // ---------------------------------------------------------------------------
-
-  /// Live vaccines for a diary, ordered by next due date.
-  Stream<List<HealthDiaryVaccineModel>> watchVaccinesForDiary(
+  /// Vaccines
+  Stream<List<HealthDiaryVaccineModel>> getVaccinesForDiary(
     String healthDiaryId,
   ) {
     return _isar.healthDiaryVaccineCaches
@@ -70,7 +60,6 @@ class HealthRepository {
   }
 
   /// Returns vaccines whose [HealthDiaryVaccineModel.nextDate] is in the future
-  /// for [petId]. Used by the home alerts widget.
   Future<List<HealthDiaryVaccineModel>> getUpcomingVaccinesForPet(
     String petId,
   ) async {
@@ -87,7 +76,6 @@ class HealthRepository {
     return rows.map((c) => c.toModel()).toList();
   }
 
-  /// Inserts a new vaccine entry.
   Future<void> addVaccine(HealthDiaryVaccineModel vaccine) async {
     try {
       await _supabase.from('health_diary_vaccines').insert(vaccine.toJson());
@@ -104,7 +92,6 @@ class HealthRepository {
     });
   }
 
-  /// Updates an existing vaccine entry.
   Future<void> updateVaccine(HealthDiaryVaccineModel vaccine) async {
     try {
       await _supabase
@@ -124,7 +111,6 @@ class HealthRepository {
     });
   }
 
-  /// Removes a vaccine entry.
   Future<void> deleteVaccine(String healthDiaryVaccineId) async {
     try {
       await _supabase
@@ -143,31 +129,19 @@ class HealthRepository {
     });
   }
 
-  // ---------------------------------------------------------------------------
-  // Weight logs
-  // ---------------------------------------------------------------------------
-
-  /// Live weight history for [petId] within [window] (default 6 months),
-  /// oldest first — ready for a chart.
-  Stream<List<HealthDiaryWeightLogModel>> watchWeightLogsForPet(
-    String petId, {
-    Duration window = const Duration(days: 180),
-  }) {
-    final since = DateTime.now().subtract(window);
+  /// Weight logs
+  Stream<List<HealthDiaryWeightLogModel>> getWeightLogsForPet(String petId) {
     return _isar.weightLogCaches
         .filter()
         .petIdEqualTo(petId)
-        .and()
-        .loggedAtGreaterThan(since)
         .sortByLoggedAt()
         .watch(fireImmediately: true)
         .map((rows) => rows.map((c) => c.toModel()).toList());
   }
 
-  /// Inserts a new weight measurement.
   Future<void> addWeightLog(HealthDiaryWeightLogModel log) async {
     try {
-      await _supabase.from('weight_logs').insert(log.toJson());
+      await _supabase.from('health_diary_weight_log').insert(log.toJson());
     } catch (_) {
       throw const RepositoryNetworkException(
         'Une connexion internet est requise pour ajouter un poids.',
@@ -181,11 +155,10 @@ class HealthRepository {
     });
   }
 
-  /// Removes a weight measurement.
   Future<void> deleteWeightLog(String healthDiaryWeightLogId) async {
     try {
       await _supabase
-          .from('weight_logs')
+          .from('health_diary_weight_log')
           .delete()
           .eq('id_health_diary_weight_log', healthDiaryWeightLogId);
     } catch (_) {
@@ -197,6 +170,66 @@ class HealthRepository {
     await _isar.writeTxn(() async {
       await _isar.weightLogCaches
           .deleteByHealthDiaryWeightLogId(healthDiaryWeightLogId);
+    });
+  }
+
+  /// Vet visits
+  Stream<List<VetVisitModel>> getVetVisitsForPet(String petId) {
+    return _isar.vetVisitCaches
+        .filter()
+        .petIdEqualTo(petId)
+        .sortByVisitedAtDesc()
+        .watch(fireImmediately: true)
+        .map((rows) => rows.map((c) => c.toModel()).toList());
+  }
+
+  Future<void> addVetVisit(VetVisitModel visit) async {
+    try {
+      await _supabase.from('vet_visits').insert(visit.toJson());
+    } catch (_) {
+      throw const RepositoryNetworkException(
+        'Une connexion internet est requise pour ajouter une visite vétérinaire.',
+      );
+    }
+
+    await _isar.writeTxn(() async {
+      await _isar.vetVisitCaches
+          .putByVetVisitId(VetVisitCache.fromModel(visit));
+    });
+  }
+
+  Future<void> updateVetVisit(VetVisitModel visit) async {
+    try {
+      await _supabase
+          .from('vet_visits')
+          .update(visit.toJson())
+          .eq('id_vet_visit', visit.vetVisitId);
+    } catch (_) {
+      throw const RepositoryNetworkException(
+        'Une connexion internet est requise pour modifier une visite vétérinaire.',
+      );
+    }
+
+    await _isar.writeTxn(() async {
+      await _isar.vetVisitCaches
+          .putByVetVisitId(VetVisitCache.fromModel(visit));
+    });
+  }
+
+  Future<void> deleteVetVisit(String vetVisitId) async {
+    try {
+      await _supabase
+          .from('vet_visits')
+          .delete()
+          .eq('id_vet_visit', vetVisitId);
+    } catch (_) {
+      throw const RepositoryNetworkException(
+        'Une connexion internet est requise pour supprimer une visite vétérinaire.',
+      );
+    }
+
+    await _isar.writeTxn(() async {
+      await _isar.vetVisitCaches.deleteByVetVisitId(vetVisitId);
     });
   }
 }

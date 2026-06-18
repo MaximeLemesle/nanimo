@@ -1,11 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_vaccine_cache.dart';
+import 'package:nanimo/core/isar/cache/schemas/vet_visit_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/weight_log_cache.dart';
 import 'package:nanimo/features/health/data/health_repository.dart';
 import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/health/data/models/health_diary_vaccine_model.dart';
 import 'package:nanimo/features/health/data/models/health_diary_weight_log_model.dart';
+import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
 
 import '../../../helpers/isar_test_helper.dart';
 import '../../../helpers/supabase_mocks.dart';
@@ -51,13 +53,32 @@ HealthDiaryWeightLogModel buildWeightLog(
   );
 }
 
+VetVisitModel buildVisit(
+  String id, {
+  String petId = 'pet-1',
+  DateTime? visitedAt,
+}) {
+  return VetVisitModel(
+    vetVisitId: id,
+    title: 'Bilan annuel',
+    visitedAt: visitedAt ?? DateTime.utc(2026, 1, 14),
+    vetName: 'Dr.Martin',
+    clinicName: 'Clinique des Pins',
+    petId: petId,
+  );
+}
+
 void main() {
+  setUpAll(registerSupabaseFallbacks);
+
   final harness = IsarTestHarness();
   late HealthRepository repo;
+  late MockSupabaseClient supabase;
 
   setUp(() async {
     await harness.setUp();
-    repo = HealthRepository(MockSupabaseClient(), harness.isar);
+    supabase = MockSupabaseClient();
+    repo = HealthRepository(supabase, harness.isar);
   });
 
   tearDown(() async {
@@ -82,6 +103,13 @@ void main() {
     await harness.isar.writeTxn(() async {
       await harness.isar.weightLogCaches
           .putByHealthDiaryWeightLogId(WeightLogCache.fromModel(m));
+    });
+  }
+
+  Future<void> seedVisit(VetVisitModel m) async {
+    await harness.isar.writeTxn(() async {
+      await harness.isar.vetVisitCaches
+          .putByVetVisitId(VetVisitCache.fromModel(m));
     });
   }
 
@@ -116,7 +144,7 @@ void main() {
 
   group('watchVaccinesForDiary', () {
     test('emits empty when nothing is cached', () async {
-      final emission = await repo.watchVaccinesForDiary('d1').first;
+      final emission = await repo.getVaccinesForDiary('d1').first;
       expect(emission, isEmpty);
     });
 
@@ -132,7 +160,7 @@ void main() {
         nextDate: DateTime.utc(2026, 1, 1),
       ));
 
-      final emission = await repo.watchVaccinesForDiary('d1').first;
+      final emission = await repo.getVaccinesForDiary('d1').first;
       expect(
         emission.map((v) => v.healthDiaryVaccineId).toList(),
         ['v1', 'v2'],
@@ -172,9 +200,9 @@ void main() {
     });
   });
 
-  group('watchWeightLogsForPet', () {
+  group('getWeightLogsForPet', () {
     test('emits empty when no log exists for the pet', () async {
-      final emission = await repo.watchWeightLogsForPet('pet-1').first;
+      final emission = await repo.getWeightLogsForPet('pet-1').first;
       expect(emission, isEmpty);
     });
 
@@ -193,11 +221,58 @@ void main() {
       ));
       await seedWeight(buildWeightLog('w-other', petId: 'pet-2'));
 
-      final emission = await repo.watchWeightLogsForPet('pet-1').first;
+      final emission = await repo.getWeightLogsForPet('pet-1').first;
       expect(
         emission.map((l) => l.healthDiaryWeightLogId).toList(),
         ['w-old', 'w-new'],
       );
+    });
+  });
+
+  group('getVetVisitsForPet', () {
+    test('emits empty when no visit exists for the pet', () async {
+      final emission = await repo.getVetVisitsForPet('pet-1').first;
+      expect(emission, isEmpty);
+    });
+
+    test('emits the pet visits, most recent first', () async {
+      await seedVisit(buildVisit('old', visitedAt: DateTime.utc(2025, 1, 1)));
+      await seedVisit(buildVisit('new', visitedAt: DateTime.utc(2026, 1, 1)));
+      await seedVisit(buildVisit('other', petId: 'pet-2'));
+
+      final emission = await repo.getVetVisitsForPet('pet-1').first;
+      expect(emission.map((v) => v.vetVisitId).toList(), ['new', 'old']);
+    });
+  });
+
+  group('addVetVisit', () {
+    test('inserts in Supabase and caches the visit', () async {
+      stubInsert(supabase, 'vet_visits', resolver: () => null);
+
+      await repo.addVetVisit(buildVisit('v1'));
+
+      final cached = await harness.isar.vetVisitCaches.getByVetVisitId('v1');
+      expect(cached, isNotNull);
+      expect(cached!.title, 'Bilan annuel');
+    });
+
+    test('throws and does not cache when Supabase fails', () async {
+      stubInsert(supabase, 'vet_visits',
+          resolver: () => throw Exception('offline'));
+
+      await expectLater(repo.addVetVisit(buildVisit('v1')), throwsException);
+      expect(await harness.isar.vetVisitCaches.getByVetVisitId('v1'), isNull);
+    });
+  });
+
+  group('deleteVetVisit', () {
+    test('removes the visit from cache', () async {
+      await seedVisit(buildVisit('v1'));
+      stubDelete(supabase, 'vet_visits', resolver: () => null);
+
+      await repo.deleteVetVisit('v1');
+
+      expect(await harness.isar.vetVisitCaches.getByVetVisitId('v1'), isNull);
     });
   });
 }

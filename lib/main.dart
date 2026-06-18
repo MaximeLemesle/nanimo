@@ -9,10 +9,12 @@ import 'package:nanimo/core/isar/database/sync_service.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:nanimo/features/health/data/health_repository.dart';
 import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
 import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
+import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/subscription/data/subscription_repository.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -52,6 +54,7 @@ void main() async {
   final subscriptionRepository = SubscriptionRepository(supabase, isar);
   final referentialRepository = ReferentialRepository(supabase);
   final petRepository = PetRepository(supabase, isar);
+  final healthRepository = HealthRepository(supabase, isar);
 
   final authCubit = AuthCubit(
     repository: authRepository,
@@ -78,12 +81,19 @@ void main() async {
     referentialRepository: referentialRepository,
   );
 
+  final petDetailsCubit = PetDetailsCubit(
+    petRepository: petRepository,
+    healthRepository: healthRepository,
+    referentialRepository: referentialRepository,
+  );
+
   runApp(MyApp(
     authCubit: authCubit,
     subscriptionCubit: subscriptionCubit,
     onboardingCubit: onboardingCubit,
     petCreationCubit: petCreationCubit,
     homeCubit: homeCubit,
+    petDetailsCubit: petDetailsCubit,
   ));
 }
 
@@ -93,6 +103,7 @@ class MyApp extends StatelessWidget {
   final OnboardingCubit onboardingCubit;
   final PetCreationCubit petCreationCubit;
   final HomeCubit homeCubit;
+  final PetDetailsCubit petDetailsCubit;
   const MyApp({
     super.key,
     required this.authCubit,
@@ -100,6 +111,7 @@ class MyApp extends StatelessWidget {
     required this.onboardingCubit,
     required this.petCreationCubit,
     required this.homeCubit,
+    required this.petDetailsCubit,
   });
 
   @override
@@ -111,6 +123,7 @@ class MyApp extends StatelessWidget {
         BlocProvider.value(value: subscriptionCubit),
         BlocProvider.value(value: petCreationCubit),
         BlocProvider.value(value: homeCubit),
+        BlocProvider.value(value: petDetailsCubit),
       ],
       child: MaterialApp.router(
         title: 'Nanimo',

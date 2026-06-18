@@ -23,10 +23,10 @@ class WeightLogCache {
   /// Maps a Supabase [json] row to a [WeightLogCache] instance
   factory WeightLogCache.fromJson(Map<String, dynamic> json) {
     return WeightLogCache()
-      ..healthDiaryWeightLogId = json['id_weight_log'] as String
+      ..healthDiaryWeightLogId = json['id_health_diary_weight_log'] as String
       ..weight = (json['weight'] as num).toDouble()
       ..loggedAt = DateTime.parse(json['logged_at'] as String)
-      ..petId = json['id_pet'] as String;
+      ..petId = json['pet_id'] as String;
   }
 
   /// Builds a [WeightLogCache] from a [HealthDiaryWeightLogModel]

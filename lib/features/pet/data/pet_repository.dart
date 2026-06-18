@@ -28,7 +28,7 @@ class PetRepository {
 
   Future<List<PetModel>> getPets() async {
     final rows = await _isar.petCaches.where().sortByCreatedAt().findAll();
-    return rows.map((c) => c.toModel()).toList();
+    return rows.map((cache) => cache.toModel()).toList();
   }
 
   Future<PetModel?> getPetById(String petId) async {
@@ -63,8 +63,8 @@ class PetRepository {
   ) async {
     try {
       await _supabase.from(table).insert(values);
-    } on PostgrestException catch (e) {
-      if (e.code == '23505') return;
+    } on PostgrestException catch (err) {
+      if (err.code == '23505') return;
       rethrow;
     }
   }

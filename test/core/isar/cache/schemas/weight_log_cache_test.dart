@@ -5,10 +5,10 @@ void main() {
   group('WeightLogCache.fromJson', () {
     test('maps all fields correctly', () {
       final json = {
-        'id_weight_log': 'wl-uuid',
+        'id_health_diary_weight_log': 'wl-uuid',
         'weight': 5.2,
         'logged_at': '2024-06-15T09:30:00.000Z',
-        'id_pet': 'pet-uuid',
+        'pet_id': 'pet-uuid',
       };
 
       final cache = WeightLogCache.fromJson(json);
@@ -21,10 +21,10 @@ void main() {
 
     test('casts weight from int to double when Supabase returns int', () {
       final json = {
-        'id_weight_log': 'wl-uuid',
+        'id_health_diary_weight_log': 'wl-uuid',
         'weight': 5,
         'logged_at': '2024-06-15T09:30:00.000Z',
-        'id_pet': 'pet-uuid',
+        'pet_id': 'pet-uuid',
       };
 
       final cache = WeightLogCache.fromJson(json);

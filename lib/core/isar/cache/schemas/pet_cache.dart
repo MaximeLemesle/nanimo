@@ -28,8 +28,8 @@ class PetCache {
           ? DateTime.parse(json['birthdate'] as String)
           : null
       ..gender = json['gender'] as String
-      ..petRaceId = json['id_race'] as String?
-      ..petSpeciesId = json['id_species'] as String?
+      ..petRaceId = json['pet_race_id'] as String?
+      ..petSpeciesId = json['pet_species_id'] as String?
       ..createdAt = DateTime.parse(json['created_at'] as String);
   }
 

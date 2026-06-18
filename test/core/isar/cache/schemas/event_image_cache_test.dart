@@ -7,7 +7,7 @@ void main() {
       final json = {
         'id_event_image': 'img-uuid',
         'asset_path': 'journal-media/image.jpg',
-        'id_event': 'event-uuid',
+        'event_id': 'event-uuid',
       };
 
       final cache = EventImageCache.fromJson(json);
