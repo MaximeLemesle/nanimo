@@ -168,12 +168,14 @@ void main() {
     final cubit = createCubit();
     await settle();
 
-    await cubit.addWeightLog(4.5);
+    final loggedAt = DateTime(2026, 6, 21);
+    await cubit.addWeightLog(4.5, loggedAt);
 
     final captured = verify(() => healthRepo.addWeightLog(captureAny()))
         .captured
         .single as HealthDiaryWeightLogModel;
     expect(captured.weight, 4.5);
+    expect(captured.loggedAt, loggedAt);
     expect(captured.petId, 'p1');
 
     await cubit.close();
@@ -184,7 +186,7 @@ void main() {
     final cubit = createCubit();
     await settle();
 
-    await cubit.addWeightLog(4.5);
+    await cubit.addWeightLog(4.5, DateTime(2026, 6, 21));
     expect(cubit.state.error, isNotNull);
 
     cubit.clearError();

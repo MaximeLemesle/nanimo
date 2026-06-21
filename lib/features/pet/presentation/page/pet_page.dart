@@ -7,12 +7,12 @@ import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/utils/date_formatter.dart';
+import 'package:nanimo/core/utils/gender_formatter.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
-import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
-import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_card_item_widget.dart';
-import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_card_widget.dart';
-import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_health_card_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card_widget/pet_card_item_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card_widget/pet_card_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_health_info_card_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_park_header_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_weight_card_widget.dart';
 
@@ -114,7 +114,7 @@ class _PetPageState extends State<PetPage> {
                           ),
                           PetCardItemWidget(
                             label: 'Genre',
-                            value: _genderLabel(pet.gender),
+                            value: GenderFormatter.label(pet.gender),
                           ),
                           PetCardItemWidget(
                             label: 'Poids',
@@ -128,13 +128,13 @@ class _PetPageState extends State<PetPage> {
                       /// Weight tracker card
                       PetWeightCardWidget(
                         logs: state.weightLogs,
-                        onWeightSubmitted: (weight) => context
+                        onWeightSubmitted: (weight, loggedAt) => context
                             .read<PetDetailsCubit>()
-                            .addWeightLog(weight),
+                            .addWeightLog(weight, loggedAt),
                       ),
 
                       /// Health info card
-                      PetHealthCardWidget(
+                      PetHealthInfoCardWidget(
                         diary: state.diary,
                         onFillPressed: () =>
                             context.push(RouteNames.healthDiary),
@@ -195,16 +195,5 @@ class _PetPageState extends State<PetPage> {
         );
       },
     );
-  }
-
-  String _genderLabel(Gender gender) {
-    switch (gender) {
-      case Gender.male:
-        return 'Mâle';
-      case Gender.female:
-        return 'Femelle';
-      case Gender.unknown:
-        return 'Inconnu';
-    }
   }
 }

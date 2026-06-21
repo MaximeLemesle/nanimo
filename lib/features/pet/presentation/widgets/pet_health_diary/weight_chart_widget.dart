@@ -4,6 +4,7 @@ import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/utils/date_formatter.dart';
+import 'package:nanimo/core/utils/weight_formatter.dart';
 import 'package:nanimo/features/health/data/models/health_diary_weight_log_model.dart';
 
 class WeightChartWidget extends StatelessWidget {
@@ -54,7 +55,7 @@ class WeightChartWidget extends StatelessWidget {
                   ? DateFormatter.date(logs[index].loggedAt)
                   : '';
               return LineTooltipItem(
-                _formatWeight(spot.y),
+                WeightFormatter.label(spot.y),
                 AppTextStyles.textSmallBold
                     .copyWith(color: AppColors.textInvert),
                 children: [
@@ -87,7 +88,4 @@ class WeightChartWidget extends StatelessWidget {
       ),
     );
   }
-
-  String _formatWeight(double weight) =>
-      '${weight.toStringAsFixed(1).replaceAll('.', ',')} kg';
 }

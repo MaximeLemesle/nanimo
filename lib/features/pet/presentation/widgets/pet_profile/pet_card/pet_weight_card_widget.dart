@@ -10,7 +10,7 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/up
 
 class PetWeightCardWidget extends StatelessWidget {
   final List<HealthDiaryWeightLogModel> logs;
-  final ValueChanged<double> onWeightSubmitted;
+  final WeightSubmit onWeightSubmitted;
 
   const PetWeightCardWidget({
     super.key,

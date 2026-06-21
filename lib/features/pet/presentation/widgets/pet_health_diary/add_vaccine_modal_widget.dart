@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_radius.dart';
@@ -7,14 +8,12 @@ import 'package:nanimo/core/utils/date_formatter.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/features/health/data/models/health_diary_vaccine_model.dart';
 
-/// Callback carrying a vaccine entry (add or edit).
 typedef VaccineSubmit = void Function({
   required String vaccineName,
   required DateTime lastDate,
   required DateTime nextDate,
 });
 
-/// Bottom sheet to add or edit a vaccine (name + last/next dates).
 class AddVaccineModalWidget extends StatefulWidget {
   final VaccineSubmit onSubmit;
   final HealthDiaryVaccineModel? initial;
@@ -54,15 +53,29 @@ class _AddVaccineModalWidgetState extends State<AddVaccineModalWidget> {
     super.dispose();
   }
 
-  Future<void> _pickDate(ValueChanged<DateTime> onPicked) async {
+  Future<void> _pickDate(DateTime? current, ValueChanged<DateTime> onPicked) async {
     final now = DateTime.now();
-    final picked = await showDatePicker(
+    var picked = current ?? now;
+
+    await showModalBottomSheet<void>(
       context: context,
-      initialDate: now,
-      firstDate: DateTime(now.year - 30),
-      lastDate: DateTime(now.year + 30),
+      builder: (context) {
+        return SizedBox(
+          height: 350,
+          width: double.infinity,
+          child: CupertinoDatePicker(
+            mode: CupertinoDatePickerMode.date,
+            dateOrder: DatePickerDateOrder.dmy,
+            initialDateTime: picked,
+            minimumDate: DateTime(now.year - 30),
+            maximumDate: DateTime(now.year + 30),
+            onDateTimeChanged: (date) => picked = date,
+          ),
+        );
+      },
     );
-    if (!mounted || picked == null) return;
+
+    if (!mounted) return;
     setState(() => onPicked(picked));
   }
 
@@ -112,13 +125,13 @@ class _AddVaccineModalWidgetState extends State<AddVaccineModalWidget> {
           _buildDateField(
             label: 'Dernier rappel',
             value: _lastDate,
-            onTap: () => _pickDate((d) => _lastDate = d),
+            onTap: () => _pickDate(_lastDate, (d) => _lastDate = d),
           ),
           const SizedBox(height: AppSpacing.sm),
           _buildDateField(
             label: 'Prochain rappel',
             value: _nextDate,
-            onTap: () => _pickDate((d) => _nextDate = d),
+            onTap: () => _pickDate(_nextDate, (d) => _nextDate = d),
           ),
           const SizedBox(height: AppSpacing.lg),
           ButtonWidget(

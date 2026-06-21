@@ -4,10 +4,8 @@ import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 
-/// Status of a vaccine derived from its next due date.
 enum VaccineStatus { done, soon, overdue }
 
-/// Computes the [VaccineStatus] for a vaccine due on [nextDate].
 VaccineStatus vaccineStatusFor(DateTime nextDate, {DateTime? now}) {
   final reference = now ?? DateTime.now();
   final days = nextDate.difference(reference).inDays;
@@ -16,7 +14,6 @@ VaccineStatus vaccineStatusFor(DateTime nextDate, {DateTime? now}) {
   return VaccineStatus.done;
 }
 
-/// Coloured pill showing a vaccine's status (« Terminé », « Dans N j », « Pas fait »).
 class VaccineStatusBadgeWidget extends StatelessWidget {
   final DateTime nextDate;
 
@@ -51,13 +48,15 @@ class VaccineStatusBadgeWidget extends StatelessWidget {
         horizontal: AppSpacing.md,
         vertical: AppSpacing.sm,
       ),
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(AppRadius.full),
+        shape: ContinuousRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg * 2),
+        ),
       ),
       child: Text(
         label,
-        style: AppTextStyles.textSmallBold.copyWith(color: foreground),
+        style: AppTextStyles.textSmall.copyWith(color: foreground),
       ),
     );
   }

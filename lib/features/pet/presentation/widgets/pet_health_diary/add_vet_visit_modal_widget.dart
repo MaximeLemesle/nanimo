@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_radius.dart';
@@ -43,13 +44,27 @@ class _AddVetVisitModalWidgetState extends State<AddVetVisitModalWidget> {
 
   Future<void> _pickDate() async {
     final now = DateTime.now();
-    final picked = await showDatePicker(
+    var picked = _visitedAt ?? now;
+
+    await showModalBottomSheet<void>(
       context: context,
-      initialDate: now,
-      firstDate: DateTime(now.year - 30),
-      lastDate: now,
+      builder: (context) {
+        return SizedBox(
+          height: 350,
+          width: double.infinity,
+          child: CupertinoDatePicker(
+            mode: CupertinoDatePickerMode.date,
+            dateOrder: DatePickerDateOrder.dmy,
+            initialDateTime: picked,
+            minimumDate: DateTime(now.year - 30),
+            maximumDate: now,
+            onDateTimeChanged: (date) => picked = date,
+          ),
+        );
+      },
     );
-    if (!mounted || picked == null) return;
+
+    if (!mounted) return;
     setState(() => _visitedAt = picked);
   }
 

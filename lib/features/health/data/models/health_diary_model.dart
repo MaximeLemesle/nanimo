@@ -35,8 +35,8 @@ class HealthDiaryModel {
 
   Map<String, dynamic> toJson() => {
         'id_health_diary': healthDiaryId,
-        'is_sterilized': isSterilized,
-        'is_chipped': isChipped,
+        'is_sterilized': isSterilized ?? false,
+        'is_chipped': isChipped ?? false,
         'chip_number': chipNumber,
         'last_deworming_at': lastDeworming?.toIso8601String(),
         'last_vet_appointment': lastVetAppointment?.toIso8601String(),

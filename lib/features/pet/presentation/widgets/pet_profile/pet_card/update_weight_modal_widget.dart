@@ -1,13 +1,17 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
+import 'package:nanimo/core/utils/date_formatter.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 
+typedef WeightSubmit = void Function(double weight, DateTime loggedAt);
+
 class UpdateWeightModalWidget extends StatefulWidget {
-  final ValueChanged<double> onSubmit;
+  final WeightSubmit onSubmit;
 
   const UpdateWeightModalWidget({super.key, required this.onSubmit});
 
@@ -18,6 +22,7 @@ class UpdateWeightModalWidget extends StatefulWidget {
 
 class _UpdateWeightModalWidgetState extends State<UpdateWeightModalWidget> {
   final TextEditingController _controller = TextEditingController();
+  DateTime _loggedAt = DateTime.now();
   bool _isValid = false;
 
   @override
@@ -36,10 +41,36 @@ class _UpdateWeightModalWidgetState extends State<UpdateWeightModalWidget> {
     setState(() => _isValid = _parse(raw) != null);
   }
 
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    var picked = _loggedAt;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (context) {
+        return SizedBox(
+          height: 350,
+          width: double.infinity,
+          child: CupertinoDatePicker(
+            mode: CupertinoDatePickerMode.date,
+            dateOrder: DatePickerDateOrder.dmy,
+            initialDateTime: picked,
+            minimumDate: DateTime(now.year - 30),
+            maximumDate: now,
+            onDateTimeChanged: (date) => picked = date,
+          ),
+        );
+      },
+    );
+
+    if (!mounted) return;
+    setState(() => _loggedAt = picked);
+  }
+
   void _submit() {
     final value = _parse(_controller.text);
     if (value == null) return;
-    widget.onSubmit(value);
+    widget.onSubmit(value, _loggedAt);
     Navigator.of(context).pop();
   }
 
@@ -61,8 +92,7 @@ class _UpdateWeightModalWidgetState extends State<UpdateWeightModalWidget> {
           TextField(
             controller: _controller,
             autofocus: true,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
             ],
@@ -78,6 +108,28 @@ class _UpdateWeightModalWidgetState extends State<UpdateWeightModalWidget> {
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
                 borderSide: const BorderSide(color: AppColors.backgroundStroke),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          InkWell(
+            onTap: _pickDate,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            child: InputDecorator(
+              decoration: InputDecoration(
+                labelText: 'Date de la pesée',
+                filled: true,
+                fillColor: AppColors.background,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderSide:
+                      const BorderSide(color: AppColors.backgroundStroke),
+                ),
+              ),
+              child: Text(
+                DateFormatter.date(_loggedAt),
+                style:
+                    AppTextStyles.text.copyWith(color: AppColors.textPrimary),
               ),
             ),
           ),
