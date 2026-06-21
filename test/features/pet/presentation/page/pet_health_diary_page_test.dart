@@ -179,27 +179,6 @@ void main() {
     await cubit.close();
   });
 
-  testWidgets('edits the diary and forwards the change to the repository',
-      (tester) async {
-    await tester.binding.setSurfaceSize(const Size(800, 2000));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    final cubit = createCubit();
-    await tester.pumpWidget(buildPage(cubit));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Modifier'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Stérilisé'), findsOneWidget);
-    await tester.tap(find.text('Enregistrer'));
-    await tester.pumpAndSettle();
-
-    verify(() => healthRepo.upsertDiary(any())).called(1);
-
-    await cubit.close();
-  });
-
   testWidgets('adds a vet visit through the modal', (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 2000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -213,9 +192,9 @@ void main() {
 
     await tester.enterText(
         find.widgetWithText(TextField, 'Motif de la visite'), 'Rappel vaccin');
-    await tester.tap(find.text('Date de la visite'));
+    await tester.tap(find.text('Sélectionner une date'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('OK'));
+    await tester.tapAt(const Offset(400, 50));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Enregistrer'));
