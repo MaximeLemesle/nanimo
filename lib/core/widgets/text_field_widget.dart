@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
@@ -7,8 +8,10 @@ class TextFieldWidget extends StatefulWidget {
   final TextEditingController controller;
   final String? label;
   final String? hint;
+  final String? suffixText;
   final String? Function(String?)? validator;
   final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
   final bool obscureText;
   final ValueChanged<String>? onChanged;
   final TextInputAction? textInputAction;
@@ -18,8 +21,10 @@ class TextFieldWidget extends StatefulWidget {
     required this.controller,
     required this.label,
     this.hint,
+    this.suffixText,
     this.validator,
     this.keyboardType,
+    this.inputFormatters,
     this.obscureText = false,
     this.onChanged,
     this.textInputAction,
@@ -48,11 +53,14 @@ class _TextFieldWidgetState extends State<TextFieldWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.label!, style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: AppSpacing.xs),
+        if (widget.label != null) ...[
+          Text(widget.label!, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: AppSpacing.xs),
+        ],
         TextFormField(
           controller: widget.controller,
           keyboardType: widget.keyboardType,
+          inputFormatters: widget.inputFormatters,
           obscureText: _obscured,
           onChanged: widget.onChanged,
           validator: widget.validator,
@@ -60,6 +68,7 @@ class _TextFieldWidgetState extends State<TextFieldWidget> {
           style: Theme.of(context).textTheme.bodyLarge,
           decoration: InputDecoration(
             hintText: widget.hint,
+            suffixText: widget.suffixText,
             hintStyle: Theme.of(context)
                 .textTheme
                 .bodyLarge

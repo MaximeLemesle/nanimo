@@ -1,3 +1,5 @@
+import 'package:nanimo/core/utils/weight_formatter.dart';
+
 enum WeightUnit { kg, g }
 
 class PetSpeciesModel {
@@ -17,7 +19,7 @@ class PetSpeciesModel {
     return PetSpeciesModel(
       petSpeciesId: json['id_pet_species'],
       speciesName: json['species_name'],
-      weightUnit: _parseWeightUnit(json['weight_unit']),
+      weightUnit: WeightFormatter.parseWeightUnit(json['weight_unit']),
       iconKey: json['icon_key'],
     );
   }
@@ -28,16 +30,6 @@ class PetSpeciesModel {
         'weight_unit': _weightUnitToString(weightUnit),
         'icon_key': iconKey,
       };
-}
-
-WeightUnit _parseWeightUnit(String value) {
-  switch (value) {
-    case 'g':
-      return WeightUnit.g;
-    case 'kg':
-    default:
-      return WeightUnit.kg;
-  }
 }
 
 String _weightUnitToString(WeightUnit unit) {

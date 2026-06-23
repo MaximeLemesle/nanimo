@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:nanimo/config/theme/app_colors.dart';
-import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/core/utils/date_formatter.dart';
+import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
-import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/add_vet_visit_modal_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/add_vet_visit_bottom_sheet_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card_widget/pet_diary_card_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card_widget/pet_diary_table_widget.dart';
 
@@ -45,31 +44,23 @@ class PetVetVisitDiaryCardWidget extends StatelessWidget {
           iconPosition: ButtonIcon.left,
           fullWidth: true,
           onPressed: () {
-            showModalBottomSheet<void>(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: AppColors.backgroundSurface,
-              shape: const RoundedRectangleBorder(
-                borderRadius:
-                    BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+            BottomSheetWidget.show<void>(
+              context,
+              AddVetVisitBottomSheetWidget(
+                onSubmit: ({
+                  required String title,
+                  required DateTime visitedAt,
+                  String? vetName,
+                  String? clinicName,
+                }) {
+                  context.read<PetDetailsCubit>().addVetVisit(
+                        title: title,
+                        visitedAt: visitedAt,
+                        vetName: vetName,
+                        clinicName: clinicName,
+                      );
+                },
               ),
-              builder: (_) {
-                return AddVetVisitModalWidget(
-                  onSubmit: ({
-                    required String title,
-                    required DateTime visitedAt,
-                    String? vetName,
-                    String? clinicName,
-                  }) {
-                    context.read<PetDetailsCubit>().addVetVisit(
-                          title: title,
-                          visitedAt: visitedAt,
-                          vetName: vetName,
-                          clinicName: clinicName,
-                        );
-                  },
-                );
-              },
             );
           },
         ),

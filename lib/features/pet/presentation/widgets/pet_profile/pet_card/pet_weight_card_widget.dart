@@ -3,10 +3,11 @@ import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
+import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/features/health/data/models/health_diary_weight_log_model.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/weight_chart_widget.dart';
-import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/update_weight_modal_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_bottom_sheet/add_weight_bottom_sheet_widget.dart';
 
 class PetWeightCardWidget extends StatelessWidget {
   final List<HealthDiaryWeightLogModel> logs;
@@ -46,16 +47,9 @@ class PetWeightCardWidget extends StatelessWidget {
             iconPosition: ButtonIcon.right,
             fullWidth: true,
             onPressed: () {
-              showModalBottomSheet<void>(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: AppColors.backgroundSurface,
-                shape: const RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
-                ),
-                builder: (_) =>
-                    UpdateWeightModalWidget(onSubmit: onWeightSubmitted),
+              BottomSheetWidget.show<void>(
+                context,
+                AddWeightBottomSheetWidget(onSubmit: onWeightSubmitted),
               );
             },
           ),

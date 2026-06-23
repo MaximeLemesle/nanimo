@@ -137,7 +137,8 @@ void main() {
         referentialRepository: refRepo,
       );
 
-  Future<void> settle() => Future<void>.delayed(const Duration(milliseconds: 20));
+  Future<void> settle() =>
+      Future<void>.delayed(const Duration(milliseconds: 20));
 
   test('selects the first pet by default and loads its details', () async {
     final cubit = createCubit();
@@ -258,5 +259,99 @@ void main() {
     expect(captured.petId, 'p1');
 
     await cubit.close();
+  });
+
+  test('createHealthDiary persists diary, weight, vaccine and visit',
+      () async {
+    final cubit = createCubit();
+    await settle();
+
+    await cubit.createHealthDiary(
+      birthWeight: 0.3,
+      birthWeightDate: DateTime(2024, 1, 1),
+      isSterilized: false,
+      isChipped: true,
+      chipNumber: '250269',
+      lastDeworming: DateTime(2026, 3, 1),
+      vaccines: [
+        (
+          name: 'Typhus félin',
+          lastDate: DateTime(2025, 1, 1),
+          nextDate: DateTime(2026, 1, 1),
+          recurrence: 365,
+        ),
+      ],
+      vetVisits: [
+        (
+          title: 'Première visite',
+          visitedAt: DateTime(2024, 2, 1),
+          vetName: 'Dr. Martin',
+          clinicName: null,
+        ),
+      ],
+    );
+
+    final diary = verify(() => healthRepo.upsertDiary(captureAny()))
+        .captured
+        .single as HealthDiaryModel;
+    expect(diary.healthDiaryId, 'd1');
+    expect(diary.isChipped, true);
+    expect(diary.chipNumber, '250269');
+    expect(diary.lastDeworming, DateTime(2026, 3, 1));
+
+    final weight = verify(() => healthRepo.addWeightLog(captureAny()))
+        .captured
+        .single as HealthDiaryWeightLogModel;
+    expect(weight.weight, 0.3);
+    expect(weight.loggedAt, DateTime(2024, 1, 1));
+
+    final vaccine = verify(() => healthRepo.addVaccine(captureAny()))
+        .captured
+        .single as HealthDiaryVaccineModel;
+    expect(vaccine.vaccineName, 'Typhus félin');
+    expect(vaccine.healthDiaryId, 'd1');
+
+    final visit = verify(() => healthRepo.addVetVisit(captureAny()))
+        .captured
+        .single as VetVisitModel;
+    expect(visit.title, 'Première visite');
+    expect(visit.petId, 'p1');
+
+    await cubit.close();
+  });
+
+  test('createHealthDiary skips the weight log when no weight given',
+      () async {
+    final cubit = createCubit();
+    await settle();
+
+    await cubit.createHealthDiary(isSterilized: true);
+
+    verify(() => healthRepo.upsertDiary(any())).called(1);
+    verifyNever(() => healthRepo.addWeightLog(any()));
+
+    await cubit.close();
+  });
+
+  group('hasHealthData', () {
+    test('is false on an empty state', () {
+      expect(const PetDetailsState().hasHealthData, isFalse);
+    });
+
+    test('is true when the diary holds information', () {
+      final state = PetDetailsState(
+        diary: HealthDiaryModel(
+          healthDiaryId: 'd1',
+          petId: 'p1',
+          isSterilized: true,
+        ),
+      );
+      expect(state.hasHealthData, isTrue);
+    });
+
+    test('is true when weight logs exist', () {
+      final state = PetDetailsState(weightLogs: _weightLogs);
+      expect(state.hasHealthData, isTrue);
+    });
   });
 }

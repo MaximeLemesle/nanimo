@@ -13,6 +13,7 @@ class PetDetailsState extends Equatable {
   final List<HealthDiaryVaccineModel> vaccines;
   final List<HealthDiaryWeightLogModel> weightLogs;
   final List<VetVisitModel> vetVisits;
+  final List<RecommendedVaccineModel> recommendedVaccines;
   final double? latestWeight;
   final String? error;
 
@@ -27,6 +28,7 @@ class PetDetailsState extends Equatable {
     this.vaccines = const [],
     this.weightLogs = const [],
     this.vetVisits = const [],
+    this.recommendedVaccines = const [],
     this.latestWeight,
     this.error,
   });
@@ -36,6 +38,19 @@ class PetDetailsState extends Equatable {
       if (pet.petId == selectedPetId) return pet;
     }
     return null;
+  }
+
+  /// Check if pet already have a diary
+  bool get hasHealthData {
+    final hasDiaryInfo = diary != null &&
+        (diary!.isSterilized != null ||
+            diary!.isChipped != null ||
+            diary!.lastDeworming != null ||
+            diary!.lastVetAppointment != null);
+    return hasDiaryInfo ||
+        vaccines.isNotEmpty ||
+        vetVisits.isNotEmpty ||
+        weightLogs.isNotEmpty;
   }
 
   static const Object _sentinel = Object();
@@ -51,6 +66,7 @@ class PetDetailsState extends Equatable {
     List<HealthDiaryVaccineModel>? vaccines,
     List<HealthDiaryWeightLogModel>? weightLogs,
     List<VetVisitModel>? vetVisits,
+    List<RecommendedVaccineModel>? recommendedVaccines,
     Object? latestWeight = _sentinel,
     Object? error = _sentinel,
   }) {
@@ -67,6 +83,7 @@ class PetDetailsState extends Equatable {
       vaccines: vaccines ?? this.vaccines,
       weightLogs: weightLogs ?? this.weightLogs,
       vetVisits: vetVisits ?? this.vetVisits,
+      recommendedVaccines: recommendedVaccines ?? this.recommendedVaccines,
       latestWeight: latestWeight == _sentinel
           ? this.latestWeight
           : latestWeight as double?,
@@ -86,6 +103,7 @@ class PetDetailsState extends Equatable {
         vaccines,
         weightLogs,
         vetVisits,
+        recommendedVaccines,
         latestWeight,
         error,
       ];

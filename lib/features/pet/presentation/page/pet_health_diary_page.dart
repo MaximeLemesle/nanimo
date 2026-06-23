@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
-import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card/pet_summary_diary_card_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card/pet_vaccine_diary_card_widget.dart';
@@ -67,14 +66,15 @@ class PetHealthDiaryPage extends StatelessWidget {
 
               const SizedBox(height: AppSpacing.lg),
 
-              ButtonWidget(
-                label: 'Exporter en PDF',
-                icon: Icons.download,
-                iconPosition: ButtonIcon.right,
-                fullWidth: true,
-                state: ButtonState.disabled,
-                onPressed: null,
-              ),
+              /// Disable for now
+              // ButtonWidget(
+              //   label: 'Exporter en PDF',
+              //   icon: Icons.download,
+              //   iconPosition: ButtonIcon.right,
+              //   fullWidth: true,
+              //   state: ButtonState.disabled,
+              //   onPressed: null,
+              // ),
             ],
           ),
         );

@@ -147,4 +147,53 @@ void main() {
 
     await cubit.close();
   });
+
+  testWidgets('shows the onboarding card when the diary is empty',
+      (tester) async {
+    when(() => healthRepo.watchDiaryForPet(any()))
+        .thenAnswer((_) => Stream.value(null));
+    when(() => healthRepo.getWeightLogsForPet(any()))
+        .thenAnswer((_) => Stream.value(const <HealthDiaryWeightLogModel>[]));
+
+    final cubit = PetDetailsCubit(
+      petRepository: petRepo,
+      healthRepository: healthRepo,
+      referentialRepository: refRepo,
+    );
+    await tester.pumpWidget(buildPage(cubit));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Identité'), findsOneWidget);
+    expect(find.text('Remplir le carnet'), findsOneWidget);
+    expect(find.text('Voir le carnet de santé'), findsNothing);
+    expect(find.text('Liste des vaccins'), findsNothing);
+
+    await cubit.close();
+  });
+
+  testWidgets('opens the onboarding modal from the empty card',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    when(() => healthRepo.watchDiaryForPet(any()))
+        .thenAnswer((_) => Stream.value(null));
+    when(() => healthRepo.getWeightLogsForPet(any()))
+        .thenAnswer((_) => Stream.value(const <HealthDiaryWeightLogModel>[]));
+
+    final cubit = PetDetailsCubit(
+      petRepository: petRepo,
+      healthRepository: healthRepo,
+      referentialRepository: refRepo,
+    );
+    await tester.pumpWidget(buildPage(cubit));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Remplir le carnet'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Création du carnet de santé'), findsOneWidget);
+
+    await cubit.close();
+  });
 }

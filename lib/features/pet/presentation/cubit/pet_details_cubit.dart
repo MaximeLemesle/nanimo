@@ -7,6 +7,7 @@ import 'package:nanimo/features/health/data/health_repository.dart';
 import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/health/data/models/health_diary_vaccine_model.dart';
 import 'package:nanimo/features/health/data/models/health_diary_weight_log_model.dart';
+import 'package:nanimo/features/health/data/models/recommended_vaccines_model.dart';
 import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
@@ -40,9 +41,8 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
   void _onPetsChanged(List<PetModel> pets) {
     final currentId = state.selectedPetId;
     final stillExists = pets.any((p) => p.petId == currentId);
-    final selectedId = stillExists
-        ? currentId
-        : (pets.isNotEmpty ? pets.first.petId : null);
+    final selectedId =
+        stillExists ? currentId : (pets.isNotEmpty ? pets.first.petId : null);
 
     emit(state.copyWith(
       status: PetDetailsStatus.loaded,
@@ -72,6 +72,83 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
         petId: petId,
       );
       await _healthRepository.addWeightLog(log);
+    } catch (err) {
+      if (isClosed) return;
+      emit(state.copyWith(error: err.toString()));
+    }
+  }
+
+  Future<void> createHealthDiary({
+    double? birthWeight,
+    DateTime? birthWeightDate,
+    bool? isSterilized,
+    bool? isChipped,
+    String? chipNumber,
+    DateTime? lastDeworming,
+    List<({String name, DateTime lastDate, DateTime nextDate, int recurrence})>
+        vaccines = const [],
+    List<
+            ({
+              String title,
+              DateTime visitedAt,
+              String? vetName,
+              String? clinicName
+            })>
+        vetVisits = const [],
+  }) async {
+    final petId = state.selectedPetId;
+    if (petId == null) return;
+    try {
+      final healthDiaryId = state.diary?.healthDiaryId ?? const Uuid().v4();
+      final diary = HealthDiaryModel(
+        healthDiaryId: healthDiaryId,
+        petId: petId,
+        isSterilized: isSterilized,
+        isChipped: isChipped,
+        chipNumber: chipNumber,
+        lastDeworming: lastDeworming,
+        lastVetAppointment: state.diary?.lastVetAppointment,
+      );
+      await _healthRepository.upsertDiary(diary);
+
+      if (birthWeight != null) {
+        await _healthRepository.addWeightLog(
+          HealthDiaryWeightLogModel(
+            healthDiaryWeightLogId: const Uuid().v4(),
+            weight: birthWeight,
+            loggedAt: birthWeightDate ?? DateTime.now(),
+            petId: petId,
+          ),
+        );
+      }
+
+      for (final vaccine in vaccines) {
+        await _healthRepository.addVaccine(
+          HealthDiaryVaccineModel(
+            healthDiaryVaccineId: const Uuid().v4(),
+            vaccineName: vaccine.name,
+            lastDate: vaccine.lastDate,
+            nextDate: vaccine.nextDate,
+            recurrence: vaccine.recurrence,
+            doseNumber: 1,
+            totalDoseNumber: 1,
+            healthDiaryId: healthDiaryId,
+          ),
+        );
+      }
+
+      for (final visit in vetVisits) {
+        await _healthRepository.addVetVisit(
+          VetVisitModel(
+            vetVisitId: const Uuid().v4(),
+            title: visit.title,
+            visitedAt: visit.visitedAt,
+            vetName: visit.vetName,
+            clinicName: visit.clinicName,
+            petId: petId,
+          ),
+        );
+      }
     } catch (err) {
       if (isClosed) return;
       emit(state.copyWith(error: err.toString()));
@@ -196,10 +273,10 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     _weightSub = _healthRepository
         .getWeightLogsForPet(petId)
         .listen(_onWeightLogsChanged);
-    _vetVisitsSub = _healthRepository
-        .getVetVisitsForPet(petId)
-        .listen(_onVetVisitsChanged);
+    _vetVisitsSub =
+        _healthRepository.getVetVisitsForPet(petId).listen(_onVetVisitsChanged);
     _loadRaceName(petId);
+    _loadRecommendedVaccines(petId);
   }
 
   void _onDiaryChanged(HealthDiaryModel? diary) {
@@ -264,6 +341,28 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     } catch (_) {
       if (isClosed) return;
       emit(state.copyWith(raceName: null));
+    }
+  }
+
+  /// Loads the recommended vaccines for the selected pet's species.
+  Future<void> _loadRecommendedVaccines(String petId) async {
+    PetModel? pet;
+    for (final petType in state.pets) {
+      if (petType.petId == petId) {
+        pet = petType;
+        break;
+      }
+    }
+    if (pet == null) return;
+
+    try {
+      final vaccines = await _referentialRepository
+          .fetchRecommendedVaccinesBySpecies(pet.petSpeciesId);
+      if (isClosed) return;
+      emit(state.copyWith(recommendedVaccines: vaccines));
+    } catch (_) {
+      if (isClosed) return;
+      emit(state.copyWith(recommendedVaccines: const []));
     }
   }
 

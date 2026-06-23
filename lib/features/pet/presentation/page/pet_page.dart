@@ -8,26 +8,19 @@ import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/utils/date_formatter.dart';
 import 'package:nanimo/core/utils/gender_formatter.dart';
+import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card_widget/pet_card_item_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card_widget/pet_card_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/create_health_diary_bottom_sheet_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_health_info_card_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_health_onboarding_card_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_park_header_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_weight_card_widget.dart';
 
-class PetPage extends StatefulWidget {
+class PetPage extends StatelessWidget {
   const PetPage({super.key});
-
-  @override
-  State<PetPage> createState() => _PetPageState();
-}
-
-class _PetPageState extends State<PetPage> {
-  bool isTyphusDone = false;
-  bool isCoryzaDone = false;
-  bool isRageDone = false;
-  bool isLeucoseDone = false;
 
   @override
   Widget build(BuildContext context) {
@@ -125,67 +118,91 @@ class _PetPageState extends State<PetPage> {
                         ],
                       ),
 
-                      /// Weight tracker card
-                      PetWeightCardWidget(
-                        logs: state.weightLogs,
-                        onWeightSubmitted: (weight, loggedAt) => context
-                            .read<PetDetailsCubit>()
-                            .addWeightLog(weight, loggedAt),
-                      ),
+                      if (!state.hasHealthData)
 
-                      /// Health info card
-                      PetHealthInfoCardWidget(
-                        diary: state.diary,
-                        onFillPressed: () =>
-                            context.push(RouteNames.healthDiary),
-                      ),
+                        /// Display onboarding card if no health data
+                        PetHealthOnboardingCardWidget(
+                          onFillPressed: () {
+                            BottomSheetWidget.show<void>(
+                              context,
+                              CreateHealthDiaryBottomSheetWidget(
+                                petName: pet.petName,
+                                birthdate: pet.birthdate,
+                                recommendedVaccines: state.recommendedVaccines,
+                                onSubmit: ({
+                                  double? birthWeight,
+                                  DateTime? birthWeightDate,
+                                  bool? isSterilized,
+                                  bool? isChipped,
+                                  String? chipNumber,
+                                  DateTime? lastDeworming,
+                                  required List<VaccineEntry> vaccines,
+                                  required List<VetVisitEntry> vetVisits,
+                                }) {
+                                  context
+                                      .read<PetDetailsCubit>()
+                                      .createHealthDiary(
+                                        birthWeight: birthWeight,
+                                        birthWeightDate: birthWeightDate,
+                                        isSterilized: isSterilized,
+                                        isChipped: isChipped,
+                                        chipNumber: chipNumber,
+                                        lastDeworming: lastDeworming,
+                                        vaccines: vaccines,
+                                        vetVisits: vetVisits,
+                                      );
+                                  context.push(RouteNames.healthDiary);
+                                },
+                              ),
+                            );
+                          },
+                        )
+                      else ...[
+                        /// Weight tracker card
+                        PetWeightCardWidget(
+                          logs: state.weightLogs,
+                          onWeightSubmitted: (weight, loggedAt) => context
+                              .read<PetDetailsCubit>()
+                              .addWeightLog(weight, loggedAt),
+                        ),
 
-                      /// Vaccines card
-                      PetCardWidget(
-                        label: 'Liste des vaccins',
-                        backgroundColor: AppColors.backgroundSecondary,
-                        isColumn: true,
-                        items: [
-                          PetCardItemWidget(
-                            label: 'Obligatoire',
-                            value: 'Typhus félin',
-                            showCheckbox: true,
-                            isChecked: isTyphusDone,
-                            onCheckChanged: (value) =>
-                                setState(() => isTyphusDone = value ?? false),
-                          ),
-                          PetCardItemWidget(
-                            label: 'Obligatoire',
-                            value: 'Coryza',
-                            showCheckbox: true,
-                            isChecked: isCoryzaDone,
-                            onCheckChanged: (value) =>
-                                setState(() => isCoryzaDone = value ?? false),
-                          ),
-                          PetCardItemWidget(
-                            label: 'Recommandé',
-                            value: 'Rage',
-                            showCheckbox: true,
-                            isChecked: isRageDone,
-                            onCheckChanged: (value) =>
-                                setState(() => isRageDone = value ?? false),
-                          ),
-                          PetCardItemWidget(
-                            label: 'Optionnel',
-                            value: 'Leucose féline',
-                            showCheckbox: true,
-                            isChecked: isLeucoseDone,
-                            onCheckChanged: (value) =>
-                                setState(() => isLeucoseDone = value ?? false),
-                          ),
-                        ],
-                      ),
+                        /// Health info card
+                        PetHealthInfoCardWidget(
+                          diary: state.diary,
+                          onFillPressed: () =>
+                              context.push(RouteNames.healthDiary),
+                        ),
 
-                      ButtonWidget(
-                        label: 'Voir le carnet de santé',
-                        fullWidth: true,
-                        onPressed: () => context.push(RouteNames.healthDiary),
-                      ),
+                        /// Vaccines card
+                        PetCardWidget(
+                          label: 'Liste des vaccins',
+                          backgroundColor: AppColors.backgroundSecondary,
+                          isColumn: true,
+                          items: state.vaccines.isEmpty
+                              ? [
+                                  PetCardItemWidget(
+                                    label:
+                                        'Aucun vaccin enregistré pour le moment',
+                                    value: '—',
+                                  )
+                                ]
+                              : state.vaccines
+                                  .map(
+                                    (vaccine) => PetCardItemWidget(
+                                      label:
+                                          'Prochain rappel : ${DateFormatter.date(vaccine.nextDate)}',
+                                      value: vaccine.vaccineName,
+                                    ),
+                                  )
+                                  .toList(),
+                        ),
+
+                        ButtonWidget(
+                          label: 'Voir le carnet de santé',
+                          fullWidth: true,
+                          onPressed: () => context.push(RouteNames.healthDiary),
+                        ),
+                      ],
                     ],
                   ),
                 ),

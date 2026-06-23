@@ -12,6 +12,7 @@ class PetCardWidget extends StatelessWidget {
   final Color backgroundColor;
   final ButtonWidget? button;
   final bool isColumn;
+  final Color? borderColor;
 
   const PetCardWidget({
     super.key,
@@ -20,6 +21,7 @@ class PetCardWidget extends StatelessWidget {
     this.backgroundColor = AppColors.backgroundPrimary,
     this.button,
     this.isColumn = false,
+    this.borderColor,
   });
 
   @override
@@ -31,6 +33,7 @@ class PetCardWidget extends StatelessWidget {
         color: backgroundColor,
         shape: ContinuousRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg * 2),
+          side: BorderSide(color: borderColor ?? Colors.transparent),
         ),
       ),
       child: Column(

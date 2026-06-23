@@ -1,5 +1,6 @@
 import 'package:nanimo/data/models/referential/pet_race_model.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
+import 'package:nanimo/features/health/data/models/recommended_vaccines_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ReferentialRepository {
@@ -33,6 +34,25 @@ class ReferentialRepository {
           .toList();
     } catch (err) {
       throw Exception('Erreur chargement des races : $err');
+    }
+  }
+
+  /// Loading recommended vaccines for a species
+  Future<List<RecommendedVaccineModel>> fetchRecommendedVaccinesBySpecies(
+    String petSpeciesId,
+  ) async {
+    try {
+      final response = await _supabase
+          .from('recommended_vaccines')
+          .select()
+          .eq('pet_species_id', petSpeciesId)
+          .order('name');
+
+      return (response as List)
+          .map((element) => RecommendedVaccineModel.fromJson(element))
+          .toList();
+    } catch (err) {
+      throw Exception('Erreur chargement des vaccins recommandés : $err');
     }
   }
 }
