@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:nanimo/core/errors/repository_network_exception.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_image_cache.dart';
 import 'package:nanimo/features/event/data/event_repository.dart';
@@ -35,10 +39,14 @@ EventImageModel buildImage(String id, {String eventId = 'e1'}) {
 void main() {
   final harness = IsarTestHarness();
   late EventRepository repo;
+  late MockSupabaseClient supabase;
+
+  setUpAll(registerSupabaseFallbacks);
 
   setUp(() async {
     await harness.setUp();
-    repo = EventRepository(MockSupabaseClient(), harness.isar);
+    supabase = MockSupabaseClient();
+    repo = EventRepository(supabase, harness.isar);
   });
 
   tearDown(() async {
@@ -116,6 +124,132 @@ void main() {
       final emission = await repo.watchImagesForEvent('e1').first;
       expect(emission, hasLength(1));
       expect(emission.first.eventImageId, 'img-1');
+    });
+  });
+
+  group('createEvent', () {
+    test('inserts the event and its pet links, then caches it', () async {
+      stubInsert(supabase, 'events', resolver: () {});
+      stubInsert(supabase, 'pets_events', resolver: () {});
+
+      await repo.createEvent(buildEvent('e1'), petIds: ['p1', 'p2']);
+
+      final cached = await repo.getEventById('e1');
+      expect(cached, isNotNull);
+      expect(cached!.eventId, 'e1');
+    });
+
+    test('skips the pet link insert when no pet is given', () async {
+      stubInsert(supabase, 'events', resolver: () {});
+
+      await repo.createEvent(buildEvent('e1'), petIds: const []);
+
+      expect(await repo.getEventById('e1'), isNotNull);
+    });
+
+    test('throws a network exception and does not cache on failure', () async {
+      stubInsert(supabase, 'events', resolver: () => throw Exception('offline'));
+
+      await expectLater(
+        repo.createEvent(buildEvent('e1'), petIds: const []),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+      expect(await repo.getEventById('e1'), isNull);
+    });
+  });
+
+  group('updateEvent', () {
+    test('updates Supabase then refreshes the cache', () async {
+      await seedEvent(buildEvent('e1', title: 'Ancien'));
+      stubUpdate(supabase, 'events', resolver: () {});
+
+      await repo.updateEvent(buildEvent('e1', title: 'Nouveau'));
+
+      expect((await repo.getEventById('e1'))!.title, 'Nouveau');
+    });
+
+    test('throws a network exception on failure', () async {
+      stubUpdate(supabase, 'events', resolver: () => throw Exception('x'));
+
+      await expectLater(
+        repo.updateEvent(buildEvent('e1')),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+    });
+  });
+
+  group('deleteEvent', () {
+    test('removes the event and its images from the cache', () async {
+      await seedEvent(buildEvent('e1'));
+      await seedImage(buildImage('img-1', eventId: 'e1'));
+      stubDelete(supabase, 'events', resolver: () {});
+
+      await repo.deleteEvent('e1');
+
+      expect(await repo.getEventById('e1'), isNull);
+      expect(await repo.watchImagesForEvent('e1').first, isEmpty);
+    });
+
+    test('throws a network exception on failure', () async {
+      stubDelete(supabase, 'events', resolver: () => throw Exception('x'));
+
+      await expectLater(
+        repo.deleteEvent('e1'),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+    });
+  });
+
+  group('addImage', () {
+    test('inserts the image then caches it', () async {
+      stubInsert(supabase, 'event_image', resolver: () {});
+
+      await repo.addImage(buildImage('img-1', eventId: 'e1'));
+
+      final emission = await repo.watchImagesForEvent('e1').first;
+      expect(emission.single.eventImageId, 'img-1');
+    });
+
+    test('throws a network exception on failure', () async {
+      stubInsert(supabase, 'event_image', resolver: () => throw Exception('x'));
+
+      await expectLater(
+        repo.addImage(buildImage('img-1')),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+    });
+  });
+
+  group('deleteImage', () {
+    test('removes the image from the cache', () async {
+      await seedImage(buildImage('img-1', eventId: 'e1'));
+      stubDelete(supabase, 'event_image', resolver: () {});
+
+      await repo.deleteImage('img-1');
+
+      expect(await repo.watchImagesForEvent('e1').first, isEmpty);
+    });
+
+    test('throws a network exception on failure', () async {
+      stubDelete(supabase, 'event_image', resolver: () => throw Exception('x'));
+
+      await expectLater(
+        repo.deleteImage('img-1'),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+    });
+  });
+
+  group('uploadEventImage', () {
+    test('throws when there is no authenticated user', () async {
+      final auth = MockGoTrueClient();
+      when(() => supabase.auth).thenReturn(auth);
+      when(() => auth.currentUser).thenReturn(null);
+
+      await expectLater(
+        repo.uploadEventImage('e1', File('photo.jpg')),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
     });
   });
 }

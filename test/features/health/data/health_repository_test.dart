@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nanimo/core/errors/repository_network_exception.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_vaccine_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/vet_visit_cache.dart';
@@ -273,6 +274,186 @@ void main() {
       await repo.deleteVetVisit('v1');
 
       expect(await harness.isar.vetVisitCaches.getByVetVisitId('v1'), isNull);
+    });
+  });
+
+  group('upsertDiary', () {
+    test('upserts in Supabase and caches the diary', () async {
+      stubUpsert(supabase, 'health_diary', resolver: () => null);
+
+      await repo.upsertDiary(buildDiary('d1', 'pet-1'));
+
+      final cached =
+          await harness.isar.healthDiaryCaches.getByHealthDiaryId('d1');
+      expect(cached, isNotNull);
+      expect(cached!.petId, 'pet-1');
+    });
+
+    test('throws and does not cache when Supabase fails', () async {
+      stubUpsert(supabase, 'health_diary',
+          resolver: () => throw Exception('offline'));
+
+      await expectLater(
+        repo.upsertDiary(buildDiary('d1', 'pet-1')),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+      expect(
+        await harness.isar.healthDiaryCaches.getByHealthDiaryId('d1'),
+        isNull,
+      );
+    });
+  });
+
+  group('addVaccine', () {
+    test('inserts and caches the vaccine', () async {
+      stubInsert(supabase, 'health_diary_vaccines', resolver: () => null);
+
+      await repo.addVaccine(buildVaccine('vac1', diaryId: 'd1'));
+
+      expect(
+        await harness.isar.healthDiaryVaccineCaches
+            .getByHealthDiaryVaccineId('vac1'),
+        isNotNull,
+      );
+    });
+
+    test('throws when Supabase fails', () async {
+      stubInsert(supabase, 'health_diary_vaccines',
+          resolver: () => throw Exception('x'));
+
+      await expectLater(
+        repo.addVaccine(buildVaccine('vac1', diaryId: 'd1')),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+    });
+  });
+
+  group('updateVaccine', () {
+    test('updates Supabase then refreshes the cache', () async {
+      await seedVaccine(buildVaccine('vac1', diaryId: 'd1'));
+      stubUpdate(supabase, 'health_diary_vaccines', resolver: () => null);
+
+      await repo.updateVaccine(buildVaccine(
+        'vac1',
+        diaryId: 'd1',
+        nextDate: DateTime.utc(2027, 1, 1),
+      ));
+
+      final cached = await harness.isar.healthDiaryVaccineCaches
+          .getByHealthDiaryVaccineId('vac1');
+      expect(
+        cached!.nextDate!.isAtSameMomentAs(DateTime.utc(2027, 1, 1)),
+        isTrue,
+      );
+    });
+
+    test('throws when Supabase fails', () async {
+      stubUpdate(supabase, 'health_diary_vaccines',
+          resolver: () => throw Exception('x'));
+
+      await expectLater(
+        repo.updateVaccine(buildVaccine('vac1', diaryId: 'd1')),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+    });
+  });
+
+  group('deleteVaccine', () {
+    test('removes the vaccine from cache', () async {
+      await seedVaccine(buildVaccine('vac1', diaryId: 'd1'));
+      stubDelete(supabase, 'health_diary_vaccines', resolver: () => null);
+
+      await repo.deleteVaccine('vac1');
+
+      expect(
+        await harness.isar.healthDiaryVaccineCaches
+            .getByHealthDiaryVaccineId('vac1'),
+        isNull,
+      );
+    });
+
+    test('throws when Supabase fails', () async {
+      stubDelete(supabase, 'health_diary_vaccines',
+          resolver: () => throw Exception('x'));
+
+      await expectLater(
+        repo.deleteVaccine('vac1'),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+    });
+  });
+
+  group('addWeightLog', () {
+    test('inserts and caches the weight log', () async {
+      stubInsert(supabase, 'health_diary_weight_log', resolver: () => null);
+
+      await repo.addWeightLog(buildWeightLog('w1'));
+
+      expect(
+        await harness.isar.weightLogCaches.getByHealthDiaryWeightLogId('w1'),
+        isNotNull,
+      );
+    });
+
+    test('throws when Supabase fails', () async {
+      stubInsert(supabase, 'health_diary_weight_log',
+          resolver: () => throw Exception('x'));
+
+      await expectLater(
+        repo.addWeightLog(buildWeightLog('w1')),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+    });
+  });
+
+  group('deleteWeightLog', () {
+    test('removes the weight log from cache', () async {
+      await seedWeight(buildWeightLog('w1'));
+      stubDelete(supabase, 'health_diary_weight_log', resolver: () => null);
+
+      await repo.deleteWeightLog('w1');
+
+      expect(
+        await harness.isar.weightLogCaches.getByHealthDiaryWeightLogId('w1'),
+        isNull,
+      );
+    });
+
+    test('throws when Supabase fails', () async {
+      stubDelete(supabase, 'health_diary_weight_log',
+          resolver: () => throw Exception('x'));
+
+      await expectLater(
+        repo.deleteWeightLog('w1'),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+    });
+  });
+
+  group('updateVetVisit', () {
+    test('updates Supabase then refreshes the cache', () async {
+      await seedVisit(buildVisit('v1'));
+      stubUpdate(supabase, 'vet_visits', resolver: () => null);
+
+      await repo.updateVetVisit(buildVisit(
+        'v1',
+        visitedAt: DateTime.utc(2027, 2, 2),
+      ));
+
+      final cached = await harness.isar.vetVisitCaches.getByVetVisitId('v1');
+      expect(
+        cached!.visitedAt.isAtSameMomentAs(DateTime.utc(2027, 2, 2)),
+        isTrue,
+      );
+    });
+
+    test('throws when Supabase fails', () async {
+      stubUpdate(supabase, 'vet_visits', resolver: () => throw Exception('x'));
+
+      await expectLater(
+        repo.updateVetVisit(buildVisit('v1')),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
     });
   });
 }

@@ -67,6 +67,47 @@ class FakePostgrestChain extends Fake
       this as PostgrestTransformBuilder<Map<String, dynamic>>;
 }
 
+/// Typed stand-in for a `.select()` chain. Unlike [FakePostgrestChain], it
+/// implements the concrete `PostgrestFilterBuilder<List<Map<String, dynamic>>>`
+/// that `select()` declares, so the implicit cast at the call site succeeds.
+/// `eq`/`order` stay on the same fake, and awaiting runs [_resolver].
+class FakeSelectChain extends Fake
+    implements
+        PostgrestFilterBuilder<List<Map<String, dynamic>>>,
+        PostgrestTransformBuilder<List<Map<String, dynamic>>> {
+  FakeSelectChain(this._resolver);
+
+  final FutureOr<dynamic> Function() _resolver;
+
+  Future<List<Map<String, dynamic>>> _future() async {
+    final value = await Future.sync(_resolver);
+    return (value as List).cast<Map<String, dynamic>>();
+  }
+
+  @override
+  Future<S> then<S>(
+    FutureOr<S> Function(List<Map<String, dynamic>>) onValue, {
+    Function? onError,
+  }) =>
+      _future().then(onValue, onError: onError);
+
+  @override
+  PostgrestFilterBuilder<List<Map<String, dynamic>>> eq(
+    String column,
+    Object value,
+  ) =>
+      this;
+
+  @override
+  PostgrestTransformBuilder<List<Map<String, dynamic>>> order(
+    String column, {
+    bool ascending = false,
+    bool nullsFirst = false,
+    String? referencedTable,
+  }) =>
+      this;
+}
+
 FakePostgrestChain stubInsert(
   MockSupabaseClient supabase,
   String table, {
@@ -119,15 +160,15 @@ FakePostgrestChain stubUpsert(
   return chain;
 }
 
-FakePostgrestChain stubSelect(
+FakeSelectChain stubSelect(
   MockSupabaseClient supabase,
   String table, {
   required FutureOr<dynamic> Function() resolver,
 }) {
   final qb = MockSupabaseQueryBuilder();
-  final chain = FakePostgrestChain(resolver);
+  final chain = FakeSelectChain(resolver);
   when(() => supabase.from(table)).thenAnswer((_) => qb);
-  when(() => qb.select(any())).thenAnswer((_) => chain as dynamic);
+  when(() => qb.select(any())).thenAnswer((_) => chain);
   return chain;
 }
 
