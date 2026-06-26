@@ -13,6 +13,8 @@ import 'package:nanimo/data/models/referential/pet_race_model.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:nanimo/features/event/data/event_repository.dart';
+import 'package:nanimo/features/event/data/models/event_type_model.dart';
 import 'package:nanimo/features/health/data/health_repository.dart';
 import 'package:nanimo/features/health/data/models/health_diary_weight_log_model.dart';
 import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
@@ -29,6 +31,8 @@ class _MockReferentialRepository extends Mock
 class _MockPetRepository extends Mock implements PetRepository {}
 
 class _MockHealthRepository extends Mock implements HealthRepository {}
+
+class _MockEventRepository extends Mock implements EventRepository {}
 
 class _FakeAuthCubit extends Cubit<AuthState> implements AuthCubit {
   _FakeAuthCubit() : super(const AuthState.unknown());
@@ -96,6 +100,7 @@ void main() {
   late _MockReferentialRepository referentialRepo;
   late _MockPetRepository petRepo;
   late _MockHealthRepository healthRepo;
+  late _MockEventRepository eventRepo;
   late StreamController<List<PetModel>> petsController;
   late OnboardingCubit onboardingCubit;
   late PetCreationCubit petCreationCubit;
@@ -122,6 +127,7 @@ void main() {
     referentialRepo = _MockReferentialRepository();
     petRepo = _MockPetRepository();
     healthRepo = _MockHealthRepository();
+    eventRepo = _MockEventRepository();
     petsController = StreamController<List<PetModel>>.broadcast();
 
     when(() => healthRepo.watchDiaryForPet(any()))
@@ -138,6 +144,12 @@ void main() {
     when(() => referentialRepo.fetchRacesBySpecies(_chien.petSpeciesId))
         .thenAnswer((_) async => [_berger]);
     when(() => petRepo.watchPets()).thenAnswer((_) => petsController.stream);
+
+    /// The splash redirect lands an authenticated user on the create-event
+    /// page, whose cubit loads pets and event types on init.
+    when(() => petRepo.getPets()).thenAnswer((_) async => const <PetModel>[]);
+    when(() => referentialRepo.fetchEventTypes())
+        .thenAnswer((_) async => const <EventTypeModel>[]);
 
     /// Mimics the write-through cache: a created pet lands in the pets stream.
     when(() => petRepo.createPet(any())).thenAnswer((invocation) async {
@@ -178,7 +190,12 @@ void main() {
       healthRepository: healthRepo,
       referentialRepository: referentialRepo,
     );
-    router = createRouter(authCubit);
+    router = createRouter(
+      authCubit,
+      eventRepository: eventRepo,
+      referentialRepository: referentialRepo,
+      petRepository: petRepo,
+    );
     await tester.pumpWidget(
       MultiBlocProvider(
         providers: [
@@ -196,9 +213,10 @@ void main() {
   /// Cold start → welcome → 3 steps → lands on the signup page.
   Future<void> goThroughOnboarding(WidgetTester tester) async {
     await pumpApp(tester);
-    expect(find.text('Splash Page'), findsOneWidget);
+    expect(find.byKey(const Key('splash_page')), findsOneWidget);
 
     authCubit.sessionNotFound();
+    await tester.pump(const Duration(seconds: 2));
     await tester.pumpAndSettle();
     expect(find.text('Commencer'), findsOneWidget);
 
@@ -321,6 +339,7 @@ void main() {
         (tester) async {
       await pumpApp(tester);
       authCubit.sessionNotFound();
+      await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Commencer'));
       await tester.pumpAndSettle();
@@ -391,10 +410,11 @@ void main() {
     testWidgets('warm start: restored session goes from splash straight to home',
         (tester) async {
       await pumpApp(tester);
-      expect(find.text('Splash Page'), findsOneWidget);
+      expect(find.byKey(const Key('splash_page')), findsOneWidget);
 
       authCubit.sessionRestored();
       petsController.add(const []);
+      await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
 
       expect(find.text('Accueil'), findsOneWidget);

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nanimo/core/widgets/species_icon_widget.dart';
 
 enum PetAvatarSize {
   small(40),
@@ -22,10 +23,9 @@ class PetAvatarWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Image.asset(
-      'assets/icons/species/$iconKey.png',
+    return SpeciesIconWidget(
+      iconKey: iconKey,
       height: size.dimension,
-      fit: BoxFit.contain,
     );
   }
 }

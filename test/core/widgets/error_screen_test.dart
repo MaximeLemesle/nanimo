@@ -30,8 +30,7 @@ void main() {
     expect(find.text('Page précédente'), findsOneWidget);
   });
 
-  testWidgets('navigates home when tapping the primary button',
-      (tester) async {
+  testWidgets('navigates home when tapping the primary button', (tester) async {
     await tester.pumpWidget(MaterialApp.router(routerConfig: buildRouter()));
     await tester.pumpAndSettle();
 

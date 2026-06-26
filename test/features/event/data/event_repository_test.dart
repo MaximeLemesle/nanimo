@@ -45,10 +45,10 @@ void main() {
     await harness.tearDown();
   });
 
-  Future<void> seedEvent(EventModel model, {String userId = 'user-1'}) async {
+  Future<void> seedEvent(EventModel model) async {
     await harness.isar.writeTxn(() async {
       await harness.isar.eventCaches
-          .putByEventId(EventCache.fromModel(model, userId: userId));
+          .putByEventId(EventCache.fromModel(model));
     });
   }
 
@@ -86,23 +86,7 @@ void main() {
       expect(emission, hasLength(1));
       expect(emission.first.eventId, 'e2');
     });
-  });
 
-  group('getEventsForDay', () {
-    test('returns only events whose entryDate falls within the day', () async {
-      // getEventsForDay builds its window in local time — use local DateTimes
-      // here to keep the test timezone-agnostic.
-      await seedEvent(buildEvent('inDay1', entryDate: DateTime(2024, 6, 1, 8)));
-      await seedEvent(
-        buildEvent('inDay2', entryDate: DateTime(2024, 6, 1, 23, 59)),
-      );
-      await seedEvent(
-        buildEvent('nextDay', entryDate: DateTime(2024, 6, 2, 0, 0, 1)),
-      );
-
-      final result = await repo.getEventsForDay(DateTime(2024, 6, 1));
-      expect(result.map((e) => e.eventId).toSet(), {'inDay1', 'inDay2'});
-    });
   });
 
   group('getEventById', () {

@@ -19,10 +19,6 @@ class EventCache {
 
   late String eventTypeId;
 
-  /// Owner of the event — used for local filtering when sync runs while
-  /// multiple sessions share the same Isar file.
-  late String userId;
-
   EventCache();
 
   /// Maps a Supabase [json] row to an [EventCache] instance
@@ -37,20 +33,18 @@ class EventCache {
       ..entryDate = json['entry_date'] != null
           ? DateTime.parse(json['entry_date'] as String)
           : null
-      ..eventTypeId = (json['id_event_type'] ?? '') as String
-      ..userId = json['user_id'] as String;
+      ..eventTypeId = (json['id_event_type'] ?? '') as String;
   }
 
   /// Builds an [EventCache] from an [EventModel]
-  factory EventCache.fromModel(EventModel model, {required String userId}) {
+  factory EventCache.fromModel(EventModel model) {
     return EventCache()
       ..eventId = model.eventId
       ..title = model.title
       ..description = model.description
       ..createdAt = model.createdAt
       ..entryDate = model.entryDate
-      ..eventTypeId = model.eventTypeId
-      ..userId = userId;
+      ..eventTypeId = model.eventTypeId;
   }
 
   /// Converts this cache row into the domain [EventModel]

@@ -4,6 +4,7 @@ import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/error_banner_widget.dart';
+import 'package:nanimo/core/widgets/species_icon_widget.dart';
 import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_creation/grid_tile_widget.dart';
 
@@ -84,8 +85,8 @@ class PetSpeciesSelectorWidget extends StatelessWidget {
                       onTap: () => context
                           .read<OnboardingCubit>()
                           .selectSpecies(species.petSpeciesId),
-                      leading: Image.asset(
-                        'assets/icons/species/${species.iconKey}.png',
+                      leading: SpeciesIconWidget(
+                        iconKey: species.iconKey,
                         width: double.infinity,
                       ),
                     );

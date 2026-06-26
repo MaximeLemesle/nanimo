@@ -37,6 +37,10 @@
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Nanimo a besoin de l'appareil photo pour ajouter des photos à vos souvenirs.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Nanimo a besoin de votre photothèque pour ajouter des photos à vos souvenirs.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

@@ -79,8 +79,10 @@ lib/
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
 | `users`                 | id_user (UUID PK), user_name, mail (unique), subscription_status, subscription_expires_at, id_subscription_config FK                         | Auth Supabase                    |
 | `pets`                  | id_pet (UUID PK), pet_name, birthdate (DATE), gender (enum), created_at, pet_race_id FK, pet_species_id FK, pet_icon_id FK                   | RLS: user_id                     |
-| `events`                | id_event (UUID PK), title, description, created_at, entry_date (DATE), event_type_id FK                                                      | Photos peut être future (rappel) |
-| `event_image`           | id_event_image (UUID PK), asset_path (Storage path), event_id FK                                                                             | Une ou plusieurs images          |
+| `events`                | id_event (UUID PK), title, description, created_at, entry_date (DATE), event_type_id FK                                                      | Aucun lien direct pet/user — passe par `pets_events`. RLS via `pets_events → users_pets` |
+| `pets_events`           | pet_id FK, event_id FK (jointure M:N)                                                                                                        | Un event ↔ plusieurs animaux, un animal ↔ plusieurs events |
+| `event_type`            | id_event_type (UUID PK), name, code (UNIQUE: balade/calin/anniversaire), is_premium                                                          | `code` pilote le style visuel app |
+| `event_image`           | id_event_image (UUID PK), asset_path (Storage path), event_id FK                                                                             | Une ou plusieurs images. RLS via l'event lié |
 | `health_diary`          | id_health_diary (UUID PK), is_sterilized, is_chipped, chip_number, last_deworming_at, last_vet_appointment, pet_id FK (UNIQUE 1:1)           | Lié au pet                       |
 | `health_diary_vaccines` | id_health_diary_vaccine (UUID PK), vaccine_name, last_date, next_date, recurrence (days), dose_number, total_dose_number, health_diary_id FK | Historique vaccins               |
 | `weight_logs`           | id_health_diary_weight_log (UUID PK), weight (DECIMAL), logged_at (TIMESTAMPTZ), pet_id FK                                                   | Graphique 6 mois                 |
@@ -100,7 +102,7 @@ lib/
 - RLS activé sur toutes les tables
 - ON DELETE CASCADE pour FK liées à pets
 - Indexes sur : entry_date, next_date, sending_at, pet_id
-- Buckets Storage : `pet-avatars` (public), `journal-media` (public), `documents` (privé)
+- Buckets Storage : `pet-avatars` (public), `journal-media` (privé), `documents` (privé)
 
 ---
 

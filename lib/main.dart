@@ -8,6 +8,7 @@ import 'package:nanimo/core/isar/database/isar_service.dart';
 import 'package:nanimo/core/isar/database/sync_service.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
+import 'package:nanimo/features/event/data/event_repository.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nanimo/features/health/data/health_repository.dart';
 import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
@@ -55,6 +56,7 @@ void main() async {
   final referentialRepository = ReferentialRepository(supabase);
   final petRepository = PetRepository(supabase, isar);
   final healthRepository = HealthRepository(supabase, isar);
+  final eventRepository = EventRepository(supabase, isar);
 
   final authCubit = AuthCubit(
     repository: authRepository,
@@ -94,6 +96,9 @@ void main() async {
     petCreationCubit: petCreationCubit,
     homeCubit: homeCubit,
     petDetailsCubit: petDetailsCubit,
+    eventRepository: eventRepository,
+    referentialRepository: referentialRepository,
+    petRepository: petRepository,
   ));
 }
 
@@ -104,6 +109,9 @@ class MyApp extends StatelessWidget {
   final PetCreationCubit petCreationCubit;
   final HomeCubit homeCubit;
   final PetDetailsCubit petDetailsCubit;
+  final EventRepository eventRepository;
+  final ReferentialRepository referentialRepository;
+  final PetRepository petRepository;
   const MyApp({
     super.key,
     required this.authCubit,
@@ -112,6 +120,9 @@ class MyApp extends StatelessWidget {
     required this.petCreationCubit,
     required this.homeCubit,
     required this.petDetailsCubit,
+    required this.eventRepository,
+    required this.referentialRepository,
+    required this.petRepository,
   });
 
   @override
@@ -135,7 +146,12 @@ class MyApp extends StatelessWidget {
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: const [Locale('fr')],
-        routerConfig: createRouter(authCubit),
+        routerConfig: createRouter(
+          authCubit,
+          eventRepository: eventRepository,
+          referentialRepository: referentialRepository,
+          petRepository: petRepository,
+        ),
       ),
     );
   }

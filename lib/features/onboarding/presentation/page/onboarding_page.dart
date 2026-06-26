@@ -40,6 +40,15 @@ class OnboardingPage extends StatelessWidget {
                 onPressed: () => context.go(RouteNames.createPet),
                 fullWidth: true,
               ),
+              TextButton(
+                onPressed: () => context.go(RouteNames.login),
+                child: Text(
+                  'J\'ai déjà un compte',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
               const SizedBox(height: AppSpacing.lg),
             ],
           ),

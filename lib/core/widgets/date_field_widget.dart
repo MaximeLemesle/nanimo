@@ -12,6 +12,9 @@ class DateFieldWidget extends StatelessWidget {
   final DateTime? firstDate;
   final DateTime? lastDate;
   final String placeholder;
+  final bool bordered;
+  final TextAlign textAlign;
+  final TextStyle? textStyle;
 
   const DateFieldWidget({
     super.key,
@@ -21,6 +24,9 @@ class DateFieldWidget extends StatelessWidget {
     this.firstDate,
     this.lastDate,
     this.placeholder = 'Sélectionner une date',
+    this.bordered = true,
+    this.textAlign = TextAlign.start,
+    this.textStyle,
   });
 
   Future<void> _pick(BuildContext context) async {
@@ -57,6 +63,25 @@ class DateFieldWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final baseStyle = textStyle ?? AppTextStyles.text;
+    final dateText = Text(
+      value == null ? placeholder : DateFormatter.date(value!),
+      textAlign: textAlign,
+      style: baseStyle.copyWith(
+        color: value == null
+            ? AppColors.textSecondary
+            : (textStyle?.color ?? AppColors.textPrimary),
+      ),
+    );
+
+    if (!bordered) {
+      return InkWell(
+        onTap: () => _pick(context),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: SizedBox(width: double.infinity, child: dateText),
+      );
+    }
+
     return InkWell(
       onTap: () => _pick(context),
       borderRadius: BorderRadius.circular(AppRadius.md),
@@ -70,13 +95,7 @@ class DateFieldWidget extends StatelessWidget {
             borderSide: const BorderSide(color: AppColors.backgroundStroke),
           ),
         ),
-        child: Text(
-          value == null ? placeholder : DateFormatter.date(value!),
-          style: AppTextStyles.text.copyWith(
-            color:
-                value == null ? AppColors.textSecondary : AppColors.textPrimary,
-          ),
-        ),
+        child: dateText,
       ),
     );
   }

@@ -11,7 +11,6 @@ void main() {
         'created_at': '2024-06-01T08:00:00.000Z',
         'entry_date': '2024-06-01',
         'id_event_type': 'type-uuid',
-        'user_id': 'user-uuid',
       };
 
       final cache = EventCache.fromJson(json);
@@ -22,7 +21,6 @@ void main() {
       expect(cache.createdAt, DateTime.parse('2024-06-01T08:00:00.000Z'));
       expect(cache.entryDate, DateTime.parse('2024-06-01'));
       expect(cache.eventTypeId, 'type-uuid');
-      expect(cache.userId, 'user-uuid');
     });
 
     test('handles null optional fields', () {

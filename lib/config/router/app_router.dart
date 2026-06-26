@@ -1,12 +1,20 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nanimo/config/router/route_guard.dart';
 import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/core/widgets/app_shell.dart';
 import 'package:nanimo/core/widgets/error_screen.dart';
+import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nanimo/features/auth/presentation/page/login_page.dart';
 import 'package:nanimo/features/auth/presentation/page/signup_page.dart';
+import 'package:nanimo/features/event/data/event_repository.dart';
+import 'package:nanimo/features/event/presentation/cubit/event_creation_cubit.dart';
+import 'package:nanimo/features/event/presentation/page/create_event_page.dart';
+import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/home/presentation/page/home_page.dart';
 import 'package:nanimo/features/home/presentation/page/profile_page.dart';
 import 'package:nanimo/features/pet/presentation/page/create_pet_page.dart';
@@ -21,13 +29,29 @@ class _AuthCubitListenable extends ChangeNotifier {
   }
 }
 
-GoRouter createRouter(AuthCubit authCubit) {
+GoRouter createRouter(
+  AuthCubit authCubit, {
+  required EventRepository eventRepository,
+  required ReferentialRepository referentialRepository,
+  required PetRepository petRepository,
+}) {
+  /// Flips to true after the splash display duration
+  final splashElapsed = ValueNotifier(false);
+  Timer(const Duration(milliseconds: 1200), () => splashElapsed.value = true);
+
   return GoRouter(
     initialLocation: RouteNames.splash,
-    refreshListenable: _AuthCubitListenable(authCubit),
+    refreshListenable: Listenable.merge([
+      _AuthCubitListenable(authCubit),
+      splashElapsed,
+    ]),
     debugLogDiagnostics: true,
     redirect: (context, state) {
-      return handleRedirect(state, authCubit.state.status);
+      return handleRedirect(
+        state,
+        authCubit.state.status,
+        splashElapsed: splashElapsed.value,
+      );
     },
     routes: [
       GoRoute(
@@ -57,6 +81,17 @@ GoRouter createRouter(AuthCubit authCubit) {
             path: RouteNames.home,
             builder: (_, __) => const HomePage(),
             routes: [
+              GoRoute(
+                path: 'create-event',
+                builder: (_, __) => BlocProvider(
+                  create: (_) => EventCreationCubit(
+                    eventRepository: eventRepository,
+                    referentialRepository: referentialRepository,
+                    petRepository: petRepository,
+                  )..load(),
+                  child: const CreateEventPage(),
+                ),
+              ),
               GoRoute(
                 path: 'pet',
                 builder: (_, __) => const PetPage(),

@@ -14,6 +14,12 @@ class IsarService {
   static late Isar _isar;
 
   static Future<void> initialize() async {
+    final existing = Isar.getInstance();
+    if (existing != null) {
+      _isar = existing;
+      return;
+    }
+
     final dir = await getApplicationDocumentsDirectory();
     _isar = await Isar.open(
       [
@@ -31,6 +37,5 @@ class IsarService {
     );
   }
 
-  /// Returns the open Isar instance. Must call [initialize] first.
   static Isar get instance => _isar;
 }

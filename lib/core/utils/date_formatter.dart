@@ -1,10 +1,34 @@
 class DateFormatter {
+  static const List<String> _frenchMonths = [
+    'janvier',
+    'février',
+    'mars',
+    'avril',
+    'mai',
+    'juin',
+    'juillet',
+    'août',
+    'septembre',
+    'octobre',
+    'novembre',
+    'décembre',
+  ];
+
   /// Format date as DD/MM/YYYY.
   static String date(DateTime value) {
     final day = value.day.toString().padLeft(2, '0');
     final month = value.month.toString().padLeft(2, '0');
     return '$day/$month/${value.year}';
-  } 
+  }
+
+  /// Event header such as « 05 mars à 11h43 ».
+  static String eventHeader(DateTime value) {
+    final day = value.day.toString().padLeft(2, '0');
+    final month = _frenchMonths[value.month - 1];
+    final hour = value.hour.toString().padLeft(2, '0');
+    final minute = value.minute.toString().padLeft(2, '0');
+    return '$day $month à ${hour}h$minute';
+  }
 
   static String age(DateTime birthdate, {DateTime? now}) {
     final reference = now ?? DateTime.now();
