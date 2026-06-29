@@ -8,23 +8,36 @@ class AppShell extends StatelessWidget {
   final Widget child;
   const AppShell({super.key, required this.child});
 
-  static const _routes = [
+  static const _tabRoutes = [
     RouteNames.home,
+    RouteNames.journal,
     RouteNames.pet,
-    RouteNames.profile,
   ];
+
+  static const _createIndex = 3;
 
   int _currentIndex(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
+    if (location.startsWith(RouteNames.createEvent)) return _createIndex;
+
     var index = 0;
     var routeLength = -1;
-    for (var i = 0; i < _routes.length; i++) {
-      if (location.startsWith(_routes[i]) && _routes[i].length > routeLength) {
+    for (var i = 0; i < _tabRoutes.length; i++) {
+      if (location.startsWith(_tabRoutes[i]) &&
+          _tabRoutes[i].length > routeLength) {
         index = i;
-        routeLength = _routes[i].length;
+        routeLength = _tabRoutes[i].length;
       }
     }
     return index;
+  }
+
+  void _onDestinationSelected(BuildContext context, int index) {
+    if (index == _createIndex) {
+      context.push(RouteNames.createEvent);
+    } else {
+      context.go(_tabRoutes[index]);
+    }
   }
 
   @override
@@ -58,7 +71,7 @@ class AppShell extends StatelessWidget {
       body: child,
       bottomNavigationBar: NavigationBar(
         selectedIndex: index,
-        onDestinationSelected: (i) => context.go(_routes[i]),
+        onDestinationSelected: (i) => _onDestinationSelected(context, i),
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
@@ -66,14 +79,19 @@ class AppShell extends StatelessWidget {
             label: 'Accueil',
           ),
           NavigationDestination(
+            icon: Icon(Icons.menu_book_outlined),
+            selectedIcon: Icon(Icons.menu_book),
+            label: 'Journal',
+          ),
+          NavigationDestination(
             icon: Icon(Icons.pets_outlined),
             selectedIcon: Icon(Icons.pets),
             label: 'Animal',
           ),
           NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Profil',
+            icon: Icon(Icons.add_circle_outline),
+            selectedIcon: Icon(Icons.add_circle),
+            label: 'Créer',
           ),
         ],
       ),

@@ -6,13 +6,12 @@ import 'package:nanimo/core/isar/cache/schemas/event_image_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_vaccine_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_cache.dart';
+import 'package:nanimo/core/isar/cache/schemas/pet_event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/subscription_config_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/user_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/vet_visit_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/weight_log_cache.dart';
 
-/// Spins up a temp-dir Isar instance with every cache schema. Repository tests
-/// only need a subset, but loading them all keeps the helper trivial to use.
 class IsarTestHarness {
   late Directory _tempDir;
   late Isar isar;
@@ -31,6 +30,7 @@ class IsarTestHarness {
         PetCacheSchema,
         EventCacheSchema,
         EventImageCacheSchema,
+        PetEventCacheSchema,
         HealthDiaryCacheSchema,
         HealthDiaryVaccineCacheSchema,
         WeightLogCacheSchema,

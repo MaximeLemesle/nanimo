@@ -2,6 +2,7 @@ import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_image_cache.dart';
+import 'package:nanimo/core/isar/cache/schemas/pet_event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_vaccine_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_cache.dart';
@@ -26,6 +27,7 @@ class SyncService {
     Future(() async {
       await _syncEvents();
       await _syncEventImages();
+      await _syncPetEvents();
       await _syncHealthDiaries();
       await _syncHealthDiaryVaccines();
       await _syncWeightLogs();
@@ -76,6 +78,7 @@ class SyncService {
           .map((e) => PetCache.fromJson(e as Map<String, dynamic>))
           .toList();
       await _isar.writeTxn(() async {
+        await _isar.petCaches.clear();
         await _isar.petCaches.putAllByPetId(pets);
       });
     } catch (_) {}
@@ -88,6 +91,7 @@ class SyncService {
           .map((e) => EventCache.fromJson(e as Map<String, dynamic>))
           .toList();
       await _isar.writeTxn(() async {
+        await _isar.eventCaches.clear();
         await _isar.eventCaches.putAllByEventId(events);
       });
     } catch (_) {}
@@ -100,7 +104,21 @@ class SyncService {
           .map((e) => EventImageCache.fromJson(e as Map<String, dynamic>))
           .toList();
       await _isar.writeTxn(() async {
+        await _isar.eventImageCaches.clear();
         await _isar.eventImageCaches.putAllByEventImageId(images);
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _syncPetEvents() async {
+    try {
+      final data = await _supabase.from('pets_events').select();
+      final links = (data as List)
+          .map((e) => PetEventCache.fromJson(e as Map<String, dynamic>))
+          .toList();
+      await _isar.writeTxn(() async {
+        await _isar.petEventCaches.clear();
+        await _isar.petEventCaches.putAllByPetEventId(links);
       });
     } catch (_) {}
   }
@@ -112,6 +130,7 @@ class SyncService {
           .map((e) => HealthDiaryCache.fromJson(e as Map<String, dynamic>))
           .toList();
       await _isar.writeTxn(() async {
+        await _isar.healthDiaryCaches.clear();
         await _isar.healthDiaryCaches.putAllByHealthDiaryId(diaries);
       });
     } catch (_) {}
@@ -125,6 +144,7 @@ class SyncService {
               HealthDiaryVaccineCache.fromJson(e as Map<String, dynamic>))
           .toList();
       await _isar.writeTxn(() async {
+        await _isar.healthDiaryVaccineCaches.clear();
         await _isar.healthDiaryVaccineCaches
             .putAllByHealthDiaryVaccineId(vaccines);
       });
@@ -138,6 +158,7 @@ class SyncService {
           .map((e) => WeightLogCache.fromJson(e as Map<String, dynamic>))
           .toList();
       await _isar.writeTxn(() async {
+        await _isar.weightLogCaches.clear();
         await _isar.weightLogCaches.putAllByHealthDiaryWeightLogId(logs);
       });
     } catch (_) {}
@@ -150,6 +171,7 @@ class SyncService {
           .map((e) => VetVisitCache.fromJson(e as Map<String, dynamic>))
           .toList();
       await _isar.writeTxn(() async {
+        await _isar.vetVisitCaches.clear();
         await _isar.vetVisitCaches.putAllByVetVisitId(visits);
       });
     } catch (_) {}

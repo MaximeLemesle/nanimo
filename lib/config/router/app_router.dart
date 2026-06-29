@@ -14,6 +14,8 @@ import 'package:nanimo/features/auth/presentation/page/signup_page.dart';
 import 'package:nanimo/features/event/data/event_repository.dart';
 import 'package:nanimo/features/event/presentation/cubit/event_creation_cubit.dart';
 import 'package:nanimo/features/event/presentation/page/create_event_page.dart';
+import 'package:nanimo/features/journal/presentation/cubit/journal_cubit.dart';
+import 'package:nanimo/features/journal/presentation/page/journal_page.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/home/presentation/page/home_page.dart';
 import 'package:nanimo/features/home/presentation/page/profile_page.dart';
@@ -90,6 +92,17 @@ GoRouter createRouter(
                     petRepository: petRepository,
                   )..load(),
                   child: const CreateEventPage(),
+                ),
+              ),
+              GoRoute(
+                path: 'journal',
+                builder: (_, __) => BlocProvider(
+                  create: (_) => JournalCubit(
+                    eventRepository: eventRepository,
+                    petRepository: petRepository,
+                    referentialRepository: referentialRepository,
+                  ),
+                  child: const JournalPage(),
                 ),
               ),
               GoRoute(

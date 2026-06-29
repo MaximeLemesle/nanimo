@@ -209,6 +209,17 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 **Timeline** : fil chronologique invers, photos polaroid, titre bold, date, description  
 **Calendrier** : mois avec dots, tap jour → panel bas montrant événements
 
+**Implémentation (NAN-018)** — feature `lib/features/journal/`, route `/home/journal` (2ᵉ onglet de la navbar).
+
+> Navbar (`AppShell`) : `Accueil / Journal / Animal / Créer (+)`. Le bouton `+` **push** `/home/create-event` (pas un onglet). La page Profil (`/home/profile`, déconnexion) n'est plus dans la navbar — accès à recâbler.
+
+- `JournalCubit` : offline-first, écoute 3 streams Isar (`watchEvents`, `watchPetEvents`, `watchAllImages`) + charge pets/types/`iconsKey`.
+- Lien `pets_events` : cache Isar `PetEventCache` (clé `"$petId|$eventId"`), pour les pastilles d'animaux et le filtre animal.
+- Images : bucket `journal-media` privé → `EventRepository.signedImageUrl()` (URL signée 1h).
+- Filtres (NAN-015) : multi-sélection animaux **et/ou** types via bottom sheet, toggle live sur le cubit (`togglePetFilter`/`toggleTypeFilter`/`clearFilters`), appliqués par `JournalState.filteredEvents` (OR intra-groupe, AND inter-groupes).
+- `JournalFilterBarWidget` : chips des filtres actifs (scroll horizontal, tap = retire) à gauche, chip d'ouverture de la sheet à droite. UI à base de `ChipWidget` (core, réutilisable).
+- Calendrier : onglet désactivé (v2).
+
 ### Créer souvenir
 
 - Date + heure tappables

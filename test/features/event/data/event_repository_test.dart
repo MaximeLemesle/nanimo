@@ -127,6 +127,35 @@ void main() {
     });
   });
 
+  group('watchAllImages', () {
+    test('groups asset paths by event id', () async {
+      await seedImage(buildImage('img-1', eventId: 'e1'));
+      await seedImage(buildImage('img-2', eventId: 'e1'));
+      await seedImage(buildImage('img-3', eventId: 'e2'));
+
+      final emission = await repo.watchAllImages().first;
+      expect(emission['e1'], hasLength(2));
+      expect(emission['e2'], ['assets/img-3.png']);
+    });
+  });
+
+  group('watchPetEvents', () {
+    test('emits empty when no link exists', () async {
+      final emission = await repo.watchPetEvents().first;
+      expect(emission, isEmpty);
+    });
+
+    test('groups pet ids by event id after createEvent', () async {
+      stubInsert(supabase, 'events', resolver: () {});
+      stubInsert(supabase, 'pets_events', resolver: () {});
+
+      await repo.createEvent(buildEvent('e1'), petIds: ['p1', 'p2']);
+
+      final emission = await repo.watchPetEvents().first;
+      expect(emission['e1'], containsAll(['p1', 'p2']));
+    });
+  });
+
   group('createEvent', () {
     test('inserts the event and its pet links, then caches it', () async {
       stubInsert(supabase, 'events', resolver: () {});
@@ -137,6 +166,9 @@ void main() {
       final cached = await repo.getEventById('e1');
       expect(cached, isNotNull);
       expect(cached!.eventId, 'e1');
+
+      final links = await repo.watchPetEvents().first;
+      expect(links['e1'], containsAll(['p1', 'p2']));
     });
 
     test('skips the pet link insert when no pet is given', () async {

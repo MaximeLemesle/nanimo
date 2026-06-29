@@ -5,6 +5,7 @@ class RouteNames {
   static const login = '/login';
   static const signup = '/signup';
   static const home = '/home';
+  static const journal = '/home/journal';
   static const createEvent = '/home/create-event';
   static const pet = '/home/pet';
   static const healthDiary = '/home/pet/health-diary';
