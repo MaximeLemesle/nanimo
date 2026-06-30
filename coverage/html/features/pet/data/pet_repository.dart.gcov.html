@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-06-14 15:28:26</td>
+            <td class="headerValue">2026-07-01 00:24:34</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">-</td>
@@ -90,7 +90,7 @@
 <span id="L28"><span class="lineNum">      28</span>              : </span>
 <span id="L29"><span class="lineNum">      29</span> <span class="tlaGNC">           1 :   Future&lt;List&lt;PetModel&gt;&gt; getPets() async {</span></span>
 <span id="L30"><span class="lineNum">      30</span> <span class="tlaGNC">           5 :     final rows = await _isar.petCaches.where().sortByCreatedAt().findAll();</span></span>
-<span id="L31"><span class="lineNum">      31</span> <span class="tlaGNC">           4 :     return rows.map((c) =&gt; c.toModel()).toList();</span></span>
+<span id="L31"><span class="lineNum">      31</span> <span class="tlaGNC">           4 :     return rows.map((cache) =&gt; cache.toModel()).toList();</span></span>
 <span id="L32"><span class="lineNum">      32</span>              :   }</span>
 <span id="L33"><span class="lineNum">      33</span>              : </span>
 <span id="L34"><span class="lineNum">      34</span> <span class="tlaGNC">           1 :   Future&lt;PetModel?&gt; getPetById(String petId) async {</span></span>
@@ -125,8 +125,8 @@
 <span id="L63"><span class="lineNum">      63</span>              :   ) async {</span>
 <span id="L64"><span class="lineNum">      64</span>              :     try {</span>
 <span id="L65"><span class="lineNum">      65</span> <span class="tlaGNC">           3 :       await _supabase.from(table).insert(values);</span></span>
-<span id="L66"><span class="lineNum">      66</span> <span class="tlaGNC">           1 :     } on PostgrestException catch (e) {</span></span>
-<span id="L67"><span class="lineNum">      67</span> <span class="tlaUNC">           0 :       if (e.code == '23505') return;</span></span>
+<span id="L66"><span class="lineNum">      66</span> <span class="tlaGNC">           1 :     } on PostgrestException catch (err) {</span></span>
+<span id="L67"><span class="lineNum">      67</span> <span class="tlaUNC">           0 :       if (err.code == '23505') return;</span></span>
 <span id="L68"><span class="lineNum">      68</span>              :       rethrow;</span>
 <span id="L69"><span class="lineNum">      69</span>              :     }</span>
 <span id="L70"><span class="lineNum">      70</span>              :   }</span>

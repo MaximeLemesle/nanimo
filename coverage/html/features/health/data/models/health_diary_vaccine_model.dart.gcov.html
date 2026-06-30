@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-06-14 15:28:26</td>
+            <td class="headerValue">2026-07-01 00:24:34</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">-</td>
@@ -70,7 +70,7 @@
 <span id="L8"><span class="lineNum">       8</span>              :   final int totalDoseNumber;</span>
 <span id="L9"><span class="lineNum">       9</span>              :   final String healthDiaryId;</span>
 <span id="L10"><span class="lineNum">      10</span>              : </span>
-<span id="L11"><span class="lineNum">      11</span> <span class="tlaGNC">           2 :   const HealthDiaryVaccineModel({</span></span>
+<span id="L11"><span class="lineNum">      11</span> <span class="tlaGNC">           4 :   const HealthDiaryVaccineModel({</span></span>
 <span id="L12"><span class="lineNum">      12</span>              :     required this.healthDiaryVaccineId,</span>
 <span id="L13"><span class="lineNum">      13</span>              :     required this.vaccineName,</span>
 <span id="L14"><span class="lineNum">      14</span>              :     required this.lastDate,</span>
@@ -94,15 +94,15 @@
 <span id="L32"><span class="lineNum">      32</span>              :     );</span>
 <span id="L33"><span class="lineNum">      33</span>              :   }</span>
 <span id="L34"><span class="lineNum">      34</span>              : </span>
-<span id="L35"><span class="lineNum">      35</span> <span class="tlaGNC">           2 :   Map&lt;String, dynamic&gt; toJson() =&gt; {</span></span>
-<span id="L36"><span class="lineNum">      36</span> <span class="tlaGNC">           1 :         'id_health_diary_vaccine': healthDiaryVaccineId,</span></span>
-<span id="L37"><span class="lineNum">      37</span> <span class="tlaGNC">           1 :         'vaccine_name': vaccineName,</span></span>
-<span id="L38"><span class="lineNum">      38</span> <span class="tlaGNC">           2 :         'last_date': lastDate.toIso8601String(),</span></span>
-<span id="L39"><span class="lineNum">      39</span> <span class="tlaGNC">           2 :         'next_date': nextDate.toIso8601String(),</span></span>
-<span id="L40"><span class="lineNum">      40</span> <span class="tlaGNC">           1 :         'recurrence': recurrence,</span></span>
-<span id="L41"><span class="lineNum">      41</span> <span class="tlaGNC">           1 :         'dose_number': doseNumber,</span></span>
-<span id="L42"><span class="lineNum">      42</span> <span class="tlaGNC">           1 :         'total_dose_number': totalDoseNumber,</span></span>
-<span id="L43"><span class="lineNum">      43</span> <span class="tlaGNC">           1 :         'health_diary_id': healthDiaryId,</span></span>
+<span id="L35"><span class="lineNum">      35</span> <span class="tlaGNC">           4 :   Map&lt;String, dynamic&gt; toJson() =&gt; {</span></span>
+<span id="L36"><span class="lineNum">      36</span> <span class="tlaGNC">           2 :         'id_health_diary_vaccine': healthDiaryVaccineId,</span></span>
+<span id="L37"><span class="lineNum">      37</span> <span class="tlaGNC">           2 :         'vaccine_name': vaccineName,</span></span>
+<span id="L38"><span class="lineNum">      38</span> <span class="tlaGNC">           4 :         'last_date': lastDate.toIso8601String(),</span></span>
+<span id="L39"><span class="lineNum">      39</span> <span class="tlaGNC">           4 :         'next_date': nextDate.toIso8601String(),</span></span>
+<span id="L40"><span class="lineNum">      40</span> <span class="tlaGNC">           2 :         'recurrence': recurrence,</span></span>
+<span id="L41"><span class="lineNum">      41</span> <span class="tlaGNC">           2 :         'dose_number': doseNumber,</span></span>
+<span id="L42"><span class="lineNum">      42</span> <span class="tlaGNC">           2 :         'total_dose_number': totalDoseNumber,</span></span>
+<span id="L43"><span class="lineNum">      43</span> <span class="tlaGNC">           2 :         'health_diary_id': healthDiaryId,</span></span>
 <span id="L44"><span class="lineNum">      44</span>              :       };</span>
 <span id="L45"><span class="lineNum">      45</span>              : }</span>
         </pre>

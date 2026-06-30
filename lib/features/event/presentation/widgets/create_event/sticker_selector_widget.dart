@@ -1,6 +1,7 @@
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
+import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_radius.dart';
 
 class StickerSelectorWidget extends StatelessWidget {
@@ -58,7 +59,7 @@ class StickerSelectorWidget extends StatelessWidget {
                   imageFilter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
                   child: ColorFiltered(
                     colorFilter: const ColorFilter.mode(
-                      Colors.black12,
+                      AppColors.shadow,
                       BlendMode.srcATop,
                     ),
                     child: visible.first,
@@ -96,7 +97,7 @@ class StickerSelectorWidget extends StatelessWidget {
                           imageFilter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
                           child: ColorFiltered(
                             colorFilter: const ColorFilter.mode(
-                              Colors.black12,
+                              AppColors.shadow,
                               BlendMode.srcATop,
                             ),
                             child: visible[i],

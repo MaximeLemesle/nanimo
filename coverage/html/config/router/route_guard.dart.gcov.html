@@ -32,12 +32,12 @@
             <td></td>
             <td class="headerItem">Lines:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
-            <td class="headerCovTableEntry">8</td>
-            <td class="headerCovTableEntry">8</td>
+            <td class="headerCovTableEntry">9</td>
+            <td class="headerCovTableEntry">9</td>
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-06-14 15:28:26</td>
+            <td class="headerValue">2026-07-01 00:24:34</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">-</td>
@@ -64,38 +64,45 @@
 <span id="L2"><span class="lineNum">       2</span>              : import 'package:nanimo/config/router/route_names.dart';</span>
 <span id="L3"><span class="lineNum">       3</span>              : import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';</span>
 <span id="L4"><span class="lineNum">       4</span>              : </span>
-<span id="L5"><span class="lineNum">       5</span> <span class="tlaGNC">           1 : String? handleRedirect(GoRouterState state, AuthStatus status) {</span></span>
-<span id="L6"><span class="lineNum">       6</span> <span class="tlaGNC">           1 :   final location = state.matchedLocation;</span></span>
-<span id="L7"><span class="lineNum">       7</span> <span class="tlaGNC">           1 :   final isAuthenticated = status == AuthStatus.authenticated;</span></span>
-<span id="L8"><span class="lineNum">       8</span> <span class="tlaGNC">           1 :   final isPublicRoute = _publicRoutes.contains(location);</span></span>
-<span id="L9"><span class="lineNum">       9</span> <span class="tlaGNC">           2 :   final isProtected = _protectedRoutes.any(location.startsWith);</span></span>
-<span id="L10"><span class="lineNum">      10</span>              : </span>
-<span id="L11"><span class="lineNum">      11</span>              :   /// First loading, redirect to the splash screen</span>
-<span id="L12"><span class="lineNum">      12</span> <span class="tlaGNC">           1 :   if (status == AuthStatus.unknown) {</span></span>
-<span id="L13"><span class="lineNum">      13</span> <span class="tlaGNC">           1 :     return location == RouteNames.splash ? null : RouteNames.splash;</span></span>
-<span id="L14"><span class="lineNum">      14</span>              :   }</span>
-<span id="L15"><span class="lineNum">      15</span>              : </span>
-<span id="L16"><span class="lineNum">      16</span>              :   /// Protect the routes if the user is not authenticated</span>
-<span id="L17"><span class="lineNum">      17</span>              :   if (!isAuthenticated &amp;&amp; isProtected) return RouteNames.login;</span>
-<span id="L18"><span class="lineNum">      18</span>              : </span>
-<span id="L19"><span class="lineNum">      19</span>              :   /// Avoid login if user is already authenticated</span>
-<span id="L20"><span class="lineNum">      20</span>              :   if (isAuthenticated &amp;&amp; isPublicRoute) return RouteNames.home;</span>
-<span id="L21"><span class="lineNum">      21</span>              : </span>
-<span id="L22"><span class="lineNum">      22</span>              :   /// Redirection after the splash screen</span>
-<span id="L23"><span class="lineNum">      23</span> <span class="tlaGNC">           1 :   if (location == RouteNames.splash) {</span></span>
-<span id="L24"><span class="lineNum">      24</span>              :     return isAuthenticated ? RouteNames.home : RouteNames.onboarding;</span>
-<span id="L25"><span class="lineNum">      25</span>              :   }</span>
-<span id="L26"><span class="lineNum">      26</span>              : </span>
-<span id="L27"><span class="lineNum">      27</span>              :   return null;</span>
-<span id="L28"><span class="lineNum">      28</span>              : }</span>
-<span id="L29"><span class="lineNum">      29</span>              : </span>
-<span id="L30"><span class="lineNum">      30</span>              : const _publicRoutes = {</span>
-<span id="L31"><span class="lineNum">      31</span>              :   RouteNames.onboarding,</span>
-<span id="L32"><span class="lineNum">      32</span>              :   RouteNames.createPet,</span>
-<span id="L33"><span class="lineNum">      33</span>              :   RouteNames.login,</span>
-<span id="L34"><span class="lineNum">      34</span>              :   RouteNames.signup,</span>
-<span id="L35"><span class="lineNum">      35</span>              : };</span>
-<span id="L36"><span class="lineNum">      36</span>              : const _protectedRoutes = {RouteNames.home};</span>
+<span id="L5"><span class="lineNum">       5</span> <span class="tlaGNC">           1 : String? handleRedirect(</span></span>
+<span id="L6"><span class="lineNum">       6</span>              :   GoRouterState state,</span>
+<span id="L7"><span class="lineNum">       7</span>              :   AuthStatus status, {</span>
+<span id="L8"><span class="lineNum">       8</span>              :   required bool splashElapsed,</span>
+<span id="L9"><span class="lineNum">       9</span>              : }) {</span>
+<span id="L10"><span class="lineNum">      10</span> <span class="tlaGNC">           1 :   final location = state.matchedLocation;</span></span>
+<span id="L11"><span class="lineNum">      11</span> <span class="tlaGNC">           1 :   final isAuthenticated = status == AuthStatus.authenticated;</span></span>
+<span id="L12"><span class="lineNum">      12</span> <span class="tlaGNC">           1 :   final isPublicRoute = _publicRoutes.contains(location);</span></span>
+<span id="L13"><span class="lineNum">      13</span> <span class="tlaGNC">           2 :   final isProtected = _protectedRoutes.any(location.startsWith);</span></span>
+<span id="L14"><span class="lineNum">      14</span>              : </span>
+<span id="L15"><span class="lineNum">      15</span>              :   /// First loading, redirect to the splash screen</span>
+<span id="L16"><span class="lineNum">      16</span> <span class="tlaGNC">           1 :   if (status == AuthStatus.unknown) {</span></span>
+<span id="L17"><span class="lineNum">      17</span> <span class="tlaGNC">           1 :     return location == RouteNames.splash ? null : RouteNames.splash;</span></span>
+<span id="L18"><span class="lineNum">      18</span>              :   }</span>
+<span id="L19"><span class="lineNum">      19</span>              : </span>
+<span id="L20"><span class="lineNum">      20</span>              :   /// Keep the splash visible for its minimum duration even when ready</span>
+<span id="L21"><span class="lineNum">      21</span> <span class="tlaGNC">           1 :   if (location == RouteNames.splash &amp;&amp; !splashElapsed) return null;</span></span>
+<span id="L22"><span class="lineNum">      22</span>              : </span>
+<span id="L23"><span class="lineNum">      23</span>              :   /// Protect the routes if the user is not authenticated</span>
+<span id="L24"><span class="lineNum">      24</span>              :   if (!isAuthenticated &amp;&amp; isProtected) return RouteNames.login;</span>
+<span id="L25"><span class="lineNum">      25</span>              : </span>
+<span id="L26"><span class="lineNum">      26</span>              :   /// Avoid login if user is already authenticated</span>
+<span id="L27"><span class="lineNum">      27</span>              :   if (isAuthenticated &amp;&amp; isPublicRoute) return RouteNames.home;</span>
+<span id="L28"><span class="lineNum">      28</span>              : </span>
+<span id="L29"><span class="lineNum">      29</span>              :   /// Redirection after the splash screen</span>
+<span id="L30"><span class="lineNum">      30</span> <span class="tlaGNC">           1 :   if (location == RouteNames.splash) {</span></span>
+<span id="L31"><span class="lineNum">      31</span>              :     return isAuthenticated ? RouteNames.home : RouteNames.onboarding;</span>
+<span id="L32"><span class="lineNum">      32</span>              :   }</span>
+<span id="L33"><span class="lineNum">      33</span>              : </span>
+<span id="L34"><span class="lineNum">      34</span>              :   return null;</span>
+<span id="L35"><span class="lineNum">      35</span>              : }</span>
+<span id="L36"><span class="lineNum">      36</span>              : </span>
+<span id="L37"><span class="lineNum">      37</span>              : const _publicRoutes = {</span>
+<span id="L38"><span class="lineNum">      38</span>              :   RouteNames.onboarding,</span>
+<span id="L39"><span class="lineNum">      39</span>              :   RouteNames.createPet,</span>
+<span id="L40"><span class="lineNum">      40</span>              :   RouteNames.login,</span>
+<span id="L41"><span class="lineNum">      41</span>              :   RouteNames.signup,</span>
+<span id="L42"><span class="lineNum">      42</span>              : };</span>
+<span id="L43"><span class="lineNum">      43</span>              : const _protectedRoutes = {RouteNames.home};</span>
         </pre>
               </td>
             </tr>
