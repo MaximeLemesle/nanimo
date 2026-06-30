@@ -5,7 +5,7 @@ import 'package:nanimo/core/widgets/chip_widget.dart';
 
 void main() {
   Widget build({
-    bool isActivated = false,
+    bool isSelected = false,
     IconData? leadingIcon,
     IconData? trailingIcon,
     VoidCallback? onTap,
@@ -14,7 +14,7 @@ void main() {
       home: Scaffold(
         body: ChipWidget(
           label: 'Filtres',
-          isSelected: isActivated,
+          isSelected: isSelected,
           leadingIcon: leadingIcon,
           trailingIcon: trailingIcon,
           onTap: onTap,
@@ -33,8 +33,8 @@ void main() {
     expect(find.byIcon(Icons.close), findsOneWidget);
   });
 
-  testWidgets('turns primary when activated', (tester) async {
-    await tester.pumpWidget(build(isActivated: true));
+  testWidgets('background change when activated', (tester) async {
+    await tester.pumpWidget(build(isSelected: true));
 
     final material = tester.widget<Material>(
       find
@@ -42,7 +42,7 @@ void main() {
               of: find.byType(ChipWidget), matching: find.byType(Material))
           .first,
     );
-    expect(material.color, AppColors.primary);
+    expect(material.color, AppColors.backgroundStroke);
   });
 
   testWidgets('calls onTap when tapped', (tester) async {

@@ -37,7 +37,7 @@ void main() {
     expect(find.text('Une belle journée ensoleillée.'), findsOneWidget);
   });
 
-  testWidgets('renders one sticker per pet icon key', (tester) async {
+  testWidgets('renders one sticker and its shadow per pet icon key', (tester) async {
     await tester.pumpWidget(
       wrap(
         JournalTimelineEventCardWidget(
@@ -50,6 +50,7 @@ void main() {
       ),
     );
 
-    expect(find.byType(SpeciesIconWidget), findsNWidgets(2));
+    /// The shadows of an icon is created using a second icon
+    expect(find.byType(SpeciesIconWidget), findsNWidgets(4));
   });
 }
