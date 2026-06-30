@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-06-14 15:28:26</td>
+            <td class="headerValue">2026-07-01 00:24:34</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">-</td>
@@ -61,33 +61,33 @@
 <pre class="sourceHeading">            Line data    Source code</pre>
 <pre class="source">
 <span id="L1"><span class="lineNum">       1</span>              : import 'package:flutter/material.dart';</span>
-<span id="L2"><span class="lineNum">       2</span>              : </span>
-<span id="L3"><span class="lineNum">       3</span>              : enum PetAvatarSize {</span>
-<span id="L4"><span class="lineNum">       4</span>              :   small(40),</span>
-<span id="L5"><span class="lineNum">       5</span>              :   medium(80),</span>
-<span id="L6"><span class="lineNum">       6</span>              :   large(160);</span>
-<span id="L7"><span class="lineNum">       7</span>              : </span>
-<span id="L8"><span class="lineNum">       8</span>              :   const PetAvatarSize(this.dimension);</span>
-<span id="L9"><span class="lineNum">       9</span>              : </span>
-<span id="L10"><span class="lineNum">      10</span>              :   final double dimension;</span>
-<span id="L11"><span class="lineNum">      11</span>              : }</span>
-<span id="L12"><span class="lineNum">      12</span>              : </span>
-<span id="L13"><span class="lineNum">      13</span>              : class PetAvatarWidget extends StatelessWidget {</span>
-<span id="L14"><span class="lineNum">      14</span>              :   final String iconKey;</span>
-<span id="L15"><span class="lineNum">      15</span>              :   final PetAvatarSize size;</span>
-<span id="L16"><span class="lineNum">      16</span>              : </span>
-<span id="L17"><span class="lineNum">      17</span> <span class="tlaGNC">           3 :   const PetAvatarWidget({</span></span>
-<span id="L18"><span class="lineNum">      18</span>              :     super.key,</span>
-<span id="L19"><span class="lineNum">      19</span>              :     required this.iconKey,</span>
-<span id="L20"><span class="lineNum">      20</span>              :     this.size = PetAvatarSize.medium,</span>
-<span id="L21"><span class="lineNum">      21</span>              :   });</span>
-<span id="L22"><span class="lineNum">      22</span>              : </span>
-<span id="L23"><span class="lineNum">      23</span> <span class="tlaGNC">           3 :   @override</span></span>
-<span id="L24"><span class="lineNum">      24</span>              :   Widget build(BuildContext context) {</span>
-<span id="L25"><span class="lineNum">      25</span> <span class="tlaGNC">           3 :     return Image.asset(</span></span>
-<span id="L26"><span class="lineNum">      26</span> <span class="tlaGNC">           6 :       'assets/icons/species/$iconKey.png',</span></span>
-<span id="L27"><span class="lineNum">      27</span> <span class="tlaGNC">           6 :       height: size.dimension,</span></span>
-<span id="L28"><span class="lineNum">      28</span>              :       fit: BoxFit.contain,</span>
+<span id="L2"><span class="lineNum">       2</span>              : import 'package:nanimo/core/widgets/species_icon_widget.dart';</span>
+<span id="L3"><span class="lineNum">       3</span>              : </span>
+<span id="L4"><span class="lineNum">       4</span>              : enum PetAvatarSize {</span>
+<span id="L5"><span class="lineNum">       5</span>              :   small(40),</span>
+<span id="L6"><span class="lineNum">       6</span>              :   medium(80),</span>
+<span id="L7"><span class="lineNum">       7</span>              :   large(160);</span>
+<span id="L8"><span class="lineNum">       8</span>              : </span>
+<span id="L9"><span class="lineNum">       9</span>              :   const PetAvatarSize(this.dimension);</span>
+<span id="L10"><span class="lineNum">      10</span>              : </span>
+<span id="L11"><span class="lineNum">      11</span>              :   final double dimension;</span>
+<span id="L12"><span class="lineNum">      12</span>              : }</span>
+<span id="L13"><span class="lineNum">      13</span>              : </span>
+<span id="L14"><span class="lineNum">      14</span>              : class PetAvatarWidget extends StatelessWidget {</span>
+<span id="L15"><span class="lineNum">      15</span>              :   final String iconKey;</span>
+<span id="L16"><span class="lineNum">      16</span>              :   final PetAvatarSize size;</span>
+<span id="L17"><span class="lineNum">      17</span>              : </span>
+<span id="L18"><span class="lineNum">      18</span> <span class="tlaGNC">           6 :   const PetAvatarWidget({</span></span>
+<span id="L19"><span class="lineNum">      19</span>              :     super.key,</span>
+<span id="L20"><span class="lineNum">      20</span>              :     required this.iconKey,</span>
+<span id="L21"><span class="lineNum">      21</span>              :     this.size = PetAvatarSize.medium,</span>
+<span id="L22"><span class="lineNum">      22</span>              :   });</span>
+<span id="L23"><span class="lineNum">      23</span>              : </span>
+<span id="L24"><span class="lineNum">      24</span> <span class="tlaGNC">           6 :   @override</span></span>
+<span id="L25"><span class="lineNum">      25</span>              :   Widget build(BuildContext context) {</span>
+<span id="L26"><span class="lineNum">      26</span> <span class="tlaGNC">           6 :     return SpeciesIconWidget(</span></span>
+<span id="L27"><span class="lineNum">      27</span> <span class="tlaGNC">           6 :       iconKey: iconKey,</span></span>
+<span id="L28"><span class="lineNum">      28</span> <span class="tlaGNC">          12 :       height: size.dimension,</span></span>
 <span id="L29"><span class="lineNum">      29</span>              :     );</span>
 <span id="L30"><span class="lineNum">      30</span>              :   }</span>
 <span id="L31"><span class="lineNum">      31</span>              : }</span>

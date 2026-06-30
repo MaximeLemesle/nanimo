@@ -32,12 +32,12 @@
             <td></td>
             <td class="headerItem">Lines:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
-            <td class="headerCovTableEntry">10</td>
-            <td class="headerCovTableEntry">10</td>
+            <td class="headerCovTableEntry">12</td>
+            <td class="headerCovTableEntry">12</td>
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-06-14 15:28:26</td>
+            <td class="headerValue">2026-07-01 00:24:34</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">-</td>
@@ -63,28 +63,32 @@
 <span id="L1"><span class="lineNum">       1</span>              : class EventTypeModel {</span>
 <span id="L2"><span class="lineNum">       2</span>              :   final String eventTypeId;</span>
 <span id="L3"><span class="lineNum">       3</span>              :   final String name;</span>
-<span id="L4"><span class="lineNum">       4</span>              :   final bool isPremium;</span>
-<span id="L5"><span class="lineNum">       5</span>              : </span>
-<span id="L6"><span class="lineNum">       6</span> <span class="tlaGNC">           1 :   const EventTypeModel({</span></span>
-<span id="L7"><span class="lineNum">       7</span>              :     required this.eventTypeId,</span>
-<span id="L8"><span class="lineNum">       8</span>              :     required this.name,</span>
-<span id="L9"><span class="lineNum">       9</span>              :     required this.isPremium,</span>
-<span id="L10"><span class="lineNum">      10</span>              :   });</span>
-<span id="L11"><span class="lineNum">      11</span>              : </span>
-<span id="L12"><span class="lineNum">      12</span> <span class="tlaGNC">           1 :   factory EventTypeModel.fromJson(Map&lt;String, dynamic&gt; json) {</span></span>
-<span id="L13"><span class="lineNum">      13</span> <span class="tlaGNC">           1 :     return EventTypeModel(</span></span>
-<span id="L14"><span class="lineNum">      14</span> <span class="tlaGNC">           1 :       eventTypeId: json['id_event_type'],</span></span>
-<span id="L15"><span class="lineNum">      15</span> <span class="tlaGNC">           1 :       name: json['name'],</span></span>
-<span id="L16"><span class="lineNum">      16</span> <span class="tlaGNC">           1 :       isPremium: json['is_premium'],</span></span>
-<span id="L17"><span class="lineNum">      17</span>              :     );</span>
-<span id="L18"><span class="lineNum">      18</span>              :   }</span>
-<span id="L19"><span class="lineNum">      19</span>              : </span>
-<span id="L20"><span class="lineNum">      20</span> <span class="tlaGNC">           2 :   Map&lt;String, dynamic&gt; toJson() =&gt; {</span></span>
-<span id="L21"><span class="lineNum">      21</span> <span class="tlaGNC">           1 :         'id_event_type': eventTypeId,</span></span>
-<span id="L22"><span class="lineNum">      22</span> <span class="tlaGNC">           1 :         'name': name,</span></span>
-<span id="L23"><span class="lineNum">      23</span> <span class="tlaGNC">           1 :         'is_premium': isPremium,</span></span>
-<span id="L24"><span class="lineNum">      24</span>              :       };</span>
-<span id="L25"><span class="lineNum">      25</span>              : }</span>
+<span id="L4"><span class="lineNum">       4</span>              :   final String? code;</span>
+<span id="L5"><span class="lineNum">       5</span>              :   final bool isPremium;</span>
+<span id="L6"><span class="lineNum">       6</span>              : </span>
+<span id="L7"><span class="lineNum">       7</span> <span class="tlaGNC">           3 :   const EventTypeModel({</span></span>
+<span id="L8"><span class="lineNum">       8</span>              :     required this.eventTypeId,</span>
+<span id="L9"><span class="lineNum">       9</span>              :     required this.name,</span>
+<span id="L10"><span class="lineNum">      10</span>              :     this.code,</span>
+<span id="L11"><span class="lineNum">      11</span>              :     required this.isPremium,</span>
+<span id="L12"><span class="lineNum">      12</span>              :   });</span>
+<span id="L13"><span class="lineNum">      13</span>              : </span>
+<span id="L14"><span class="lineNum">      14</span> <span class="tlaGNC">           2 :   factory EventTypeModel.fromJson(Map&lt;String, dynamic&gt; json) {</span></span>
+<span id="L15"><span class="lineNum">      15</span> <span class="tlaGNC">           2 :     return EventTypeModel(</span></span>
+<span id="L16"><span class="lineNum">      16</span> <span class="tlaGNC">           2 :       eventTypeId: json['id_event_type'],</span></span>
+<span id="L17"><span class="lineNum">      17</span> <span class="tlaGNC">           2 :       name: json['name'],</span></span>
+<span id="L18"><span class="lineNum">      18</span> <span class="tlaGNC">           2 :       code: json['code'],</span></span>
+<span id="L19"><span class="lineNum">      19</span> <span class="tlaGNC">           2 :       isPremium: json['is_premium'],</span></span>
+<span id="L20"><span class="lineNum">      20</span>              :     );</span>
+<span id="L21"><span class="lineNum">      21</span>              :   }</span>
+<span id="L22"><span class="lineNum">      22</span>              : </span>
+<span id="L23"><span class="lineNum">      23</span> <span class="tlaGNC">           2 :   Map&lt;String, dynamic&gt; toJson() =&gt; {</span></span>
+<span id="L24"><span class="lineNum">      24</span> <span class="tlaGNC">           1 :         'id_event_type': eventTypeId,</span></span>
+<span id="L25"><span class="lineNum">      25</span> <span class="tlaGNC">           1 :         'name': name,</span></span>
+<span id="L26"><span class="lineNum">      26</span> <span class="tlaGNC">           1 :         'code': code,</span></span>
+<span id="L27"><span class="lineNum">      27</span> <span class="tlaGNC">           1 :         'is_premium': isPremium,</span></span>
+<span id="L28"><span class="lineNum">      28</span>              :       };</span>
+<span id="L29"><span class="lineNum">      29</span>              : }</span>
         </pre>
               </td>
             </tr>

@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import 'package:nanimo/core/errors/repository_network_exception.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_image_cache.dart';
+import 'package:nanimo/core/isar/cache/schemas/pet_event_cache.dart';
 import 'package:nanimo/features/event/data/models/event_image_model.dart';
 import 'package:nanimo/features/event/data/models/event_model.dart';
 
@@ -50,6 +51,10 @@ class EventRepository {
 
     await _isar.writeTxn(() async {
       await _isar.eventCaches.putByEventId(EventCache.fromModel(event));
+      await _isar.petEventCaches.putAllByPetEventId([
+        for (final petId in petIds)
+          PetEventCache.fromIds(petId: petId, eventId: event.eventId),
+      ]);
     });
   }
 
@@ -83,10 +88,43 @@ class EventRepository {
     await _isar.writeTxn(() async {
       await _isar.eventCaches.deleteByEventId(eventId);
       await _isar.eventImageCaches.filter().eventIdEqualTo(eventId).deleteAll();
+      await _isar.petEventCaches.filter().eventIdEqualTo(eventId).deleteAll();
     });
   }
 
-  /// Live list of images attached to event
+  Stream<Map<String, List<String>>> watchPetEvents() {
+    return _isar.petEventCaches
+        .where()
+        .watch(fireImmediately: true)
+        .map((rows) {
+      final map = <String, List<String>>{};
+      for (final row in rows) {
+        map.putIfAbsent(row.eventId, () => []).add(row.petId);
+      }
+      return map;
+    });
+  }
+
+  Future<String> signedImageUrl(String assetPath) {
+    return _supabase.storage.from('journal-media').createSignedUrl(
+          assetPath,
+          3600,
+        );
+  }
+
+  Stream<Map<String, List<String>>> watchAllImages() {
+    return _isar.eventImageCaches
+        .where()
+        .watch(fireImmediately: true)
+        .map((rows) {
+      final map = <String, List<String>>{};
+      for (final row in rows) {
+        map.putIfAbsent(row.eventId, () => []).add(row.assetPath);
+      }
+      return map;
+    });
+  }
+
   Stream<List<EventImageModel>> watchImagesForEvent(String eventId) {
     return _isar.eventImageCaches
         .filter()

@@ -31,13 +31,13 @@
             <td class="headerValue">lcov.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
-            <td class="headerCovTableEntryLo">0.0&nbsp;%</td>
-            <td class="headerCovTableEntry">15</td>
-            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
+            <td class="headerCovTableEntry">29</td>
+            <td class="headerCovTableEntry">29</td>
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-06-14 15:28:26</td>
+            <td class="headerValue">2026-07-01 00:24:34</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">-</td>
@@ -62,42 +62,75 @@
 <pre class="source">
 <span id="L1"><span class="lineNum">       1</span>              : import 'package:nanimo/data/models/referential/pet_race_model.dart';</span>
 <span id="L2"><span class="lineNum">       2</span>              : import 'package:nanimo/data/models/referential/pet_species_model.dart';</span>
-<span id="L3"><span class="lineNum">       3</span>              : import 'package:supabase_flutter/supabase_flutter.dart';</span>
-<span id="L4"><span class="lineNum">       4</span>              : </span>
-<span id="L5"><span class="lineNum">       5</span>              : class ReferentialRepository {</span>
-<span id="L6"><span class="lineNum">       6</span>              :   final SupabaseClient _supabase;</span>
-<span id="L7"><span class="lineNum">       7</span>              : </span>
-<span id="L8"><span class="lineNum">       8</span> <span class="tlaUNC">           0 :   ReferentialRepository(this._supabase);</span></span>
+<span id="L3"><span class="lineNum">       3</span>              : import 'package:nanimo/features/event/data/models/event_type_model.dart';</span>
+<span id="L4"><span class="lineNum">       4</span>              : import 'package:nanimo/features/health/data/models/recommended_vaccines_model.dart';</span>
+<span id="L5"><span class="lineNum">       5</span>              : import 'package:supabase_flutter/supabase_flutter.dart';</span>
+<span id="L6"><span class="lineNum">       6</span>              : </span>
+<span id="L7"><span class="lineNum">       7</span>              : class ReferentialRepository {</span>
+<span id="L8"><span class="lineNum">       8</span>              :   final SupabaseClient _supabase;</span>
 <span id="L9"><span class="lineNum">       9</span>              : </span>
-<span id="L10"><span class="lineNum">      10</span>              :   /// Loading pet species</span>
-<span id="L11"><span class="lineNum">      11</span> <span class="tlaUNC">           0 :   Future&lt;List&lt;PetSpeciesModel&gt;&gt; fetchSpecies() async {</span></span>
-<span id="L12"><span class="lineNum">      12</span>              :     try {</span>
-<span id="L13"><span class="lineNum">      13</span> <span class="tlaUNC">           0 :       final response = await _supabase.from('pet_species').select();</span></span>
-<span id="L14"><span class="lineNum">      14</span>              :       return (response as List)</span>
-<span id="L15"><span class="lineNum">      15</span> <span class="tlaUNC">           0 :           .map((element) =&gt; PetSpeciesModel.fromJson(element))</span></span>
-<span id="L16"><span class="lineNum">      16</span> <span class="tlaUNC">           0 :           .toList();</span></span>
-<span id="L17"><span class="lineNum">      17</span>              :     } catch (err) {</span>
-<span id="L18"><span class="lineNum">      18</span> <span class="tlaUNC">           0 :       throw Exception('Erreur chargement des espèces : $err');</span></span>
-<span id="L19"><span class="lineNum">      19</span>              :     }</span>
-<span id="L20"><span class="lineNum">      20</span>              :   }</span>
-<span id="L21"><span class="lineNum">      21</span>              : </span>
-<span id="L22"><span class="lineNum">      22</span>              :   /// Loading pet races</span>
-<span id="L23"><span class="lineNum">      23</span> <span class="tlaUNC">           0 :   Future&lt;List&lt;PetRaceModel&gt;&gt; fetchRacesBySpecies(String petSpeciesId) async {</span></span>
-<span id="L24"><span class="lineNum">      24</span>              :     try {</span>
-<span id="L25"><span class="lineNum">      25</span> <span class="tlaUNC">           0 :       final response = await _supabase</span></span>
-<span id="L26"><span class="lineNum">      26</span> <span class="tlaUNC">           0 :           .from('pet_race')</span></span>
-<span id="L27"><span class="lineNum">      27</span> <span class="tlaUNC">           0 :           .select()</span></span>
-<span id="L28"><span class="lineNum">      28</span> <span class="tlaUNC">           0 :           .eq('pet_species_id', petSpeciesId)</span></span>
-<span id="L29"><span class="lineNum">      29</span> <span class="tlaUNC">           0 :           .order('pet_race_name');</span></span>
-<span id="L30"><span class="lineNum">      30</span>              : </span>
-<span id="L31"><span class="lineNum">      31</span>              :       return (response as List)</span>
-<span id="L32"><span class="lineNum">      32</span> <span class="tlaUNC">           0 :           .map((element) =&gt; PetRaceModel.fromJson(element))</span></span>
-<span id="L33"><span class="lineNum">      33</span> <span class="tlaUNC">           0 :           .toList();</span></span>
-<span id="L34"><span class="lineNum">      34</span>              :     } catch (err) {</span>
-<span id="L35"><span class="lineNum">      35</span> <span class="tlaUNC">           0 :       throw Exception('Erreur chargement des races : $err');</span></span>
-<span id="L36"><span class="lineNum">      36</span>              :     }</span>
-<span id="L37"><span class="lineNum">      37</span>              :   }</span>
-<span id="L38"><span class="lineNum">      38</span>              : }</span>
+<span id="L10"><span class="lineNum">      10</span> <span class="tlaGNC">           1 :   ReferentialRepository(this._supabase);</span></span>
+<span id="L11"><span class="lineNum">      11</span>              : </span>
+<span id="L12"><span class="lineNum">      12</span>              :   /// Loading pet species</span>
+<span id="L13"><span class="lineNum">      13</span> <span class="tlaGNC">           1 :   Future&lt;List&lt;PetSpeciesModel&gt;&gt; fetchSpecies() async {</span></span>
+<span id="L14"><span class="lineNum">      14</span>              :     try {</span>
+<span id="L15"><span class="lineNum">      15</span> <span class="tlaGNC">           3 :       final response = await _supabase.from('pet_species').select();</span></span>
+<span id="L16"><span class="lineNum">      16</span>              :       return (response as List)</span>
+<span id="L17"><span class="lineNum">      17</span> <span class="tlaGNC">           3 :           .map((element) =&gt; PetSpeciesModel.fromJson(element))</span></span>
+<span id="L18"><span class="lineNum">      18</span> <span class="tlaGNC">           1 :           .toList();</span></span>
+<span id="L19"><span class="lineNum">      19</span>              :     } catch (err) {</span>
+<span id="L20"><span class="lineNum">      20</span> <span class="tlaGNC">           2 :       throw Exception('Erreur chargement des espèces : $err');</span></span>
+<span id="L21"><span class="lineNum">      21</span>              :     }</span>
+<span id="L22"><span class="lineNum">      22</span>              :   }</span>
+<span id="L23"><span class="lineNum">      23</span>              : </span>
+<span id="L24"><span class="lineNum">      24</span>              :   /// Loading pet races</span>
+<span id="L25"><span class="lineNum">      25</span> <span class="tlaGNC">           1 :   Future&lt;List&lt;PetRaceModel&gt;&gt; fetchRacesBySpecies(String petSpeciesId) async {</span></span>
+<span id="L26"><span class="lineNum">      26</span>              :     try {</span>
+<span id="L27"><span class="lineNum">      27</span> <span class="tlaGNC">           1 :       final response = await _supabase</span></span>
+<span id="L28"><span class="lineNum">      28</span> <span class="tlaGNC">           1 :           .from('pet_race')</span></span>
+<span id="L29"><span class="lineNum">      29</span> <span class="tlaGNC">           1 :           .select()</span></span>
+<span id="L30"><span class="lineNum">      30</span> <span class="tlaGNC">           1 :           .eq('pet_species_id', petSpeciesId)</span></span>
+<span id="L31"><span class="lineNum">      31</span> <span class="tlaGNC">           1 :           .order('pet_race_name');</span></span>
+<span id="L32"><span class="lineNum">      32</span>              : </span>
+<span id="L33"><span class="lineNum">      33</span>              :       return (response as List)</span>
+<span id="L34"><span class="lineNum">      34</span> <span class="tlaGNC">           3 :           .map((element) =&gt; PetRaceModel.fromJson(element))</span></span>
+<span id="L35"><span class="lineNum">      35</span> <span class="tlaGNC">           1 :           .toList();</span></span>
+<span id="L36"><span class="lineNum">      36</span>              :     } catch (err) {</span>
+<span id="L37"><span class="lineNum">      37</span> <span class="tlaGNC">           2 :       throw Exception('Erreur chargement des races : $err');</span></span>
+<span id="L38"><span class="lineNum">      38</span>              :     }</span>
+<span id="L39"><span class="lineNum">      39</span>              :   }</span>
+<span id="L40"><span class="lineNum">      40</span>              : </span>
+<span id="L41"><span class="lineNum">      41</span>              :   /// Loading event types</span>
+<span id="L42"><span class="lineNum">      42</span> <span class="tlaGNC">           1 :   Future&lt;List&lt;EventTypeModel&gt;&gt; fetchEventTypes() async {</span></span>
+<span id="L43"><span class="lineNum">      43</span>              :     try {</span>
+<span id="L44"><span class="lineNum">      44</span> <span class="tlaGNC">           4 :       final response = await _supabase.from('event_type').select().order('name');</span></span>
+<span id="L45"><span class="lineNum">      45</span>              :       return (response as List)</span>
+<span id="L46"><span class="lineNum">      46</span> <span class="tlaGNC">           3 :           .map((element) =&gt; EventTypeModel.fromJson(element))</span></span>
+<span id="L47"><span class="lineNum">      47</span> <span class="tlaGNC">           1 :           .toList();</span></span>
+<span id="L48"><span class="lineNum">      48</span>              :     } catch (err) {</span>
+<span id="L49"><span class="lineNum">      49</span> <span class="tlaGNC">           2 :       throw Exception('Erreur chargement des types d\'événement : $err');</span></span>
+<span id="L50"><span class="lineNum">      50</span>              :     }</span>
+<span id="L51"><span class="lineNum">      51</span>              :   }</span>
+<span id="L52"><span class="lineNum">      52</span>              : </span>
+<span id="L53"><span class="lineNum">      53</span>              :   /// Loading recommended vaccines for a species</span>
+<span id="L54"><span class="lineNum">      54</span> <span class="tlaGNC">           1 :   Future&lt;List&lt;RecommendedVaccineModel&gt;&gt; fetchRecommendedVaccinesBySpecies(</span></span>
+<span id="L55"><span class="lineNum">      55</span>              :     String petSpeciesId,</span>
+<span id="L56"><span class="lineNum">      56</span>              :   ) async {</span>
+<span id="L57"><span class="lineNum">      57</span>              :     try {</span>
+<span id="L58"><span class="lineNum">      58</span> <span class="tlaGNC">           1 :       final response = await _supabase</span></span>
+<span id="L59"><span class="lineNum">      59</span> <span class="tlaGNC">           1 :           .from('recommended_vaccines')</span></span>
+<span id="L60"><span class="lineNum">      60</span> <span class="tlaGNC">           1 :           .select()</span></span>
+<span id="L61"><span class="lineNum">      61</span> <span class="tlaGNC">           1 :           .eq('pet_species_id', petSpeciesId)</span></span>
+<span id="L62"><span class="lineNum">      62</span> <span class="tlaGNC">           1 :           .order('name');</span></span>
+<span id="L63"><span class="lineNum">      63</span>              : </span>
+<span id="L64"><span class="lineNum">      64</span>              :       return (response as List)</span>
+<span id="L65"><span class="lineNum">      65</span> <span class="tlaGNC">           3 :           .map((element) =&gt; RecommendedVaccineModel.fromJson(element))</span></span>
+<span id="L66"><span class="lineNum">      66</span> <span class="tlaGNC">           1 :           .toList();</span></span>
+<span id="L67"><span class="lineNum">      67</span>              :     } catch (err) {</span>
+<span id="L68"><span class="lineNum">      68</span> <span class="tlaGNC">           2 :       throw Exception('Erreur chargement des vaccins recommandés : $err');</span></span>
+<span id="L69"><span class="lineNum">      69</span>              :     }</span>
+<span id="L70"><span class="lineNum">      70</span>              :   }</span>
+<span id="L71"><span class="lineNum">      71</span>              : }</span>
         </pre>
               </td>
             </tr>

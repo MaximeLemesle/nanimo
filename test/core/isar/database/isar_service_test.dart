@@ -5,6 +5,7 @@ import 'package:nanimo/core/isar/cache/schemas/user_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_image_cache.dart';
+import 'package:nanimo/core/isar/cache/schemas/pet_event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_vaccine_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/vet_visit_cache.dart';
@@ -27,6 +28,7 @@ void main() {
           PetCacheSchema,
           EventCacheSchema,
           EventImageCacheSchema,
+          PetEventCacheSchema,
           HealthDiaryCacheSchema,
           HealthDiaryVaccineCacheSchema,
           VetVisitCacheSchema,
@@ -82,6 +84,21 @@ void main() {
       final result = await isar.petCaches.getByPetId('pet-uuid');
       expect(result, isNotNull);
       expect(result!.petName, 'Buddy');
+    });
+
+    test('can write and read a PetEventCache', () async {
+      final link =
+          PetEventCache.fromIds(petId: 'pet-uuid', eventId: 'event-uuid');
+
+      await isar.writeTxn(() async {
+        await isar.petEventCaches.putByPetEventId(link);
+      });
+
+      final result =
+          await isar.petEventCaches.getByPetEventId('pet-uuid|event-uuid');
+      expect(result, isNotNull);
+      expect(result!.petId, 'pet-uuid');
+      expect(result.eventId, 'event-uuid');
     });
 
     test('can write and read a VetVisitCache', () async {

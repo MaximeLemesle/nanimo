@@ -68,4 +68,7 @@ class AppColors {
   static const Color neutral700 = Color(0xFF2F3130);
   static const Color neutral800 = Color(0xFF1A1C1C);
   static const Color neutral900 = Color(0xFF000000);
+
+  /// Shadow colors ///
+  static const Color shadow = Color.fromARGB(15, 0, 0, 0);
 }

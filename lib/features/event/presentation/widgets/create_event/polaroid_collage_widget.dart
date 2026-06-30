@@ -169,7 +169,7 @@ class PolaroidCollageWidget extends StatelessWidget {
             ? null
             : const [
                 BoxShadow(
-                  color: Color(0x1A000000),
+                  color: AppColors.shadow,
                   blurRadius: 8,
                   offset: Offset(0, 4),
                 ),

@@ -79,7 +79,7 @@ lib/
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
 | `users`                 | id_user (UUID PK), user_name, mail (unique), subscription_status, subscription_expires_at, id_subscription_config FK                         | Auth Supabase                    |
 | `pets`                  | id_pet (UUID PK), pet_name, birthdate (DATE), gender (enum), created_at, pet_race_id FK, pet_species_id FK, pet_icon_id FK                   | RLS: user_id                     |
-| `events`                | id_event (UUID PK), title, description, created_at, entry_date (DATE), event_type_id FK                                                      | Aucun lien direct pet/user — passe par `pets_events`. RLS via `pets_events → users_pets` |
+| `events`                | id_event (UUID PK), title, description, created_at, entry_date (TIMESTAMPTZ), event_type_id FK                                                      | Aucun lien direct pet/user — passe par `pets_events`. RLS via `pets_events → users_pets` |
 | `pets_events`           | pet_id FK, event_id FK (jointure M:N)                                                                                                        | Un event ↔ plusieurs animaux, un animal ↔ plusieurs events |
 | `event_type`            | id_event_type (UUID PK), name, code (UNIQUE: balade/calin/anniversaire), is_premium                                                          | `code` pilote le style visuel app |
 | `event_image`           | id_event_image (UUID PK), asset_path (Storage path), event_id FK                                                                             | Une ou plusieurs images. RLS via l'event lié |
@@ -208,6 +208,17 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 
 **Timeline** : fil chronologique invers, photos polaroid, titre bold, date, description  
 **Calendrier** : mois avec dots, tap jour → panel bas montrant événements
+
+**Implémentation (NAN-018)** — feature `lib/features/journal/`, route `/home/journal` (2ᵉ onglet de la navbar).
+
+> Navbar (`AppShell`) : `Accueil / Journal / Animal / Créer (+)`. Le bouton `+` **push** `/home/create-event` (pas un onglet). La page Profil (`/home/profile`, déconnexion) n'est plus dans la navbar — accès à recâbler.
+
+- `JournalCubit` : offline-first, écoute 3 streams Isar (`watchEvents`, `watchPetEvents`, `watchAllImages`) + charge pets/types/`iconsKey`.
+- Lien `pets_events` : cache Isar `PetEventCache` (clé `"$petId|$eventId"`), pour les pastilles d'animaux et le filtre animal.
+- Images : bucket `journal-media` privé → `EventRepository.signedImageUrl()` (URL signée 1h).
+- Filtres (NAN-015) : multi-sélection animaux **et/ou** types via bottom sheet, toggle live sur le cubit (`togglePetFilter`/`toggleTypeFilter`/`clearFilters`), appliqués par `JournalState.filteredEvents` (OR intra-groupe, AND inter-groupes).
+- `JournalFilterBarWidget` : chips des filtres actifs (scroll horizontal, tap = retire) à gauche, chip d'ouverture de la sheet à droite. UI à base de `ChipWidget` (core, réutilisable).
+- Calendrier : onglet désactivé (v2).
 
 ### Créer souvenir
 

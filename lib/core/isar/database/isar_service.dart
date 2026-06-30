@@ -4,6 +4,7 @@ import 'package:nanimo/core/isar/cache/schemas/user_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_image_cache.dart';
+import 'package:nanimo/core/isar/cache/schemas/pet_event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_vaccine_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/subscription_config_cache.dart';
@@ -27,6 +28,7 @@ class IsarService {
         PetCacheSchema,
         EventCacheSchema,
         EventImageCacheSchema,
+        PetEventCacheSchema,
         HealthDiaryCacheSchema,
         HealthDiaryVaccineCacheSchema,
         SubscriptionConfigCacheSchema,
