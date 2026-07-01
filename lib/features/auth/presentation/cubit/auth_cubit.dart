@@ -44,6 +44,9 @@ class AuthCubit extends Cubit<AuthState> {
           clearError: true,
         ));
       } else {
+        try {
+          await _syncService.clearAllCaches();
+        } catch (_) {}
         emit(state.copyWith(
           status: AuthStatus.unauthenticated,
           isSubmitting: false,
