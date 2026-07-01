@@ -275,4 +275,22 @@ void main() {
 
     await cubit.close();
   });
+
+  test('imageUrl memoizes the signed url per asset path', () async {
+    when(() => eventRepo.signedImageUrl('path/a.jpg'))
+        .thenAnswer((_) async => 'https://signed/a.jpg');
+    when(() => eventRepo.signedImageUrl('path/b.jpg'))
+        .thenAnswer((_) async => 'https://signed/b.jpg');
+    final cubit = createCubit();
+    await settle();
+
+    expect(await cubit.imageUrl('path/a.jpg'), 'https://signed/a.jpg');
+    expect(await cubit.imageUrl('path/a.jpg'), 'https://signed/a.jpg');
+    expect(await cubit.imageUrl('path/b.jpg'), 'https://signed/b.jpg');
+
+    verify(() => eventRepo.signedImageUrl('path/a.jpg')).called(1);
+    verify(() => eventRepo.signedImageUrl('path/b.jpg')).called(1);
+
+    await cubit.close();
+  });
 }

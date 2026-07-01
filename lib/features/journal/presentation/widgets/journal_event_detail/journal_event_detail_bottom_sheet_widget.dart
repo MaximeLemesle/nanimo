@@ -266,6 +266,9 @@ class _EventPhoto extends StatelessWidget {
           }
           return CachedNetworkImage(
             imageUrl: snapshot.data!,
+            // The signed url token changes on every call; key the disk cache
+            // on the stable storage path instead.
+            cacheKey: assetPath,
             width: 200,
             height: 200,
             fit: BoxFit.cover,
