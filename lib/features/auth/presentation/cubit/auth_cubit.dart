@@ -24,8 +24,8 @@ class AuthCubit extends Cubit<AuthState> {
 
   void _listenToAuthChanges() {
     /// Listen to session changes and trigger sync on sign-in or session restore
-    _authSubscription = supabase.Supabase.instance.client.auth.onAuthStateChange
-        .listen((supabase.AuthState data) async {
+    _authSubscription =
+        _repository.authStateChanges.listen((supabase.AuthState data) async {
       final session = data.session;
 
       if (session != null) {
