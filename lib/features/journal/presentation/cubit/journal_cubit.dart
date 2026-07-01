@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nanimo/core/errors/repository_network_exception.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/event/data/event_repository.dart';
 import 'package:nanimo/features/event/data/models/event_model.dart';
@@ -91,6 +92,17 @@ class JournalCubit extends Cubit<JournalState> {
 
   Future<String> imageUrl(String assetPath) =>
       _eventRepository.signedImageUrl(assetPath);
+
+  Future<String?> deleteEvent(String eventId) async {
+    try {
+      await _eventRepository.deleteEvent(eventId);
+      return null;
+    } on RepositoryNetworkException catch (e) {
+      return e.message;
+    } catch (_) {
+      return 'Impossible de supprimer le souvenir.';
+    }
+  }
 
   @override
   Future<void> close() {

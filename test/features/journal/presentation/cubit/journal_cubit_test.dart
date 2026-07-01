@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:nanimo/core/errors/repository_network_exception.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/event/data/event_repository.dart';
@@ -224,6 +225,41 @@ void main() {
 
     expect(cubit.state.status, JournalStatus.error);
     expect(cubit.state.error, isNotNull);
+
+    await cubit.close();
+  });
+
+  test('deleteEvent returns null when the repository succeeds', () async {
+    when(() => eventRepo.deleteEvent('e1')).thenAnswer((_) async {});
+    final cubit = createCubit();
+    await settle();
+
+    final error = await cubit.deleteEvent('e1');
+    expect(error, isNull);
+    verify(() => eventRepo.deleteEvent('e1')).called(1);
+
+    await cubit.close();
+  });
+
+  test('deleteEvent surfaces the network exception message', () async {
+    when(() => eventRepo.deleteEvent('e1'))
+        .thenThrow(const RepositoryNetworkException('Pas de réseau'));
+    final cubit = createCubit();
+    await settle();
+
+    final error = await cubit.deleteEvent('e1');
+    expect(error, 'Pas de réseau');
+
+    await cubit.close();
+  });
+
+  test('deleteEvent returns a generic message on unknown failure', () async {
+    when(() => eventRepo.deleteEvent('e1')).thenThrow(Exception('boom'));
+    final cubit = createCubit();
+    await settle();
+
+    final error = await cubit.deleteEvent('e1');
+    expect(error, 'Impossible de supprimer le souvenir.');
 
     await cubit.close();
   });

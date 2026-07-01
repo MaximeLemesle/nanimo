@@ -4,6 +4,7 @@ import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/features/journal/presentation/cubit/journal_cubit.dart';
+import 'package:nanimo/features/journal/presentation/widgets/journal_event_detail/journal_event_detail_bottom_sheet_widget.dart';
 import 'package:nanimo/features/journal/presentation/widgets/journal_timeline/journal_timeline_event_card_widget.dart';
 
 class JournalTimelineWidget extends StatelessWidget {
@@ -49,6 +50,17 @@ class JournalTimelineWidget extends StatelessWidget {
           iconKeys: iconKeysFor(event.eventId),
           urlResolver: cubit.imageUrl,
           imageFirst: index.isEven,
+          onTap: () => JournalEventDetailBottomSheetWidget.show(
+            context,
+            event: event,
+            onEdit: () => ScaffoldMessenger.of(context)
+              ..clearSnackBars()
+              ..showSnackBar(
+                const SnackBar(
+                  content: Text('La modification arrivera bientôt.'),
+                ),
+              ),
+          ),
         );
       },
     );

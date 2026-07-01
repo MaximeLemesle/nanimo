@@ -240,3 +240,8 @@ coverage/html/features/subscription/presentation/cubit/index-sort-l.html
 coverage/html/features/subscription/presentation/cubit/index.html
 coverage/html/features/subscription/presentation/cubit/subscription_cubit.dart.gcov.html
 coverage/html/features/subscription/presentation/cubit/subscription_state.dart.gcov.html
+.tokensave/branch-meta.json
+.tokensave/config.json
+.tokensave/tokensave.db
+.tokensave/tokensave.db-shm
+.tokensave/tokensave.db-wal
