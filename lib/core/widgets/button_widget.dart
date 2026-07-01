@@ -3,7 +3,7 @@ import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 
-enum ButtonType { primary, secondary }
+enum ButtonType { primary, secondary, delete }
 
 enum ButtonState { normal, active, disabled }
 
@@ -76,6 +76,22 @@ class _ButtonWidgetState extends State<ButtonWidget> {
             break;
           case ButtonState.disabled:
             backgroundColor = AppColors.primary50;
+            textColor = AppColors.textSecondary;
+            break;
+        }
+
+      case ButtonType.delete:
+        switch (effectiveState) {
+          case ButtonState.normal:
+            backgroundColor = AppColors.backgroundSecondary;
+            textColor = AppColors.secondary600;
+            break;
+          case ButtonState.active:
+            backgroundColor = AppColors.secondary200;
+            textColor = AppColors.secondary700;
+            break;
+          case ButtonState.disabled:
+            backgroundColor = AppColors.secondary50;
             textColor = AppColors.textSecondary;
             break;
         }

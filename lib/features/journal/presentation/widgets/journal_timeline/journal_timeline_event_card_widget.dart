@@ -16,6 +16,7 @@ class JournalTimelineEventCardWidget extends StatelessWidget {
   final Future<String> Function(String assetPath) urlResolver;
 
   final bool imageFirst;
+  final VoidCallback? onTap;
 
   const JournalTimelineEventCardWidget({
     super.key,
@@ -24,6 +25,7 @@ class JournalTimelineEventCardWidget extends StatelessWidget {
     required this.iconKeys,
     required this.urlResolver,
     required this.imageFirst,
+    this.onTap,
   });
 
   @override
@@ -71,19 +73,23 @@ class JournalTimelineEventCardWidget extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.xxl),
-      child: Column(
-        children: [
-          if (date != null)
-            Text(
-              DateFormatter.eventHeader(date),
-              style: AppTextStyles.numberSmall,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Column(
+          children: [
+            if (date != null)
+              Text(
+                DateFormatter.eventHeader(date),
+                style: AppTextStyles.numberSmall,
+              ),
+            const SizedBox(height: AppSpacing.sm),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: rowChildren,
             ),
-          const SizedBox(height: AppSpacing.sm),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: rowChildren,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

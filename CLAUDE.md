@@ -218,6 +218,7 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 - Images : bucket `journal-media` privé → `EventRepository.signedImageUrl()` (URL signée 1h).
 - Filtres (NAN-015) : multi-sélection animaux **et/ou** types via bottom sheet, toggle live sur le cubit (`togglePetFilter`/`toggleTypeFilter`/`clearFilters`), appliqués par `JournalState.filteredEvents` (OR intra-groupe, AND inter-groupes).
 - `JournalFilterBarWidget` : chips des filtres actifs (scroll horizontal, tap = retire) à gauche, chip d'ouverture de la sheet à droite. UI à base de `ChipWidget` (core, réutilisable).
+- Détail événement (NAN-032) : tap sur une carte timeline → `JournalEventDetailBottomSheetWidget.show()` (réutilise le `JournalCubit` ambiant via `BlocProvider.value`). Affiche photos (scroll horizontal, URL signées), titre, date, description, animaux (chips) + actions **Modifier**/**Supprimer**. Suppression câblée (`JournalCubit.deleteEvent` → `EventRepository.deleteEvent`, confirmation `AlertDialog`, la sheet se ferme sur succès et un snackbar remonte l'erreur réseau). **Modifier** = simple hook `onEdit` (placeholder snackbar) ; le vrai flux d'édition est un ticket séparé.
 - Calendrier : onglet désactivé (v2).
 
 ### Créer souvenir

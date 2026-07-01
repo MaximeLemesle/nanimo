@@ -23,10 +23,11 @@ class DateFormatter {
 
   /// Event header such as « 05 mars à 11h43 ».
   static String eventHeader(DateTime value) {
-    final day = value.day.toString().padLeft(2, '0');
-    final month = _frenchMonths[value.month - 1];
-    final hour = value.hour.toString().padLeft(2, '0');
-    final minute = value.minute.toString().padLeft(2, '0');
+    final local = value.toLocal();
+    final day = local.day.toString().padLeft(2, '0');
+    final month = _frenchMonths[local.month - 1];
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
     return '$day $month à ${hour}h$minute';
   }
 
