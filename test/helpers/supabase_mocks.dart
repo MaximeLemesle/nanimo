@@ -13,6 +13,11 @@ class MockUser extends Mock implements User {}
 
 class MockSupabaseQueryBuilder extends Mock implements SupabaseQueryBuilder {}
 
+class MockSupabaseStorageClient extends Mock
+    implements SupabaseStorageClient {}
+
+class MockStorageFileApi extends Mock implements StorageFileApi {}
+
 /// Awaitable stand-in for any Postgrest chain. All chain methods return `this`
 /// so an arbitrarily deep `.eq(...).single()` call still resolves to the same
 /// terminal `Future` configured at construction. Awaiting the chain executes
@@ -158,6 +163,24 @@ FakePostgrestChain stubUpsert(
         ignoreDuplicates: any(named: 'ignoreDuplicates'),
       )).thenAnswer((_) => chain as dynamic);
   return chain;
+}
+
+/// Stubs `supabase.storage.from(bucket).remove(...)`, returning `resolver()`'s
+/// result on success or letting it throw to drive the error path.
+MockStorageFileApi stubStorageRemove(
+  MockSupabaseClient supabase,
+  String bucket, {
+  required FutureOr<void> Function() resolver,
+}) {
+  final storageClient = MockSupabaseStorageClient();
+  final fileApi = MockStorageFileApi();
+  when(() => supabase.storage).thenReturn(storageClient);
+  when(() => storageClient.from(bucket)).thenReturn(fileApi);
+  when(() => fileApi.remove(any())).thenAnswer((_) async {
+    await Future.sync(resolver);
+    return <FileObject>[];
+  });
+  return fileApi;
 }
 
 FakeSelectChain stubSelect(
