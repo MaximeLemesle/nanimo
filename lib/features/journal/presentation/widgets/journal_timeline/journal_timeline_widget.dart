@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
@@ -53,13 +55,8 @@ class JournalTimelineWidget extends StatelessWidget {
           onTap: () => JournalEventDetailBottomSheetWidget.show(
             context,
             event: event,
-            onEdit: () => ScaffoldMessenger.of(context)
-              ..clearSnackBars()
-              ..showSnackBar(
-                const SnackBar(
-                  content: Text('La modification arrivera bientôt.'),
-                ),
-              ),
+            onEdit: () =>
+                context.push('${RouteNames.editEvent}/${event.eventId}'),
           ),
         );
       },

@@ -1,0 +1,66 @@
+part of 'edit_event_cubit.dart';
+
+enum EditEventStatus { initial, loading, success, error }
+
+class EditEventState extends Equatable {
+  final EditEventStatus status;
+  final EventModel? event;
+  final List<EventImageModel> existingImages;
+  final List<EventTypeModel> types;
+  final String? selectedTypeId;
+  final List<PetModel> pets;
+  final List<String> selectedPetIds;
+  final Map<String, String> iconsKey;
+  final String? error;
+
+  const EditEventState({
+    this.status = EditEventStatus.initial,
+    this.event,
+    this.existingImages = const [],
+    this.types = const [],
+    this.selectedTypeId,
+    this.pets = const [],
+    this.selectedPetIds = const [],
+    this.iconsKey = const {},
+    this.error,
+  });
+
+  bool get isLoaded => event != null && types.isNotEmpty;
+
+  EditEventState copyWith({
+    EditEventStatus? status,
+    EventModel? event,
+    List<EventImageModel>? existingImages,
+    List<EventTypeModel>? types,
+    String? selectedTypeId,
+    List<PetModel>? pets,
+    List<String>? selectedPetIds,
+    Map<String, String>? iconsKey,
+    String? error,
+  }) {
+    return EditEventState(
+      status: status ?? this.status,
+      event: event ?? this.event,
+      existingImages: existingImages ?? this.existingImages,
+      types: types ?? this.types,
+      selectedTypeId: selectedTypeId ?? this.selectedTypeId,
+      pets: pets ?? this.pets,
+      selectedPetIds: selectedPetIds ?? this.selectedPetIds,
+      iconsKey: iconsKey ?? this.iconsKey,
+      error: error ?? this.error,
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+        status,
+        event,
+        existingImages,
+        types,
+        selectedTypeId,
+        pets,
+        selectedPetIds,
+        iconsKey,
+        error,
+      ];
+}

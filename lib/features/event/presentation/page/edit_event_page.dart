@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
@@ -10,7 +9,9 @@ import 'package:nanimo/core/widgets/app_scaffold.dart';
 import 'package:nanimo/core/widgets/species_icon_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/date_field_widget.dart';
-import 'package:nanimo/features/event/presentation/cubit/event_creation_cubit.dart';
+import 'package:nanimo/features/event/data/models/event_image_model.dart';
+import 'package:nanimo/features/event/data/models/event_model.dart';
+import 'package:nanimo/features/event/presentation/cubit/edit_event_cubit.dart';
 import 'package:nanimo/features/event/presentation/event_type_styles.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/create_event_bottom_sheet/add_image_bottom_sheet_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/create_event_bottom_sheet/event_type_bottom_sheet_widget.dart';
@@ -18,20 +19,22 @@ import 'package:nanimo/features/event/presentation/widgets/create_event/create_e
 import 'package:nanimo/features/event/presentation/widgets/create_event/polaroid_collage_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/sticker_selector_widget.dart';
 
-class CreateEventPage extends StatefulWidget {
-  const CreateEventPage({super.key});
+class EditEventPage extends StatefulWidget {
+  const EditEventPage({super.key});
 
   @override
-  State<CreateEventPage> createState() => _CreateEventPageState();
+  State<EditEventPage> createState() => _EditEventPageState();
 }
 
-class _CreateEventPageState extends State<CreateEventPage> {
+class _EditEventPageState extends State<EditEventPage> {
   static const int _maxTitleLength = 30;
 
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   DateTime _entryDate = DateTime.now();
-  final List<XFile> _images = [];
+  List<CollageImage> _images = [];
+  final List<EventImageModel> _removedImages = [];
+  bool _seeded = false;
 
   @override
   void initState() {
@@ -49,14 +52,33 @@ class _CreateEventPageState extends State<CreateEventPage> {
     super.dispose();
   }
 
+  /// Prefills the form from the loaded event, once, on the first build after
+  /// load completes. Detaches the title listener while writing so setting the
+  /// controllers' text doesn't trigger a `setState` mid-build.
+  void _seedFromEvent(EventModel event, List<EventImageModel> images) {
+    _seeded = true;
+    _entryDate = event.entryDate ?? DateTime.now();
+    _images = [
+      for (final image in images)
+        RemoteCollageImage(
+          eventImageId: image.eventImageId,
+          assetPath: image.assetPath,
+        ),
+    ];
+    _titleController.removeListener(_onTitleChanged);
+    _titleController.text = event.title;
+    _titleController.addListener(_onTitleChanged);
+    _descriptionController.text = event.description ?? '';
+  }
+
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<EventCreationCubit, EventCreationState>(
+    return BlocConsumer<EditEventCubit, EditEventState>(
       listenWhen: (previous, current) => previous.status != current.status,
       listener: (context, state) {
-        if (state.status == EventCreationStatus.success) {
+        if (state.status == EditEventStatus.success) {
           context.pop();
-        } else if (state.status == EventCreationStatus.error &&
+        } else if (state.status == EditEventStatus.error &&
             state.error != null) {
           ScaffoldMessenger.of(context)
             ..clearSnackBars()
@@ -64,13 +86,17 @@ class _CreateEventPageState extends State<CreateEventPage> {
         }
       },
       builder: (context, state) {
-        if (state.types.isEmpty) {
+        if (!state.isLoaded) {
           return const AppScaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
 
-        final isLoading = state.status == EventCreationStatus.loading;
+        if (!_seeded) {
+          _seedFromEvent(state.event!, state.existingImages);
+        }
+
+        final isLoading = state.status == EditEventStatus.loading;
         final selectedType = state.types.firstWhere(
           (type) => type.eventTypeId == state.selectedTypeId,
           orElse: () => state.types.first,
@@ -141,7 +167,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                             ),
                       ],
                       onTap: () async {
-                        final state = context.read<EventCreationCubit>().state;
+                        final state = context.read<EditEventCubit>().state;
                         final selected = await PetSelectBottomSheetWidget.show(
                           context,
                           pets: state.pets,
@@ -151,7 +177,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                         if (selected == null || !mounted) return;
                         setState(() {
                           context
-                              .read<EventCreationCubit>()
+                              .read<EditEventCubit>()
                               .setSelectedPets(selected);
                         });
                       },
@@ -170,7 +196,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                         ),
                       ],
                       onTap: () async {
-                        final state = context.read<EventCreationCubit>().state;
+                        final state = context.read<EditEventCubit>().state;
                         final selected = await EventTypeBottomSheetWidget.show(
                           context,
                           types: state.types,
@@ -178,9 +204,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                         );
                         if (selected == null || !mounted) return;
                         setState(() {
-                          context
-                              .read<EventCreationCubit>()
-                              .selectType(selected);
+                          context.read<EditEventCubit>().selectType(selected);
                         });
                       },
                     ),
@@ -190,7 +214,8 @@ class _CreateEventPageState extends State<CreateEventPage> {
 
               /// Images selector
               PolaroidCollageWidget(
-                images: [for (final image in _images) LocalCollageImage(image)],
+                images: _images,
+                urlResolver: context.read<EditEventCubit>().imageUrl,
                 onTap: () async {
                   final messenger = ScaffoldMessenger.of(context);
                   final picked = await AddImageBottomSheetWidget.show(context);
@@ -209,18 +234,22 @@ class _CreateEventPageState extends State<CreateEventPage> {
                       );
                     return;
                   }
-                  setState(() => _images.addAll(picked.take(remaining)));
+                  setState(() => _images.addAll([
+                        for (final image in picked.take(remaining))
+                          LocalCollageImage(image),
+                      ]));
                 },
-                onImageTap: (_) async {
-                  /// Re-pick the whole set, replacing the current selection.
-                  final picked = await ImagePicker().pickMultiImage(
-                    limit: PolaroidCollageWidget.maxImages,
-                  );
-                  if (picked.isEmpty || !mounted) return;
+                onImageTap: (index) {
+                  final image = _images[index];
                   setState(() {
-                    _images
-                      ..clear()
-                      ..addAll(picked.take(PolaroidCollageWidget.maxImages));
+                    _images.removeAt(index);
+                    if (image is RemoteCollageImage) {
+                      _removedImages.add(EventImageModel(
+                        eventImageId: image.eventImageId,
+                        assetPath: image.assetPath,
+                        eventId: state.event!.eventId,
+                      ));
+                    }
                   });
                 },
               ),
@@ -247,11 +276,15 @@ class _CreateEventPageState extends State<CreateEventPage> {
                 isLoading: isLoading,
                 state: canSubmit ? ButtonState.normal : ButtonState.disabled,
                 onPressed: () {
-                  context.read<EventCreationCubit>().submit(
+                  context.read<EditEventCubit>().submit(
                         title: _titleController.text.trim(),
                         description: _descriptionController.text,
                         entryDate: _entryDate,
-                        images: _images,
+                        newImages: [
+                          for (final image in _images)
+                            if (image is LocalCollageImage) image.file,
+                        ],
+                        removedImages: List.of(_removedImages),
                       );
                 },
               ),
