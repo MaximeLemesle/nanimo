@@ -2,10 +2,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_image_cache.dart';
+import 'package:nanimo/core/isar/cache/schemas/event_type_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_vaccine_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_event_cache.dart';
+import 'package:nanimo/core/isar/cache/schemas/pet_species_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/subscription_config_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/user_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/vet_visit_cache.dart';
@@ -206,10 +208,26 @@ void main() {
               'pet_id': 'p1',
             },
           ]);
+      stubSelect(supabase, 'pet_species', resolver: () => [
+            {
+              'id_pet_species': 's1',
+              'species_name': 'Chat',
+              'weight_unit': 'kg',
+              'icon_key': 'cat',
+            },
+          ]);
+      stubSelect(supabase, 'event_type', resolver: () => [
+            {
+              'id_event_type': 't1',
+              'name': 'Balade',
+              'code': 'balade',
+              'is_premium': false,
+            },
+          ]);
       await seedEvent('stale');
 
       syncService.syncSecondary();
-      await _waitFor(() => harness.isar.vetVisitCaches.count());
+      await _waitFor(() => harness.isar.eventTypeCaches.count());
 
       expect(await harness.isar.eventCaches.count(), 1);
       expect(await harness.isar.eventCaches.getByEventId('e9'), isNotNull);
@@ -219,6 +237,8 @@ void main() {
       expect(await harness.isar.healthDiaryVaccineCaches.count(), 1);
       expect(await harness.isar.weightLogCaches.count(), 1);
       expect(await harness.isar.vetVisitCaches.count(), 1);
+      expect(await harness.isar.petSpeciesCaches.count(), 1);
+      expect(await harness.isar.eventTypeCaches.count(), 1);
     });
 
     test('swallows fetch failures and leaves the caches untouched', () async {
