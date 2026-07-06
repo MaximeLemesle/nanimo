@@ -38,9 +38,10 @@ class EventRepository {
   Future<void> createEvent(EventModel event,
       {required List<String> petIds}) async {
     try {
-      await _supabase.from('events').insert(event.toJson());
+      // Ignore duplicate keys so a retry after a partial failure is idempotent.
+      await _insertIgnoringDuplicate('events', event.toJson());
       if (petIds.isNotEmpty) {
-        await _supabase.from('pets_events').insert([
+        await _insertIgnoringDuplicate('pets_events', [
           for (final petId in petIds)
             {'event_id': event.eventId, 'pet_id': petId},
         ]);
@@ -140,7 +141,8 @@ class EventRepository {
 
   Future<void> addImage(EventImageModel image) async {
     try {
-      await _supabase.from('event_image').insert(image.toJson());
+      // Ignore duplicate keys so a retry after a partial failure is idempotent.
+      await _insertIgnoringDuplicate('event_image', image.toJson());
     } catch (e, st) {
       throw mapRepositoryError(e, st,
           operation: 'addImage',
@@ -201,5 +203,16 @@ class EventRepository {
       );
     }
     return userId;
+  }
+
+  /// Inserts [values], swallowing a unique-violation (23505) so a retry after a
+  /// partial failure does not create duplicates.
+  Future<void> _insertIgnoringDuplicate(String table, Object values) async {
+    try {
+      await _supabase.from(table).insert(values);
+    } on PostgrestException catch (err) {
+      if (err.code == '23505') return;
+      rethrow;
+    }
   }
 }
