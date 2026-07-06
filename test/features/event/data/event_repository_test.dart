@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -35,6 +36,8 @@ EventImageModel buildImage(String id, {String eventId = 'e1'}) {
     eventId: eventId,
   );
 }
+
+void _noop() {}
 
 void main() {
   final harness = IsarTestHarness();
@@ -253,20 +256,103 @@ void main() {
   });
 
   group('deleteImage', () {
-    test('removes the image from the cache', () async {
+    test('removes the image from the cache and the storage bucket', () async {
       await seedImage(buildImage('img-1', eventId: 'e1'));
       stubDelete(supabase, 'event_image', resolver: () {});
+      final fileApi = stubStorageRemove(supabase, 'journal-media', resolver: () {});
 
-      await repo.deleteImage('img-1');
+      await repo.deleteImage('img-1', 'assets/img-1.png');
 
       expect(await repo.watchImagesForEvent('e1').first, isEmpty);
+      verify(() => fileApi.remove(['assets/img-1.png'])).called(1);
     });
 
-    test('throws a network exception on failure', () async {
+    test('throws a network exception when the row delete fails', () async {
       stubDelete(supabase, 'event_image', resolver: () => throw Exception('x'));
 
       await expectLater(
-        repo.deleteImage('img-1'),
+        repo.deleteImage('img-1', 'assets/img-1.png'),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+    });
+
+    test('throws a network exception when the storage removal fails',
+        () async {
+      stubDelete(supabase, 'event_image', resolver: () {});
+      stubStorageRemove(supabase, 'journal-media',
+          resolver: () => throw Exception('x'));
+
+      await expectLater(
+        repo.deleteImage('img-1', 'assets/img-1.png'),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+    });
+  });
+
+  group('getPetIdsForEvent', () {
+    test('returns an empty list when no link exists', () async {
+      expect(await repo.getPetIdsForEvent('e1'), isEmpty);
+    });
+
+    test('returns only the pet ids linked to the given event', () async {
+      stubInsert(supabase, 'events', resolver: () {});
+      stubInsert(supabase, 'pets_events', resolver: () {});
+      await repo.createEvent(buildEvent('e1'), petIds: ['p1', 'p2']);
+      await repo.createEvent(buildEvent('e2'), petIds: ['p3']);
+
+      expect(await repo.getPetIdsForEvent('e1'), containsAll(['p1', 'p2']));
+      expect(await repo.getPetIdsForEvent('e2'), ['p3']);
+    });
+  });
+
+  group('updateEventPets', () {
+    /// updateEventPets can insert and delete on `pets_events` within the same
+    /// call, so both operations must be stubbed on a single query builder.
+    void stubPetsEventsInsertAndDelete(
+      MockSupabaseClient supabase, {
+      FutureOr<dynamic> Function() insertResolver = _noop,
+      FutureOr<dynamic> Function() deleteResolver = _noop,
+    }) {
+      final qb = MockSupabaseQueryBuilder();
+      when(() => supabase.from('pets_events')).thenAnswer((_) => qb);
+      when(() => qb.insert(any()))
+          .thenAnswer((_) => FakePostgrestChain(insertResolver));
+      when(() => qb.delete())
+          .thenAnswer((_) => FakePostgrestChain(deleteResolver));
+    }
+
+    test('adds newly selected pets and removes deselected ones', () async {
+      stubInsert(supabase, 'events', resolver: () {});
+      stubPetsEventsInsertAndDelete(supabase);
+      await repo.createEvent(buildEvent('e1'), petIds: ['p1', 'p2']);
+
+      await repo.updateEventPets('e1', ['p2', 'p3']);
+
+      expect(await repo.getPetIdsForEvent('e1'), containsAll(['p2', 'p3']));
+      expect(await repo.getPetIdsForEvent('e1'), isNot(contains('p1')));
+    });
+
+    test('does nothing when the selection is unchanged', () async {
+      stubInsert(supabase, 'events', resolver: () {});
+      stubPetsEventsInsertAndDelete(supabase);
+      await repo.createEvent(buildEvent('e1'), petIds: ['p1']);
+
+      await repo.updateEventPets('e1', ['p1']);
+
+      expect(await repo.getPetIdsForEvent('e1'), ['p1']);
+    });
+
+    test('throws a network exception on failure', () async {
+      stubInsert(supabase, 'events', resolver: () {});
+      stubPetsEventsInsertAndDelete(supabase);
+      await repo.createEvent(buildEvent('e1'), petIds: ['p1']);
+      stubPetsEventsInsertAndDelete(
+        supabase,
+        deleteResolver: () => throw Exception('offline'),
+      );
+
+      await expectLater(
+        repo.updateEventPets('e1', ['p2']),
         throwsA(isA<RepositoryNetworkException>()),
       );
     });
