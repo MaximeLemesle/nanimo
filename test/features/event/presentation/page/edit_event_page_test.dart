@@ -7,10 +7,12 @@ import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/event/data/event_repository.dart';
+import 'package:nanimo/features/event/data/models/event_image_model.dart';
 import 'package:nanimo/features/event/data/models/event_model.dart';
 import 'package:nanimo/features/event/data/models/event_type_model.dart';
 import 'package:nanimo/features/event/presentation/cubit/edit_event_cubit.dart';
 import 'package:nanimo/features/event/presentation/page/edit_event_page.dart';
+import 'package:nanimo/features/event/presentation/widgets/create_event/polaroid_collage_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/sticker_selector_widget.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
@@ -60,6 +62,12 @@ final _event = EventModel(
   eventTypeId: 't-balade',
 );
 
+const _existingImage = EventImageModel(
+  eventImageId: 'img-1',
+  assetPath: 'events/e1/img-1.jpg',
+  eventId: 'e1',
+);
+
 void main() {
   late _MockEventRepository eventRepo;
   late _MockReferentialRepository referentialRepo;
@@ -89,6 +97,7 @@ void main() {
     when(() => eventRepo.updateEvent(any())).thenAnswer((_) async {});
     when(() => eventRepo.updateEventPets(any(), any()))
         .thenAnswer((_) async {});
+    when(() => eventRepo.deleteImage(any(), any())).thenAnswer((_) async {});
   });
 
   EditEventCubit buildCubit() => EditEventCubit(
@@ -162,8 +171,7 @@ void main() {
     expect(find.byType(StickerSelectorWidget), findsNWidgets(2));
   });
 
-  testWidgets('submits the updated fields and pops on success',
-      (tester) async {
+  testWidgets('submits the updated fields and pops on success', (tester) async {
     await pumpPage(tester);
 
     await tester.enterText(find.byType(TextField).first, 'Titre modifié');
@@ -204,5 +212,57 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(cubit.state.selectedTypeId, 't-calin');
+  });
+
+  testWidgets(
+      'opens the image grid when an existing image is tapped without deleting it',
+      (tester) async {
+    when(() => eventRepo.watchImagesForEvent('e1'))
+        .thenAnswer((_) => Stream.value([_existingImage]));
+    when(() => eventRepo.signedImageUrl(_existingImage.assetPath))
+        .thenAnswer((_) async => 'https://example.com/img-1.jpg');
+
+    await pumpPage(tester);
+
+    await tester.tap(find.byType(PolaroidCollageWidget));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Photos du souvenir'), findsOneWidget);
+
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Enregistrer'));
+    await tester.pumpAndSettle();
+
+    verifyNever(() => eventRepo.deleteImage(any(), any()));
+  });
+
+  testWidgets('deletes an existing image only after the explicit delete action',
+      (tester) async {
+    when(() => eventRepo.watchImagesForEvent('e1'))
+        .thenAnswer((_) => Stream.value([_existingImage]));
+    when(() => eventRepo.signedImageUrl(_existingImage.assetPath))
+        .thenAnswer((_) async => 'https://example.com/img-1.jpg');
+
+    await pumpPage(tester);
+
+    await tester.tap(find.byType(PolaroidCollageWidget));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('edit-event-image-grid-tile-0')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Modifier la photo'), findsOneWidget);
+
+    await tester.tap(find.text('Supprimer la photo'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Enregistrer'));
+    await tester.pumpAndSettle();
+
+    verify(() => eventRepo.deleteImage(
+          _existingImage.eventImageId,
+          _existingImage.assetPath,
+        )).called(1);
   });
 }

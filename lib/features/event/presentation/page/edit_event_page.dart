@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
@@ -14,6 +15,7 @@ import 'package:nanimo/features/event/data/models/event_model.dart';
 import 'package:nanimo/features/event/presentation/cubit/edit_event_cubit.dart';
 import 'package:nanimo/features/event/presentation/event_type_styles.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/create_event_bottom_sheet/add_image_bottom_sheet_widget.dart';
+import 'package:nanimo/features/event/presentation/widgets/create_event/create_event_bottom_sheet/edit_event_image_bottom_sheet_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/create_event_bottom_sheet/event_type_bottom_sheet_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/create_event_bottom_sheet/pet_select_bottom_sheet_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/polaroid_collage_widget.dart';
@@ -69,6 +71,104 @@ class _EditEventPageState extends State<EditEventPage> {
     _titleController.text = event.title;
     _titleController.addListener(_onTitleChanged);
     _descriptionController.text = event.description ?? '';
+  }
+
+  Future<void> _addImages() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final picked = await AddImageBottomSheetWidget.show(context);
+    if (picked == null || picked.isEmpty || !mounted) return;
+
+    final remaining = PolaroidCollageWidget.maxImages - _images.length;
+    if (remaining <= 0) {
+      messenger
+        ..clearSnackBars()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Vous pouvez ajouter 5 photos maximum.',
+            ),
+          ),
+        );
+      return;
+    }
+
+    setState(() => _images.addAll([
+          for (final image in picked.take(remaining)) LocalCollageImage(image),
+        ]));
+  }
+
+  Future<void> _showImageGrid(String eventId) async {
+    if (_images.isEmpty) {
+      await _addImages();
+      return;
+    }
+
+    final selection = await EditEventImageGridBottomSheetWidget.show(
+      context,
+      images: List.of(_images),
+      urlResolver: context.read<EditEventCubit>().imageUrl,
+      canAdd: _images.length < PolaroidCollageWidget.maxImages,
+    );
+    if (selection == null || !mounted) return;
+
+    switch (selection) {
+      case EditEventImageGridAddSelected():
+        await _addImages();
+      case EditEventImageGridImageSelected(:final index):
+        await _showImageActions(eventId, index);
+    }
+  }
+
+  Future<void> _showImageActions(
+    String eventId,
+    int index,
+  ) async {
+    if (index < 0 || index >= _images.length) return;
+
+    final action = await EditEventImageActionBottomSheetWidget.show(context);
+    if (action == null || !mounted) return;
+
+    switch (action) {
+      case EditEventImageAction.takePhoto:
+        await _replaceImage(index, eventId, ImageSource.camera);
+      case EditEventImageAction.selectPhoto:
+        await _replaceImage(index, eventId, ImageSource.gallery);
+      case EditEventImageAction.deletePhoto:
+        setState(() => _removeImageAt(index, eventId));
+    }
+  }
+
+  Future<void> _replaceImage(
+    int index,
+    String eventId,
+    ImageSource source,
+  ) async {
+    final picked = await ImagePicker().pickImage(source: source);
+    if (picked == null || !mounted || index >= _images.length) return;
+
+    setState(() {
+      _markImageRemoved(_images[index], eventId);
+      _images[index] = LocalCollageImage(picked);
+    });
+  }
+
+  void _removeImageAt(int index, String eventId) {
+    final image = _images.removeAt(index);
+    _markImageRemoved(image, eventId);
+  }
+
+  void _markImageRemoved(CollageImage image, String eventId) {
+    if (image is! RemoteCollageImage) return;
+    final alreadyRemoved = _removedImages.any(
+      (removed) => removed.eventImageId == image.eventImageId,
+    );
+    if (alreadyRemoved) return;
+
+    _removedImages.add(EventImageModel(
+      eventImageId: image.eventImageId,
+      assetPath: image.assetPath,
+      eventId: eventId,
+    ));
   }
 
   @override
@@ -216,42 +316,8 @@ class _EditEventPageState extends State<EditEventPage> {
               PolaroidCollageWidget(
                 images: _images,
                 urlResolver: context.read<EditEventCubit>().imageUrl,
-                onTap: () async {
-                  final messenger = ScaffoldMessenger.of(context);
-                  final picked = await AddImageBottomSheetWidget.show(context);
-                  if (picked == null || picked.isEmpty) return;
-                  final remaining =
-                      PolaroidCollageWidget.maxImages - _images.length;
-                  if (remaining <= 0) {
-                    messenger
-                      ..clearSnackBars()
-                      ..showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Vous pouvez ajouter 5 photos maximum.',
-                          ),
-                        ),
-                      );
-                    return;
-                  }
-                  setState(() => _images.addAll([
-                        for (final image in picked.take(remaining))
-                          LocalCollageImage(image),
-                      ]));
-                },
-                onImageTap: (index) {
-                  final image = _images[index];
-                  setState(() {
-                    _images.removeAt(index);
-                    if (image is RemoteCollageImage) {
-                      _removedImages.add(EventImageModel(
-                        eventImageId: image.eventImageId,
-                        assetPath: image.assetPath,
-                        eventId: state.event!.eventId,
-                      ));
-                    }
-                  });
-                },
+                onTap: () => _showImageGrid(state.event!.eventId),
+                onImageTap: (_) => _showImageGrid(state.event!.eventId),
               ),
               const SizedBox(height: AppSpacing.lg),
 
