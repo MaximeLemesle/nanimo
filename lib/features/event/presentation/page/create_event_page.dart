@@ -17,6 +17,7 @@ import 'package:nanimo/features/event/presentation/widgets/create_event/create_e
 import 'package:nanimo/features/event/presentation/widgets/create_event/create_event_bottom_sheet/pet_select_bottom_sheet_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/polaroid_collage_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/sticker_selector_widget.dart';
+import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 
 class CreateEventPage extends StatefulWidget {
   const CreateEventPage({super.key});
@@ -40,6 +41,22 @@ class _CreateEventPageState extends State<CreateEventPage> {
   }
 
   void _onTitleChanged() => setState(() {});
+
+  /// Photos allowed for this event: the plan quota, capped by the collage max.
+  int _maxImages(BuildContext context) {
+    final quota = context.read<SubscriptionCubit>().state.maxImagesPerEvent;
+    return quota < PolaroidCollageWidget.maxImages
+        ? quota
+        : PolaroidCollageWidget.maxImages;
+  }
+
+  String _quotaMessage(int maxImages) {
+    if (maxImages <= 1) {
+      return 'Le plan gratuit est limité à $maxImages photo par souvenir. '
+          'Passez au premium pour en ajouter plus.';
+    }
+    return 'Vous pouvez ajouter $maxImages photos maximum.';
+  }
 
   @override
   void dispose() {
@@ -193,18 +210,16 @@ class _CreateEventPageState extends State<CreateEventPage> {
                 images: _images,
                 onTap: () async {
                   final messenger = ScaffoldMessenger.of(context);
+                  final maxImages = _maxImages(context);
                   final picked = await AddImageBottomSheetWidget.show(context);
                   if (picked == null || picked.isEmpty) return;
-                  final remaining =
-                      PolaroidCollageWidget.maxImages - _images.length;
+                  final remaining = maxImages - _images.length;
                   if (remaining <= 0) {
                     messenger
                       ..clearSnackBars()
                       ..showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Vous pouvez ajouter 5 photos maximum.',
-                          ),
+                        SnackBar(
+                          content: Text(_quotaMessage(maxImages)),
                         ),
                       );
                     return;
@@ -212,15 +227,26 @@ class _CreateEventPageState extends State<CreateEventPage> {
                   setState(() => _images.addAll(picked.take(remaining)));
                 },
                 onReplaceImage: (_) async {
+                  final maxImages = _maxImages(context);
+                  if (maxImages <= 0) return;
+
                   /// Re-pick the whole set, replacing the current selection.
-                  final picked = await ImagePicker().pickMultiImage(
-                    limit: PolaroidCollageWidget.maxImages,
-                  );
+                  /// `pickMultiImage` requires a limit of at least 2, so a
+                  /// single-photo plan re-picks one image instead.
+                  final List<XFile> picked;
+                  if (maxImages == 1) {
+                    final one = await ImagePicker()
+                        .pickImage(source: ImageSource.gallery);
+                    picked = one == null ? const [] : [one];
+                  } else {
+                    picked =
+                        await ImagePicker().pickMultiImage(limit: maxImages);
+                  }
                   if (picked.isEmpty || !mounted) return;
                   setState(() {
                     _images
                       ..clear()
-                      ..addAll(picked.take(PolaroidCollageWidget.maxImages));
+                      ..addAll(picked.take(maxImages));
                   });
                 },
               ),

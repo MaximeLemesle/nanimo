@@ -30,6 +30,13 @@ class SubscriptionState extends Equatable {
   bool canAddImageToEvent(int currentImageCount) =>
       config != null && currentImageCount < config!.maxImagesPerEvent;
 
+  /// Max photos allowed per event by the plan — 0 (fail-closed) until the
+  /// config has loaded, so quota checks never over-grant while offline.
+  int get maxImagesPerEvent => config?.maxImagesPerEvent ?? 0;
+
+  /// Max pets allowed by the plan — 0 (fail-closed) until the config loads.
+  int get maxPets => config?.maxPets ?? 0;
+
   /// True if the user has access to premium icons
   bool get canAccessPremiumIcons => config?.canAccessPremiumIcons ?? false;
 

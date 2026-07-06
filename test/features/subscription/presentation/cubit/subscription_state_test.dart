@@ -81,6 +81,23 @@ void main() {
     });
   });
 
+  group('quota getters', () {
+    test('fail-closed to 0 when config is null', () {
+      const state = SubscriptionState.unknown();
+      expect(state.maxImagesPerEvent, 0);
+      expect(state.maxPets, 0);
+    });
+
+    test('expose the plan quotas when loaded', () {
+      const free = SubscriptionState.loaded(freeConfig);
+      expect(free.maxImagesPerEvent, 1);
+      expect(free.maxPets, 1);
+
+      const premium = SubscriptionState.loaded(premiumConfig);
+      expect(premium.maxImagesPerEvent, 5);
+    });
+  });
+
   group('canAccessPremiumIcons', () {
     test('fail-closed when config is null', () {
       expect(const SubscriptionState.unknown().canAccessPremiumIcons, isFalse);
