@@ -1,6 +1,6 @@
 import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:nanimo/core/errors/repository_network_exception.dart';
+import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_cache.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 
@@ -74,11 +74,12 @@ class PetRepository {
       try {
         await write();
         return;
-      } catch (_) {
+      } catch (e, st) {
         if (attempt >= _writeRetryAttempts) {
-          throw const RepositoryNetworkException(
-            'Une connexion internet est requise pour créer un animal.',
-          );
+          throw mapRepositoryError(e, st,
+              operation: 'createPet',
+              networkMessage:
+                  'Une connexion internet est requise pour créer un animal.');
         }
         await Future<void>.delayed(_writeRetryBackoff * attempt);
       }
@@ -88,10 +89,11 @@ class PetRepository {
   Future<void> updatePet(PetModel pet) async {
     try {
       await _supabase.from('pets').update(pet.toJson()).eq('id_pet', pet.petId);
-    } catch (_) {
-      throw const RepositoryNetworkException(
-        'Une connexion internet est requise pour mettre à jour un animal.',
-      );
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'updatePet',
+          networkMessage:
+              'Une connexion internet est requise pour mettre à jour un animal.');
     }
 
     await _isar.writeTxn(() async {
@@ -102,10 +104,11 @@ class PetRepository {
   Future<void> deletePet(String petId) async {
     try {
       await _supabase.from('pets').delete().eq('id_pet', petId);
-    } catch (_) {
-      throw const RepositoryNetworkException(
-        'Une connexion internet est requise pour supprimer un animal.',
-      );
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'deletePet',
+          networkMessage:
+              'Une connexion internet est requise pour supprimer un animal.');
     }
 
     await _isar.writeTxn(() async {

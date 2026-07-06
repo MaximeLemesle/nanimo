@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_cache.dart';
@@ -55,7 +57,9 @@ class SyncService {
       await _isar.writeTxn(() async {
         await _isar.userCaches.putByUserId(user);
       });
-    } catch (_) {}
+    } catch (e, st) {
+      developer.log('syncUser failed', name: 'sync', error: e, stackTrace: st);
+    }
   }
 
   Future<void> _syncSubscriptionConfig() async {
@@ -76,7 +80,9 @@ class SyncService {
       await _isar.writeTxn(() async {
         await _isar.subscriptionConfigCaches.putByConfigId(cache);
       });
-    } catch (_) {}
+    } catch (e, st) {
+      developer.log('syncSubscriptionConfig failed', name: 'sync', error: e, stackTrace: st);
+    }
   }
 
   Future<void> _syncPets() async {
@@ -89,7 +95,9 @@ class SyncService {
         await _isar.petCaches.clear();
         await _isar.petCaches.putAllByPetId(pets);
       });
-    } catch (_) {}
+    } catch (e, st) {
+      developer.log('syncPets failed', name: 'sync', error: e, stackTrace: st);
+    }
   }
 
   Future<void> _syncEvents() async {
@@ -102,7 +110,9 @@ class SyncService {
         await _isar.eventCaches.clear();
         await _isar.eventCaches.putAllByEventId(events);
       });
-    } catch (_) {}
+    } catch (e, st) {
+      developer.log('syncEvents failed', name: 'sync', error: e, stackTrace: st);
+    }
   }
 
   Future<void> _syncEventImages() async {
@@ -115,7 +125,9 @@ class SyncService {
         await _isar.eventImageCaches.clear();
         await _isar.eventImageCaches.putAllByEventImageId(images);
       });
-    } catch (_) {}
+    } catch (e, st) {
+      developer.log('syncEventImages failed', name: 'sync', error: e, stackTrace: st);
+    }
   }
 
   Future<void> _syncPetEvents() async {
@@ -128,7 +140,9 @@ class SyncService {
         await _isar.petEventCaches.clear();
         await _isar.petEventCaches.putAllByPetEventId(links);
       });
-    } catch (_) {}
+    } catch (e, st) {
+      developer.log('syncPetEvents failed', name: 'sync', error: e, stackTrace: st);
+    }
   }
 
   Future<void> _syncHealthDiaries() async {
@@ -141,7 +155,9 @@ class SyncService {
         await _isar.healthDiaryCaches.clear();
         await _isar.healthDiaryCaches.putAllByHealthDiaryId(diaries);
       });
-    } catch (_) {}
+    } catch (e, st) {
+      developer.log('syncHealthDiaries failed', name: 'sync', error: e, stackTrace: st);
+    }
   }
 
   Future<void> _syncHealthDiaryVaccines() async {
@@ -156,7 +172,9 @@ class SyncService {
         await _isar.healthDiaryVaccineCaches
             .putAllByHealthDiaryVaccineId(vaccines);
       });
-    } catch (_) {}
+    } catch (e, st) {
+      developer.log('syncHealthDiaryVaccines failed', name: 'sync', error: e, stackTrace: st);
+    }
   }
 
   Future<void> _syncWeightLogs() async {
@@ -169,7 +187,9 @@ class SyncService {
         await _isar.weightLogCaches.clear();
         await _isar.weightLogCaches.putAllByHealthDiaryWeightLogId(logs);
       });
-    } catch (_) {}
+    } catch (e, st) {
+      developer.log('syncWeightLogs failed', name: 'sync', error: e, stackTrace: st);
+    }
   }
 
   Future<void> _syncVetVisits() async {
@@ -182,6 +202,8 @@ class SyncService {
         await _isar.vetVisitCaches.clear();
         await _isar.vetVisitCaches.putAllByVetVisitId(visits);
       });
-    } catch (_) {}
+    } catch (e, st) {
+      developer.log('syncVetVisits failed', name: 'sync', error: e, stackTrace: st);
+    }
   }
 }

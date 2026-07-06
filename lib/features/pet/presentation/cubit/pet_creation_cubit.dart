@@ -4,7 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
 
-import 'package:nanimo/core/errors/repository_network_exception.dart';
+import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
@@ -78,7 +78,7 @@ class PetCreationCubit extends Cubit<PetCreationState> {
         status: PetCreationStatus.success,
         clearPendingPet: true,
       ));
-    } on RepositoryNetworkException catch (e) {
+    } on RepositoryException catch (e) {
       emit(state.copyWith(
         status: PetCreationStatus.error,
         error: e.message,

@@ -4,7 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
-import 'package:nanimo/core/errors/repository_network_exception.dart';
+import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/event/data/event_repository.dart';
 import 'package:nanimo/features/event/data/models/event_image_model.dart';
@@ -129,7 +129,7 @@ class EventCreationCubit extends Cubit<EventCreationState> {
       }
 
       emit(state.copyWith(status: EventCreationStatus.success));
-    } on RepositoryNetworkException catch (e) {
+    } on RepositoryException catch (e) {
       emit(state.copyWith(status: EventCreationStatus.error, error: e.message));
     } catch (_) {
       emit(state.copyWith(

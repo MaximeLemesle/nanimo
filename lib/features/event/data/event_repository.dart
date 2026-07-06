@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
-import 'package:nanimo/core/errors/repository_network_exception.dart';
+import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_image_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_event_cache.dart';
@@ -43,10 +43,11 @@ class EventRepository {
             {'event_id': event.eventId, 'pet_id': petId},
         ]);
       }
-    } catch (_) {
-      throw const RepositoryNetworkException(
-        'Une connexion internet est requise pour créer un événement.',
-      );
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'createEvent',
+          networkMessage:
+              'Une connexion internet est requise pour créer un événement.');
     }
 
     await _isar.writeTxn(() async {
@@ -65,10 +66,11 @@ class EventRepository {
           .from('events')
           .update(event.toJson())
           .eq('id_event', event.eventId);
-    } catch (_) {
-      throw const RepositoryNetworkException(
-        'Une connexion internet est requise pour modifier un événement.',
-      );
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'updateEvent',
+          networkMessage:
+              'Une connexion internet est requise pour modifier un événement.');
     }
 
     await _isar.writeTxn(() async {
@@ -79,10 +81,11 @@ class EventRepository {
   Future<void> deleteEvent(String eventId) async {
     try {
       await _supabase.from('events').delete().eq('id_event', eventId);
-    } catch (_) {
-      throw const RepositoryNetworkException(
-        'Une connexion internet est requise pour supprimer un événement.',
-      );
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'deleteEvent',
+          networkMessage:
+              'Une connexion internet est requise pour supprimer un événement.');
     }
 
     await _isar.writeTxn(() async {
@@ -136,10 +139,11 @@ class EventRepository {
   Future<void> addImage(EventImageModel image) async {
     try {
       await _supabase.from('event_image').insert(image.toJson());
-    } catch (_) {
-      throw const RepositoryNetworkException(
-        'Une connexion internet est requise pour ajouter une photo.',
-      );
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'addImage',
+          networkMessage:
+              'Une connexion internet est requise pour ajouter une photo.');
     }
 
     await _isar.writeTxn(() async {
@@ -159,10 +163,11 @@ class EventRepository {
 
     try {
       await _supabase.storage.from('journal-media').upload(storagePath, file);
-    } catch (_) {
-      throw const RepositoryNetworkException(
-        'Une connexion internet est requise pour envoyer une photo.',
-      );
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'uploadEventImage',
+          networkMessage:
+              'Une connexion internet est requise pour envoyer une photo.');
     }
 
     return storagePath;
@@ -174,10 +179,11 @@ class EventRepository {
           .from('event_image')
           .delete()
           .eq('id_event_image', eventImageId);
-    } catch (_) {
-      throw const RepositoryNetworkException(
-        'Une connexion internet est requise pour supprimer une photo.',
-      );
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'deleteImage',
+          networkMessage:
+              'Une connexion internet est requise pour supprimer une photo.');
     }
 
     await _isar.writeTxn(() async {

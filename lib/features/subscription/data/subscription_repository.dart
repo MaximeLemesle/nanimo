@@ -1,6 +1,6 @@
 import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:nanimo/core/errors/repository_network_exception.dart';
+import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/core/isar/cache/schemas/subscription_config_cache.dart';
 import 'package:nanimo/features/subscription/data/models/subscription_config_model.dart';
 
@@ -44,10 +44,11 @@ class SubscriptionRepository {
         await _isar.subscriptionConfigCaches.putByConfigId(cache);
       });
       return cache.toModel();
-    } catch (_) {
-      throw const RepositoryNetworkException(
-        'Une connexion internet est requise pour charger votre abonnement.',
-      );
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'fetchConfigById',
+          networkMessage:
+              'Une connexion internet est requise pour charger votre abonnement.');
     }
   }
 }
