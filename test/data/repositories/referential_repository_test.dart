@@ -1,6 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:nanimo/core/isar/cache/schemas/event_type_cache.dart';
+import 'package:nanimo/core/isar/cache/schemas/pet_species_cache.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 
+import '../../helpers/isar_test_helper.dart';
 import '../../helpers/supabase_mocks.dart';
 
 void main() {
@@ -144,6 +148,65 @@ void main() {
         repo.fetchRecommendedVaccinesBySpecies('s-cat'),
         throwsA(isA<Exception>()),
       );
+    });
+  });
+
+  group('cache-first (Isar-backed)', () {
+    final harness = IsarTestHarness();
+    late ReferentialRepository cachingRepo;
+
+    setUp(() async {
+      await harness.setUp();
+      cachingRepo = ReferentialRepository(supabase, harness.isar);
+    });
+
+    tearDown(() => harness.tearDown());
+
+    test('fetchSpecies write-throughs the cache then serves it offline',
+        () async {
+      stubSelect(supabase, 'pet_species', resolver: () => [
+            {
+              'id_pet_species': 's-cat',
+              'species_name': 'Chat',
+              'weight_unit': 'kg',
+              'icon_key': 'cat',
+            },
+          ]);
+
+      final online = await cachingRepo.fetchSpecies();
+      expect(online.first.petSpeciesId, 's-cat');
+      expect(await harness.isar.petSpeciesCaches.count(), 1);
+
+      // Now offline: the Supabase call throws but the cache answers.
+      when(() => supabase.from('pet_species')).thenThrow(Exception('offline'));
+      final offline = await cachingRepo.fetchSpecies();
+      expect(offline.first.petSpeciesId, 's-cat');
+    });
+
+    test('fetchEventTypes write-throughs the cache then serves it offline',
+        () async {
+      stubSelect(supabase, 'event_type', resolver: () => [
+            {
+              'id_event_type': 't-balade',
+              'name': 'Balade',
+              'code': 'balade',
+              'is_premium': false,
+            },
+          ]);
+
+      final online = await cachingRepo.fetchEventTypes();
+      expect(online.first.eventTypeId, 't-balade');
+      expect(await harness.isar.eventTypeCaches.count(), 1);
+
+      when(() => supabase.from('event_type')).thenThrow(Exception('offline'));
+      final offline = await cachingRepo.fetchEventTypes();
+      expect(offline.first.eventTypeId, 't-balade');
+    });
+
+    test('fetchSpecies rethrows when offline with an empty cache', () async {
+      when(() => supabase.from('pet_species')).thenThrow(Exception('offline'));
+
+      expect(cachingRepo.fetchSpecies(), throwsA(isA<Exception>()));
     });
   });
 }

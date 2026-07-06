@@ -4,6 +4,8 @@ import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_image_cache.dart';
+import 'package:nanimo/core/isar/cache/schemas/event_type_cache.dart';
+import 'package:nanimo/core/isar/cache/schemas/pet_species_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_vaccine_cache.dart';
@@ -42,6 +44,7 @@ class SyncService {
       await _syncHealthDiaryVaccines();
       await _syncWeightLogs();
       await _syncVetVisits();
+      await _syncReferential();
     });
   }
 
@@ -204,6 +207,27 @@ class SyncService {
       });
     } catch (e, st) {
       developer.log('syncVetVisits failed', name: 'sync', error: e, stackTrace: st);
+    }
+  }
+
+  Future<void> _syncReferential() async {
+    try {
+      final speciesData = await _supabase.from('pet_species').select();
+      final species = (speciesData as List)
+          .map((e) => PetSpeciesCache.fromJson(e as Map<String, dynamic>))
+          .toList();
+      final typesData = await _supabase.from('event_type').select();
+      final types = (typesData as List)
+          .map((e) => EventTypeCache.fromJson(e as Map<String, dynamic>))
+          .toList();
+      await _isar.writeTxn(() async {
+        await _isar.petSpeciesCaches.clear();
+        await _isar.petSpeciesCaches.putAll(species);
+        await _isar.eventTypeCaches.clear();
+        await _isar.eventTypeCaches.putAll(types);
+      });
+    } catch (e, st) {
+      developer.log('syncReferential failed', name: 'sync', error: e, stackTrace: st);
     }
   }
 }

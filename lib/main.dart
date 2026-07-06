@@ -53,7 +53,7 @@ void main() async {
     googleWebClientId: webClientId,
   );
   final subscriptionRepository = SubscriptionRepository(supabase, isar);
-  final referentialRepository = ReferentialRepository(supabase);
+  final referentialRepository = ReferentialRepository(supabase, isar);
   final petRepository = PetRepository(supabase, isar);
   final healthRepository = HealthRepository(supabase, isar);
   final eventRepository = EventRepository(supabase, isar);
