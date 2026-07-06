@@ -115,6 +115,47 @@ void main() {
     await cubit.close();
   });
 
+  group('resync', () {
+    test('re-runs both sync waves when authenticated', () async {
+      final cubit = createCubit();
+      authEvents.add(
+        supabase.AuthState(supabase.AuthChangeEvent.signedIn, MockSession()),
+      );
+      await pumpEventQueue();
+      clearInteractions(syncService);
+
+      await cubit.resync();
+
+      verify(() => syncService.syncCritical()).called(1);
+      verify(() => syncService.syncSecondary()).called(1);
+      await cubit.close();
+    });
+
+    test('is a no-op when signed out', () async {
+      final cubit = createCubit();
+
+      await cubit.resync();
+
+      verifyNever(() => syncService.syncCritical());
+      verifyNever(() => syncService.syncSecondary());
+      await cubit.close();
+    });
+
+    test('still authenticated when the resync critical wave fails', () async {
+      final cubit = createCubit();
+      authEvents.add(
+        supabase.AuthState(supabase.AuthChangeEvent.signedIn, MockSession()),
+      );
+      await pumpEventQueue();
+      when(() => syncService.syncCritical()).thenThrow(Exception('offline'));
+
+      await cubit.resync();
+
+      expect(cubit.state.isAuthenticated, isTrue);
+      await cubit.close();
+    });
+  });
+
   test('login sets isSubmitting while the request is in flight', () async {
     when(() => repository.login('a@b.fr', 'secret'))
         .thenAnswer((_) async {});

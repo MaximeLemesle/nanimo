@@ -66,6 +66,9 @@ class _FakeAuthCubit extends Cubit<AuthState> implements AuthCubit {
   }
 
   @override
+  Future<void> resync() async {}
+
+  @override
   void clearError() {}
 }
 

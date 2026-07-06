@@ -107,6 +107,17 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  /// Re-runs both sync waves — called when the app resumes or on pull-to-refresh
+  /// so data edited on another device is pulled in without a restart. No-op when
+  /// signed out.
+  Future<void> resync() async {
+    if (state.status != AuthStatus.authenticated) return;
+    try {
+      await _syncService.syncCritical();
+    } catch (_) {}
+    _syncService.syncSecondary();
+  }
+
   /// Signs out the current user
   Future<void> logout() async {
     await _repository.logout();
