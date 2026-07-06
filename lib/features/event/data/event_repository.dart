@@ -18,11 +18,13 @@ class EventRepository {
 
   Stream<List<EventModel>> watchEvents({String? eventTypeId}) {
     final query = eventTypeId == null
-        ? _isar.eventCaches.filter().titleIsNotEmpty()
-        : _isar.eventCaches.filter().eventTypeIdEqualTo(eventTypeId);
+        ? _isar.eventCaches.where().sortByEntryDateDesc()
+        : _isar.eventCaches
+            .filter()
+            .eventTypeIdEqualTo(eventTypeId)
+            .sortByEntryDateDesc();
 
     return query
-        .sortByEntryDateDesc()
         .watch(fireImmediately: true)
         .map((rows) => rows.map((c) => c.toModel()).toList());
   }

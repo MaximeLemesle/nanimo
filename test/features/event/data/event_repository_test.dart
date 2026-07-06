@@ -73,8 +73,7 @@ void main() {
       expect(emission, isEmpty);
     });
 
-    test('emits events with a non-empty title, newest entryDate first',
-        () async {
+    test('emits every event, newest entryDate first', () async {
       await seedEvent(
         buildEvent('e1', entryDate: DateTime.utc(2024, 1, 1)),
       );
@@ -84,6 +83,15 @@ void main() {
 
       final emission = await repo.watchEvents().first;
       expect(emission.map((e) => e.eventId).toList(), ['e2', 'e1']);
+    });
+
+    test('does not drop events with an empty title', () async {
+      await seedEvent(
+        buildEvent('e1', title: '', entryDate: DateTime.utc(2024, 1, 1)),
+      );
+
+      final emission = await repo.watchEvents().first;
+      expect(emission.map((e) => e.eventId).toList(), ['e1']);
     });
 
     test('filters by eventTypeId when provided', () async {
