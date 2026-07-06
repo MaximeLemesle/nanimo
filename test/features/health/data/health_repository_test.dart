@@ -275,6 +275,18 @@ void main() {
 
       expect(await harness.isar.vetVisitCaches.getByVetVisitId('v1'), isNull);
     });
+
+    test('throws and keeps the cache when Supabase fails', () async {
+      await seedVisit(buildVisit('v1'));
+      stubDelete(supabase, 'vet_visits',
+          resolver: () => throw Exception('offline'));
+
+      await expectLater(
+        repo.deleteVetVisit('v1'),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+      expect(await harness.isar.vetVisitCaches.getByVetVisitId('v1'), isNotNull);
+    });
   });
 
   group('upsertDiary', () {

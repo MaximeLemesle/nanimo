@@ -41,7 +41,10 @@ void main() {
   late EventRepository repo;
   late MockSupabaseClient supabase;
 
-  setUpAll(registerSupabaseFallbacks);
+  setUpAll(() {
+    registerSupabaseFallbacks();
+    registerFallbackValue(File('fallback.jpg'));
+  });
 
   setUp(() async {
     await harness.setUp();
@@ -285,6 +288,38 @@ void main() {
       final auth = MockGoTrueClient();
       when(() => supabase.auth).thenReturn(auth);
       when(() => auth.currentUser).thenReturn(null);
+
+      await expectLater(
+        repo.uploadEventImage('e1', File('photo.jpg')),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+    });
+
+    test('returns the storage path on success', () async {
+      final auth = MockGoTrueClient();
+      final user = MockUser();
+      when(() => supabase.auth).thenReturn(auth);
+      when(() => auth.currentUser).thenReturn(user);
+      when(() => user.id).thenReturn('u1');
+      final fileApi = stubStorageBucket(supabase, 'journal-media');
+      when(() => fileApi.upload(any(), any()))
+          .thenAnswer((_) async => 'ok');
+
+      final path = await repo.uploadEventImage('e1', File('photo.jpg'));
+
+      expect(path, startsWith('u1/e1/'));
+      expect(path, endsWith('.jpg'));
+    });
+
+    test('maps a storage failure to a network exception', () async {
+      final auth = MockGoTrueClient();
+      final user = MockUser();
+      when(() => supabase.auth).thenReturn(auth);
+      when(() => auth.currentUser).thenReturn(user);
+      when(() => user.id).thenReturn('u1');
+      final fileApi = stubStorageBucket(supabase, 'journal-media');
+      when(() => fileApi.upload(any(), any()))
+          .thenThrow(Exception('offline'));
 
       await expectLater(
         repo.uploadEventImage('e1', File('photo.jpg')),
