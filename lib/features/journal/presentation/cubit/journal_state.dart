@@ -2,8 +2,11 @@ part of 'journal_cubit.dart';
 
 enum JournalStatus { loading, loaded, error }
 
+enum JournalViewMode { timeline, calendar }
+
 class JournalState extends Equatable {
   final JournalStatus status;
+  final JournalViewMode viewMode;
   final List<EventModel> events;
   final List<PetModel> pets;
   final List<EventTypeModel> types;
@@ -12,10 +15,12 @@ class JournalState extends Equatable {
   final Map<String, String> iconsKey;
   final Set<String> selectedPetIds;
   final Set<String> selectedTypeIds;
+  final DateTime? selectedCalendarDay;
   final String? error;
 
   const JournalState({
     this.status = JournalStatus.loading,
+    this.viewMode = JournalViewMode.timeline,
     this.events = const [],
     this.pets = const [],
     this.types = const [],
@@ -24,6 +29,7 @@ class JournalState extends Equatable {
     this.iconsKey = const {},
     this.selectedPetIds = const {},
     this.selectedTypeIds = const {},
+    this.selectedCalendarDay,
     this.error,
   });
 
@@ -46,8 +52,59 @@ class JournalState extends Equatable {
     }).toList();
   }
 
+  Map<DateTime, List<EventModel>> get calendarEventsByDay {
+    final map = <DateTime, List<EventModel>>{};
+    for (final event in filteredEvents) {
+      final entryDate = event.entryDate;
+      if (entryDate == null) continue;
+
+      final day = calendarDayKey(entryDate);
+      map.putIfAbsent(day, () => []).add(event);
+    }
+    return map;
+  }
+
+  List<DateTime> get calendarMonths {
+    final months = {
+      for (final day in calendarEventsByDay.keys) DateTime(day.year, day.month),
+    }.toList()
+      ..sort((a, b) => b.compareTo(a));
+    return months;
+  }
+
+  /// Returns the oldest month
+  DateTime? get firstCalendarEventMonth {
+    DateTime? firstMonth;
+    for (final day in calendarEventsByDay.keys) {
+      final month = DateTime(day.year, day.month);
+      if (firstMonth == null || month.isBefore(firstMonth)) {
+        firstMonth = month;
+      }
+    }
+    return firstMonth;
+  }
+
+  List<EventModel> eventsForCalendarDay(DateTime day) {
+    return calendarEventsByDay[calendarDayKey(day)] ?? const [];
+  }
+
+  bool hasEventsOnCalendarDay(DateTime day) {
+    return calendarEventsByDay.containsKey(calendarDayKey(day));
+  }
+
+  bool isSelectedCalendarDay(DateTime day) {
+    final selected = selectedCalendarDay;
+    return selected != null && calendarDayKey(selected) == calendarDayKey(day);
+  }
+
+  static DateTime calendarDayKey(DateTime value) {
+    final local = value.toLocal();
+    return DateTime(local.year, local.month, local.day);
+  }
+
   JournalState copyWith({
     JournalStatus? status,
+    JournalViewMode? viewMode,
     List<EventModel>? events,
     List<PetModel>? pets,
     List<EventTypeModel>? types,
@@ -56,10 +113,13 @@ class JournalState extends Equatable {
     Map<String, String>? iconsKey,
     Set<String>? selectedPetIds,
     Set<String>? selectedTypeIds,
+    DateTime? selectedCalendarDay,
+    bool clearSelectedCalendarDay = false,
     String? error,
   }) {
     return JournalState(
       status: status ?? this.status,
+      viewMode: viewMode ?? this.viewMode,
       events: events ?? this.events,
       pets: pets ?? this.pets,
       types: types ?? this.types,
@@ -68,6 +128,9 @@ class JournalState extends Equatable {
       iconsKey: iconsKey ?? this.iconsKey,
       selectedPetIds: selectedPetIds ?? this.selectedPetIds,
       selectedTypeIds: selectedTypeIds ?? this.selectedTypeIds,
+      selectedCalendarDay: clearSelectedCalendarDay
+          ? null
+          : selectedCalendarDay ?? this.selectedCalendarDay,
       error: error ?? this.error,
     );
   }
@@ -75,6 +138,7 @@ class JournalState extends Equatable {
   @override
   List<Object?> get props => [
         status,
+        viewMode,
         events,
         pets,
         types,
@@ -83,6 +147,7 @@ class JournalState extends Equatable {
         iconsKey,
         selectedPetIds,
         selectedTypeIds,
+        selectedCalendarDay,
         error,
       ];
 }

@@ -14,10 +14,8 @@ class JournalFilterListWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final cubit = context.read<JournalCubit>();
 
-    final selectedPets =
-        state.pets.where((pet) => state.selectedPetIds.contains(pet.petId));
-    final selectedTypes = state.types
-        .where((type) => state.selectedTypeIds.contains(type.eventTypeId));
+    final selectedPets = state.pets.where((pet) => state.selectedPetIds.contains(pet.petId));
+    final selectedTypes = state.types.where((type) => state.selectedTypeIds.contains(type.eventTypeId));
 
     return SingleChildScrollView(
       reverse: true,

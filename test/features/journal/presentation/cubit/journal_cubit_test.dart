@@ -123,6 +123,7 @@ void main() {
     await settle();
 
     expect(cubit.state.status, JournalStatus.loaded);
+    expect(cubit.state.viewMode, JournalViewMode.timeline);
     expect(cubit.state.events, [_eventWalk, _eventHug]);
     expect(cubit.state.pets, [_pet1, _pet2]);
     expect(cubit.state.types, [_walkType, _hugType]);
@@ -130,6 +131,28 @@ void main() {
     expect(cubit.state.imagePathsByEvent['e1'], ['path/a.jpg']);
     expect(cubit.state.iconsKey['s1'], 'cat');
     expect(cubit.state.filteredEvents, [_eventWalk, _eventHug]);
+
+    await cubit.close();
+  });
+
+  test('switches journal view mode', () async {
+    final cubit = createCubit();
+    await settle();
+
+    cubit.setViewMode(JournalViewMode.calendar);
+
+    expect(cubit.state.viewMode, JournalViewMode.calendar);
+
+    await cubit.close();
+  });
+
+  test('selectCalendarDay stores a local day key', () async {
+    final cubit = createCubit();
+    await settle();
+
+    cubit.selectCalendarDay(DateTime(2026, 3, 5, 11, 43));
+
+    expect(cubit.state.selectedCalendarDay, DateTime(2026, 3, 5));
 
     await cubit.close();
   });
@@ -216,6 +239,47 @@ void main() {
     expect(cubit.state.filteredEvents, [_eventWalk, _eventHug]);
 
     await cubit.close();
+  });
+
+  test('calendar groups filtered events by local day', () async {
+    final cubit = createCubit();
+    await settle();
+
+    cubit.togglePetFilter('p1');
+
+    expect(cubit.state.calendarEventsByDay.keys, [DateTime(2026, 3, 5)]);
+    expect(
+      cubit.state.eventsForCalendarDay(DateTime(2026, 3, 5, 23)),
+      [_eventWalk],
+    );
+    expect(cubit.state.hasEventsOnCalendarDay(DateTime(2026, 3, 4)), isFalse);
+
+    await cubit.close();
+  });
+
+  test('calendar months are sorted from newest to oldest', () {
+    final state = JournalState(
+      events: [
+        EventModel(
+          eventId: 'e3',
+          title: 'Avril',
+          entryDate: DateTime(2026, 4, 1),
+          eventTypeId: 't1',
+        ),
+        _eventWalk,
+        const EventModel(
+          eventId: 'e4',
+          title: 'Sans date',
+          eventTypeId: 't1',
+        ),
+      ],
+    );
+
+    expect(state.calendarMonths, [
+      DateTime(2026, 4),
+      DateTime(2026, 3),
+    ]);
+    expect(state.firstCalendarEventMonth, DateTime(2026, 3));
   });
 
   test('emits an error when referential loading throws', () async {

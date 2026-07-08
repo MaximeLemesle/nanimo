@@ -10,6 +10,7 @@ import 'package:nanimo/core/widgets/app_scaffold.dart';
 import 'package:nanimo/core/widgets/species_icon_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/date_field_widget.dart';
+import 'package:nanimo/core/widgets/time_field_widget.dart';
 import 'package:nanimo/features/event/data/models/event_image_model.dart';
 import 'package:nanimo/features/event/data/models/event_model.dart';
 import 'package:nanimo/features/event/presentation/cubit/edit_event_cubit.dart';
@@ -45,6 +46,33 @@ class _EditEventPageState extends State<EditEventPage> {
   }
 
   void _onTitleChanged() => setState(() {});
+
+  void _setEntryDate(DateTime date) {
+    setState(() {
+      _entryDate = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        _entryDate.hour,
+        _entryDate.minute,
+        _entryDate.second,
+        _entryDate.millisecond,
+        _entryDate.microsecond,
+      );
+    });
+  }
+
+  void _setEntryTime(TimeOfDay time) {
+    setState(() {
+      _entryDate = DateTime(
+        _entryDate.year,
+        _entryDate.month,
+        _entryDate.day,
+        time.hour,
+        time.minute,
+      );
+    });
+  }
 
   @override
   void dispose() {
@@ -221,14 +249,31 @@ class _EditEventPageState extends State<EditEventPage> {
           body: ListView(
             padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
-              /// Date selector
-              DateFieldWidget(
-                label: 'Date',
-                value: _entryDate,
-                onChanged: (date) => setState(() => _entryDate = date),
-                bordered: false,
-                textAlign: TextAlign.center,
-                textStyle: AppTextStyles.textBold,
+              /// Date and time selector
+              Row(
+                children: [
+                  Expanded(
+                    child: DateFieldWidget(
+                      label: 'Date',
+                      value: _entryDate,
+                      onChanged: _setEntryDate,
+                      bordered: false,
+                      textAlign: TextAlign.center,
+                      textStyle: AppTextStyles.textBold,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: TimeFieldWidget(
+                      label: 'Heure',
+                      value: _entryDate,
+                      onChanged: _setEntryTime,
+                      bordered: false,
+                      textAlign: TextAlign.center,
+                      textStyle: AppTextStyles.textBold,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: AppSpacing.md),
 
