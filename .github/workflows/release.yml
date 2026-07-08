@@ -9,20 +9,53 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  build:
+    name: Build Android artifacts
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Flutter
+        uses: ./.github/actions/setup-flutter
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Build App Bundle
+        run: flutter build appbundle --release
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-release
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
+
+      - name: Download Android artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: android-release
+          path: artifacts
 
       - name: Create Github Release
         uses: actions/github-script@v7
         with:
           script: |
+            const fs = require('fs');
             const tag = context.ref.replace('refs/tags/', '');
-            
-            await github.rest.repos.createRelease({
+
+            const release = await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: tag,
@@ -31,3 +64,16 @@ jobs:
               draft: false,
               prerelease: tag.includes('beta') || tag.includes('alpha')
             });
+
+            for (const asset of ['app-release.apk', 'app-release.aab']) {
+              const path = `artifacts/${asset}`;
+              if (fs.existsSync(path)) {
+                await github.rest.repos.uploadReleaseAsset({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  release_id: release.data.id,
+                  name: `nanimo-${tag}-${asset}`,
+                  data: fs.readFileSync(path)
+                });
+              }
+            }
