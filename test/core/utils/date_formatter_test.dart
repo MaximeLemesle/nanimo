@@ -8,11 +8,32 @@ void main() {
     });
   });
 
+  group('DateFormatter.time', () {
+    test('formats as HH:mm with zero padding', () {
+      expect(DateFormatter.time(DateTime(2026, 3, 5, 9, 5)), '09:05');
+    });
+  });
+
+  group('DateFormatter.monthYear', () {
+    test('formats a French month header with capitalization', () {
+      expect(DateFormatter.monthYear(DateTime(2026, 3, 5)), 'Mars 2026');
+    });
+  });
+
+  group('DateFormatter.calendarDay', () {
+    test('formats a selected calendar day', () {
+      expect(DateFormatter.calendarDay(DateTime(2026, 3, 5)), '5 mars 2026');
+    });
+  });
+
   group('DateFormatter.age', () {
     final now = DateTime(2026, 6, 15);
 
     test('returns "Moins d\'un mois" for newborns', () {
-      expect(DateFormatter.age(DateTime(2026, 6, 1), now: now), "Moins d'un mois");
+      expect(
+        DateFormatter.age(DateTime(2026, 6, 1), now: now),
+        "Moins d'un mois",
+      );
     });
 
     test('returns months when under a year', () {
@@ -40,13 +61,13 @@ void main() {
     });
 
     test('drops the months part when zero', () {
-      expect(DateFormatter.ageDetailed(DateTime(2024, 6, 15), now: now),
-          '2 ans');
+      expect(
+          DateFormatter.ageDetailed(DateTime(2024, 6, 15), now: now), '2 ans');
     });
 
     test('falls back to age() under a year', () {
-      expect(DateFormatter.ageDetailed(DateTime(2026, 3, 15), now: now),
-          '3 mois');
+      expect(
+          DateFormatter.ageDetailed(DateTime(2026, 3, 15), now: now), '3 mois');
     });
   });
 }
