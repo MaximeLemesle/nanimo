@@ -21,6 +21,28 @@ class DateFormatter {
     return '$day/$month/${value.year}';
   }
 
+  /// Format time as HH:mm.
+  static String time(DateTime value) {
+    final local = value.toLocal();
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
+  }
+
+  /// Format month and year for calendar headers such as « Mars 2026 ».
+  static String monthYear(DateTime value) {
+    final local = value.toLocal();
+    final month = _capitalize(_frenchMonths[local.month - 1]);
+    return '$month ${local.year}';
+  }
+
+  /// Format date for a selected calendar day such as « 5 mars 2026 ».
+  static String calendarDay(DateTime value) {
+    final local = value.toLocal();
+    final month = _frenchMonths[local.month - 1];
+    return '${local.day} $month ${local.year}';
+  }
+
   /// Event header such as « 05 mars à 11h43 ».
   static String eventHeader(DateTime value) {
     final local = value.toLocal();
@@ -65,5 +87,10 @@ class DateFormatter {
     if (months <= 0) return yearsLabel;
     final monthsLabel = months == 1 ? '1 mois' : '$months mois';
     return '$yearsLabel et $monthsLabel';
+  }
+
+  static String _capitalize(String value) {
+    if (value.isEmpty) return value;
+    return '${value[0].toUpperCase()}${value.substring(1)}';
   }
 }

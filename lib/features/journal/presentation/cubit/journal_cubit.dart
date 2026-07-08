@@ -29,12 +29,9 @@ class JournalCubit extends Cubit<JournalState> {
         _petRepository = petRepository,
         _referentialRepository = referentialRepository,
         super(const JournalState()) {
-    _eventsSubscription =
-        _eventRepository.watchEvents().listen(_onEventsChanged);
-    _petEventsSubscription =
-        _eventRepository.watchPetEvents().listen(_onPetEventsChanged);
-    _imagesSubscription =
-        _eventRepository.watchAllImages().listen(_onImagesChanged);
+    _eventsSubscription = _eventRepository.watchEvents().listen(_onEventsChanged);
+    _petEventsSubscription = _eventRepository.watchPetEvents().listen(_onPetEventsChanged);
+    _imagesSubscription = _eventRepository.watchAllImages().listen(_onImagesChanged);
     _load();
   }
 
@@ -90,8 +87,17 @@ class JournalCubit extends Cubit<JournalState> {
     ));
   }
 
-  Future<String> imageUrl(String assetPath) =>
-      _eventRepository.signedImageUrl(assetPath);
+  void setViewMode(JournalViewMode viewMode) {
+    emit(state.copyWith(viewMode: viewMode));
+  }
+
+  void selectCalendarDay(DateTime day) {
+    emit(state.copyWith(
+      selectedCalendarDay: JournalState.calendarDayKey(day),
+    ));
+  }
+
+  Future<String> imageUrl(String assetPath) => _eventRepository.signedImageUrl(assetPath);
 
   Future<String?> deleteEvent(String eventId) async {
     try {

@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
+import 'package:nanimo/core/widgets/date_field_widget.dart';
+import 'package:nanimo/core/widgets/time_field_widget.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/event/data/event_repository.dart';
@@ -57,7 +59,7 @@ final _event = EventModel(
   eventId: 'e1',
   title: 'Première balade',
   description: 'Une belle balade.',
-  entryDate: DateTime(2026, 3, 5),
+  entryDate: DateTime(2026, 3, 5, 11, 43),
   createdAt: DateTime(2026, 3, 5),
   eventTypeId: 't-balade',
 );
@@ -164,6 +166,8 @@ void main() {
   testWidgets('prefills the form from the loaded event', (tester) async {
     await pumpPage(tester);
 
+    expect(find.text('05/03/2026'), findsOneWidget);
+    expect(find.text('11:43'), findsOneWidget);
     expect(find.text('Première balade'), findsOneWidget);
     expect(find.text('Une belle balade.'), findsOneWidget);
     expect(find.bySemanticsLabel('Balade'), findsOneWidget);
@@ -181,10 +185,38 @@ void main() {
     await tester.pumpAndSettle();
 
     final captured = verify(() => eventRepo.updateEvent(captureAny())).captured;
-    expect((captured.single as EventModel).title, 'Titre modifié');
+    final event = captured.single as EventModel;
+    expect(event.title, 'Titre modifié');
+    expect(event.entryDate, DateTime(2026, 3, 5, 11, 43));
     verify(() => eventRepo.updateEventPets('e1', ['pet-milo'])).called(1);
     // Popped back to the host route.
     expect(find.byType(EditEventPage), findsNothing);
+  });
+
+  testWidgets('combines the selected date and time before submitting',
+      (tester) async {
+    await pumpPage(tester);
+
+    tester
+        .widget<DateFieldWidget>(find.byType(DateFieldWidget))
+        .onChanged(DateTime(2026, 4, 2));
+    await tester.pump();
+    tester
+        .widget<TimeFieldWidget>(find.byType(TimeFieldWidget))
+        .onChanged(const TimeOfDay(hour: 9, minute: 5));
+    await tester.pump();
+
+    expect(find.text('02/04/2026'), findsOneWidget);
+    expect(find.text('09:05'), findsOneWidget);
+
+    await tester.tap(find.text('Enregistrer'));
+    await tester.pumpAndSettle();
+
+    final captured = verify(() => eventRepo.updateEvent(captureAny())).captured;
+    expect(
+      (captured.single as EventModel).entryDate,
+      DateTime(2026, 4, 2, 9, 5),
+    );
   });
 
   testWidgets('disables submit when the title is cleared', (tester) async {
