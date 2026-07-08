@@ -1,0 +1,90 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:nanimo/config/theme/app_colors.dart';
+import 'package:nanimo/config/theme/app_radius.dart';
+import 'package:nanimo/config/theme/app_text_styles.dart';
+import 'package:nanimo/core/utils/date_formatter.dart';
+
+class TimeFieldWidget extends StatelessWidget {
+  final String label;
+  final DateTime? value;
+  final ValueChanged<TimeOfDay> onChanged;
+  final String placeholder;
+  final bool bordered;
+  final TextAlign textAlign;
+  final TextStyle? textStyle;
+
+  const TimeFieldWidget({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.onChanged,
+    this.placeholder = 'Sélectionner une heure',
+    this.bordered = true,
+    this.textAlign = TextAlign.start,
+    this.textStyle,
+  });
+
+  Future<void> _pick(BuildContext context) async {
+    final initial = value ?? DateTime.now();
+    var picked = initial;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (context) {
+        return SizedBox(
+          height: 350,
+          width: double.infinity,
+          child: CupertinoDatePicker(
+            mode: CupertinoDatePickerMode.time,
+            use24hFormat: true,
+            initialDateTime: initial,
+            onDateTimeChanged: (date) => picked = date,
+          ),
+        );
+      },
+    );
+
+    if (!context.mounted) return;
+    onChanged(TimeOfDay(hour: picked.hour, minute: picked.minute));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final baseStyle = textStyle ?? AppTextStyles.text;
+    final timeText = Text(
+      value == null ? placeholder : DateFormatter.time(value!),
+      textAlign: textAlign,
+      style: baseStyle.copyWith(
+        color: value == null
+            ? AppColors.textSecondary
+            : (textStyle?.color ?? AppColors.textPrimary),
+      ),
+    );
+
+    if (!bordered) {
+      return InkWell(
+        onTap: () => _pick(context),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: SizedBox(width: double.infinity, child: timeText),
+      );
+    }
+
+    return InkWell(
+      onTap: () => _pick(context),
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          filled: true,
+          fillColor: AppColors.background,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderSide: const BorderSide(color: AppColors.backgroundStroke),
+          ),
+        ),
+        child: timeText,
+      ),
+    );
+  }
+}

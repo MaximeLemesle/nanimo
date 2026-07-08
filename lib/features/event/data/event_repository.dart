@@ -90,6 +90,55 @@ class EventRepository {
     });
   }
 
+  Future<List<String>> getPetIdsForEvent(String eventId) async {
+    final rows =
+        await _isar.petEventCaches.filter().eventIdEqualTo(eventId).findAll();
+    return rows.map((row) => row.petId).toList();
+  }
+
+  Future<void> updateEventPets(String eventId, List<String> petIds) async {
+    final currentRows =
+        await _isar.petEventCaches.filter().eventIdEqualTo(eventId).findAll();
+    final currentPetIds = currentRows.map((row) => row.petId).toSet();
+    final nextPetIds = petIds.toSet();
+
+    final toAdd = nextPetIds.difference(currentPetIds);
+    final toRemove = currentPetIds.difference(nextPetIds);
+
+    try {
+      for (final petId in toRemove) {
+        await _supabase
+            .from('pets_events')
+            .delete()
+            .eq('event_id', eventId)
+            .eq('pet_id', petId);
+      }
+      if (toAdd.isNotEmpty) {
+        await _supabase.from('pets_events').insert([
+          for (final petId in toAdd) {'event_id': eventId, 'pet_id': petId},
+        ]);
+      }
+    } catch (_) {
+      throw const RepositoryNetworkException(
+        'Une connexion internet est requise pour modifier les animaux liés.',
+      );
+    }
+
+    await _isar.writeTxn(() async {
+      final idsToDelete = currentRows
+          .where((row) => toRemove.contains(row.petId))
+          .map((row) => row.id)
+          .toList();
+      if (idsToDelete.isNotEmpty) {
+        await _isar.petEventCaches.deleteAll(idsToDelete);
+      }
+      await _isar.petEventCaches.putAllByPetEventId([
+        for (final petId in toAdd)
+          PetEventCache.fromIds(petId: petId, eventId: eventId),
+      ]);
+    });
+  }
+
   Future<String> signedImageUrl(String assetPath) {
     return _supabase.storage.from('journal-media').createSignedUrl(
           assetPath,
@@ -144,9 +193,10 @@ class EventRepository {
     return storagePath;
   }
 
-  Future<void> deleteImage(String eventImageId) async {
+  Future<void> deleteImage(String eventImageId, String assetPath) async {
     try {
       await _supabase.from('event_image').delete().eq('id_event_image', eventImageId);
+      await _supabase.storage.from('journal-media').remove([assetPath]);
     } catch (e, st) {
       throw mapRepositoryError(e, st,
           operation: 'deleteImage', networkMessage: 'Une connexion internet est requise pour supprimer une photo.');
