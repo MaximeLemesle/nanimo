@@ -14,9 +14,12 @@ import 'package:nanimo/features/auth/presentation/page/signup_page.dart';
 import 'package:nanimo/features/event/data/event_repository.dart';
 import 'package:nanimo/features/event/presentation/cubit/event_creation_cubit.dart';
 import 'package:nanimo/features/event/presentation/page/create_event_page.dart';
+import 'package:nanimo/features/health/data/health_repository.dart';
+import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
 import 'package:nanimo/features/journal/presentation/cubit/journal_cubit.dart';
 import 'package:nanimo/features/journal/presentation/page/journal_page.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
+import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/home/presentation/page/home_page.dart';
 import 'package:nanimo/features/home/presentation/page/profile_page.dart';
 import 'package:nanimo/features/pet/presentation/page/create_pet_page.dart';
@@ -26,8 +29,16 @@ import 'package:nanimo/features/pet/presentation/page/pet_page.dart';
 import 'package:nanimo/features/pet/presentation/page/pet_health_diary_page.dart';
 
 class _AuthCubitListenable extends ChangeNotifier {
+  late final StreamSubscription<AuthState> _subscription;
+
   _AuthCubitListenable(AuthCubit cubit) {
-    cubit.stream.listen((_) => notifyListeners());
+    _subscription = cubit.stream.listen((_) => notifyListeners());
+  }
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
   }
 }
 
@@ -36,6 +47,7 @@ GoRouter createRouter(
   required EventRepository eventRepository,
   required ReferentialRepository referentialRepository,
   required PetRepository petRepository,
+  required HealthRepository healthRepository,
 }) {
   /// Flips to true after the splash display duration
   final splashElapsed = ValueNotifier(false);
@@ -77,7 +89,27 @@ GoRouter createRouter(
         builder: (_, __) => const SignupPage(),
       ),
       ShellRoute(
-        builder: (context, state, child) => AppShell(child: child),
+        // Home and pet cubits live for the authenticated session only: created
+        // when the shell mounts, disposed when it unmounts (sign-out), so no
+        // stale data survives a logout and no Isar streams run on auth screens.
+        builder: (context, state, child) => MultiBlocProvider(
+          providers: [
+            BlocProvider(
+              create: (_) => HomeCubit(
+                petRepository: petRepository,
+                referentialRepository: referentialRepository,
+              ),
+            ),
+            BlocProvider(
+              create: (_) => PetDetailsCubit(
+                petRepository: petRepository,
+                healthRepository: healthRepository,
+                referentialRepository: referentialRepository,
+              ),
+            ),
+          ],
+          child: AppShell(child: child),
+        ),
         routes: [
           GoRoute(
             path: RouteNames.home,
