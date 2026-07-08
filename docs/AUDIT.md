@@ -128,7 +128,7 @@ sequenceDiagram
     Auth-->>Router: status = authenticated
     Router-->>Router: redirect → /home (ShellRoute crée Home/PetDetails)
     Isar-->>App: streams watch*() → UI réactive
-    Note over App,Isar: resync() au resume + pull-to-refresh (A-6 ✅) ;<br/>purge du cache au sign-out (A-1 ✅)
+    Note over App,Isar: resync() au resume + pull-to-refresh (A-6 ✅) <br> purge du cache au sign-out (A-1 ✅)
 ```
 
 **Résiduel** : la sync reste *full-table* (pas de delta). Les colonnes `updated_at` sont désormais versionnées (`supabase/migrations/0003…`, A-11) pour préparer le delta sync côté client, à implémenter en V2.
@@ -147,7 +147,7 @@ sequenceDiagram
     participant Isar as Isar
 
     P->>C: submit(titre, date, photos, petIds)
-    Note over C: eventId stable (mémorisé pour le retry) ;<br/>photos plafonnées au quota du plan (A-2 ✅)
+    Note over C: eventId stable (mémorisé pour le retry) <br/>photos plafonnées au quota du plan (A-2 ✅)
     loop pour chaque photo (upload AVANT les inserts)
         C->>ER: uploadEventImage(eventId, file)
         ER->>ST: upload userId/eventId/uuid.ext
