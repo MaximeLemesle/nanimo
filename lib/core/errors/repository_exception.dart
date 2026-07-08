@@ -2,7 +2,6 @@ import 'dart:developer' as developer;
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// Base type for failures surfaced to the UI by repositories.
 abstract class RepositoryException implements Exception {
   final String message;
   const RepositoryException(this.message);
@@ -11,16 +10,10 @@ abstract class RepositoryException implements Exception {
   String toString() => message;
 }
 
-/// Thrown when Supabase rejected the call (RLS, constraint, storage error) —
-/// retrying with a better connection will not help.
 class RepositoryServerException extends RepositoryException {
   const RepositoryServerException(super.message);
 }
 
-/// Logs [error] and returns the typed exception a repository should throw:
-/// server-side rejections become [RepositoryServerException] so they are not
-/// mistaken for an offline device; anything else falls back to
-/// [RepositoryNetworkException] carrying [networkMessage].
 RepositoryException mapRepositoryError(
   Object error,
   StackTrace stackTrace, {
@@ -42,7 +35,6 @@ RepositoryException mapRepositoryError(
   return RepositoryNetworkException(networkMessage);
 }
 
-/// Thrown when a repository call needs the network and the device is offline
 class RepositoryNetworkException extends RepositoryException {
   const RepositoryNetworkException(super.message);
 }

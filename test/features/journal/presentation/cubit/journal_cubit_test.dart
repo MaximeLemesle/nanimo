@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:nanimo/core/errors/repository_network_exception.dart';
+import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/event/data/event_repository.dart';
@@ -14,8 +14,7 @@ class _MockEventRepository extends Mock implements EventRepository {}
 
 class _MockPetRepository extends Mock implements PetRepository {}
 
-class _MockReferentialRepository extends Mock
-    implements ReferentialRepository {}
+class _MockReferentialRepository extends Mock implements ReferentialRepository {}
 
 final _pet1 = PetModel(
   petId: 'p1',
@@ -90,8 +89,7 @@ void main() {
     petRepo = _MockPetRepository();
     refRepo = _MockReferentialRepository();
 
-    when(() => eventRepo.watchEvents())
-        .thenAnswer((_) => Stream.value([_eventWalk, _eventHug]));
+    when(() => eventRepo.watchEvents()).thenAnswer((_) => Stream.value([_eventWalk, _eventHug]));
     when(() => eventRepo.watchPetEvents()).thenAnswer(
       (_) => Stream.value({
         'e1': ['p1'],
@@ -104,8 +102,7 @@ void main() {
       }),
     );
     when(() => petRepo.getPets()).thenAnswer((_) async => [_pet1, _pet2]);
-    when(() => refRepo.fetchEventTypes())
-        .thenAnswer((_) async => [_walkType, _hugType]);
+    when(() => refRepo.fetchEventTypes()).thenAnswer((_) async => [_walkType, _hugType]);
     when(() => refRepo.fetchSpecies()).thenAnswer((_) async => _species);
   });
 
@@ -115,8 +112,7 @@ void main() {
         referentialRepository: refRepo,
       );
 
-  Future<void> settle() =>
-      Future<void>.delayed(const Duration(milliseconds: 20));
+  Future<void> settle() => Future<void>.delayed(const Duration(milliseconds: 20));
 
   test('loads events, links, images, pets and icons', () async {
     final cubit = createCubit();
@@ -242,8 +238,7 @@ void main() {
   });
 
   test('deleteEvent surfaces the network exception message', () async {
-    when(() => eventRepo.deleteEvent('e1'))
-        .thenThrow(const RepositoryNetworkException('Pas de réseau'));
+    when(() => eventRepo.deleteEvent('e1')).thenThrow(const RepositoryNetworkException('Pas de réseau'));
     final cubit = createCubit();
     await settle();
 
@@ -265,8 +260,7 @@ void main() {
   });
 
   test('imageUrl delegates to the repository signed url', () async {
-    when(() => eventRepo.signedImageUrl('path/a.jpg'))
-        .thenAnswer((_) async => 'https://signed/a.jpg');
+    when(() => eventRepo.signedImageUrl('path/a.jpg')).thenAnswer((_) async => 'https://signed/a.jpg');
     final cubit = createCubit();
     await settle();
 
@@ -277,10 +271,8 @@ void main() {
   });
 
   test('imageUrl memoizes the signed url per asset path', () async {
-    when(() => eventRepo.signedImageUrl('path/a.jpg'))
-        .thenAnswer((_) async => 'https://signed/a.jpg');
-    when(() => eventRepo.signedImageUrl('path/b.jpg'))
-        .thenAnswer((_) async => 'https://signed/b.jpg');
+    when(() => eventRepo.signedImageUrl('path/a.jpg')).thenAnswer((_) async => 'https://signed/a.jpg');
+    when(() => eventRepo.signedImageUrl('path/b.jpg')).thenAnswer((_) async => 'https://signed/b.jpg');
     final cubit = createCubit();
     await settle();
 

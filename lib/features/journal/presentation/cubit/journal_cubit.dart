@@ -29,12 +29,9 @@ class JournalCubit extends Cubit<JournalState> {
         _petRepository = petRepository,
         _referentialRepository = referentialRepository,
         super(const JournalState()) {
-    _eventsSubscription =
-        _eventRepository.watchEvents().listen(_onEventsChanged);
-    _petEventsSubscription =
-        _eventRepository.watchPetEvents().listen(_onPetEventsChanged);
-    _imagesSubscription =
-        _eventRepository.watchAllImages().listen(_onImagesChanged);
+    _eventsSubscription = _eventRepository.watchEvents().listen(_onEventsChanged);
+    _petEventsSubscription = _eventRepository.watchPetEvents().listen(_onPetEventsChanged);
+    _imagesSubscription = _eventRepository.watchAllImages().listen(_onImagesChanged);
     _load();
   }
 
@@ -90,8 +87,7 @@ class JournalCubit extends Cubit<JournalState> {
     ));
   }
 
-  /// Signed urls stay valid 1h; refresh a bit early so a memoized link is
-  /// never served about to expire.
+  /// Refresh signed URLs before they expire (1h)
   static const _signedUrlTtl = Duration(minutes: 45);
   final Map<String, ({String url, DateTime expiresAt})> _signedUrls = {};
 

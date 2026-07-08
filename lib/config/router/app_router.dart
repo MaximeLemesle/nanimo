@@ -89,9 +89,6 @@ GoRouter createRouter(
         builder: (_, __) => const SignupPage(),
       ),
       ShellRoute(
-        // Home and pet cubits live for the authenticated session only: created
-        // when the shell mounts, disposed when it unmounts (sign-out), so no
-        // stale data survives a logout and no Isar streams run on auth screens.
         builder: (context, state, child) => MultiBlocProvider(
           providers: [
             BlocProvider(

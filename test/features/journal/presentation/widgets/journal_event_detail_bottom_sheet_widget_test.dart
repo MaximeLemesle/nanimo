@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:nanimo/core/errors/repository_network_exception.dart';
+import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/event/data/event_repository.dart';
@@ -17,8 +17,7 @@ class _MockEventRepository extends Mock implements EventRepository {}
 
 class _MockPetRepository extends Mock implements PetRepository {}
 
-class _MockReferentialRepository extends Mock
-    implements ReferentialRepository {}
+class _MockReferentialRepository extends Mock implements ReferentialRepository {}
 
 final _saiko = PetModel(
   petId: 'p1',
@@ -64,8 +63,7 @@ void main() {
     petRepo = _MockPetRepository();
     refRepo = _MockReferentialRepository();
 
-    when(() => eventRepo.watchEvents())
-        .thenAnswer((_) => Stream.value([_event]));
+    when(() => eventRepo.watchEvents()).thenAnswer((_) => Stream.value([_event]));
     when(() => eventRepo.watchPetEvents()).thenAnswer((_) => Stream.value({
           'e1': ['p1']
         }));
@@ -112,8 +110,7 @@ void main() {
     return cubit;
   }
 
-  testWidgets('shows title, date, description, pet and action buttons',
-      (tester) async {
+  testWidgets('shows title, date, description, pet and action buttons', (tester) async {
     final cubit = await pumpSheet(tester);
 
     expect(find.text('Promenade au parc'), findsOneWidget);
@@ -126,8 +123,7 @@ void main() {
     await cubit.close();
   });
 
-  testWidgets('tapping Modifier closes the sheet and fires onEdit',
-      (tester) async {
+  testWidgets('tapping Modifier closes the sheet and fires onEdit', (tester) async {
     var edited = false;
     final cubit = await pumpSheet(tester, onEdit: () => edited = true);
 
@@ -140,8 +136,7 @@ void main() {
     await cubit.close();
   });
 
-  testWidgets('confirming deletion calls the repository and closes the sheet',
-      (tester) async {
+  testWidgets('confirming deletion calls the repository and closes the sheet', (tester) async {
     when(() => eventRepo.deleteEvent('e1')).thenAnswer((_) async {});
     final cubit = await pumpSheet(tester);
 
@@ -178,10 +173,8 @@ void main() {
     await cubit.close();
   });
 
-  testWidgets('a failed deletion shows a snackbar and keeps the sheet',
-      (tester) async {
-    when(() => eventRepo.deleteEvent('e1'))
-        .thenThrow(const RepositoryNetworkException('Pas de réseau'));
+  testWidgets('a failed deletion shows a snackbar and keeps the sheet', (tester) async {
+    when(() => eventRepo.deleteEvent('e1')).thenThrow(const RepositoryNetworkException('Pas de réseau'));
     final cubit = await pumpSheet(tester);
 
     await tester.tap(find.text('Supprimer'));

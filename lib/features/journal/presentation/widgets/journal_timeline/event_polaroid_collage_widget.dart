@@ -67,8 +67,7 @@ class JournalTimelinePolaroidCollageWidget extends StatelessWidget {
     var half = 0.0;
     for (final p in _placements(count)) {
       final full = p.size + padding;
-      final extent =
-          (full / 2) * (math.cos(p.angle).abs() + math.sin(p.angle).abs());
+      final extent = (full / 2) * (math.cos(p.angle).abs() + math.sin(p.angle).abs());
       half = math.max(half, p.offset.dy.abs() + extent);
     }
     return 2 * half;
@@ -158,13 +157,10 @@ class _RemoteImage extends StatelessWidget {
         }
         return CachedNetworkImage(
           imageUrl: snapshot.data!,
-          // The signed url token changes on every call; key the disk cache
-          // on the stable storage path instead.
           cacheKey: assetPath,
           fit: BoxFit.cover,
           placeholder: (context, url) => _placeholder(),
-          errorWidget: (context, url, error) =>
-              _placeholder(icon: Icons.broken_image_outlined),
+          errorWidget: (context, url, error) => _placeholder(icon: Icons.broken_image_outlined),
         );
       },
     );

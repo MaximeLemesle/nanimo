@@ -19,14 +19,9 @@ class EventRepository {
   Stream<List<EventModel>> watchEvents({String? eventTypeId}) {
     final query = eventTypeId == null
         ? _isar.eventCaches.where().sortByEntryDateDesc()
-        : _isar.eventCaches
-            .filter()
-            .eventTypeIdEqualTo(eventTypeId)
-            .sortByEntryDateDesc();
+        : _isar.eventCaches.filter().eventTypeIdEqualTo(eventTypeId).sortByEntryDateDesc();
 
-    return query
-        .watch(fireImmediately: true)
-        .map((rows) => rows.map((c) => c.toModel()).toList());
+    return query.watch(fireImmediately: true).map((rows) => rows.map((c) => c.toModel()).toList());
   }
 
   /// One-shot read of a single event.
@@ -35,29 +30,23 @@ class EventRepository {
     return row?.toModel();
   }
 
-  Future<void> createEvent(EventModel event,
-      {required List<String> petIds}) async {
+  Future<void> createEvent(EventModel event, {required List<String> petIds}) async {
     try {
-      // Ignore duplicate keys so a retry after a partial failure is idempotent.
       await _insertIgnoringDuplicate('events', event.toJson());
       if (petIds.isNotEmpty) {
         await _insertIgnoringDuplicate('pets_events', [
-          for (final petId in petIds)
-            {'event_id': event.eventId, 'pet_id': petId},
+          for (final petId in petIds) {'event_id': event.eventId, 'pet_id': petId},
         ]);
       }
     } catch (e, st) {
       throw mapRepositoryError(e, st,
-          operation: 'createEvent',
-          networkMessage:
-              'Une connexion internet est requise pour créer un événement.');
+          operation: 'createEvent', networkMessage: 'Une connexion internet est requise pour créer un événement.');
     }
 
     await _isar.writeTxn(() async {
       await _isar.eventCaches.putByEventId(EventCache.fromModel(event));
       await _isar.petEventCaches.putAllByPetEventId([
-        for (final petId in petIds)
-          PetEventCache.fromIds(petId: petId, eventId: event.eventId),
+        for (final petId in petIds) PetEventCache.fromIds(petId: petId, eventId: event.eventId),
       ]);
     });
   }
@@ -65,15 +54,10 @@ class EventRepository {
   /// Updates an existing event.
   Future<void> updateEvent(EventModel event) async {
     try {
-      await _supabase
-          .from('events')
-          .update(event.toJson())
-          .eq('id_event', event.eventId);
+      await _supabase.from('events').update(event.toJson()).eq('id_event', event.eventId);
     } catch (e, st) {
       throw mapRepositoryError(e, st,
-          operation: 'updateEvent',
-          networkMessage:
-              'Une connexion internet est requise pour modifier un événement.');
+          operation: 'updateEvent', networkMessage: 'Une connexion internet est requise pour modifier un événement.');
     }
 
     await _isar.writeTxn(() async {
@@ -86,9 +70,7 @@ class EventRepository {
       await _supabase.from('events').delete().eq('id_event', eventId);
     } catch (e, st) {
       throw mapRepositoryError(e, st,
-          operation: 'deleteEvent',
-          networkMessage:
-              'Une connexion internet est requise pour supprimer un événement.');
+          operation: 'deleteEvent', networkMessage: 'Une connexion internet est requise pour supprimer un événement.');
     }
 
     await _isar.writeTxn(() async {
@@ -99,10 +81,7 @@ class EventRepository {
   }
 
   Stream<Map<String, List<String>>> watchPetEvents() {
-    return _isar.petEventCaches
-        .where()
-        .watch(fireImmediately: true)
-        .map((rows) {
+    return _isar.petEventCaches.where().watch(fireImmediately: true).map((rows) {
       final map = <String, List<String>>{};
       for (final row in rows) {
         map.putIfAbsent(row.eventId, () => []).add(row.petId);
@@ -119,10 +98,7 @@ class EventRepository {
   }
 
   Stream<Map<String, List<String>>> watchAllImages() {
-    return _isar.eventImageCaches
-        .where()
-        .watch(fireImmediately: true)
-        .map((rows) {
+    return _isar.eventImageCaches.where().watch(fireImmediately: true).map((rows) {
       final map = <String, List<String>>{};
       for (final row in rows) {
         map.putIfAbsent(row.eventId, () => []).add(row.assetPath);
@@ -141,18 +117,13 @@ class EventRepository {
 
   Future<void> addImage(EventImageModel image) async {
     try {
-      // Ignore duplicate keys so a retry after a partial failure is idempotent.
       await _insertIgnoringDuplicate('event_image', image.toJson());
     } catch (e, st) {
-      throw mapRepositoryError(e, st,
-          operation: 'addImage',
-          networkMessage:
-              'Une connexion internet est requise pour ajouter une photo.');
+      throw mapRepositoryError(e, st, operation: 'addImage', networkMessage: 'Une connexion internet est requise pour ajouter une photo.');
     }
 
     await _isar.writeTxn(() async {
-      await _isar.eventImageCaches
-          .putByEventImageId(EventImageCache.fromModel(image));
+      await _isar.eventImageCaches.putByEventImageId(EventImageCache.fromModel(image));
     });
   }
 
@@ -160,18 +131,14 @@ class EventRepository {
   Future<String> uploadEventImage(String eventId, File file) async {
     final userId = _requireUserId();
     final dotIndex = file.path.lastIndexOf('.');
-    final extension = dotIndex == -1
-        ? 'jpg'
-        : file.path.substring(dotIndex + 1).toLowerCase();
+    final extension = dotIndex == -1 ? 'jpg' : file.path.substring(dotIndex + 1).toLowerCase();
     final storagePath = '$userId/$eventId/${const Uuid().v4()}.$extension';
 
     try {
       await _supabase.storage.from('journal-media').upload(storagePath, file);
     } catch (e, st) {
       throw mapRepositoryError(e, st,
-          operation: 'uploadEventImage',
-          networkMessage:
-              'Une connexion internet est requise pour envoyer une photo.');
+          operation: 'uploadEventImage', networkMessage: 'Une connexion internet est requise pour envoyer une photo.');
     }
 
     return storagePath;
@@ -179,15 +146,10 @@ class EventRepository {
 
   Future<void> deleteImage(String eventImageId) async {
     try {
-      await _supabase
-          .from('event_image')
-          .delete()
-          .eq('id_event_image', eventImageId);
+      await _supabase.from('event_image').delete().eq('id_event_image', eventImageId);
     } catch (e, st) {
       throw mapRepositoryError(e, st,
-          operation: 'deleteImage',
-          networkMessage:
-              'Une connexion internet est requise pour supprimer une photo.');
+          operation: 'deleteImage', networkMessage: 'Une connexion internet est requise pour supprimer une photo.');
     }
 
     await _isar.writeTxn(() async {
@@ -205,8 +167,7 @@ class EventRepository {
     return userId;
   }
 
-  /// Inserts [values], swallowing a unique-violation (23505) so a retry after a
-  /// partial failure does not create duplicates.
+  /// Ignore duplicate keys so a retry after a partial failure is idempotent
   Future<void> _insertIgnoringDuplicate(String table, Object values) async {
     try {
       await _supabase.from(table).insert(values);

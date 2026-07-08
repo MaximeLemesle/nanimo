@@ -73,17 +73,11 @@ class EventCreationCubit extends Cubit<EventCreationState> {
     emit(state.copyWith(selectedPetIds: petIds));
   }
 
-  /// Event id kept stable across retries so re-submitting after a partial
-  /// failure updates the same event instead of creating a duplicate.
   String? _pendingEventId;
-
-  /// Photos already uploaded, keyed by local file path, so a retry skips
-  /// re-uploading and re-inserting the same photo.
   final Map<String, ({String imageId, String assetPath})> _uploadedImages = {};
 
-  /// Uploads the photos first (orphan storage files are harmless), then creates
-  /// the event and links its images. All writes are idempotent so a retry after
-  /// a partial failure never produces a duplicate event or photo.
+  /// Uploads the photos first, then creates the event. 
+  /// So a retry after a failure never makes a duplicate event or photo.
   Future<void> submit({
     required String title,
     String? description,

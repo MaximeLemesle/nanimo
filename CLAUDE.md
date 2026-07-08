@@ -5,7 +5,7 @@
 **Tagline**: "Chaque moment compte"  
 **Marché**: France (V1)  
 **Modèle**: Freemium + Premium  
-**Stack**: Flutter 3.x + Supabase 2.x + Isar 3.x _(notifications push Firebase FCM prévues en V2 — non implémentées)_
+**Stack**: Flutter 3.x + Supabase 2.x + Isar 3.x Firebase FCM
 
 ---
 
@@ -339,7 +339,7 @@ Workflow `.github/workflows/ci.yml` découpé en 3 jobs :
 - **Fichiers** : snake_case (auth_cubit.dart, pet_model.dart)
 - **Cubits** : `[feature]_cubit.dart` + `[feature]_state.dart`
 - **Pages** : `[feature]_page.dart`
-- **Commentaires** : Une ligne courte en anglais pour chaque méthode publique avec /// pour différencier des balises flutter
+- **Commentaires** : Uniquement sur les fonctions qui en ont vraiment besoin — logique non évidente, contrainte invisible dans le code, workaround. Ne pas commenter une méthode dont le nom suffit. Format : une ligne courte en anglais avec /// pour différencier des balises flutter
 - **Erreurs** : Toujours wrap Supabase calls en try/catch
 - **Mounted** : Toujours vérifier `if (!mounted) return;` après await avant setState
 

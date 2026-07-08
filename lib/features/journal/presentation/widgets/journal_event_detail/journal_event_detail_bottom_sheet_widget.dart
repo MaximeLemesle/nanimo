@@ -41,27 +41,23 @@ class JournalEventDetailBottomSheetWidget extends StatefulWidget {
   }
 
   @override
-  State<JournalEventDetailBottomSheetWidget> createState() =>
-      _JournalEventDetailBottomSheetWidgetState();
+  State<JournalEventDetailBottomSheetWidget> createState() => _JournalEventDetailBottomSheetWidgetState();
 }
 
-class _JournalEventDetailBottomSheetWidgetState
-    extends State<JournalEventDetailBottomSheetWidget> {
+class _JournalEventDetailBottomSheetWidgetState extends State<JournalEventDetailBottomSheetWidget> {
   bool _isDeleting = false;
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<JournalCubit, JournalState>(
       builder: (context, state) {
-        final event =
-            state.events.where((e) => e.eventId == widget.eventId).firstOrNull;
+        final event = state.events.where((e) => e.eventId == widget.eventId).firstOrNull;
 
         if (event == null) return const SizedBox.shrink();
 
         final imagePaths = state.imagePathsByEvent[widget.eventId] ?? const [];
         final petIds = state.petIdsByEvent[widget.eventId] ?? const [];
-        final pets =
-            state.pets.where((pet) => petIds.contains(pet.petId)).toList();
+        final pets = state.pets.where((pet) => petIds.contains(pet.petId)).toList();
         final date = event.entryDate;
 
         return BottomSheetWidget(
@@ -79,8 +75,7 @@ class _JournalEventDetailBottomSheetWidgetState
             if (date != null) ...[
               Text(
                 DateFormatter.eventHeader(date),
-                style: AppTextStyles.numberSmall
-                    .copyWith(color: AppColors.textSecondary),
+                style: AppTextStyles.numberSmall.copyWith(color: AppColors.textSecondary),
               ),
               const SizedBox(height: AppSpacing.md),
             ],
@@ -90,8 +85,7 @@ class _JournalEventDetailBottomSheetWidgetState
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: imagePaths.length,
-                  separatorBuilder: (_, __) =>
-                      const SizedBox(width: AppSpacing.md),
+                  separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.md),
                   itemBuilder: (_, index) => _EventPhoto(
                     assetPath: imagePaths[index],
                     urlResolver: context.read<JournalCubit>().imageUrl,
@@ -100,16 +94,14 @@ class _JournalEventDetailBottomSheetWidgetState
               ),
               const SizedBox(height: AppSpacing.md),
             ],
-            if (event.description != null &&
-                event.description!.trim().isNotEmpty) ...[
+            if (event.description != null && event.description!.trim().isNotEmpty) ...[
               Text(event.description!, style: AppTextStyles.text),
               const SizedBox(height: AppSpacing.lg),
             ],
             if (pets.isNotEmpty) ...[
               Text(
                 'Animaux',
-                style: AppTextStyles.textSmallBold
-                    .copyWith(color: AppColors.textSecondary),
+                style: AppTextStyles.textSmallBold.copyWith(color: AppColors.textSecondary),
               ),
               const SizedBox(height: AppSpacing.sm),
               Wrap(
@@ -131,9 +123,7 @@ class _JournalEventDetailBottomSheetWidgetState
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           if (state.iconsKey[pet.petSpeciesId] != null) ...[
-                            SpeciesIconWidget(
-                                iconKey: state.iconsKey[pet.petSpeciesId]!,
-                                height: 28),
+                            SpeciesIconWidget(iconKey: state.iconsKey[pet.petSpeciesId]!, height: 28),
                             const SizedBox(width: AppSpacing.sm),
                           ],
                           Text(pet.petName, style: AppTextStyles.textBold),
@@ -168,16 +158,14 @@ class _JournalEventDetailBottomSheetWidgetState
             onPressed: () => Navigator.of(dialogContext).pop(false),
             child: Text(
               'Annuler',
-              style: AppTextStyles.textBold
-                  .copyWith(color: AppColors.textSecondary),
+              style: AppTextStyles.textBold.copyWith(color: AppColors.textSecondary),
             ),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             child: Text(
               'Supprimer',
-              style: AppTextStyles.textBold
-                  .copyWith(color: AppColors.secondary600),
+              style: AppTextStyles.textBold.copyWith(color: AppColors.secondary600),
             ),
           ),
         ],
@@ -266,15 +254,12 @@ class _EventPhoto extends StatelessWidget {
           }
           return CachedNetworkImage(
             imageUrl: snapshot.data!,
-            // The signed url token changes on every call; key the disk cache
-            // on the stable storage path instead.
             cacheKey: assetPath,
             width: 200,
             height: 200,
             fit: BoxFit.cover,
             placeholder: (_, __) => _placeholder(),
-            errorWidget: (_, __, ___) =>
-                _placeholder(icon: Icons.broken_image_outlined),
+            errorWidget: (_, __, ___) => _placeholder(icon: Icons.broken_image_outlined),
           );
         },
       ),

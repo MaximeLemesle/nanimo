@@ -24,13 +24,11 @@ class AuthCubit extends Cubit<AuthState> {
 
   void _listenToAuthChanges() {
     /// Listen to session changes and trigger sync on sign-in or session restore
-    _authSubscription =
-        _repository.authStateChanges.listen((supabase.AuthState data) async {
+    _authSubscription = _repository.authStateChanges.listen((supabase.AuthState data) async {
       final session = data.session;
 
       if (session != null) {
-        final isNewSession = data.event == supabase.AuthChangeEvent.signedIn ||
-            data.event == supabase.AuthChangeEvent.initialSession;
+        final isNewSession = data.event == supabase.AuthChangeEvent.signedIn || data.event == supabase.AuthChangeEvent.initialSession;
 
         if (isNewSession) {
           try {
@@ -107,9 +105,7 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  /// Re-runs both sync waves — called when the app resumes or on pull-to-refresh
-  /// so data edited on another device is pulled in without a restart. No-op when
-  /// signed out.
+  /// Re-runs both sync waves - pull-to-refresh
   Future<void> resync() async {
     if (state.status != AuthStatus.authenticated) return;
     try {
@@ -132,15 +128,12 @@ class AuthCubit extends Cubit<AuthState> {
 
   static const _supabaseErrorMessages = {
     'invalid login credentials': 'Email ou mot de passe incorrect.',
-    'email not confirmed':
-        'Veuillez confirmer votre email avant de vous connecter.',
+    'email not confirmed': 'Veuillez confirmer votre email avant de vous connecter.',
     'too many requests': 'Trop de tentatives. Réessayez dans quelques minutes.',
     'user already registered': 'Un compte existe déjà avec cet email.',
     'email rate limit exceeded': 'Trop d\'emails envoyés. Réessayez plus tard.',
-    'password should be at least 6 characters':
-        'Le mot de passe doit contenir au moins 6 caractères.',
-    'unable to validate email address: invalid format':
-        'Adresse email invalide.',
+    'password should be at least 6 characters': 'Le mot de passe doit contenir au moins 6 caractères.',
+    'unable to validate email address: invalid format': 'Adresse email invalide.',
     'signup disabled': 'Les inscriptions sont désactivées.',
     'email link is invalid or has expired': 'Le lien est invalide ou expiré.',
   };
