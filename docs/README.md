@@ -2,7 +2,7 @@
 
 > Synthèse de l'audit du 2026-07-01, orientée pratiques de développement. Pour le détail technique (schémas d'architecture, flux entre services, constats A-1 → A-13), voir [AUDIT.md](./AUDIT.md).
 >
-> État : les fixes **A-1** (purge du cache Isar à la déconnexion) et **A-7** (cache des images réparé) sont déjà appliqués sur cette branche, avec la couverture d'`AuthCubit` passée de 0 % à quasi complète (PR #10).
+> **État : les 13 constats de l'audit (A-1 → A-13) ont été traités** sur la branche, un commit par point, tests au vert. Le détail de chaque résolution — et ce qui reste pour la V2 — est dans [AUDIT.md §6-7](./AUDIT.md). Les axes ci-dessous décrivent donc les *bonnes pratiques à pérenniser* plutôt que des correctifs à faire.
 
 ---
 
