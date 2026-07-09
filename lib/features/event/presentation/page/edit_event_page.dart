@@ -97,9 +97,7 @@ class _EditEventPageState extends State<EditEventPage> {
     super.dispose();
   }
 
-  /// Prefills the form from the loaded event, once, on the first build after
-  /// load completes. Detaches the title listener while writing so setting the
-  /// controllers' text doesn't trigger a `setState` mid-build.
+  /// Prefills the form from the loaded event
   void _seedFromEvent(EventModel event, List<EventImageModel> images) {
     _seeded = true;
     _entryDate = event.entryDate ?? DateTime.now();
@@ -220,8 +218,7 @@ class _EditEventPageState extends State<EditEventPage> {
       listener: (context, state) {
         if (state.status == EditEventStatus.success) {
           context.pop();
-        } else if (state.status == EditEventStatus.error &&
-            state.error != null) {
+        } else if (state.status == EditEventStatus.error && state.error != null) {
           ScaffoldMessenger.of(context)
             ..clearSnackBars()
             ..showSnackBar(SnackBar(content: Text(state.error!)));
@@ -244,12 +241,9 @@ class _EditEventPageState extends State<EditEventPage> {
           orElse: () => state.types.first,
         );
         final selectedStyle = EventTypeStyle.fromCode(selectedType.code);
-        final selectedPets = state.pets
-            .where((pet) => state.selectedPetIds.contains(pet.petId))
-            .toList();
+        final selectedPets = state.pets.where((pet) => state.selectedPetIds.contains(pet.petId)).toList();
 
-        final canSubmit =
-            _titleController.text.trim().isNotEmpty && selectedPets.isNotEmpty;
+        final canSubmit = _titleController.text.trim().isNotEmpty && selectedPets.isNotEmpty;
         final String petLabel;
         if (selectedPets.isEmpty) {
           petLabel = 'Animal';
@@ -263,9 +257,21 @@ class _EditEventPageState extends State<EditEventPage> {
           body: ListView(
             padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
-              /// Date and time selector
               Row(
                 children: [
+                  /// Back button
+                  IconButton(
+                    onPressed: () => context.pop(),
+                    icon: const Icon(Icons.arrow_back),
+                    color: AppColors.textPrimary,
+                    tooltip: 'Retour',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+
+                  /// Date and time selector
                   Expanded(
                     child: DateFieldWidget(
                       label: 'Date',
@@ -335,9 +341,7 @@ class _EditEventPageState extends State<EditEventPage> {
                         );
                         if (selected == null || !mounted) return;
                         setState(() {
-                          context
-                              .read<EditEventCubit>()
-                              .setSelectedPets(selected);
+                          context.read<EditEventCubit>().setSelectedPets(selected);
                         });
                       },
                     ),

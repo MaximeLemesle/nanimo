@@ -140,9 +140,21 @@ class _CreateEventPageState extends State<CreateEventPage> {
           body: ListView(
             padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
-              /// Date and time selector
               Row(
                 children: [
+                  /// Back button
+                  IconButton(
+                    onPressed: () => context.pop(),
+                    icon: const Icon(Icons.arrow_back),
+                    color: AppColors.textPrimary,
+                    tooltip: 'Retour',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+
+                  /// Date and time selector
                   Expanded(
                     child: DateFieldWidget(
                       label: 'Date',
