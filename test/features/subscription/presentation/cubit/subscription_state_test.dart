@@ -80,10 +80,10 @@ void main() {
   });
 
   group('quota getters', () {
-    test('fail-closed to 0 when config is null', () {
+    test('fail-closed to 3 when config is null', () {
       const state = SubscriptionState.unknown();
-      expect(state.maxImagesPerEvent, 0);
-      expect(state.maxPets, 0);
+      expect(state.maxImagesPerEvent, 3);
+      expect(state.maxPets, 1);
     });
 
     test('expose the plan quotas when loaded', () {
@@ -118,8 +118,7 @@ void main() {
 
     test('loaded(free) != loaded(premium)', () {
       expect(
-        const SubscriptionState.loaded(freeConfig) ==
-            const SubscriptionState.loaded(premiumConfig),
+        const SubscriptionState.loaded(freeConfig) == const SubscriptionState.loaded(premiumConfig),
         isFalse,
       );
     });
