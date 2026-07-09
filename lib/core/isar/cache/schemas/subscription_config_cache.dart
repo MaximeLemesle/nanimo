@@ -14,7 +14,6 @@ class SubscriptionConfigCache {
   late int maxImagesPerEvent;
   late int maxPets;
   late int maxStorageMb;
-  late bool canAccessPremiumIcons;
 
   SubscriptionConfigCache();
 
@@ -25,8 +24,7 @@ class SubscriptionConfigCache {
       ..planName = json['plan_name'] as String
       ..maxImagesPerEvent = json['max_images_per_event'] as int
       ..maxPets = json['max_pets'] as int
-      ..maxStorageMb = json['max_storage_mb'] as int
-      ..canAccessPremiumIcons = json['can_access_premium_icons'] as bool;
+      ..maxStorageMb = json['max_storage_in_mb'] as int;
   }
 
   /// Builds a [SubscriptionConfigCache] from a [SubscriptionConfigModel]
@@ -36,8 +34,7 @@ class SubscriptionConfigCache {
       ..planName = model.planName
       ..maxImagesPerEvent = model.maxImagesPerEvent
       ..maxPets = model.maxPets
-      ..maxStorageMb = model.maxStorageMb
-      ..canAccessPremiumIcons = model.canAccessPremiumIcons;
+      ..maxStorageMb = model.maxStorageMb;
   }
 
   /// Converts this cache row into the domain [SubscriptionConfigModel]
@@ -48,7 +45,6 @@ class SubscriptionConfigCache {
       maxImagesPerEvent: maxImagesPerEvent,
       maxPets: maxPets,
       maxStorageMb: maxStorageMb,
-      canAccessPremiumIcons: canAccessPremiumIcons,
     );
   }
 }

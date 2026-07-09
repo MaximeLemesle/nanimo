@@ -3,6 +3,8 @@
 > Audit réalisé le 2026-07-01 sur `main` (d5f235c). Périmètre : code Flutter (`lib/`, `test/`), CI/CD, conventions, cohérence avec `CLAUDE.md`.
 
 > **Statut de remédiation** — Les 13 constats (A-1 → A-13) ont été traités sur la branche `claude/project-audit-architecture-nwbjt6` (un commit par point). Chaque constat ci-dessous porte désormais sa résolution ✅ et ce qu'il reste éventuellement à faire côté serveur/produit. Les schémas d'architecture (§2-5) sont conservés comme référence, avec leurs annotations mises à jour.
+>
+> **Re-check du 2026-07-09** (après merge de `main` : NAN-016 calendrier, NAN-033 édition de souvenir) — trois régressions détectées et recorrigées sur la branche : quota photos absent de la page d'édition (A-2), URLs signées non mémoïsées + `cacheKey` manquants sur les nouveaux `CachedNetworkImage` (A-7), `updateEventPets` sans `mapRepositoryError` (A-4). Gardes `isClosed` ajoutées aux cubits event. Couverture re-mesurée : 88,2 %.
 
 ---
 
@@ -247,5 +249,5 @@ Les points ci-dessous sont volontairement hors périmètre de cette passe (produ
 1. **Delta sync client** sur `updated_at` (les colonnes existent) + Supabase Realtime pour le multi-device.
 2. **Câbler la RPC `create_event`** dans `EventRepository` une fois déployée, et écrire les tests RLS.
 3. **Crash reporting** (Sentry) + bandeau d'état de sync.
-4. **Suppression de compte / export RGPD**, paywall d'achat premium, notifications FCM, édition de souvenir, calendrier, export PDF — cf. roadmap V2.
+4. **Suppression de compte / export RGPD**, paywall d'achat premium, notifications FCM, export PDF — cf. roadmap V2.
 5. **Dettes A-13 résiduelles** (UTC, i18n, split cubit, lints) au fil de l'eau.

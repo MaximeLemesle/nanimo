@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
-import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nanimo/features/journal/presentation/cubit/journal_cubit.dart';
 import 'package:nanimo/features/journal/presentation/widgets/journal_empty_state_widget.dart';
@@ -20,10 +19,7 @@ class JournalTimelineWidget extends StatelessWidget {
     final events = state.filteredEvents;
 
     if (events.isEmpty) {
-      return RefreshIndicator(
-        onRefresh: () => context.read<AuthCubit>().resync(),
-        child: const JournalEmptyStateWidget()
-      );
+      return RefreshIndicator(onRefresh: () => context.read<AuthCubit>().resync(), child: const JournalEmptyStateWidget());
     }
 
     final cubit = context.read<JournalCubit>();
@@ -32,10 +28,7 @@ class JournalTimelineWidget extends StatelessWidget {
       final petIds = state.petIdsByEvent[eventId] ?? const [];
       return [
         for (final petId in petIds)
-          if (state.pets
-                  .where((pet) => pet.petId == petId)
-                  .map((pet) => state.iconsKey[pet.petSpeciesId])
-                  .firstOrNull
+          if (state.pets.where((pet) => pet.petId == petId).map((pet) => state.iconsKey[pet.petSpeciesId]).firstOrNull
               case final String iconKey)
             iconKey,
       ];
@@ -57,11 +50,11 @@ class JournalTimelineWidget extends StatelessWidget {
             onTap: () => JournalEventDetailBottomSheetWidget.show(
               context,
               event: event,
-            onEdit: () =>
-                context.push('${RouteNames.editEvent}/${event.eventId}'),
-          ),
-        );
-      },
+              onEdit: () => context.push('${RouteNames.editEvent}/${event.eventId}'),
+            ),
+          );
+        },
+      ),
     );
   }
 }

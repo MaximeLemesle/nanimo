@@ -31,6 +31,7 @@ class EventCreationCubit extends Cubit<EventCreationState> {
 
   Future<void> load({String? initialPetId}) async {
     final pets = await _petRepository.getPets();
+    if (isClosed) return;
     final defaultPetId = pets.any((pet) => pet.petId == initialPetId)
         ? initialPetId
         : (pets.isNotEmpty ? pets.first.petId : null);
@@ -42,6 +43,7 @@ class EventCreationCubit extends Cubit<EventCreationState> {
     try {
       final types = await _referentialRepository.fetchEventTypes();
       final species = await _referentialRepository.fetchSpecies();
+      if (isClosed) return;
 
       final defaultType = types.isEmpty
           ? null
@@ -58,6 +60,7 @@ class EventCreationCubit extends Cubit<EventCreationState> {
         },
       ));
     } catch (_) {
+      if (isClosed) return;
       emit(state.copyWith(
         status: EventCreationStatus.error,
         error: 'Impossible de charger les types d\'événement.',
@@ -142,10 +145,13 @@ class EventCreationCubit extends Cubit<EventCreationState> {
 
       _pendingEventId = null;
       _uploadedImages.clear();
+      if (isClosed) return;
       emit(state.copyWith(status: EventCreationStatus.success));
     } on RepositoryException catch (e) {
+      if (isClosed) return;
       emit(state.copyWith(status: EventCreationStatus.error, error: e.message));
     } catch (_) {
+      if (isClosed) return;
       emit(state.copyWith(
         status: EventCreationStatus.error,
         error: 'Une erreur est survenue lors de la création de l\'événement.',

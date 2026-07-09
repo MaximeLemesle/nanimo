@@ -104,7 +104,7 @@ class JournalCubit extends Cubit<JournalState> {
     );
     return url;
   }
-  
+
   void setViewMode(JournalViewMode viewMode) {
     emit(state.copyWith(viewMode: viewMode));
   }
@@ -114,8 +114,6 @@ class JournalCubit extends Cubit<JournalState> {
       selectedCalendarDay: JournalState.calendarDayKey(day),
     ));
   }
-
-  Future<String> imageUrl(String assetPath) => _eventRepository.signedImageUrl(assetPath);
 
   Future<String?> deleteEvent(String eventId) async {
     try {

@@ -6,6 +6,7 @@ import 'package:nanimo/config/router/app_router.dart';
 import 'package:nanimo/config/theme/app_theme.dart';
 import 'package:nanimo/core/isar/database/isar_service.dart';
 import 'package:nanimo/core/isar/database/sync_service.dart';
+import 'package:nanimo/core/widgets/keyboard_dismiss_wrapper.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
 import 'package:nanimo/features/event/data/event_repository.dart';
@@ -128,6 +129,9 @@ class MyApp extends StatelessWidget {
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: const [Locale('fr')],
+        builder: (context, child) => KeyboardDismissWrapper(
+          child: child ?? const SizedBox.shrink(),
+        ),
         routerConfig: createRouter(
           authCubit,
           eventRepository: eventRepository,

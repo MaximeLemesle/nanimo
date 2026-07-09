@@ -52,9 +52,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
   /// Photos allowed for this event: the plan quota, capped by the collage max.
   int _maxImages(BuildContext context) {
     final quota = context.read<SubscriptionCubit>().state.maxImagesPerEvent;
-    return quota < PolaroidCollageWidget.maxImages
-        ? quota
-        : PolaroidCollageWidget.maxImages;
+    return quota < PolaroidCollageWidget.maxImages ? quota : PolaroidCollageWidget.maxImages;
   }
 
   String _quotaMessage(int maxImages) {
@@ -63,7 +61,8 @@ class _CreateEventPageState extends State<CreateEventPage> {
           'Passez au premium pour en ajouter plus.';
     }
     return 'Vous pouvez ajouter $maxImages photos maximum.';
-  
+  }
+
   void _setEntryDate(DateTime date) {
     setState(() {
       _entryDate = DateTime(
@@ -106,8 +105,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
       listener: (context, state) {
         if (state.status == EventCreationStatus.success) {
           context.pop();
-        } else if (state.status == EventCreationStatus.error &&
-            state.error != null) {
+        } else if (state.status == EventCreationStatus.error && state.error != null) {
           ScaffoldMessenger.of(context)
             ..clearSnackBars()
             ..showSnackBar(SnackBar(content: Text(state.error!)));
@@ -126,12 +124,9 @@ class _CreateEventPageState extends State<CreateEventPage> {
           orElse: () => state.types.first,
         );
         final selectedStyle = EventTypeStyle.fromCode(selectedType.code);
-        final selectedPets = state.pets
-            .where((pet) => state.selectedPetIds.contains(pet.petId))
-            .toList();
+        final selectedPets = state.pets.where((pet) => state.selectedPetIds.contains(pet.petId)).toList();
 
-        final canSubmit =
-            _titleController.text.trim().isNotEmpty && selectedPets.isNotEmpty;
+        final canSubmit = _titleController.text.trim().isNotEmpty && selectedPets.isNotEmpty;
         final String petLabel;
         if (selectedPets.isEmpty) {
           petLabel = 'Animal';
@@ -217,9 +212,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                         );
                         if (selected == null || !mounted) return;
                         setState(() {
-                          context
-                              .read<EventCreationCubit>()
-                              .setSelectedPets(selected);
+                          context.read<EventCreationCubit>().setSelectedPets(selected);
                         });
                       },
                     ),
@@ -245,9 +238,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                         );
                         if (selected == null || !mounted) return;
                         setState(() {
-                          context
-                              .read<EventCreationCubit>()
-                              .selectType(selected);
+                          context.read<EventCreationCubit>().selectType(selected);
                         });
                       },
                     ),
@@ -276,17 +267,15 @@ class _CreateEventPageState extends State<CreateEventPage> {
                   }
                   setState(() => _images.addAll(picked.take(remaining)));
                 },
-                onReplaceImage: (_) async {
+                onImageTap: (_) async {
                   final maxImages = _maxImages(context);
                   if (maxImages <= 0) return;
                   final List<XFile> picked;
                   if (maxImages == 1) {
-                    final one = await ImagePicker()
-                        .pickImage(source: ImageSource.gallery);
+                    final one = await ImagePicker().pickImage(source: ImageSource.gallery);
                     picked = one == null ? const [] : [one];
                   } else {
-                    picked =
-                        await ImagePicker().pickMultiImage(limit: maxImages);
+                    picked = await ImagePicker().pickMultiImage(limit: maxImages);
                   }
                   if (picked.isEmpty || !mounted) return;
                   setState(() {

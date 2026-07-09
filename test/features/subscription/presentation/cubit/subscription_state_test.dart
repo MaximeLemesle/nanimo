@@ -9,7 +9,6 @@ void main() {
     maxImagesPerEvent: 1,
     maxPets: 1,
     maxStorageMb: 500,
-    canAccessPremiumIcons: false,
   );
 
   const premiumConfig = SubscriptionConfigModel(
@@ -18,7 +17,6 @@ void main() {
     maxImagesPerEvent: 5,
     maxPets: 10,
     maxStorageMb: 5000,
-    canAccessPremiumIcons: true,
   );
 
   group('SubscriptionState factories', () {
@@ -95,20 +93,6 @@ void main() {
 
       const premium = SubscriptionState.loaded(premiumConfig);
       expect(premium.maxImagesPerEvent, 5);
-    });
-  });
-
-  group('canAccessPremiumIcons', () {
-    test('fail-closed when config is null', () {
-      expect(const SubscriptionState.unknown().canAccessPremiumIcons, isFalse);
-    });
-
-    test('false on free plan', () {
-      expect(const SubscriptionState.loaded(freeConfig).canAccessPremiumIcons, isFalse);
-    });
-
-    test('true on premium plan', () {
-      expect(const SubscriptionState.loaded(premiumConfig).canAccessPremiumIcons, isTrue);
     });
   });
 

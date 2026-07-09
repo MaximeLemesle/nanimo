@@ -118,10 +118,9 @@ class EventRepository {
           for (final petId in toAdd) {'event_id': eventId, 'pet_id': petId},
         ]);
       }
-    } catch (_) {
-      throw const RepositoryNetworkException(
-        'Une connexion internet est requise pour modifier les animaux liés.',
-      );
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'updateEventPets', networkMessage: 'Une connexion internet est requise pour modifier les animaux liés.');
     }
 
     await _isar.writeTxn(() async {

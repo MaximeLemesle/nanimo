@@ -19,7 +19,6 @@ void main() {
     maxImagesPerEvent: 1,
     maxPets: 1,
     maxStorageMb: 500,
-    canAccessPremiumIcons: false,
   );
 
   setUpAll(registerSupabaseFallbacks);
@@ -67,7 +66,6 @@ void main() {
       final result = await repo.getConfigById('cfg-free');
       expect(result, isNotNull);
       expect(result!.maxStorageMb, 500);
-      expect(result.canAccessPremiumIcons, isFalse);
     });
   });
 
@@ -79,8 +77,7 @@ void main() {
                 'plan_name': 'premium',
                 'max_images_per_event': 5,
                 'max_pets': 10,
-                'max_storage_mb': 5000,
-                'can_access_premium_icons': true,
+                'max_storage_in_mb': 5000,
               });
 
       final result = await repo.fetchConfigById('2');

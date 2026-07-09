@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:nanimo/core/errors/repository_network_exception.dart';
+import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/event/data/event_repository.dart';
@@ -15,8 +15,7 @@ import 'package:nanimo/features/pet/data/pet_repository.dart';
 
 class _MockEventRepository extends Mock implements EventRepository {}
 
-class _MockReferentialRepository extends Mock
-    implements ReferentialRepository {}
+class _MockReferentialRepository extends Mock implements ReferentialRepository {}
 
 class _MockPetRepository extends Mock implements PetRepository {}
 
@@ -89,15 +88,11 @@ void main() {
     petRepo = _MockPetRepository();
 
     when(() => eventRepo.getEventById('e1')).thenAnswer((_) async => _event);
-    when(() => eventRepo.getPetIdsForEvent('e1'))
-        .thenAnswer((_) async => ['pet-milo']);
-    when(() => eventRepo.watchImagesForEvent('e1'))
-        .thenAnswer((_) => Stream.value([_image]));
+    when(() => eventRepo.getPetIdsForEvent('e1')).thenAnswer((_) async => ['pet-milo']);
+    when(() => eventRepo.watchImagesForEvent('e1')).thenAnswer((_) => Stream.value([_image]));
     when(() => petRepo.getPets()).thenAnswer((_) async => [_milo]);
-    when(() => referentialRepo.fetchEventTypes())
-        .thenAnswer((_) async => [_souvenir, _anniversaire]);
-    when(() => referentialRepo.fetchSpecies())
-        .thenAnswer((_) async => [_catSpecies]);
+    when(() => referentialRepo.fetchEventTypes()).thenAnswer((_) async => [_souvenir, _anniversaire]);
+    when(() => referentialRepo.fetchSpecies()).thenAnswer((_) async => [_catSpecies]);
   });
 
   group('load', () {
@@ -126,8 +121,7 @@ void main() {
     });
 
     test('emits an error status when types loading fails', () async {
-      when(() => referentialRepo.fetchEventTypes())
-          .thenThrow(Exception('boom'));
+      when(() => referentialRepo.fetchEventTypes()).thenThrow(Exception('boom'));
 
       final cubit = buildCubit();
       await cubit.load('e1');
@@ -151,11 +145,9 @@ void main() {
   group('submit', () {
     test('updates the event, syncs pets and applies photo changes', () async {
       when(() => eventRepo.updateEvent(any())).thenAnswer((_) async {});
-      when(() => eventRepo.updateEventPets(any(), any()))
-          .thenAnswer((_) async {});
+      when(() => eventRepo.updateEventPets(any(), any())).thenAnswer((_) async {});
       when(() => eventRepo.deleteImage(any(), any())).thenAnswer((_) async {});
-      when(() => eventRepo.uploadEventImage(any(), any()))
-          .thenAnswer((_) async => 'new/path.jpg');
+      when(() => eventRepo.uploadEventImage(any(), any())).thenAnswer((_) async => 'new/path.jpg');
       when(() => eventRepo.addImage(any())).thenAnswer((_) async {});
 
       final cubit = buildCubit();
@@ -176,8 +168,7 @@ void main() {
       expect(updated.eventId, 'e1');
 
       verify(() => eventRepo.updateEventPets('e1', ['pet-milo'])).called(1);
-      verify(() => eventRepo.deleteImage('img-1', 'assets/img-1.png'))
-          .called(1);
+      verify(() => eventRepo.deleteImage('img-1', 'assets/img-1.png')).called(1);
       expect(cubit.state.status, EditEventStatus.success);
     });
 

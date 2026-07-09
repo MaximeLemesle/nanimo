@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nanimo/features/event/data/models/event_model.dart';
 import 'package:nanimo/features/journal/presentation/cubit/journal_cubit.dart';
+import 'package:nanimo/features/journal/presentation/widgets/journal_empty_state_widget.dart';
 import 'package:nanimo/features/journal/presentation/widgets/journal_timeline/journal_timeline_widget.dart';
 
 class _FakeAuthCubit extends Cubit<AuthState> implements AuthCubit {
@@ -52,7 +53,7 @@ void main() {
     final auth = _FakeAuthCubit();
     await tester.pumpWidget(wrap(const JournalState(), auth));
 
-    expect(find.text('Aucun souvenir pour le moment'), findsOneWidget);
+    expect(find.text(JournalEmptyStateWidget.message), findsOneWidget);
     expect(find.byType(RefreshIndicator), findsOneWidget);
   });
 

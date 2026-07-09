@@ -40,7 +40,6 @@ class _FakeSubscriptionCubit extends Cubit<SubscriptionState>
           maxImagesPerEvent: maxImagesPerEvent,
           maxPets: 1,
           maxStorageMb: 500,
-          canAccessPremiumIcons: false,
         )));
 
   @override
@@ -159,7 +158,7 @@ void main() {
               BlocProvider<EventCreationCubit>.value(value: cubit),
               BlocProvider<SubscriptionCubit>.value(value: subscriptionCubit),
             ],
-            child: const CreateEventPage(),
+            child: CreateEventPage(initialEntryDate: initialEntryDate),
           ),
         ),
       ],

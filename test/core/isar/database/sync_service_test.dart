@@ -105,8 +105,7 @@ void main() {
               'plan_name': 'free',
               'max_images_per_event': 1,
               'max_pets': 1,
-              'max_storage_mb': 500,
-              'can_access_premium_icons': false,
+              'max_storage_in_mb': 500,
             },
           });
       stubSelect(supabase, 'pets', resolver: () => [
