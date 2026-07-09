@@ -1,9 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:nanimo/core/errors/repository_network_exception.dart';
+import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_cache.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../helpers/isar_test_helper.dart';
 import '../../../helpers/supabase_mocks.dart';
@@ -166,6 +167,76 @@ void main() {
         throwsA(isA<RepositoryNetworkException>()),
       );
       expect(await createRepo.getPetById('p1'), isNull);
+    });
+
+    test('ignores a duplicate-key insert and caches the pet', () async {
+      buildAuthenticatedRepo();
+      stubInsert(supabase, 'pets',
+          resolver: () =>
+              throw const PostgrestException(message: 'dup', code: '23505'));
+      stubInsert(supabase, 'users_pets', resolver: () => null);
+
+      await createRepo.createPet(buildPet('p1', 'Milo'));
+
+      expect(await createRepo.getPetById('p1'), isNotNull);
+    });
+  });
+
+  group('updatePet', () {
+    late MockSupabaseClient supabase;
+    late PetRepository petRepo;
+
+    setUp(() {
+      supabase = MockSupabaseClient();
+      petRepo = PetRepository(supabase, harness.isar);
+    });
+
+    test('updates Supabase then refreshes the cache', () async {
+      await seed(buildPet('p1', 'Ancien'));
+      stubUpdate(supabase, 'pets', resolver: () => null);
+
+      await petRepo.updatePet(buildPet('p1', 'Nouveau'));
+
+      expect((await petRepo.getPetById('p1'))!.petName, 'Nouveau');
+    });
+
+    test('throws a network exception on failure', () async {
+      stubUpdate(supabase, 'pets', resolver: () => throw Exception('offline'));
+
+      await expectLater(
+        petRepo.updatePet(buildPet('p1', 'Milo')),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+    });
+  });
+
+  group('deletePet', () {
+    late MockSupabaseClient supabase;
+    late PetRepository petRepo;
+
+    setUp(() {
+      supabase = MockSupabaseClient();
+      petRepo = PetRepository(supabase, harness.isar);
+    });
+
+    test('deletes from Supabase and removes it from the cache', () async {
+      await seed(buildPet('p1', 'Milo'));
+      stubDelete(supabase, 'pets', resolver: () => null);
+
+      await petRepo.deletePet('p1');
+
+      expect(await petRepo.getPetById('p1'), isNull);
+    });
+
+    test('throws and keeps the cache when Supabase fails', () async {
+      await seed(buildPet('p1', 'Milo'));
+      stubDelete(supabase, 'pets', resolver: () => throw Exception('offline'));
+
+      await expectLater(
+        petRepo.deletePet('p1'),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+      expect(await petRepo.getPetById('p1'), isNotNull);
     });
   });
 }

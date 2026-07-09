@@ -5,7 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:isar/isar.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:nanimo/core/errors/repository_network_exception.dart';
+import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/core/isar/cache/schemas/user_cache.dart';
 import 'package:nanimo/features/auth/data/models/user_model.dart';
 
@@ -32,10 +32,11 @@ class AuthRepository {
       await _supabase.auth.signInWithPassword(email: email, password: password);
     } on AuthException {
       rethrow;
-    } catch (_) {
-      throw const RepositoryNetworkException(
-        'Une connexion internet est requise pour se connecter.',
-      );
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'login',
+          networkMessage: 'Une connexion internet est requise pour se connecter.',
+          serverMessage: 'Impossible de vous connecter pour le moment.');
     }
   }
 
@@ -45,10 +46,11 @@ class AuthRepository {
       await _supabase.auth.signUp(email: email, password: password);
     } on AuthException {
       rethrow;
-    } catch (_) {
-      throw const RepositoryNetworkException(
-        'Une connexion internet est requise pour créer un compte.',
-      );
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'register',
+          networkMessage: 'Une connexion internet est requise pour créer un compte.',
+          serverMessage: 'Impossible de créer le compte pour le moment.');
     }
   }
 
@@ -86,10 +88,11 @@ class AuthRepository {
       rethrow;
     } on RepositoryNetworkException {
       rethrow;
-    } catch (_) {
-      throw const RepositoryNetworkException(
-        'Une connexion internet est requise pour se connecter avec Google.',
-      );
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'signInWithGoogle',
+          networkMessage: 'Une connexion internet est requise pour se connecter avec Google.',
+          serverMessage: 'Impossible de vous connecter avec Google pour le moment.');
     }
   }
 
@@ -123,10 +126,11 @@ class AuthRepository {
       rethrow;
     } on RepositoryNetworkException {
       rethrow;
-    } catch (_) {
-      throw const RepositoryNetworkException(
-        'Une connexion internet est requise pour se connecter avec Apple.',
-      );
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'signInWithApple',
+          networkMessage: 'Une connexion internet est requise pour se connecter avec Apple.',
+          serverMessage: 'Impossible de vous connecter avec Apple pour le moment.');
     }
   }
 

@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nanimo/config/router/app_router.dart';
-import 'package:nanimo/core/errors/repository_network_exception.dart';
+import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/data/models/referential/pet_race_model.dart';
@@ -66,6 +66,9 @@ class _FakeAuthCubit extends Cubit<AuthState> implements AuthCubit {
   }
 
   @override
+  Future<void> resync() async {}
+
+  @override
   void clearError() {}
 }
 
@@ -107,6 +110,13 @@ void main() {
   late HomeCubit homeCubit;
   late PetDetailsCubit petDetailsCubit;
   late GoRouter router;
+  var lastPets = const <PetModel>[];
+
+  /// Emits [pets] and records them so late subscribers replay the latest value.
+  void emitPets(List<PetModel> pets) {
+    lastPets = pets;
+    petsController.add(pets);
+  }
 
   setUpAll(() {
     registerFallbackValue(
@@ -129,6 +139,7 @@ void main() {
     healthRepo = _MockHealthRepository();
     eventRepo = _MockEventRepository();
     petsController = StreamController<List<PetModel>>.broadcast();
+    lastPets = const [];
 
     when(() => healthRepo.watchDiaryForPet(any()))
         .thenAnswer((_) => Stream.value(null));
@@ -143,7 +154,13 @@ void main() {
         .thenAnswer((_) async => [_europeen]);
     when(() => referentialRepo.fetchRacesBySpecies(_chien.petSpeciesId))
         .thenAnswer((_) async => [_berger]);
-    when(() => petRepo.watchPets()).thenAnswer((_) => petsController.stream);
+    // Replay the latest pets to any late subscriber (cubits scoped to the
+    // shell route subscribe only once Home mounts, after emissions may have
+    // fired), mirroring a real Isar `watch` that seeds the current rows.
+    when(() => petRepo.watchPets()).thenAnswer((_) async* {
+      yield List<PetModel>.from(lastPets);
+      yield* petsController.stream;
+    });
 
     /// The splash redirect lands an authenticated user on the create-event
     /// page, whose cubit loads pets and event types on init.
@@ -154,7 +171,7 @@ void main() {
     /// Mimics the write-through cache: a created pet lands in the pets stream.
     when(() => petRepo.createPet(any())).thenAnswer((invocation) async {
       final pet = invocation.positionalArguments.first as PetModel;
-      petsController.add([pet]);
+      emitPets([pet]);
     });
   });
 
@@ -195,6 +212,7 @@ void main() {
       eventRepository: eventRepo,
       referentialRepository: referentialRepo,
       petRepository: petRepo,
+      healthRepository: healthRepo,
     );
     await tester.pumpWidget(
       MultiBlocProvider(
@@ -294,7 +312,7 @@ void main() {
           throw const RepositoryNetworkException('Création impossible.');
         }
         final pet = invocation.positionalArguments.first as PetModel;
-        petsController.add([pet]);
+        emitPets([pet]);
       });
 
       await goThroughOnboarding(tester);
@@ -307,7 +325,7 @@ void main() {
       await tester.pump();
       // Mimic the post-signup sync landing an empty pet cache so Home renders
       // (otherwise it stays on its loading spinner forever).
-      petsController.add(const []);
+      emitPets(const []);
       await tester.pumpAndSettle();
 
       // Landed on Home without the pet, but the failure is surfaced + retryable.
@@ -388,7 +406,7 @@ void main() {
       await tester.pump();
 
       // The sync fills the cache with the user's existing pets.
-      petsController.add([
+      emitPets([
         PetModel(
           petId: 'p-existing',
           petName: 'Saïko',
@@ -413,7 +431,7 @@ void main() {
       expect(find.byKey(const Key('splash_page')), findsOneWidget);
 
       authCubit.sessionRestored();
-      petsController.add(const []);
+      emitPets(const []);
       await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
 

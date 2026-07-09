@@ -5,7 +5,7 @@
 **Tagline**: "Chaque moment compte"  
 **Marché**: France (V1)  
 **Modèle**: Freemium + Premium  
-**Stack**: Flutter 3.x + Supabase 2.x + Isar 3.x + Firebase FCM
+**Stack**: Flutter 3.x + Supabase 2.x + Isar 3.x Firebase FCM
 
 ---
 
@@ -32,38 +32,34 @@ lib/
 │   └── theme/
 │       └── app_theme.dart
 ├── core/
+│   ├── errors/          # RepositoryException + mapRepositoryError : traduit les codes Postgres/Storage en messages clairs
+│   ├── isar/            # schémas de cache + IsarService + SyncService
+│   ├── utils/
 │   └── widgets/
-│   ├── errors/
-│   └── utils/
+├── data/                # repositories transverses (référentiel)
 └─── features/
     ├── auth/
     │   ├── data/
-    │   │   └── auth_repository.dart
+    │   │   ├── auth_repository.dart
+    │   │   └── models/
     │   └── presentation/
     │       ├── cubit/
-    │       │   ├── auth_cubit.dart
-    │       │   └── auth_state.dart
     │       ├── page/
-    │       │   └── login_page.dart
     │       └── widgets/
-    │           └── login_button_widget.dart
     ├── onboarding/
     │   └── presentation/
     │       ├── cubit/
-    │       │   ├── onboarding_cubit.dart
-    │       │   └── onboarding_state.dart
-    │       └── page/
-    │           ├── splash_page.dart
-    │           └── onboarding_page.dart
+    │       └── page/     # splash_page.dart + onboarding_page.dart
     ├── home/
-    │   ├── data/
-    │   └── presentation/
-    ├── health/
-    ├── journal/
-    ├── onboarding/
+    │   └── presentation/ # profile_page.dart y vit (accès à recâbler, cf. §6)
+    ├── event/            # création de souvenir (EventCreationCubit)
+    ├── journal/          # timeline + filtres (JournalCubit)
+    ├── health/           # data/ uniquement (piloté par pet/PetDetailsCubit)
     ├── pet/
-    └── settings/
+    └── subscription/     # SubscriptionCubit + quotas freemium
 ```
+
+> Pas de feature `settings/` à ce jour. Les notifications (FCM) sont prévues en V2.
 
 **Pattern** : Cubit pour états simples, repositories = source de vérité
 **Navigation** : Go Router avec deep linking + redirection auth conditionnelle  
@@ -85,16 +81,16 @@ lib/
 | `event_image`           | id_event_image (UUID PK), asset_path (Storage path), event_id FK                                                                             | Une ou plusieurs images. RLS via l'event lié |
 | `health_diary`          | id_health_diary (UUID PK), is_sterilized, is_chipped, chip_number, last_deworming_at, last_vet_appointment, pet_id FK (UNIQUE 1:1)           | Lié au pet                       |
 | `health_diary_vaccines` | id_health_diary_vaccine (UUID PK), vaccine_name, last_date, next_date, recurrence (days), dose_number, total_dose_number, health_diary_id FK | Historique vaccins               |
-| `weight_logs`           | id_health_diary_weight_log (UUID PK), weight (DECIMAL), logged_at (TIMESTAMPTZ), pet_id FK                                                   | Graphique 6 mois                 |
+| `health_diary_weight_log` | id_health_diary_weight_log (UUID PK), weight (DECIMAL), logged_at (TIMESTAMPTZ), pet_id FK                                                 | Graphique 6 mois                 |
 | `vet_visits`            | id_vet_visit (UUID PK), title, visited_at (DATE), vet_name, clinic_name, pet_id FK (CASCADE)                                                 | Timeline visites véto (carnet)   |
-| `notifications`         | id_notification (UUID PK), type (enum), title, description, sending_at (TIMESTAMPTZ), id_pet FK                                              | Push Firebase FCM                |
-| `subscription_config`   | id_subscription_config (SERIAL PK), plan_name, max_images_per_event, max_pets, max_storage_mb, can_access_premium_icons                      | Quotas freemium                  |
+| `notifications`         | id_notification (UUID PK), type (enum), title, description, sending_at (TIMESTAMPTZ), id_pet FK                                              | Push Firebase FCM _(table prête, feature V2)_ |
+| `subscription_config`   | id_subscription_config (UUID PK), plan_name, max_images_per_event, max_pets, max_storage_in_mb                                               | Quotas freemium. Icônes premium = `is_premium` (event_type/pet_icons) croisé au `subscription_status` de l'user, pas une colonne de config |
 
 ### ENUMs
 
 - `gender_enum` : male, female, unknown
 - `weight_unit_enum` : kg, g
-- `subscription_status_enum` : free, premium
+- `subscription_status_enum` : freemium, premium
 - `notification_type_enum` : anniversary, vaccine, vet, deworming, custom
 
 ### Règles critiques
@@ -103,6 +99,7 @@ lib/
 - ON DELETE CASCADE pour FK liées à pets
 - Indexes sur : entry_date, next_date, sending_at, pet_id
 - Buckets Storage : `pet-avatars` (public), `journal-media` (privé), `documents` (privé)
+- **Schéma versionné** dans `supabase/migrations/` (tables, RLS, triggers de quotas, RPC `create_event`) — cf. `supabase/README.md`
 
 ---
 
@@ -136,7 +133,7 @@ lib/
 ### Frontend
 
 - **Flutter 3.x** : iOS + Android
-- **Cubit** : State management (flutter_bloc ^8.1.6)
+- **Cubit** : State management (flutter_bloc ^9.1.1)
 - **Go Router ^14.x** : Navigation + deep linking
 
 ### Backend
@@ -153,9 +150,9 @@ lib/
 ### Dépendances clés
 
 ```yaml
-flutter_bloc: ^9.1.0
-go_router: ^17.2.0
-supabase_flutter: ^2.12.0
+flutter_bloc: ^9.1.1
+go_router: ^17.2.3
+supabase_flutter: ^2.12.4
 isar: ^3.1.0
 isar_flutter_libs: ^3.1.0
 cached_network_image: ^3.3.1
@@ -218,8 +215,9 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 - Images : bucket `journal-media` privé → `EventRepository.signedImageUrl()` (URL signée 1h).
 - Filtres (NAN-015) : multi-sélection animaux **et/ou** types via bottom sheet, toggle live sur le cubit (`togglePetFilter`/`toggleTypeFilter`/`clearFilters`), appliqués par `JournalState.filteredEvents` (OR intra-groupe, AND inter-groupes).
 - `JournalFilterBarWidget` : chips des filtres actifs (scroll horizontal, tap = retire) à gauche, chip d'ouverture de la sheet à droite. UI à base de `ChipWidget` (core, réutilisable).
-- Détail événement (NAN-032) : tap sur une carte timeline → `JournalEventDetailBottomSheetWidget.show()` (réutilise le `JournalCubit` ambiant via `BlocProvider.value`). Affiche photos (scroll horizontal, URL signées), titre, date, description, animaux (chips) + actions **Modifier**/**Supprimer**. Suppression câblée (`JournalCubit.deleteEvent` → `EventRepository.deleteEvent`, confirmation `AlertDialog`, la sheet se ferme sur succès et un snackbar remonte l'erreur réseau). **Modifier** = simple hook `onEdit` (placeholder snackbar) ; le vrai flux d'édition est un ticket séparé.
-- Calendrier : onglet désactivé (v2).
+- Détail événement (NAN-032) : tap sur une carte timeline → `JournalEventDetailBottomSheetWidget.show()` (réutilise le `JournalCubit` ambiant via `BlocProvider.value`). Affiche photos (scroll horizontal, URL signées), titre, date, description, animaux (chips) + actions **Modifier**/**Supprimer**. Suppression câblée (`JournalCubit.deleteEvent` → `EventRepository.deleteEvent`, confirmation `AlertDialog`, la sheet se ferme sur succès et un snackbar remonte l'erreur réseau). **Modifier** ferme la sheet et push `/home/edit-event/:eventId` (NAN-033).
+- Édition de souvenir (NAN-033) : route `/home/edit-event/:eventId`, `EditEventCubit` scopé route (créé par le `BlocProvider` du GoRoute, `load()` au push). Formulaire pré-rempli, photos gérées via bottom sheets (grille, ajout/remplacement/suppression — quota photos du plan appliqué comme en création), `EventRepository.updateEvent`/`updateEventPets` + upload/suppression d'images. URLs signées mémoïsées (TTL 45 min) + `cacheKey` stable sur les `CachedNetworkImage`.
+- Calendrier (NAN-016) : vue mois avec dots sur les jours à événements, switch timeline/calendrier (`JournalSwitchViewWidget`), mois courant affiché en bas au premier rendu, chargement par blocs de 6 mois sans remonter avant le premier événement. Tap sur un jour → `JournalDayEventsBottomSheetWidget` → détail événement. État vide partagé `JournalEmptyStateWidget`.
 
 ### Créer souvenir
 
@@ -342,7 +340,7 @@ Workflow `.github/workflows/ci.yml` découpé en 3 jobs :
 - **Fichiers** : snake_case (auth_cubit.dart, pet_model.dart)
 - **Cubits** : `[feature]_cubit.dart` + `[feature]_state.dart`
 - **Pages** : `[feature]_page.dart`
-- **Commentaires** : Une ligne courte en anglais pour chaque méthode publique avec /// pour différencier des balises flutter
+- **Commentaires** : Uniquement sur les fonctions qui en ont vraiment besoin — logique non évidente, contrainte invisible dans le code, workaround. Ne pas commenter une méthode dont le nom suffit. Format : une ligne courte en anglais avec /// pour différencier des balises flutter
 - **Erreurs** : Toujours wrap Supabase calls en try/catch
 - **Mounted** : Toujours vérifier `if (!mounted) return;` après await avant setState
 

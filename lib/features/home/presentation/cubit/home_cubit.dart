@@ -31,12 +31,15 @@ class HomeCubit extends Cubit<HomeState> {
 
   /// Loads the species and icon
   Future<void> _loadSpecies() async {
-    final species = await _referentialRepository.fetchSpecies();
-    emit(state.copyWith(
-      iconsKey: {
-        for (final s in species) s.petSpeciesId: s.iconKey,
-      },
-    ));
+    try {
+      final species = await _referentialRepository.fetchSpecies();
+      if (isClosed) return;
+      emit(state.copyWith(
+        iconsKey: {
+          for (final s in species) s.petSpeciesId: s.iconKey,
+        },
+      ));
+    } catch (_) {}
   }
 
   @override

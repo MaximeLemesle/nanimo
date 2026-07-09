@@ -6,16 +6,15 @@ import 'package:nanimo/config/router/app_router.dart';
 import 'package:nanimo/config/theme/app_theme.dart';
 import 'package:nanimo/core/isar/database/isar_service.dart';
 import 'package:nanimo/core/isar/database/sync_service.dart';
+import 'package:nanimo/core/widgets/keyboard_dismiss_wrapper.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
 import 'package:nanimo/features/event/data/event_repository.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nanimo/features/health/data/health_repository.dart';
-import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
 import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
-import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/subscription/data/subscription_repository.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -53,7 +52,7 @@ void main() async {
     googleWebClientId: webClientId,
   );
   final subscriptionRepository = SubscriptionRepository(supabase, isar);
-  final referentialRepository = ReferentialRepository(supabase);
+  final referentialRepository = ReferentialRepository(supabase, isar);
   final petRepository = PetRepository(supabase, isar);
   final healthRepository = HealthRepository(supabase, isar);
   final eventRepository = EventRepository(supabase, isar);
@@ -78,27 +77,15 @@ void main() async {
     petRepository: petRepository,
   );
 
-  final homeCubit = HomeCubit(
-    petRepository: petRepository,
-    referentialRepository: referentialRepository,
-  );
-
-  final petDetailsCubit = PetDetailsCubit(
-    petRepository: petRepository,
-    healthRepository: healthRepository,
-    referentialRepository: referentialRepository,
-  );
-
   runApp(MyApp(
     authCubit: authCubit,
     subscriptionCubit: subscriptionCubit,
     onboardingCubit: onboardingCubit,
     petCreationCubit: petCreationCubit,
-    homeCubit: homeCubit,
-    petDetailsCubit: petDetailsCubit,
     eventRepository: eventRepository,
     referentialRepository: referentialRepository,
     petRepository: petRepository,
+    healthRepository: healthRepository,
   ));
 }
 
@@ -107,22 +94,20 @@ class MyApp extends StatelessWidget {
   final SubscriptionCubit subscriptionCubit;
   final OnboardingCubit onboardingCubit;
   final PetCreationCubit petCreationCubit;
-  final HomeCubit homeCubit;
-  final PetDetailsCubit petDetailsCubit;
   final EventRepository eventRepository;
   final ReferentialRepository referentialRepository;
   final PetRepository petRepository;
+  final HealthRepository healthRepository;
   const MyApp({
     super.key,
     required this.authCubit,
     required this.subscriptionCubit,
     required this.onboardingCubit,
     required this.petCreationCubit,
-    required this.homeCubit,
-    required this.petDetailsCubit,
     required this.eventRepository,
     required this.referentialRepository,
     required this.petRepository,
+    required this.healthRepository,
   });
 
   @override
@@ -133,8 +118,6 @@ class MyApp extends StatelessWidget {
         BlocProvider.value(value: onboardingCubit),
         BlocProvider.value(value: subscriptionCubit),
         BlocProvider.value(value: petCreationCubit),
-        BlocProvider.value(value: homeCubit),
-        BlocProvider.value(value: petDetailsCubit),
       ],
       child: MaterialApp.router(
         title: 'Nanimo',
@@ -146,11 +129,15 @@ class MyApp extends StatelessWidget {
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: const [Locale('fr')],
+        builder: (context, child) => KeyboardDismissWrapper(
+          child: child ?? const SizedBox.shrink(),
+        ),
         routerConfig: createRouter(
           authCubit,
           eventRepository: eventRepository,
           referentialRepository: referentialRepository,
           petRepository: petRepository,
+          healthRepository: healthRepository,
         ),
       ),
     );

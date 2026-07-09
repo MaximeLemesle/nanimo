@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:nanimo/core/errors/repository_network_exception.dart';
+import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_image_cache.dart';
 import 'package:nanimo/features/event/data/event_repository.dart';
@@ -44,7 +44,10 @@ void main() {
   late EventRepository repo;
   late MockSupabaseClient supabase;
 
-  setUpAll(registerSupabaseFallbacks);
+  setUpAll(() {
+    registerSupabaseFallbacks();
+    registerFallbackValue(File('fallback.jpg'));
+  });
 
   setUp(() async {
     await harness.setUp();
@@ -76,8 +79,7 @@ void main() {
       expect(emission, isEmpty);
     });
 
-    test('emits events with a non-empty title, newest entryDate first',
-        () async {
+    test('emits every event, newest entryDate first', () async {
       await seedEvent(
         buildEvent('e1', entryDate: DateTime.utc(2024, 1, 1)),
       );
@@ -87,6 +89,15 @@ void main() {
 
       final emission = await repo.watchEvents().first;
       expect(emission.map((e) => e.eventId).toList(), ['e2', 'e1']);
+    });
+
+    test('does not drop events with an empty title', () async {
+      await seedEvent(
+        buildEvent('e1', title: '', entryDate: DateTime.utc(2024, 1, 1)),
+      );
+
+      final emission = await repo.watchEvents().first;
+      expect(emission.map((e) => e.eventId).toList(), ['e1']);
     });
 
     test('filters by eventTypeId when provided', () async {
@@ -363,6 +374,38 @@ void main() {
       final auth = MockGoTrueClient();
       when(() => supabase.auth).thenReturn(auth);
       when(() => auth.currentUser).thenReturn(null);
+
+      await expectLater(
+        repo.uploadEventImage('e1', File('photo.jpg')),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+    });
+
+    test('returns the storage path on success', () async {
+      final auth = MockGoTrueClient();
+      final user = MockUser();
+      when(() => supabase.auth).thenReturn(auth);
+      when(() => auth.currentUser).thenReturn(user);
+      when(() => user.id).thenReturn('u1');
+      final fileApi = stubStorageBucket(supabase, 'journal-media');
+      when(() => fileApi.upload(any(), any()))
+          .thenAnswer((_) async => 'ok');
+
+      final path = await repo.uploadEventImage('e1', File('photo.jpg'));
+
+      expect(path, startsWith('u1/e1/'));
+      expect(path, endsWith('.jpg'));
+    });
+
+    test('maps a storage failure to a network exception', () async {
+      final auth = MockGoTrueClient();
+      final user = MockUser();
+      when(() => supabase.auth).thenReturn(auth);
+      when(() => auth.currentUser).thenReturn(user);
+      when(() => user.id).thenReturn('u1');
+      final fileApi = stubStorageBucket(supabase, 'journal-media');
+      when(() => fileApi.upload(any(), any()))
+          .thenThrow(Exception('offline'));
 
       await expectLater(
         repo.uploadEventImage('e1', File('photo.jpg')),

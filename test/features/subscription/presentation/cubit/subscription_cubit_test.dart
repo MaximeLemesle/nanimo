@@ -24,7 +24,6 @@ const _freeConfig = SubscriptionConfigModel(
   maxImagesPerEvent: 1,
   maxPets: 1,
   maxStorageMb: 500,
-  canAccessPremiumIcons: false,
 );
 
 const _premiumConfig = SubscriptionConfigModel(
@@ -33,7 +32,6 @@ const _premiumConfig = SubscriptionConfigModel(
   maxImagesPerEvent: 5,
   maxPets: 10,
   maxStorageMb: 5000,
-  canAccessPremiumIcons: true,
 );
 
 UserModel _user(String configId) => UserModel(

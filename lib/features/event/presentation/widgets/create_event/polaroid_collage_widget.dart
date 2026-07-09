@@ -173,6 +173,7 @@ class PolaroidCollageWidget extends StatelessWidget {
             }
             return CachedNetworkImage(
               imageUrl: snapshot.data!,
+              cacheKey: assetPath,
               width: size,
               height: size,
               fit: BoxFit.cover,

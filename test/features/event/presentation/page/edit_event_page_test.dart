@@ -18,6 +18,8 @@ import 'package:nanimo/features/event/presentation/widgets/create_event/polaroid
 import 'package:nanimo/features/event/presentation/widgets/create_event/sticker_selector_widget.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
+import 'package:nanimo/features/subscription/data/models/subscription_config_model.dart';
+import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 
 class _MockEventRepository extends Mock implements EventRepository {}
 
@@ -25,6 +27,21 @@ class _MockReferentialRepository extends Mock
     implements ReferentialRepository {}
 
 class _MockPetRepository extends Mock implements PetRepository {}
+
+class _FakeSubscriptionCubit extends Cubit<SubscriptionState>
+    implements SubscriptionCubit {
+  _FakeSubscriptionCubit(int maxImagesPerEvent)
+      : super(SubscriptionState.loaded(SubscriptionConfigModel(
+          configId: 'cfg',
+          planName: 'test',
+          maxImagesPerEvent: maxImagesPerEvent,
+          maxPets: 1,
+          maxStorageMb: 500,
+        )));
+
+  @override
+  void noSuchMethod(Invocation invocation) {}
+}
 
 const _balade = EventTypeModel(
   eventTypeId: 't-balade',
@@ -110,12 +127,17 @@ void main() {
 
   /// Hosts the page behind a GoRouter so the success listener's `context.pop()`
   /// has a route to fall back to.
-  Future<EditEventCubit> pumpPage(WidgetTester tester) async {
+  Future<EditEventCubit> pumpPage(
+    WidgetTester tester, {
+    int maxImagesPerEvent = 5,
+  }) async {
     await tester.binding.setSurfaceSize(const Size(1080, 2400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final cubit = buildCubit()..load('e1');
     addTearDown(cubit.close);
+    final subscriptionCubit = _FakeSubscriptionCubit(maxImagesPerEvent);
+    addTearDown(subscriptionCubit.close);
 
     final router = GoRouter(
       initialLocation: '/',
@@ -126,8 +148,11 @@ void main() {
         ),
         GoRoute(
           path: '/edit',
-          builder: (_, __) => BlocProvider.value(
-            value: cubit,
+          builder: (_, __) => MultiBlocProvider(
+            providers: [
+              BlocProvider<EditEventCubit>.value(value: cubit),
+              BlocProvider<SubscriptionCubit>.value(value: subscriptionCubit),
+            ],
             child: const EditEventPage(),
           ),
         ),

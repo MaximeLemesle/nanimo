@@ -18,6 +18,7 @@ import 'package:nanimo/features/event/presentation/widgets/create_event/create_e
 import 'package:nanimo/features/event/presentation/widgets/create_event/create_event_bottom_sheet/pet_select_bottom_sheet_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/polaroid_collage_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/sticker_selector_widget.dart';
+import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 
 class CreateEventPage extends StatefulWidget {
   const CreateEventPage({
@@ -47,6 +48,20 @@ class _CreateEventPageState extends State<CreateEventPage> {
   }
 
   void _onTitleChanged() => setState(() {});
+
+  /// Photos allowed for this event: the plan quota, capped by the collage max.
+  int _maxImages(BuildContext context) {
+    final quota = context.read<SubscriptionCubit>().state.maxImagesPerEvent;
+    return quota < PolaroidCollageWidget.maxImages ? quota : PolaroidCollageWidget.maxImages;
+  }
+
+  String _quotaMessage(int maxImages) {
+    if (maxImages <= 1) {
+      return 'Le plan gratuit est limité à $maxImages photo par souvenir. '
+          'Passez au premium pour en ajouter plus.';
+    }
+    return 'Vous pouvez ajouter $maxImages photos maximum.';
+  }
 
   void _setEntryDate(DateTime date) {
     setState(() {
@@ -90,8 +105,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
       listener: (context, state) {
         if (state.status == EventCreationStatus.success) {
           context.pop();
-        } else if (state.status == EventCreationStatus.error &&
-            state.error != null) {
+        } else if (state.status == EventCreationStatus.error && state.error != null) {
           ScaffoldMessenger.of(context)
             ..clearSnackBars()
             ..showSnackBar(SnackBar(content: Text(state.error!)));
@@ -110,12 +124,9 @@ class _CreateEventPageState extends State<CreateEventPage> {
           orElse: () => state.types.first,
         );
         final selectedStyle = EventTypeStyle.fromCode(selectedType.code);
-        final selectedPets = state.pets
-            .where((pet) => state.selectedPetIds.contains(pet.petId))
-            .toList();
+        final selectedPets = state.pets.where((pet) => state.selectedPetIds.contains(pet.petId)).toList();
 
-        final canSubmit =
-            _titleController.text.trim().isNotEmpty && selectedPets.isNotEmpty;
+        final canSubmit = _titleController.text.trim().isNotEmpty && selectedPets.isNotEmpty;
         final String petLabel;
         if (selectedPets.isEmpty) {
           petLabel = 'Animal';
@@ -129,9 +140,21 @@ class _CreateEventPageState extends State<CreateEventPage> {
           body: ListView(
             padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
-              /// Date and time selector
               Row(
                 children: [
+                  /// Back button
+                  IconButton(
+                    onPressed: () => context.pop(),
+                    icon: const Icon(Icons.arrow_back),
+                    color: AppColors.textPrimary,
+                    tooltip: 'Retour',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+
+                  /// Date and time selector
                   Expanded(
                     child: DateFieldWidget(
                       label: 'Date',
@@ -201,9 +224,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                         );
                         if (selected == null || !mounted) return;
                         setState(() {
-                          context
-                              .read<EventCreationCubit>()
-                              .setSelectedPets(selected);
+                          context.read<EventCreationCubit>().setSelectedPets(selected);
                         });
                       },
                     ),
@@ -229,9 +250,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                         );
                         if (selected == null || !mounted) return;
                         setState(() {
-                          context
-                              .read<EventCreationCubit>()
-                              .selectType(selected);
+                          context.read<EventCreationCubit>().selectType(selected);
                         });
                       },
                     ),
@@ -244,18 +263,16 @@ class _CreateEventPageState extends State<CreateEventPage> {
                 images: [for (final image in _images) LocalCollageImage(image)],
                 onTap: () async {
                   final messenger = ScaffoldMessenger.of(context);
+                  final maxImages = _maxImages(context);
                   final picked = await AddImageBottomSheetWidget.show(context);
                   if (picked == null || picked.isEmpty) return;
-                  final remaining =
-                      PolaroidCollageWidget.maxImages - _images.length;
+                  final remaining = maxImages - _images.length;
                   if (remaining <= 0) {
                     messenger
                       ..clearSnackBars()
                       ..showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Vous pouvez ajouter 5 photos maximum.',
-                          ),
+                        SnackBar(
+                          content: Text(_quotaMessage(maxImages)),
                         ),
                       );
                     return;
@@ -263,15 +280,20 @@ class _CreateEventPageState extends State<CreateEventPage> {
                   setState(() => _images.addAll(picked.take(remaining)));
                 },
                 onImageTap: (_) async {
-                  /// Re-pick the whole set, replacing the current selection.
-                  final picked = await ImagePicker().pickMultiImage(
-                    limit: PolaroidCollageWidget.maxImages,
-                  );
+                  final maxImages = _maxImages(context);
+                  if (maxImages <= 0) return;
+                  final List<XFile> picked;
+                  if (maxImages == 1) {
+                    final one = await ImagePicker().pickImage(source: ImageSource.gallery);
+                    picked = one == null ? const [] : [one];
+                  } else {
+                    picked = await ImagePicker().pickMultiImage(limit: maxImages);
+                  }
                   if (picked.isEmpty || !mounted) return;
                   setState(() {
                     _images
                       ..clear()
-                      ..addAll(picked.take(PolaroidCollageWidget.maxImages));
+                      ..addAll(picked.take(maxImages));
                   });
                 },
               ),

@@ -1,9 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:nanimo/core/errors/repository_network_exception.dart';
+import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/core/isar/cache/schemas/user_cache.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
 import 'package:nanimo/features/auth/data/models/user_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../helpers/isar_test_helper.dart';
 import '../../../helpers/supabase_mocks.dart';
@@ -14,6 +15,8 @@ void main() {
   late MockGoTrueClient auth;
   late MockUser user;
   late AuthRepository repo;
+
+  setUpAll(registerSupabaseFallbacks);
 
   setUp(() async {
     await harness.setUp();
@@ -45,6 +48,101 @@ void main() {
       subscriptionConfigId: 'cfg-free',
     );
   }
+
+  group('login', () {
+    test('returns normally on success', () async {
+      when(() => auth.signInWithPassword(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+          )).thenAnswer((_) async => AuthResponse());
+
+      await expectLater(repo.login('m@example.com', 'secret'), completes);
+    });
+
+    test('rethrows an AuthException untouched', () async {
+      when(() => auth.signInWithPassword(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+          )).thenThrow(const AuthException('Invalid login credentials'));
+
+      await expectLater(
+        repo.login('m@example.com', 'bad'),
+        throwsA(isA<AuthException>()),
+      );
+    });
+
+    test('maps an unexpected error to a network exception', () async {
+      when(() => auth.signInWithPassword(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+          )).thenThrow(Exception('offline'));
+
+      await expectLater(
+        repo.login('m@example.com', 'secret'),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+    });
+  });
+
+  group('register', () {
+    test('returns normally on success', () async {
+      when(() => auth.signUp(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+          )).thenAnswer((_) async => AuthResponse());
+
+      await expectLater(repo.register('m@example.com', 'secret'), completes);
+    });
+
+    test('rethrows an AuthException untouched', () async {
+      when(() => auth.signUp(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+          )).thenThrow(const AuthException('User already registered'));
+
+      await expectLater(
+        repo.register('m@example.com', 'secret'),
+        throwsA(isA<AuthException>()),
+      );
+    });
+
+    test('maps an unexpected error to a network exception', () async {
+      when(() => auth.signUp(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+          )).thenThrow(Exception('offline'));
+
+      await expectLater(
+        repo.register('m@example.com', 'secret'),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+    });
+  });
+
+  group('logout / session getters', () {
+    test('logout delegates to Supabase signOut', () async {
+      when(() => auth.signOut()).thenAnswer((_) async {});
+
+      await repo.logout();
+
+      verify(() => auth.signOut()).called(1);
+    });
+
+    test('currentUserId reflects the signed-in user', () {
+      when(() => auth.currentUser).thenReturn(user);
+      when(() => user.id).thenReturn('user-1');
+
+      expect(repo.currentUserId, 'user-1');
+    });
+
+    test('currentToken reads the active session access token', () {
+      final session = MockSession();
+      when(() => auth.currentSession).thenReturn(session);
+      when(() => session.accessToken).thenReturn('jwt-123');
+
+      expect(repo.currentToken, 'jwt-123');
+    });
+  });
 
   group('watchCurrentUser', () {
     test('emits null when signed out', () async {
@@ -90,6 +188,33 @@ void main() {
       final result = await repo.getCurrentUser();
       expect(result?.userId, 'user-1');
     });
+
+    test('falls back to Supabase and caches when the cache is empty', () async {
+      when(() => auth.currentUser).thenReturn(user);
+      when(() => user.id).thenReturn('user-9');
+      stubSelect(supabase, 'users', resolver: () => {
+            'id_user': 'user-9',
+            'user_name': 'Remote',
+            'mail': 'remote@example.com',
+            'subscription_status': 'free',
+            'subscription_expires_at': null,
+            'id_subscription_config': 'cfg-free',
+          });
+
+      final result = await repo.getCurrentUser();
+
+      expect(result?.userId, 'user-9');
+      expect(await harness.isar.userCaches.getByUserId('user-9'), isNotNull);
+    });
+
+    test('returns null when the Supabase fallback fails', () async {
+      when(() => auth.currentUser).thenReturn(user);
+      when(() => user.id).thenReturn('user-9');
+      when(() => supabase.from(any()))
+          .thenThrow(const PostgrestException(message: 'RLS'));
+
+      expect(await repo.getCurrentUser(), isNull);
+    });
   });
 
   group('signInWithGoogle', () {
@@ -98,6 +223,33 @@ void main() {
       // Repo built without googleIosClientId/googleWebClientId
       expect(
         () => repo.signInWithGoogle(),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+    });
+
+    test('maps a plugin failure to a network exception', () async {
+      // With config present the flow reaches the native plugin, which is
+      // unavailable in tests and surfaces via the generic catch.
+      final configured = AuthRepository(
+        supabase,
+        harness.isar,
+        googleIosClientId: 'ios-id',
+        googleWebClientId: 'web-id',
+      );
+
+      await expectLater(
+        configured.signInWithGoogle(),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+    });
+  });
+
+  group('signInWithApple', () {
+    test('maps a plugin failure to a network exception', () async {
+      // The Apple native plugin is unavailable in tests, so the credential
+      // request fails and is mapped by the generic catch.
+      await expectLater(
+        repo.signInWithApple(),
         throwsA(isA<RepositoryNetworkException>()),
       );
     });

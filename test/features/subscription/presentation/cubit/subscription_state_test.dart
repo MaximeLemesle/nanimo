@@ -9,7 +9,6 @@ void main() {
     maxImagesPerEvent: 1,
     maxPets: 1,
     maxStorageMb: 500,
-    canAccessPremiumIcons: false,
   );
 
   const premiumConfig = SubscriptionConfigModel(
@@ -18,7 +17,6 @@ void main() {
     maxImagesPerEvent: 5,
     maxPets: 10,
     maxStorageMb: 5000,
-    canAccessPremiumIcons: true,
   );
 
   group('SubscriptionState factories', () {
@@ -81,17 +79,20 @@ void main() {
     });
   });
 
-  group('canAccessPremiumIcons', () {
-    test('fail-closed when config is null', () {
-      expect(const SubscriptionState.unknown().canAccessPremiumIcons, isFalse);
+  group('quota getters', () {
+    test('fail-closed to 3 when config is null', () {
+      const state = SubscriptionState.unknown();
+      expect(state.maxImagesPerEvent, 3);
+      expect(state.maxPets, 1);
     });
 
-    test('false on free plan', () {
-      expect(const SubscriptionState.loaded(freeConfig).canAccessPremiumIcons, isFalse);
-    });
+    test('expose the plan quotas when loaded', () {
+      const free = SubscriptionState.loaded(freeConfig);
+      expect(free.maxImagesPerEvent, 1);
+      expect(free.maxPets, 1);
 
-    test('true on premium plan', () {
-      expect(const SubscriptionState.loaded(premiumConfig).canAccessPremiumIcons, isTrue);
+      const premium = SubscriptionState.loaded(premiumConfig);
+      expect(premium.maxImagesPerEvent, 5);
     });
   });
 
@@ -117,8 +118,7 @@ void main() {
 
     test('loaded(free) != loaded(premium)', () {
       expect(
-        const SubscriptionState.loaded(freeConfig) ==
-            const SubscriptionState.loaded(premiumConfig),
+        const SubscriptionState.loaded(freeConfig) == const SubscriptionState.loaded(premiumConfig),
         isFalse,
       );
     });

@@ -18,6 +18,19 @@ class MockSupabaseStorageClient extends Mock
 
 class MockStorageFileApi extends Mock implements StorageFileApi {}
 
+/// Wires `supabase.storage.from(bucket)` to a mock [StorageFileApi] and returns
+/// it so tests can stub `upload` / `createSignedUrl`.
+MockStorageFileApi stubStorageBucket(
+  MockSupabaseClient supabase,
+  String bucket,
+) {
+  final storage = MockSupabaseStorageClient();
+  final fileApi = MockStorageFileApi();
+  when(() => supabase.storage).thenReturn(storage);
+  when(() => storage.from(bucket)).thenReturn(fileApi);
+  return fileApi;
+}
+
 /// Awaitable stand-in for any Postgrest chain. All chain methods return `this`
 /// so an arbitrarily deep `.eq(...).single()` call still resolves to the same
 /// terminal `Future` configured at construction. Awaiting the chain executes
@@ -111,6 +124,31 @@ class FakeSelectChain extends Fake
     String? referencedTable,
   }) =>
       this;
+
+  @override
+  PostgrestTransformBuilder<Map<String, dynamic>> single() =>
+      FakeSingleChain(_resolver);
+}
+
+/// Terminal `.single()` stand-in: awaiting it resolves [_resolver] and casts
+/// the value to a single row.
+class FakeSingleChain extends Fake
+    implements PostgrestTransformBuilder<Map<String, dynamic>> {
+  FakeSingleChain(this._resolver);
+
+  final FutureOr<dynamic> Function() _resolver;
+
+  Future<Map<String, dynamic>> _future() async {
+    final value = await Future.sync(_resolver);
+    return (value as Map).cast<String, dynamic>();
+  }
+
+  @override
+  Future<S> then<S>(
+    FutureOr<S> Function(Map<String, dynamic>) onValue, {
+    Function? onError,
+  }) =>
+      _future().then(onValue, onError: onError);
 }
 
 FakePostgrestChain stubInsert(

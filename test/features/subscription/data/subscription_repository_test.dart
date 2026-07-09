@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/core/isar/cache/schemas/subscription_config_cache.dart';
 import 'package:nanimo/features/subscription/data/models/subscription_config_model.dart';
 import 'package:nanimo/features/subscription/data/subscription_repository.dart';
@@ -8,6 +10,7 @@ import '../../../helpers/supabase_mocks.dart';
 
 void main() {
   final harness = IsarTestHarness();
+  late MockSupabaseClient supabase;
   late SubscriptionRepository repo;
 
   const freeConfig = SubscriptionConfigModel(
@@ -16,12 +19,14 @@ void main() {
     maxImagesPerEvent: 1,
     maxPets: 1,
     maxStorageMb: 500,
-    canAccessPremiumIcons: false,
   );
+
+  setUpAll(registerSupabaseFallbacks);
 
   setUp(() async {
     await harness.setUp();
-    repo = SubscriptionRepository(MockSupabaseClient(), harness.isar);
+    supabase = MockSupabaseClient();
+    repo = SubscriptionRepository(supabase, harness.isar);
   });
 
   tearDown(() async {
@@ -30,8 +35,7 @@ void main() {
 
   Future<void> seedConfig(SubscriptionConfigModel model) async {
     await harness.isar.writeTxn(() async {
-      await harness.isar.subscriptionConfigCaches
-          .putByConfigId(SubscriptionConfigCache.fromModel(model));
+      await harness.isar.subscriptionConfigCaches.putByConfigId(SubscriptionConfigCache.fromModel(model));
     });
   }
 
@@ -62,7 +66,34 @@ void main() {
       final result = await repo.getConfigById('cfg-free');
       expect(result, isNotNull);
       expect(result!.maxStorageMb, 500);
-      expect(result.canAccessPremiumIcons, isFalse);
+    });
+  });
+
+  group('fetchConfigById', () {
+    test('fetches from Supabase and writes through the cache', () async {
+      stubSelect(supabase, 'subscription_config',
+          resolver: () => {
+                'id_subscription_config': 2,
+                'plan_name': 'premium',
+                'max_images_per_event': 5,
+                'max_pets': 10,
+                'max_storage_in_mb': 5000,
+              });
+
+      final result = await repo.fetchConfigById('2');
+
+      expect(result.planName, 'premium');
+      expect(result.maxPets, 10);
+      expect(await repo.getConfigById('2'), isNotNull);
+    });
+
+    test('throws a network exception on failure', () async {
+      when(() => supabase.from(any())).thenThrow(Exception('offline'));
+
+      await expectLater(
+        repo.fetchConfigById('2'),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
     });
   });
 }

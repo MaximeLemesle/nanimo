@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/date_field_widget.dart';
@@ -9,13 +12,17 @@ import 'package:nanimo/core/widgets/time_field_widget.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/event/data/event_repository.dart';
+import 'package:nanimo/features/event/data/models/event_image_model.dart';
 import 'package:nanimo/features/event/data/models/event_model.dart';
 import 'package:nanimo/features/event/data/models/event_type_model.dart';
 import 'package:nanimo/features/event/presentation/cubit/event_creation_cubit.dart';
 import 'package:nanimo/features/event/presentation/page/create_event_page.dart';
+import 'package:nanimo/features/event/presentation/widgets/create_event/polaroid_collage_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/sticker_selector_widget.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
+import 'package:nanimo/features/subscription/data/models/subscription_config_model.dart';
+import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 
 class _MockEventRepository extends Mock implements EventRepository {}
 
@@ -23,6 +30,40 @@ class _MockReferentialRepository extends Mock
     implements ReferentialRepository {}
 
 class _MockPetRepository extends Mock implements PetRepository {}
+
+class _FakeSubscriptionCubit extends Cubit<SubscriptionState>
+    implements SubscriptionCubit {
+  _FakeSubscriptionCubit(int maxImagesPerEvent)
+      : super(SubscriptionState.loaded(SubscriptionConfigModel(
+          configId: 'cfg',
+          planName: 'test',
+          maxImagesPerEvent: maxImagesPerEvent,
+          maxPets: 1,
+          maxStorageMb: 500,
+        )));
+
+  @override
+  void noSuchMethod(Invocation invocation) {}
+}
+
+/// Returns a fixed set of images so quota enforcement can be exercised.
+class _FakeImagePicker extends ImagePickerPlatform {
+  _FakeImagePicker(this._paths);
+  final List<String> _paths;
+
+  @override
+  Future<List<XFile>> getMultiImageWithOptions({
+    MultiImagePickerOptions options = const MultiImagePickerOptions(),
+  }) async =>
+      _paths.map(XFile.new).toList();
+
+  @override
+  Future<XFile?> getImageFromSource({
+    required ImageSource source,
+    ImagePickerOptions options = const ImagePickerOptions(),
+  }) async =>
+      _paths.isEmpty ? null : XFile(_paths.first);
+}
 
 const _balade = EventTypeModel(
   eventTypeId: 't-balade',
@@ -62,6 +103,10 @@ void main() {
     registerFallbackValue(
       const EventModel(eventId: 'e', title: 't', eventTypeId: 't-balade'),
     );
+    registerFallbackValue(
+      const EventImageModel(eventImageId: 'i', assetPath: 'p', eventId: 'e'),
+    );
+    registerFallbackValue(File('fallback.jpg'));
   });
 
   setUp(() {
@@ -88,6 +133,7 @@ void main() {
   /// has a route to fall back to.
   Future<EventCreationCubit> pumpPage(
     WidgetTester tester, {
+    int maxImagesPerEvent = 5,
     DateTime? initialEntryDate,
   }) async {
     await tester.binding.setSurfaceSize(const Size(1080, 2400));
@@ -95,6 +141,8 @@ void main() {
 
     final cubit = buildCubit()..load();
     addTearDown(cubit.close);
+    final subscriptionCubit = _FakeSubscriptionCubit(maxImagesPerEvent);
+    addTearDown(subscriptionCubit.close);
 
     final router = GoRouter(
       initialLocation: '/',
@@ -105,8 +153,11 @@ void main() {
         ),
         GoRoute(
           path: '/create',
-          builder: (_, __) => BlocProvider.value(
-            value: cubit,
+          builder: (_, __) => MultiBlocProvider(
+            providers: [
+              BlocProvider<EventCreationCubit>.value(value: cubit),
+              BlocProvider<SubscriptionCubit>.value(value: subscriptionCubit),
+            ],
             child: CreateEventPage(initialEntryDate: initialEntryDate),
           ),
         ),
@@ -272,5 +323,51 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(cubit.state.selectedPetIds, ['pet-milo']);
+  });
+
+  group('photo quota', () {
+    setUp(() {
+      // The picker offers three photos on every call.
+      ImagePickerPlatform.instance =
+          _FakeImagePicker(['/tmp/a.jpg', '/tmp/b.jpg', '/tmp/c.jpg']);
+      when(() => eventRepo.uploadEventImage(any(), any()))
+          .thenAnswer((_) async => 'u/e/x.jpg');
+      when(() => eventRepo.addImage(any())).thenAnswer((_) async {});
+    });
+
+    testWidgets('a free plan (max 1) keeps only one of several picked photos',
+        (tester) async {
+      await pumpPage(tester, maxImagesPerEvent: 1);
+
+      await tester.tap(find.byType(PolaroidCollageWidget));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sélectionner plusieurs photos'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField).first, 'Balade');
+      await tester.pump();
+      await tester.tap(find.text('Enregistrer'));
+      await tester.pumpAndSettle();
+
+      // Three photos offered, but the free plan uploads only one.
+      verify(() => eventRepo.uploadEventImage(any(), any())).called(1);
+    });
+
+    testWidgets('a premium plan (max 5) keeps every picked photo',
+        (tester) async {
+      await pumpPage(tester, maxImagesPerEvent: 5);
+
+      await tester.tap(find.byType(PolaroidCollageWidget));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sélectionner plusieurs photos'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField).first, 'Balade');
+      await tester.pump();
+      await tester.tap(find.text('Enregistrer'));
+      await tester.pumpAndSettle();
+
+      verify(() => eventRepo.uploadEventImage(any(), any())).called(3);
+    });
   });
 }

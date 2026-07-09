@@ -21,6 +21,7 @@ import 'package:nanimo/features/event/presentation/widgets/create_event/create_e
 import 'package:nanimo/features/event/presentation/widgets/create_event/create_event_bottom_sheet/pet_select_bottom_sheet_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/polaroid_collage_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/sticker_selector_widget.dart';
+import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 
 class EditEventPage extends StatefulWidget {
   const EditEventPage({super.key});
@@ -46,6 +47,20 @@ class _EditEventPageState extends State<EditEventPage> {
   }
 
   void _onTitleChanged() => setState(() {});
+
+  /// Photos allowed for this event: the plan quota, capped by the collage max.
+  int _maxImages(BuildContext context) {
+    final quota = context.read<SubscriptionCubit>().state.maxImagesPerEvent;
+    return quota < PolaroidCollageWidget.maxImages ? quota : PolaroidCollageWidget.maxImages;
+  }
+
+  String _quotaMessage(int maxImages) {
+    if (maxImages <= 1) {
+      return 'Le plan gratuit est limité à $maxImages photo par souvenir. '
+          'Passez au premium pour en ajouter plus.';
+    }
+    return 'Vous pouvez ajouter $maxImages photos maximum.';
+  }
 
   void _setEntryDate(DateTime date) {
     setState(() {
@@ -82,9 +97,7 @@ class _EditEventPageState extends State<EditEventPage> {
     super.dispose();
   }
 
-  /// Prefills the form from the loaded event, once, on the first build after
-  /// load completes. Detaches the title listener while writing so setting the
-  /// controllers' text doesn't trigger a `setState` mid-build.
+  /// Prefills the form from the loaded event
   void _seedFromEvent(EventModel event, List<EventImageModel> images) {
     _seeded = true;
     _entryDate = event.entryDate ?? DateTime.now();
@@ -103,18 +116,17 @@ class _EditEventPageState extends State<EditEventPage> {
 
   Future<void> _addImages() async {
     final messenger = ScaffoldMessenger.of(context);
+    final maxImages = _maxImages(context);
     final picked = await AddImageBottomSheetWidget.show(context);
     if (picked == null || picked.isEmpty || !mounted) return;
 
-    final remaining = PolaroidCollageWidget.maxImages - _images.length;
+    final remaining = maxImages - _images.length;
     if (remaining <= 0) {
       messenger
         ..clearSnackBars()
         ..showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Vous pouvez ajouter 5 photos maximum.',
-            ),
+          SnackBar(
+            content: Text(_quotaMessage(maxImages)),
           ),
         );
       return;
@@ -135,7 +147,7 @@ class _EditEventPageState extends State<EditEventPage> {
       context,
       images: List.of(_images),
       urlResolver: context.read<EditEventCubit>().imageUrl,
-      canAdd: _images.length < PolaroidCollageWidget.maxImages,
+      canAdd: _images.length < _maxImages(context),
     );
     if (selection == null || !mounted) return;
 
@@ -206,8 +218,7 @@ class _EditEventPageState extends State<EditEventPage> {
       listener: (context, state) {
         if (state.status == EditEventStatus.success) {
           context.pop();
-        } else if (state.status == EditEventStatus.error &&
-            state.error != null) {
+        } else if (state.status == EditEventStatus.error && state.error != null) {
           ScaffoldMessenger.of(context)
             ..clearSnackBars()
             ..showSnackBar(SnackBar(content: Text(state.error!)));
@@ -230,12 +241,9 @@ class _EditEventPageState extends State<EditEventPage> {
           orElse: () => state.types.first,
         );
         final selectedStyle = EventTypeStyle.fromCode(selectedType.code);
-        final selectedPets = state.pets
-            .where((pet) => state.selectedPetIds.contains(pet.petId))
-            .toList();
+        final selectedPets = state.pets.where((pet) => state.selectedPetIds.contains(pet.petId)).toList();
 
-        final canSubmit =
-            _titleController.text.trim().isNotEmpty && selectedPets.isNotEmpty;
+        final canSubmit = _titleController.text.trim().isNotEmpty && selectedPets.isNotEmpty;
         final String petLabel;
         if (selectedPets.isEmpty) {
           petLabel = 'Animal';
@@ -249,9 +257,21 @@ class _EditEventPageState extends State<EditEventPage> {
           body: ListView(
             padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
-              /// Date and time selector
               Row(
                 children: [
+                  /// Back button
+                  IconButton(
+                    onPressed: () => context.pop(),
+                    icon: const Icon(Icons.arrow_back),
+                    color: AppColors.textPrimary,
+                    tooltip: 'Retour',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+
+                  /// Date and time selector
                   Expanded(
                     child: DateFieldWidget(
                       label: 'Date',
@@ -321,9 +341,7 @@ class _EditEventPageState extends State<EditEventPage> {
                         );
                         if (selected == null || !mounted) return;
                         setState(() {
-                          context
-                              .read<EditEventCubit>()
-                              .setSelectedPets(selected);
+                          context.read<EditEventCubit>().setSelectedPets(selected);
                         });
                       },
                     ),

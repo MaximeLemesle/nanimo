@@ -176,6 +176,7 @@ class _ImageGridTile extends StatelessWidget {
             }
             return CachedNetworkImage(
               imageUrl: snapshot.data!,
+              cacheKey: assetPath,
               fit: BoxFit.cover,
               placeholder: (_, __) => _placeholder(),
               errorWidget: (_, __, ___) => _placeholder(

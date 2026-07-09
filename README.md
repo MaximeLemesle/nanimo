@@ -1,19 +1,55 @@
-# nanimo
+# Nanimo
 
-A new Flutter project.
+Journal émotionnel mobile pour propriétaires d'animaux : souvenirs du quotidien,
+événements marquants et suivi de santé de chaque animal. **Flutter + Supabase +
+Isar** (offline-first pour les lectures). Voir [`CLAUDE.md`](CLAUDE.md) pour
+l'architecture détaillée et [`docs/AUDIT.md`](docs/AUDIT.md) pour l'audit technique.
 
-## Getting Started
+## Prérequis
 
-This project is a starting point for a Flutter application.
+- Flutter `3.41.9` (voir [`.fvmrc`](.fvmrc))
+- Un projet Supabase (URL + clé anon) et les identifiants OAuth Google/Apple
 
-A few resources to get you started if this is your first Flutter project:
+## Configuration
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+Les secrets sont lus depuis un fichier `.env` (gitignoré) chargé au démarrage.
+Copiez le modèle et remplissez les valeurs :
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+cp .env.example .env
+```
+
+| Clé | Rôle |
+| --- | --- |
+| `SUPABASE_URL` / `SUPABASE_ANON_KEY` | Connexion Supabase (publiques par design) |
+| `GOOGLE_IOS_CLIENT_ID` / `GOOGLE_WEB_CLIENT_ID` | SSO Google natif |
+| `APPLE_SERVICE_ID` | SSO Apple |
+
+> Ne mettez que des valeurs **publiques** dans `.env` : il est embarqué dans les
+> assets et donc présent en clair dans l'app livrée.
+
+## Lancer l'app
+
+```bash
+flutter pub get
+dart run build_runner build --delete-conflicting-outputs   # schémas Isar
+git config core.hooksPath .githooks                         # hook commit-msg (une fois)
+flutter run
+```
+
+## Tests
+
+```bash
+flutter test                    # toute la suite
+flutter test <chemin_du_test>   # un fichier
+```
+
+> Les tests Isar téléchargent `libisar` au premier lancement.
+
+## Base de données
+
+Le schéma PostgreSQL, les policies RLS, les triggers de quotas et la RPC
+`create_event` sont versionnés dans [`supabase/migrations/`](supabase/README.md).
 
 ## Convention de commit
 

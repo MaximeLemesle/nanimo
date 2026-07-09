@@ -1,6 +1,6 @@
 import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:nanimo/core/errors/repository_network_exception.dart';
+import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_vaccine_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/vet_visit_cache.dart';
@@ -35,10 +35,11 @@ class HealthRepository {
       await _supabase
           .from('health_diary')
           .upsert(diary.toJson(), onConflict: 'pet_id');
-    } catch (_) {
-      throw const RepositoryNetworkException(
-        'Une connexion internet est requise pour mettre à jour le carnet de santé.',
-      );
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'upsertDiary',
+          networkMessage: 'Une connexion internet est requise pour mettre à jour le carnet de santé.',
+          serverMessage: 'Impossible de mettre à jour le carnet de santé pour le moment.');
     }
 
     await _isar.writeTxn(() async {
@@ -79,10 +80,11 @@ class HealthRepository {
   Future<void> addVaccine(HealthDiaryVaccineModel vaccine) async {
     try {
       await _supabase.from('health_diary_vaccines').insert(vaccine.toJson());
-    } catch (_) {
-      throw const RepositoryNetworkException(
-        'Une connexion internet est requise pour ajouter un vaccin.',
-      );
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'addVaccine',
+          networkMessage: 'Une connexion internet est requise pour ajouter un vaccin.',
+          serverMessage: 'Impossible d’ajouter le vaccin pour le moment.');
     }
 
     await _isar.writeTxn(() async {
@@ -98,10 +100,11 @@ class HealthRepository {
           .from('health_diary_vaccines')
           .update(vaccine.toJson())
           .eq('id_health_diary_vaccine', vaccine.healthDiaryVaccineId);
-    } catch (_) {
-      throw const RepositoryNetworkException(
-        'Une connexion internet est requise pour modifier un vaccin.',
-      );
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'updateVaccine',
+          networkMessage: 'Une connexion internet est requise pour modifier un vaccin.',
+          serverMessage: 'Impossible de modifier le vaccin pour le moment.');
     }
 
     await _isar.writeTxn(() async {
@@ -117,10 +120,11 @@ class HealthRepository {
           .from('health_diary_vaccines')
           .delete()
           .eq('id_health_diary_vaccine', healthDiaryVaccineId);
-    } catch (_) {
-      throw const RepositoryNetworkException(
-        'Une connexion internet est requise pour supprimer un vaccin.',
-      );
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'deleteVaccine',
+          networkMessage: 'Une connexion internet est requise pour supprimer un vaccin.',
+          serverMessage: 'Impossible de supprimer le vaccin pour le moment.');
     }
 
     await _isar.writeTxn(() async {
@@ -142,10 +146,11 @@ class HealthRepository {
   Future<void> addWeightLog(HealthDiaryWeightLogModel log) async {
     try {
       await _supabase.from('health_diary_weight_log').insert(log.toJson());
-    } catch (_) {
-      throw const RepositoryNetworkException(
-        'Une connexion internet est requise pour ajouter un poids.',
-      );
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'addWeightLog',
+          networkMessage: 'Une connexion internet est requise pour ajouter un poids.',
+          serverMessage: 'Impossible d’ajouter le poids pour le moment.');
     }
 
     await _isar.writeTxn(() async {
@@ -161,10 +166,11 @@ class HealthRepository {
           .from('health_diary_weight_log')
           .delete()
           .eq('id_health_diary_weight_log', healthDiaryWeightLogId);
-    } catch (_) {
-      throw const RepositoryNetworkException(
-        'Une connexion internet est requise pour supprimer un poids.',
-      );
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'deleteWeightLog',
+          networkMessage: 'Une connexion internet est requise pour supprimer un poids.',
+          serverMessage: 'Impossible de supprimer le poids pour le moment.');
     }
 
     await _isar.writeTxn(() async {
@@ -186,10 +192,11 @@ class HealthRepository {
   Future<void> addVetVisit(VetVisitModel visit) async {
     try {
       await _supabase.from('vet_visits').insert(visit.toJson());
-    } catch (_) {
-      throw const RepositoryNetworkException(
-        'Une connexion internet est requise pour ajouter une visite vétérinaire.',
-      );
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'addVetVisit',
+          networkMessage: 'Une connexion internet est requise pour ajouter une visite vétérinaire.',
+          serverMessage: 'Impossible d’ajouter la visite vétérinaire pour le moment.');
     }
 
     await _isar.writeTxn(() async {
@@ -204,10 +211,11 @@ class HealthRepository {
           .from('vet_visits')
           .update(visit.toJson())
           .eq('id_vet_visit', visit.vetVisitId);
-    } catch (_) {
-      throw const RepositoryNetworkException(
-        'Une connexion internet est requise pour modifier une visite vétérinaire.',
-      );
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'updateVetVisit',
+          networkMessage: 'Une connexion internet est requise pour modifier une visite vétérinaire.',
+          serverMessage: 'Impossible de modifier la visite vétérinaire pour le moment.');
     }
 
     await _isar.writeTxn(() async {
@@ -222,10 +230,11 @@ class HealthRepository {
           .from('vet_visits')
           .delete()
           .eq('id_vet_visit', vetVisitId);
-    } catch (_) {
-      throw const RepositoryNetworkException(
-        'Une connexion internet est requise pour supprimer une visite vétérinaire.',
-      );
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'deleteVetVisit',
+          networkMessage: 'Une connexion internet est requise pour supprimer une visite vétérinaire.',
+          serverMessage: 'Impossible de supprimer la visite vétérinaire pour le moment.');
     }
 
     await _isar.writeTxn(() async {

@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:nanimo/core/errors/repository_network_exception.dart';
+import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/event/data/event_repository.dart';
@@ -63,6 +66,7 @@ void main() {
     registerFallbackValue(
       const EventImageModel(eventImageId: 'i', assetPath: 'p', eventId: 'e'),
     );
+    registerFallbackValue(File('fallback.jpg'));
   });
 
   setUp(() {
@@ -213,6 +217,51 @@ void main() {
 
       expect(cubit.state.status, EventCreationStatus.error);
       expect(cubit.state.error, 'offline');
+    });
+
+    test('retry reuses the same event id and does not re-upload photos',
+        () async {
+      when(() => referentialRepo.fetchEventTypes())
+          .thenAnswer((_) async => [_souvenir]);
+      when(() => eventRepo.uploadEventImage(any(), any()))
+          .thenAnswer((_) async => 'u1/e/photo.jpg');
+      when(() => eventRepo.createEvent(any(), petIds: any(named: 'petIds')))
+          .thenAnswer((_) async {});
+      // addImage fails on the first attempt, succeeds on the retry.
+      var addAttempts = 0;
+      when(() => eventRepo.addImage(any())).thenAnswer((_) async {
+        addAttempts++;
+        if (addAttempts == 1) {
+          throw const RepositoryNetworkException('offline');
+        }
+      });
+
+      final cubit = buildCubit();
+      await cubit.load();
+
+      final images = [XFile('/tmp/photo.jpg')];
+      await cubit.submit(
+        title: 'Balade',
+        entryDate: DateTime(2026, 3, 5),
+        images: images,
+      );
+      expect(cubit.state.status, EventCreationStatus.error);
+
+      await cubit.submit(
+        title: 'Balade',
+        entryDate: DateTime(2026, 3, 5),
+        images: images,
+      );
+      expect(cubit.state.status, EventCreationStatus.success);
+
+      // Upload ran once (the retry reused the cached storage path).
+      verify(() => eventRepo.uploadEventImage(any(), any())).called(1);
+      // Both create calls used the same stable event id.
+      final createdIds = verify(() => eventRepo.createEvent(
+            captureAny(),
+            petIds: any(named: 'petIds'),
+          )).captured.map((e) => (e as EventModel).eventId).toSet();
+      expect(createdIds, hasLength(1));
     });
   });
 }
