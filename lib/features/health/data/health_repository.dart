@@ -38,7 +38,8 @@ class HealthRepository {
     } catch (e, st) {
       throw mapRepositoryError(e, st,
           operation: 'upsertDiary',
-          networkMessage: 'Une connexion internet est requise pour mettre à jour le carnet de santé.');
+          networkMessage: 'Une connexion internet est requise pour mettre à jour le carnet de santé.',
+          serverMessage: 'Impossible de mettre à jour le carnet de santé pour le moment.');
     }
 
     await _isar.writeTxn(() async {
@@ -82,7 +83,8 @@ class HealthRepository {
     } catch (e, st) {
       throw mapRepositoryError(e, st,
           operation: 'addVaccine',
-          networkMessage: 'Une connexion internet est requise pour ajouter un vaccin.');
+          networkMessage: 'Une connexion internet est requise pour ajouter un vaccin.',
+          serverMessage: 'Impossible d’ajouter le vaccin pour le moment.');
     }
 
     await _isar.writeTxn(() async {
@@ -101,7 +103,8 @@ class HealthRepository {
     } catch (e, st) {
       throw mapRepositoryError(e, st,
           operation: 'updateVaccine',
-          networkMessage: 'Une connexion internet est requise pour modifier un vaccin.');
+          networkMessage: 'Une connexion internet est requise pour modifier un vaccin.',
+          serverMessage: 'Impossible de modifier le vaccin pour le moment.');
     }
 
     await _isar.writeTxn(() async {
@@ -120,7 +123,8 @@ class HealthRepository {
     } catch (e, st) {
       throw mapRepositoryError(e, st,
           operation: 'deleteVaccine',
-          networkMessage: 'Une connexion internet est requise pour supprimer un vaccin.');
+          networkMessage: 'Une connexion internet est requise pour supprimer un vaccin.',
+          serverMessage: 'Impossible de supprimer le vaccin pour le moment.');
     }
 
     await _isar.writeTxn(() async {
@@ -145,7 +149,8 @@ class HealthRepository {
     } catch (e, st) {
       throw mapRepositoryError(e, st,
           operation: 'addWeightLog',
-          networkMessage: 'Une connexion internet est requise pour ajouter un poids.');
+          networkMessage: 'Une connexion internet est requise pour ajouter un poids.',
+          serverMessage: 'Impossible d’ajouter le poids pour le moment.');
     }
 
     await _isar.writeTxn(() async {
@@ -164,7 +169,8 @@ class HealthRepository {
     } catch (e, st) {
       throw mapRepositoryError(e, st,
           operation: 'deleteWeightLog',
-          networkMessage: 'Une connexion internet est requise pour supprimer un poids.');
+          networkMessage: 'Une connexion internet est requise pour supprimer un poids.',
+          serverMessage: 'Impossible de supprimer le poids pour le moment.');
     }
 
     await _isar.writeTxn(() async {
@@ -189,7 +195,8 @@ class HealthRepository {
     } catch (e, st) {
       throw mapRepositoryError(e, st,
           operation: 'addVetVisit',
-          networkMessage: 'Une connexion internet est requise pour ajouter une visite vétérinaire.');
+          networkMessage: 'Une connexion internet est requise pour ajouter une visite vétérinaire.',
+          serverMessage: 'Impossible d’ajouter la visite vétérinaire pour le moment.');
     }
 
     await _isar.writeTxn(() async {
@@ -207,7 +214,8 @@ class HealthRepository {
     } catch (e, st) {
       throw mapRepositoryError(e, st,
           operation: 'updateVetVisit',
-          networkMessage: 'Une connexion internet est requise pour modifier une visite vétérinaire.');
+          networkMessage: 'Une connexion internet est requise pour modifier une visite vétérinaire.',
+          serverMessage: 'Impossible de modifier la visite vétérinaire pour le moment.');
     }
 
     await _isar.writeTxn(() async {
@@ -225,7 +233,8 @@ class HealthRepository {
     } catch (e, st) {
       throw mapRepositoryError(e, st,
           operation: 'deleteVetVisit',
-          networkMessage: 'Une connexion internet est requise pour supprimer une visite vétérinaire.');
+          networkMessage: 'Une connexion internet est requise pour supprimer une visite vétérinaire.',
+          serverMessage: 'Impossible de supprimer la visite vétérinaire pour le moment.');
     }
 
     await _isar.writeTxn(() async {

@@ -24,7 +24,6 @@ class EventRepository {
     return query.watch(fireImmediately: true).map((rows) => rows.map((c) => c.toModel()).toList());
   }
 
-  /// One-shot read of a single event.
   Future<EventModel?> getEventById(String eventId) async {
     final row = await _isar.eventCaches.getByEventId(eventId);
     return row?.toModel();
@@ -40,7 +39,9 @@ class EventRepository {
       }
     } catch (e, st) {
       throw mapRepositoryError(e, st,
-          operation: 'createEvent', networkMessage: 'Une connexion internet est requise pour créer un événement.');
+          operation: 'createEvent',
+          networkMessage: 'Une connexion internet est requise pour créer un événement.',
+          serverMessage: 'Impossible de créer le souvenir pour le moment.');
     }
 
     await _isar.writeTxn(() async {
@@ -57,7 +58,9 @@ class EventRepository {
       await _supabase.from('events').update(event.toJson()).eq('id_event', event.eventId);
     } catch (e, st) {
       throw mapRepositoryError(e, st,
-          operation: 'updateEvent', networkMessage: 'Une connexion internet est requise pour modifier un événement.');
+          operation: 'updateEvent',
+          networkMessage: 'Une connexion internet est requise pour modifier un événement.',
+          serverMessage: 'Impossible de modifier le souvenir pour le moment.');
     }
 
     await _isar.writeTxn(() async {
@@ -70,7 +73,9 @@ class EventRepository {
       await _supabase.from('events').delete().eq('id_event', eventId);
     } catch (e, st) {
       throw mapRepositoryError(e, st,
-          operation: 'deleteEvent', networkMessage: 'Une connexion internet est requise pour supprimer un événement.');
+          operation: 'deleteEvent',
+          networkMessage: 'Une connexion internet est requise pour supprimer un événement.',
+          serverMessage: 'Impossible de supprimer le souvenir pour le moment.');
     }
 
     await _isar.writeTxn(() async {
@@ -120,7 +125,9 @@ class EventRepository {
       }
     } catch (e, st) {
       throw mapRepositoryError(e, st,
-          operation: 'updateEventPets', networkMessage: 'Une connexion internet est requise pour modifier les animaux liés.');
+          operation: 'updateEventPets',
+          networkMessage: 'Une connexion internet est requise pour modifier les animaux liés.',
+          serverMessage: 'Impossible de modifier les animaux liés au souvenir.');
     }
 
     await _isar.writeTxn(() async {
@@ -167,7 +174,10 @@ class EventRepository {
     try {
       await _insertIgnoringDuplicate('event_image', image.toJson());
     } catch (e, st) {
-      throw mapRepositoryError(e, st, operation: 'addImage', networkMessage: 'Une connexion internet est requise pour ajouter une photo.');
+      throw mapRepositoryError(e, st,
+          operation: 'addImage',
+          networkMessage: 'Une connexion internet est requise pour ajouter une photo.',
+          serverMessage: 'Impossible d’ajouter la photo au souvenir.');
     }
 
     await _isar.writeTxn(() async {
@@ -186,7 +196,9 @@ class EventRepository {
       await _supabase.storage.from('journal-media').upload(storagePath, file);
     } catch (e, st) {
       throw mapRepositoryError(e, st,
-          operation: 'uploadEventImage', networkMessage: 'Une connexion internet est requise pour envoyer une photo.');
+          operation: 'uploadEventImage',
+          networkMessage: 'Une connexion internet est requise pour envoyer une photo.',
+          serverMessage: 'Impossible d’envoyer la photo pour le moment.');
     }
 
     return storagePath;
@@ -198,7 +210,9 @@ class EventRepository {
       await _supabase.storage.from('journal-media').remove([assetPath]);
     } catch (e, st) {
       throw mapRepositoryError(e, st,
-          operation: 'deleteImage', networkMessage: 'Une connexion internet est requise pour supprimer une photo.');
+          operation: 'deleteImage',
+          networkMessage: 'Une connexion internet est requise pour supprimer une photo.',
+          serverMessage: 'Impossible de supprimer la photo pour le moment.');
     }
 
     await _isar.writeTxn(() async {

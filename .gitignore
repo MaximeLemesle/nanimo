@@ -245,3 +245,6 @@ coverage/html/features/subscription/presentation/cubit/subscription_state.dart.g
 .tokensave/tokensave.db
 .tokensave/tokensave.db-shm
 .tokensave/tokensave.db-wal
+
+# Zed config
+.zed/

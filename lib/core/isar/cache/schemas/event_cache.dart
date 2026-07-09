@@ -33,7 +33,7 @@ class EventCache {
       ..entryDate = json['entry_date'] != null
           ? DateTime.parse(json['entry_date'] as String)
           : null
-      ..eventTypeId = (json['id_event_type'] ?? '') as String;
+      ..eventTypeId = (json['event_type_id'] ?? '') as String;
   }
 
   /// Builds an [EventCache] from an [EventModel]

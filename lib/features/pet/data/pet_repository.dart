@@ -79,7 +79,8 @@ class PetRepository {
           throw mapRepositoryError(e, st,
               operation: 'createPet',
               networkMessage:
-                  'Une connexion internet est requise pour créer un animal.');
+                  'Une connexion internet est requise pour créer un animal.',
+              serverMessage: 'Impossible de créer l’animal pour le moment.');
         }
         await Future<void>.delayed(_writeRetryBackoff * attempt);
       }
@@ -93,7 +94,8 @@ class PetRepository {
       throw mapRepositoryError(e, st,
           operation: 'updatePet',
           networkMessage:
-              'Une connexion internet est requise pour mettre à jour un animal.');
+              'Une connexion internet est requise pour mettre à jour un animal.',
+          serverMessage: 'Impossible de mettre à jour l’animal pour le moment.');
     }
 
     await _isar.writeTxn(() async {
@@ -108,7 +110,8 @@ class PetRepository {
       throw mapRepositoryError(e, st,
           operation: 'deletePet',
           networkMessage:
-              'Une connexion internet est requise pour supprimer un animal.');
+              'Une connexion internet est requise pour supprimer un animal.',
+          serverMessage: 'Impossible de supprimer l’animal pour le moment.');
     }
 
     await _isar.writeTxn(() async {

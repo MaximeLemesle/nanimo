@@ -10,7 +10,7 @@ void main() {
         'description': 'Great walk in the park',
         'created_at': '2024-06-01T08:00:00.000Z',
         'entry_date': '2024-06-01',
-        'id_event_type': 'type-uuid',
+        'event_type_id': 'type-uuid',
       };
 
       final cache = EventCache.fromJson(json);
@@ -30,7 +30,7 @@ void main() {
         'description': null,
         'created_at': '2024-06-01T08:00:00.000Z',
         'entry_date': '2024-06-01',
-        'id_event_type': null,
+        'event_type_id': null,
         'user_id': 'user-uuid',
       };
 

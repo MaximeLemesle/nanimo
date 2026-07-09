@@ -32,7 +32,7 @@ lib/
 │   └── theme/
 │       └── app_theme.dart
 ├── core/
-│   ├── errors/          # RepositoryException + mapRepositoryError (typed errors)
+│   ├── errors/          # RepositoryException + mapRepositoryError : traduit les codes Postgres/Storage en messages clairs
 │   ├── isar/            # schémas de cache + IsarService + SyncService
 │   ├── utils/
 │   └── widgets/

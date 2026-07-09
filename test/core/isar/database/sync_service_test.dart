@@ -230,6 +230,10 @@ void main() {
 
       expect(await harness.isar.eventCaches.count(), 1);
       expect(await harness.isar.eventCaches.getByEventId('e9'), isNotNull);
+      expect(
+        (await harness.isar.eventCaches.getByEventId('e9'))!.eventTypeId,
+        't1',
+      );
       expect(await harness.isar.eventImageCaches.count(), 1);
       expect(await harness.isar.petEventCaches.count(), 1);
       expect(await harness.isar.healthDiaryCaches.count(), 1);
