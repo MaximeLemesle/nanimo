@@ -97,7 +97,23 @@ class JournalCubit extends Cubit<JournalState> {
     ));
   }
 
-  Future<String> imageUrl(String assetPath) => _eventRepository.signedImageUrl(assetPath);
+  /// Refresh signed URLs before they expire (1h)
+  static const _signedUrlTtl = Duration(minutes: 45);
+  final Map<String, ({String url, DateTime expiresAt})> _signedUrls = {};
+
+  /// Resolves a signed url for [assetPath], memoized until [_signedUrlTtl].
+  Future<String> imageUrl(String assetPath) async {
+    final cached = _signedUrls[assetPath];
+    if (cached != null && DateTime.now().isBefore(cached.expiresAt)) {
+      return cached.url;
+    }
+    final url = await _eventRepository.signedImageUrl(assetPath);
+    _signedUrls[assetPath] = (
+      url: url,
+      expiresAt: DateTime.now().add(_signedUrlTtl),
+    );
+    return url;
+  }
 
   Future<String?> deleteEvent(String eventId) async {
     try {
