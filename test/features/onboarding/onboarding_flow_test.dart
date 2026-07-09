@@ -12,6 +12,7 @@ import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/data/models/referential/pet_race_model.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
+import 'package:nanimo/features/auth/data/auth_repository.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nanimo/features/event/data/event_repository.dart';
 import 'package:nanimo/features/event/data/models/event_type_model.dart';
@@ -33,6 +34,8 @@ class _MockPetRepository extends Mock implements PetRepository {}
 class _MockHealthRepository extends Mock implements HealthRepository {}
 
 class _MockEventRepository extends Mock implements EventRepository {}
+
+class _MockAuthRepository extends Mock implements AuthRepository {}
 
 class _FakeAuthCubit extends Cubit<AuthState> implements AuthCubit {
   _FakeAuthCubit() : super(const AuthState.unknown());
@@ -104,6 +107,7 @@ void main() {
   late _MockPetRepository petRepo;
   late _MockHealthRepository healthRepo;
   late _MockEventRepository eventRepo;
+  late _MockAuthRepository authRepo;
   late StreamController<List<PetModel>> petsController;
   late OnboardingCubit onboardingCubit;
   late PetCreationCubit petCreationCubit;
@@ -138,6 +142,21 @@ void main() {
     petRepo = _MockPetRepository();
     healthRepo = _MockHealthRepository();
     eventRepo = _MockEventRepository();
+    authRepo = _MockAuthRepository();
+
+    /// Home streams: empty journal/health caches and no cached user.
+    when(() => eventRepo.watchEvents())
+        .thenAnswer((_) => Stream.value(const []));
+    when(() => eventRepo.watchPetEvents())
+        .thenAnswer((_) => Stream.value(const {}));
+    when(() => eventRepo.watchAllImages())
+        .thenAnswer((_) => Stream.value(const {}));
+    when(() => healthRepo.watchAllDiaries())
+        .thenAnswer((_) => Stream.value(const []));
+    when(() => healthRepo.watchAllVaccines())
+        .thenAnswer((_) => Stream.value(const []));
+    when(() => authRepo.watchCurrentUser())
+        .thenAnswer((_) => Stream.value(null));
     petsController = StreamController<List<PetModel>>.broadcast();
     lastPets = const [];
 
@@ -201,6 +220,9 @@ void main() {
     homeCubit = HomeCubit(
       petRepository: petRepo,
       referentialRepository: referentialRepo,
+      eventRepository: eventRepo,
+      healthRepository: healthRepo,
+      authRepository: authRepo,
     );
     petDetailsCubit = PetDetailsCubit(
       petRepository: petRepo,
@@ -209,6 +231,7 @@ void main() {
     );
     router = createRouter(
       authCubit,
+      authRepository: authRepo,
       eventRepository: eventRepo,
       referentialRepository: referentialRepo,
       petRepository: petRepo,

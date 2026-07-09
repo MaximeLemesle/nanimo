@@ -78,6 +78,7 @@ void main() async {
 
   runApp(MyApp(
     authCubit: authCubit,
+    authRepository: authRepository,
     subscriptionCubit: subscriptionCubit,
     onboardingCubit: onboardingCubit,
     petCreationCubit: petCreationCubit,
@@ -90,6 +91,7 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   final AuthCubit authCubit;
+  final AuthRepository authRepository;
   final SubscriptionCubit subscriptionCubit;
   final OnboardingCubit onboardingCubit;
   final PetCreationCubit petCreationCubit;
@@ -100,6 +102,7 @@ class MyApp extends StatelessWidget {
   const MyApp({
     super.key,
     required this.authCubit,
+    required this.authRepository,
     required this.subscriptionCubit,
     required this.onboardingCubit,
     required this.petCreationCubit,
@@ -130,6 +133,7 @@ class MyApp extends StatelessWidget {
         supportedLocales: const [Locale('fr')],
         routerConfig: createRouter(
           authCubit,
+          authRepository: authRepository,
           eventRepository: eventRepository,
           referentialRepository: referentialRepository,
           petRepository: petRepository,

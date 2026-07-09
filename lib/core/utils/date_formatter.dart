@@ -14,6 +14,24 @@ class DateFormatter {
     'décembre',
   ];
 
+  static const List<String> _frenchWeekdays = [
+    'Lundi',
+    'Mardi',
+    'Mercredi',
+    'Jeudi',
+    'Vendredi',
+    'Samedi',
+    'Dimanche',
+  ];
+
+  /// Full french date such as « Mardi 8 juillet ».
+  static String weekdayDayMonth(DateTime value) {
+    final local = value.toLocal();
+    final weekday = _frenchWeekdays[local.weekday - 1];
+    final month = _frenchMonths[local.month - 1];
+    return '$weekday ${local.day} $month';
+  }
+
   /// Format date as DD/MM/YYYY.
   static String date(DateTime value) {
     final day = value.day.toString().padLeft(2, '0');
