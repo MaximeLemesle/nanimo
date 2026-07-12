@@ -48,7 +48,8 @@ class SubscriptionRepository {
       throw mapRepositoryError(e, st,
           operation: 'fetchConfigById',
           networkMessage:
-              'Une connexion internet est requise pour charger votre abonnement.');
+              'Une connexion internet est requise pour charger votre abonnement.',
+          serverMessage: 'Impossible de charger votre abonnement pour le moment.');
     }
   }
 }

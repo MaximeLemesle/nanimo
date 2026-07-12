@@ -31,6 +31,7 @@ class EventCreationCubit extends Cubit<EventCreationState> {
 
   Future<void> load({String? initialPetId}) async {
     final pets = await _petRepository.getPets();
+    if (isClosed) return;
     final defaultPetId = pets.any((pet) => pet.petId == initialPetId)
         ? initialPetId
         : (pets.isNotEmpty ? pets.first.petId : null);
@@ -42,6 +43,7 @@ class EventCreationCubit extends Cubit<EventCreationState> {
     try {
       final types = await _referentialRepository.fetchEventTypes();
       final species = await _referentialRepository.fetchSpecies();
+      if (isClosed) return;
 
       final defaultType = types.isEmpty
           ? null
@@ -58,6 +60,7 @@ class EventCreationCubit extends Cubit<EventCreationState> {
         },
       ));
     } catch (_) {
+      if (isClosed) return;
       emit(state.copyWith(
         status: EventCreationStatus.error,
         error: 'Impossible de charger les types d\'événement.',
@@ -73,17 +76,11 @@ class EventCreationCubit extends Cubit<EventCreationState> {
     emit(state.copyWith(selectedPetIds: petIds));
   }
 
-  /// Event id kept stable across retries so re-submitting after a partial
-  /// failure updates the same event instead of creating a duplicate.
   String? _pendingEventId;
-
-  /// Photos already uploaded, keyed by local file path, so a retry skips
-  /// re-uploading and re-inserting the same photo.
   final Map<String, ({String imageId, String assetPath})> _uploadedImages = {};
 
-  /// Uploads the photos first (orphan storage files are harmless), then creates
-  /// the event and links its images. All writes are idempotent so a retry after
-  /// a partial failure never produces a duplicate event or photo.
+  /// Uploads the photos first, then creates the event. 
+  /// So a retry after a failure never makes a duplicate event or photo.
   Future<void> submit({
     required String title,
     String? description,
@@ -148,10 +145,13 @@ class EventCreationCubit extends Cubit<EventCreationState> {
 
       _pendingEventId = null;
       _uploadedImages.clear();
+      if (isClosed) return;
       emit(state.copyWith(status: EventCreationStatus.success));
     } on RepositoryException catch (e) {
+      if (isClosed) return;
       emit(state.copyWith(status: EventCreationStatus.error, error: e.message));
     } catch (_) {
+      if (isClosed) return;
       emit(state.copyWith(
         status: EventCreationStatus.error,
         error: 'Une erreur est survenue lors de la création de l\'événement.',

@@ -18,33 +18,28 @@ const SubscriptionConfigCacheSchema = CollectionSchema(
   name: r'SubscriptionConfigCache',
   id: 1226880869150589037,
   properties: {
-    r'canAccessPremiumIcons': PropertySchema(
-      id: 0,
-      name: r'canAccessPremiumIcons',
-      type: IsarType.bool,
-    ),
     r'configId': PropertySchema(
-      id: 1,
+      id: 0,
       name: r'configId',
       type: IsarType.string,
     ),
     r'maxImagesPerEvent': PropertySchema(
-      id: 2,
+      id: 1,
       name: r'maxImagesPerEvent',
       type: IsarType.long,
     ),
     r'maxPets': PropertySchema(
-      id: 3,
+      id: 2,
       name: r'maxPets',
       type: IsarType.long,
     ),
     r'maxStorageMb': PropertySchema(
-      id: 4,
+      id: 3,
       name: r'maxStorageMb',
       type: IsarType.long,
     ),
     r'planName': PropertySchema(
-      id: 5,
+      id: 4,
       name: r'planName',
       type: IsarType.string,
     )
@@ -94,12 +89,11 @@ void _subscriptionConfigCacheSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeBool(offsets[0], object.canAccessPremiumIcons);
-  writer.writeString(offsets[1], object.configId);
-  writer.writeLong(offsets[2], object.maxImagesPerEvent);
-  writer.writeLong(offsets[3], object.maxPets);
-  writer.writeLong(offsets[4], object.maxStorageMb);
-  writer.writeString(offsets[5], object.planName);
+  writer.writeString(offsets[0], object.configId);
+  writer.writeLong(offsets[1], object.maxImagesPerEvent);
+  writer.writeLong(offsets[2], object.maxPets);
+  writer.writeLong(offsets[3], object.maxStorageMb);
+  writer.writeString(offsets[4], object.planName);
 }
 
 SubscriptionConfigCache _subscriptionConfigCacheDeserialize(
@@ -109,13 +103,12 @@ SubscriptionConfigCache _subscriptionConfigCacheDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = SubscriptionConfigCache();
-  object.canAccessPremiumIcons = reader.readBool(offsets[0]);
-  object.configId = reader.readString(offsets[1]);
+  object.configId = reader.readString(offsets[0]);
   object.id = id;
-  object.maxImagesPerEvent = reader.readLong(offsets[2]);
-  object.maxPets = reader.readLong(offsets[3]);
-  object.maxStorageMb = reader.readLong(offsets[4]);
-  object.planName = reader.readString(offsets[5]);
+  object.maxImagesPerEvent = reader.readLong(offsets[1]);
+  object.maxPets = reader.readLong(offsets[2]);
+  object.maxStorageMb = reader.readLong(offsets[3]);
+  object.planName = reader.readString(offsets[4]);
   return object;
 }
 
@@ -127,16 +120,14 @@ P _subscriptionConfigCacheDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readBool(offset)) as P;
-    case 1:
       return (reader.readString(offset)) as P;
+    case 1:
+      return (reader.readLong(offset)) as P;
     case 2:
       return (reader.readLong(offset)) as P;
     case 3:
       return (reader.readLong(offset)) as P;
     case 4:
-      return (reader.readLong(offset)) as P;
-    case 5:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -344,16 +335,6 @@ extension SubscriptionConfigCacheQueryWhere on QueryBuilder<
 
 extension SubscriptionConfigCacheQueryFilter on QueryBuilder<
     SubscriptionConfigCache, SubscriptionConfigCache, QFilterCondition> {
-  QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache,
-      QAfterFilterCondition> canAccessPremiumIconsEqualTo(bool value) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'canAccessPremiumIcons',
-        value: value,
-      ));
-    });
-  }
-
   QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache,
       QAfterFilterCondition> configIdEqualTo(
     String value, {
@@ -864,20 +845,6 @@ extension SubscriptionConfigCacheQueryLinks on QueryBuilder<
 extension SubscriptionConfigCacheQuerySortBy
     on QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache, QSortBy> {
   QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache, QAfterSortBy>
-      sortByCanAccessPremiumIcons() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'canAccessPremiumIcons', Sort.asc);
-    });
-  }
-
-  QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache, QAfterSortBy>
-      sortByCanAccessPremiumIconsDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'canAccessPremiumIcons', Sort.desc);
-    });
-  }
-
-  QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache, QAfterSortBy>
       sortByConfigId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'configId', Sort.asc);
@@ -950,20 +917,6 @@ extension SubscriptionConfigCacheQuerySortBy
 
 extension SubscriptionConfigCacheQuerySortThenBy on QueryBuilder<
     SubscriptionConfigCache, SubscriptionConfigCache, QSortThenBy> {
-  QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache, QAfterSortBy>
-      thenByCanAccessPremiumIcons() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'canAccessPremiumIcons', Sort.asc);
-    });
-  }
-
-  QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache, QAfterSortBy>
-      thenByCanAccessPremiumIconsDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'canAccessPremiumIcons', Sort.desc);
-    });
-  }
-
   QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache, QAfterSortBy>
       thenByConfigId() {
     return QueryBuilder.apply(this, (query) {
@@ -1052,13 +1005,6 @@ extension SubscriptionConfigCacheQuerySortThenBy on QueryBuilder<
 extension SubscriptionConfigCacheQueryWhereDistinct on QueryBuilder<
     SubscriptionConfigCache, SubscriptionConfigCache, QDistinct> {
   QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache, QDistinct>
-      distinctByCanAccessPremiumIcons() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'canAccessPremiumIcons');
-    });
-  }
-
-  QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache, QDistinct>
       distinctByConfigId({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'configId', caseSensitive: caseSensitive);
@@ -1099,13 +1045,6 @@ extension SubscriptionConfigCacheQueryProperty on QueryBuilder<
   QueryBuilder<SubscriptionConfigCache, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
-    });
-  }
-
-  QueryBuilder<SubscriptionConfigCache, bool, QQueryOperations>
-      canAccessPremiumIconsProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'canAccessPremiumIcons');
     });
   }
 

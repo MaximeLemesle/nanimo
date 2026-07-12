@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:nanimo/core/errors/repository_network_exception.dart';
+import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/core/isar/database/sync_service.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
@@ -24,16 +24,14 @@ void main() {
     syncService = _MockSyncService();
     authEvents = StreamController<supabase.AuthState>();
 
-    when(() => repository.authStateChanges)
-        .thenAnswer((_) => authEvents.stream);
+    when(() => repository.authStateChanges).thenAnswer((_) => authEvents.stream);
     when(() => syncService.syncCritical()).thenAnswer((_) async {});
     when(() => syncService.clearAllCaches()).thenAnswer((_) async {});
   });
 
   tearDown(() => authEvents.close());
 
-  AuthCubit createCubit() =>
-      AuthCubit(repository: repository, syncService: syncService);
+  AuthCubit createCubit() => AuthCubit(repository: repository, syncService: syncService);
 
   test('starts in the unknown state', () async {
     final cubit = createCubit();
@@ -157,8 +155,7 @@ void main() {
   });
 
   test('login sets isSubmitting while the request is in flight', () async {
-    when(() => repository.login('a@b.fr', 'secret'))
-        .thenAnswer((_) async {});
+    when(() => repository.login('a@b.fr', 'secret')).thenAnswer((_) async {});
     final cubit = createCubit();
 
     await cubit.login('a@b.fr', 'secret');
@@ -169,8 +166,7 @@ void main() {
   });
 
   test('login maps a known AuthException to a french message', () async {
-    when(() => repository.login('a@b.fr', 'bad'))
-        .thenThrow(const supabase.AuthException('Invalid login credentials'));
+    when(() => repository.login('a@b.fr', 'bad')).thenThrow(const supabase.AuthException('Invalid login credentials'));
     final cubit = createCubit();
 
     await cubit.login('a@b.fr', 'bad');
@@ -193,8 +189,7 @@ void main() {
   });
 
   test('register maps a known AuthException to a french message', () async {
-    when(() => repository.register('a@b.fr', 'secret'))
-        .thenThrow(const supabase.AuthException('User already registered'));
+    when(() => repository.register('a@b.fr', 'secret')).thenThrow(const supabase.AuthException('User already registered'));
     final cubit = createCubit();
 
     await cubit.register('a@b.fr', 'secret');
@@ -238,8 +233,7 @@ void main() {
   });
 
   test('clearError removes the current error message', () async {
-    when(() => repository.login('a@b.fr', 'bad'))
-        .thenThrow(const supabase.AuthException('Invalid login credentials'));
+    when(() => repository.login('a@b.fr', 'bad')).thenThrow(const supabase.AuthException('Invalid login credentials'));
     final cubit = createCubit();
     await cubit.login('a@b.fr', 'bad');
     expect(cubit.state.errorMessage, isNotNull);

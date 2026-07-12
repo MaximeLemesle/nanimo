@@ -13,10 +13,12 @@ import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nanimo/features/auth/presentation/page/login_page.dart';
 import 'package:nanimo/features/auth/presentation/page/signup_page.dart';
 import 'package:nanimo/features/event/data/event_repository.dart';
+import 'package:nanimo/features/event/presentation/cubit/edit_event_cubit.dart';
 import 'package:nanimo/features/event/presentation/cubit/event_creation_cubit.dart';
 import 'package:nanimo/features/event/presentation/page/create_event_page.dart';
 import 'package:nanimo/features/health/data/health_repository.dart';
 import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
+import 'package:nanimo/features/event/presentation/page/edit_event_page.dart';
 import 'package:nanimo/features/journal/presentation/cubit/journal_cubit.dart';
 import 'package:nanimo/features/journal/presentation/page/journal_page.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
@@ -91,9 +93,6 @@ GoRouter createRouter(
         builder: (_, __) => const SignupPage(),
       ),
       ShellRoute(
-        // Home and pet cubits live for the authenticated session only: created
-        // when the shell mounts, disposed when it unmounts (sign-out), so no
-        // stale data survives a logout and no Isar streams run on auth screens.
         builder: (context, state, child) => MultiBlocProvider(
           providers: [
             BlocProvider(
@@ -129,6 +128,17 @@ GoRouter createRouter(
                     petRepository: petRepository,
                   )..load(),
                   child: const CreateEventPage(),
+                ),
+              ),
+              GoRoute(
+                path: 'edit-event/:eventId',
+                builder: (_, state) => BlocProvider(
+                  create: (_) => EditEventCubit(
+                    eventRepository: eventRepository,
+                    referentialRepository: referentialRepository,
+                    petRepository: petRepository,
+                  )..load(state.pathParameters['eventId']!),
+                  child: const EditEventPage(),
                 ),
               ),
               GoRoute(

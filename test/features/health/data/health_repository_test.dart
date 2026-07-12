@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nanimo/core/errors/repository_network_exception.dart';
+import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_vaccine_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/vet_visit_cache.dart';
@@ -88,29 +88,25 @@ void main() {
 
   Future<void> seedDiary(HealthDiaryModel m) async {
     await harness.isar.writeTxn(() async {
-      await harness.isar.healthDiaryCaches
-          .putByHealthDiaryId(HealthDiaryCache.fromModel(m));
+      await harness.isar.healthDiaryCaches.putByHealthDiaryId(HealthDiaryCache.fromModel(m));
     });
   }
 
   Future<void> seedVaccine(HealthDiaryVaccineModel m) async {
     await harness.isar.writeTxn(() async {
-      await harness.isar.healthDiaryVaccineCaches
-          .putByHealthDiaryVaccineId(HealthDiaryVaccineCache.fromModel(m));
+      await harness.isar.healthDiaryVaccineCaches.putByHealthDiaryVaccineId(HealthDiaryVaccineCache.fromModel(m));
     });
   }
 
   Future<void> seedWeight(HealthDiaryWeightLogModel m) async {
     await harness.isar.writeTxn(() async {
-      await harness.isar.weightLogCaches
-          .putByHealthDiaryWeightLogId(WeightLogCache.fromModel(m));
+      await harness.isar.weightLogCaches.putByHealthDiaryWeightLogId(WeightLogCache.fromModel(m));
     });
   }
 
   Future<void> seedVisit(VetVisitModel m) async {
     await harness.isar.writeTxn(() async {
-      await harness.isar.vetVisitCaches
-          .putByVetVisitId(VetVisitCache.fromModel(m));
+      await harness.isar.vetVisitCaches.putByVetVisitId(VetVisitCache.fromModel(m));
     });
   }
 
@@ -174,8 +170,7 @@ void main() {
       expect(await repo.getUpcomingVaccinesForPet('pet-1'), isEmpty);
     });
 
-    test('returns only vaccines whose nextDate is in the future, sorted',
-        () async {
+    test('returns only vaccines whose nextDate is in the future, sorted', () async {
       await seedDiary(buildDiary('d1', 'pet-1'));
       await seedVaccine(buildVaccine(
         'past',
@@ -258,8 +253,7 @@ void main() {
     });
 
     test('throws and does not cache when Supabase fails', () async {
-      stubInsert(supabase, 'vet_visits',
-          resolver: () => throw Exception('offline'));
+      stubInsert(supabase, 'vet_visits', resolver: () => throw Exception('offline'));
 
       await expectLater(repo.addVetVisit(buildVisit('v1')), throwsException);
       expect(await harness.isar.vetVisitCaches.getByVetVisitId('v1'), isNull);
@@ -278,8 +272,7 @@ void main() {
 
     test('throws and keeps the cache when Supabase fails', () async {
       await seedVisit(buildVisit('v1'));
-      stubDelete(supabase, 'vet_visits',
-          resolver: () => throw Exception('offline'));
+      stubDelete(supabase, 'vet_visits', resolver: () => throw Exception('offline'));
 
       await expectLater(
         repo.deleteVetVisit('v1'),
@@ -295,15 +288,13 @@ void main() {
 
       await repo.upsertDiary(buildDiary('d1', 'pet-1'));
 
-      final cached =
-          await harness.isar.healthDiaryCaches.getByHealthDiaryId('d1');
+      final cached = await harness.isar.healthDiaryCaches.getByHealthDiaryId('d1');
       expect(cached, isNotNull);
       expect(cached!.petId, 'pet-1');
     });
 
     test('throws and does not cache when Supabase fails', () async {
-      stubUpsert(supabase, 'health_diary',
-          resolver: () => throw Exception('offline'));
+      stubUpsert(supabase, 'health_diary', resolver: () => throw Exception('offline'));
 
       await expectLater(
         repo.upsertDiary(buildDiary('d1', 'pet-1')),
@@ -323,15 +314,13 @@ void main() {
       await repo.addVaccine(buildVaccine('vac1', diaryId: 'd1'));
 
       expect(
-        await harness.isar.healthDiaryVaccineCaches
-            .getByHealthDiaryVaccineId('vac1'),
+        await harness.isar.healthDiaryVaccineCaches.getByHealthDiaryVaccineId('vac1'),
         isNotNull,
       );
     });
 
     test('throws when Supabase fails', () async {
-      stubInsert(supabase, 'health_diary_vaccines',
-          resolver: () => throw Exception('x'));
+      stubInsert(supabase, 'health_diary_vaccines', resolver: () => throw Exception('x'));
 
       await expectLater(
         repo.addVaccine(buildVaccine('vac1', diaryId: 'd1')),
@@ -351,8 +340,7 @@ void main() {
         nextDate: DateTime.utc(2027, 1, 1),
       ));
 
-      final cached = await harness.isar.healthDiaryVaccineCaches
-          .getByHealthDiaryVaccineId('vac1');
+      final cached = await harness.isar.healthDiaryVaccineCaches.getByHealthDiaryVaccineId('vac1');
       expect(
         cached!.nextDate!.isAtSameMomentAs(DateTime.utc(2027, 1, 1)),
         isTrue,
@@ -360,8 +348,7 @@ void main() {
     });
 
     test('throws when Supabase fails', () async {
-      stubUpdate(supabase, 'health_diary_vaccines',
-          resolver: () => throw Exception('x'));
+      stubUpdate(supabase, 'health_diary_vaccines', resolver: () => throw Exception('x'));
 
       await expectLater(
         repo.updateVaccine(buildVaccine('vac1', diaryId: 'd1')),
@@ -378,15 +365,13 @@ void main() {
       await repo.deleteVaccine('vac1');
 
       expect(
-        await harness.isar.healthDiaryVaccineCaches
-            .getByHealthDiaryVaccineId('vac1'),
+        await harness.isar.healthDiaryVaccineCaches.getByHealthDiaryVaccineId('vac1'),
         isNull,
       );
     });
 
     test('throws when Supabase fails', () async {
-      stubDelete(supabase, 'health_diary_vaccines',
-          resolver: () => throw Exception('x'));
+      stubDelete(supabase, 'health_diary_vaccines', resolver: () => throw Exception('x'));
 
       await expectLater(
         repo.deleteVaccine('vac1'),
@@ -408,8 +393,7 @@ void main() {
     });
 
     test('throws when Supabase fails', () async {
-      stubInsert(supabase, 'health_diary_weight_log',
-          resolver: () => throw Exception('x'));
+      stubInsert(supabase, 'health_diary_weight_log', resolver: () => throw Exception('x'));
 
       await expectLater(
         repo.addWeightLog(buildWeightLog('w1')),
@@ -432,8 +416,7 @@ void main() {
     });
 
     test('throws when Supabase fails', () async {
-      stubDelete(supabase, 'health_diary_weight_log',
-          resolver: () => throw Exception('x'));
+      stubDelete(supabase, 'health_diary_weight_log', resolver: () => throw Exception('x'));
 
       await expectLater(
         repo.deleteWeightLog('w1'),

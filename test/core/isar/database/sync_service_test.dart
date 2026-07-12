@@ -105,8 +105,7 @@ void main() {
               'plan_name': 'free',
               'max_images_per_event': 1,
               'max_pets': 1,
-              'max_storage_mb': 500,
-              'can_access_premium_icons': false,
+              'max_storage_in_mb': 500,
             },
           });
       stubSelect(supabase, 'pets', resolver: () => [
@@ -231,6 +230,10 @@ void main() {
 
       expect(await harness.isar.eventCaches.count(), 1);
       expect(await harness.isar.eventCaches.getByEventId('e9'), isNotNull);
+      expect(
+        (await harness.isar.eventCaches.getByEventId('e9'))!.eventTypeId,
+        't1',
+      );
       expect(await harness.isar.eventImageCaches.count(), 1);
       expect(await harness.isar.petEventCaches.count(), 1);
       expect(await harness.isar.healthDiaryCaches.count(), 1);

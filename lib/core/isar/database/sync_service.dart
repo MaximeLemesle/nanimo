@@ -27,14 +27,6 @@ class SyncService {
     await Future.wait([_syncUser(), _syncPets(), _syncSubscriptionConfig()]);
   }
 
-  /// Wipes every cached collection so the next account on this device
-  /// never sees the previous user's data.
-  Future<void> clearAllCaches() async {
-    await _isar.writeTxn(() async {
-      await _isar.clear();
-    });
-  }
-
   /// Wave 2 — fire and forget after Home renders.
   void syncSecondary() {
     Future(() async {
@@ -46,6 +38,12 @@ class SyncService {
       await _syncWeightLogs();
       await _syncVetVisits();
       await _syncReferential();
+    });
+  }
+
+  Future<void> clearAllCaches() async {
+    await _isar.writeTxn(() async {
+      await _isar.clear();
     });
   }
 

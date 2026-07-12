@@ -203,6 +203,24 @@ FakePostgrestChain stubUpsert(
   return chain;
 }
 
+/// Stubs `supabase.storage.from(bucket).remove(...)`, returning `resolver()`'s
+/// result on success or letting it throw to drive the error path.
+MockStorageFileApi stubStorageRemove(
+  MockSupabaseClient supabase,
+  String bucket, {
+  required FutureOr<void> Function() resolver,
+}) {
+  final storageClient = MockSupabaseStorageClient();
+  final fileApi = MockStorageFileApi();
+  when(() => supabase.storage).thenReturn(storageClient);
+  when(() => storageClient.from(bucket)).thenReturn(fileApi);
+  when(() => fileApi.remove(any())).thenAnswer((_) async {
+    await Future.sync(resolver);
+    return <FileObject>[];
+  });
+  return fileApi;
+}
+
 FakeSelectChain stubSelect(
   MockSupabaseClient supabase,
   String table, {

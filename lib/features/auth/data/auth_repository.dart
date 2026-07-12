@@ -35,7 +35,8 @@ class AuthRepository {
     } catch (e, st) {
       throw mapRepositoryError(e, st,
           operation: 'login',
-          networkMessage: 'Une connexion internet est requise pour se connecter.');
+          networkMessage: 'Une connexion internet est requise pour se connecter.',
+          serverMessage: 'Impossible de vous connecter pour le moment.');
     }
   }
 
@@ -48,7 +49,8 @@ class AuthRepository {
     } catch (e, st) {
       throw mapRepositoryError(e, st,
           operation: 'register',
-          networkMessage: 'Une connexion internet est requise pour créer un compte.');
+          networkMessage: 'Une connexion internet est requise pour créer un compte.',
+          serverMessage: 'Impossible de créer le compte pour le moment.');
     }
   }
 
@@ -89,7 +91,8 @@ class AuthRepository {
     } catch (e, st) {
       throw mapRepositoryError(e, st,
           operation: 'signInWithGoogle',
-          networkMessage: 'Une connexion internet est requise pour se connecter avec Google.');
+          networkMessage: 'Une connexion internet est requise pour se connecter avec Google.',
+          serverMessage: 'Impossible de vous connecter avec Google pour le moment.');
     }
   }
 
@@ -126,7 +129,8 @@ class AuthRepository {
     } catch (e, st) {
       throw mapRepositoryError(e, st,
           operation: 'signInWithApple',
-          networkMessage: 'Une connexion internet est requise pour se connecter avec Apple.');
+          networkMessage: 'Une connexion internet est requise pour se connecter avec Apple.',
+          serverMessage: 'Impossible de vous connecter avec Apple pour le moment.');
     }
   }
 

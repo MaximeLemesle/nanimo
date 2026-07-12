@@ -1,22 +1,43 @@
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 
+sealed class CollageImage {
+  const CollageImage();
+}
+
+class LocalCollageImage extends CollageImage {
+  final XFile file;
+  const LocalCollageImage(this.file);
+}
+
+class RemoteCollageImage extends CollageImage {
+  final String eventImageId;
+  final String assetPath;
+  const RemoteCollageImage({
+    required this.eventImageId,
+    required this.assetPath,
+  });
+}
+
 class PolaroidCollageWidget extends StatelessWidget {
-  final List<XFile> images;
+  final List<CollageImage> images;
   final VoidCallback onTap;
-  final void Function(int index)? onReplaceImage;
+  final void Function(int index)? onImageTap;
+  final Future<String> Function(String assetPath)? urlResolver;
 
   const PolaroidCollageWidget({
     super.key,
     required this.images,
     required this.onTap,
-    this.onReplaceImage,
+    this.onImageTap,
+    this.urlResolver,
   });
 
   static const int maxImages = 5;
@@ -100,16 +121,11 @@ class PolaroidCollageWidget extends StatelessWidget {
     /// A single image is displayed larger
     if (images.length == 1) {
       return Center(
-        child: _replaceable(
+        child: _tappable(
           0,
           _frame(
             size: _singleFrameSize,
-            child: Image.file(
-              File(images.first.path),
-              width: _singleFrameSize + 10,
-              height: _singleFrameSize + 10,
-              fit: BoxFit.cover,
-            ),
+            child: _image(images.first, _singleFrameSize + 10),
           ),
         ),
       );
@@ -125,15 +141,10 @@ class PolaroidCollageWidget extends StatelessWidget {
               offset: _frameOffset(i),
               child: Transform.rotate(
                 angle: _angles[i],
-                child: _replaceable(
+                child: _tappable(
                   i,
                   _frame(
-                    child: Image.file(
-                      File(visible[i].path),
-                      width: 150,
-                      height: 150,
-                      fit: BoxFit.cover,
-                    ),
+                    child: _image(visible[i], 150),
                   ),
                 ),
               ),
@@ -143,11 +154,53 @@ class PolaroidCollageWidget extends StatelessWidget {
     );
   }
 
-  Widget _replaceable(int index, Widget frame) {
-    if (onReplaceImage == null) return frame;
+  Widget _image(CollageImage image, double size) {
+    return switch (image) {
+      LocalCollageImage(:final file) => Image.file(
+          File(file.path),
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+        ),
+      RemoteCollageImage(:final assetPath) => FutureBuilder<String>(
+          future: urlResolver!(assetPath),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return _imagePlaceholder(size);
+            }
+            if (!snapshot.hasData || snapshot.hasError) {
+              return _imagePlaceholder(size, icon: Icons.broken_image_outlined);
+            }
+            return CachedNetworkImage(
+              imageUrl: snapshot.data!,
+              cacheKey: assetPath,
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              placeholder: (_, __) => _imagePlaceholder(size),
+              errorWidget: (_, __, ___) =>
+                  _imagePlaceholder(size, icon: Icons.broken_image_outlined),
+            );
+          },
+        ),
+    };
+  }
+
+  Widget _imagePlaceholder(double size, {IconData icon = Icons.photo}) {
+    return Container(
+      width: size,
+      height: size,
+      color: AppColors.background,
+      alignment: Alignment.center,
+      child: Icon(icon, color: AppColors.textSecondary, size: AppSpacing.xl),
+    );
+  }
+
+  Widget _tappable(int index, Widget frame) {
+    if (onImageTap == null) return frame;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () => onReplaceImage!(index),
+      onTap: () => onImageTap!(index),
       child: frame,
     );
   }

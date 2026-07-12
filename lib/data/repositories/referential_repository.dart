@@ -7,24 +7,18 @@ import 'package:nanimo/features/event/data/models/event_type_model.dart';
 import 'package:nanimo/features/health/data/models/recommended_vaccines_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// Reference data (species, event types) is nearly static, so it is cached in
-/// Isar: a Supabase fetch write-throughs the cache, and a failure falls back to
-/// the last known rows so the journal and home stay usable offline. Races and
-/// recommended vaccines are only needed in the online onboarding flow and are
-/// not cached.
+/// Stat data (species, event types) is cached in Isar
 class ReferentialRepository {
   final SupabaseClient _supabase;
   final Isar? _isar;
 
   ReferentialRepository(this._supabase, [this._isar]);
 
-  /// Loading pet species — cache-first with a Supabase refresh.
+  /// Loading pet species
   Future<List<PetSpeciesModel>> fetchSpecies() async {
     try {
       final response = await _supabase.from('pet_species').select();
-      final species = (response as List)
-          .map((element) => PetSpeciesModel.fromJson(element))
-          .toList();
+      final species = (response as List).map((element) => PetSpeciesModel.fromJson(element)).toList();
       await _cacheSpecies(species);
       return species;
     } catch (err) {
@@ -55,27 +49,19 @@ class ReferentialRepository {
   /// Loading pet races
   Future<List<PetRaceModel>> fetchRacesBySpecies(String petSpeciesId) async {
     try {
-      final response = await _supabase
-          .from('pet_race')
-          .select()
-          .eq('pet_species_id', petSpeciesId)
-          .order('pet_race_name');
+      final response = await _supabase.from('pet_race').select().eq('pet_species_id', petSpeciesId).order('pet_race_name');
 
-      return (response as List)
-          .map((element) => PetRaceModel.fromJson(element))
-          .toList();
+      return (response as List).map((element) => PetRaceModel.fromJson(element)).toList();
     } catch (err) {
       throw Exception('Erreur chargement des races : $err');
     }
   }
 
-  /// Loading event types — cache-first with a Supabase refresh.
+  /// Loading event types
   Future<List<EventTypeModel>> fetchEventTypes() async {
     try {
       final response = await _supabase.from('event_type').select().order('name');
-      final types = (response as List)
-          .map((element) => EventTypeModel.fromJson(element))
-          .toList();
+      final types = (response as List).map((element) => EventTypeModel.fromJson(element)).toList();
       await _cacheEventTypes(types);
       return types;
     } catch (err) {
@@ -108,15 +94,9 @@ class ReferentialRepository {
     String petSpeciesId,
   ) async {
     try {
-      final response = await _supabase
-          .from('recommended_vaccines')
-          .select()
-          .eq('pet_species_id', petSpeciesId)
-          .order('name');
+      final response = await _supabase.from('recommended_vaccines').select().eq('pet_species_id', petSpeciesId).order('name');
 
-      return (response as List)
-          .map((element) => RecommendedVaccineModel.fromJson(element))
-          .toList();
+      return (response as List).map((element) => RecommendedVaccineModel.fromJson(element)).toList();
     } catch (err) {
       throw Exception('Erreur chargement des vaccins recommandés : $err');
     }

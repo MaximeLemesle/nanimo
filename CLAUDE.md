@@ -5,7 +5,7 @@
 **Tagline**: "Chaque moment compte"  
 **Marché**: France (V1)  
 **Modèle**: Freemium + Premium  
-**Stack**: Flutter 3.x + Supabase 2.x + Isar 3.x _(notifications push Firebase FCM prévues en V2 — non implémentées)_
+**Stack**: Flutter 3.x + Supabase 2.x + Isar 3.x Firebase FCM
 
 ---
 
@@ -32,7 +32,7 @@ lib/
 │   └── theme/
 │       └── app_theme.dart
 ├── core/
-│   ├── errors/          # RepositoryException + mapRepositoryError (typed errors)
+│   ├── errors/          # RepositoryException + mapRepositoryError : traduit les codes Postgres/Storage en messages clairs
 │   ├── isar/            # schémas de cache + IsarService + SyncService
 │   ├── utils/
 │   └── widgets/
@@ -84,13 +84,13 @@ lib/
 | `health_diary_weight_log` | id_health_diary_weight_log (UUID PK), weight (DECIMAL), logged_at (TIMESTAMPTZ), pet_id FK                                                 | Graphique 6 mois                 |
 | `vet_visits`            | id_vet_visit (UUID PK), title, visited_at (DATE), vet_name, clinic_name, pet_id FK (CASCADE)                                                 | Timeline visites véto (carnet)   |
 | `notifications`         | id_notification (UUID PK), type (enum), title, description, sending_at (TIMESTAMPTZ), id_pet FK                                              | Push Firebase FCM _(table prête, feature V2)_ |
-| `subscription_config`   | id_subscription_config (SERIAL PK), plan_name, max_images_per_event, max_pets, max_storage_mb, can_access_premium_icons                      | Quotas freemium                  |
+| `subscription_config`   | id_subscription_config (UUID PK), plan_name, max_images_per_event, max_pets, max_storage_in_mb                                               | Quotas freemium. Icônes premium = `is_premium` (event_type/pet_icons) croisé au `subscription_status` de l'user, pas une colonne de config |
 
 ### ENUMs
 
 - `gender_enum` : male, female, unknown
 - `weight_unit_enum` : kg, g
-- `subscription_status_enum` : free, premium
+- `subscription_status_enum` : freemium, premium
 - `notification_type_enum` : anniversary, vaccine, vet, deworming, custom
 
 ### Règles critiques
@@ -221,8 +221,9 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 - Images : bucket `journal-media` privé → `EventRepository.signedImageUrl()` (URL signée 1h).
 - Filtres (NAN-015) : multi-sélection animaux **et/ou** types via bottom sheet, toggle live sur le cubit (`togglePetFilter`/`toggleTypeFilter`/`clearFilters`), appliqués par `JournalState.filteredEvents` (OR intra-groupe, AND inter-groupes).
 - `JournalFilterBarWidget` : chips des filtres actifs (scroll horizontal, tap = retire) à gauche, chip d'ouverture de la sheet à droite. UI à base de `ChipWidget` (core, réutilisable).
-- Détail événement (NAN-032) : tap sur une carte timeline → `JournalEventDetailBottomSheetWidget.show()` (réutilise le `JournalCubit` ambiant via `BlocProvider.value`). Affiche photos (scroll horizontal, URL signées), titre, date, description, animaux (chips) + actions **Modifier**/**Supprimer**. Suppression câblée (`JournalCubit.deleteEvent` → `EventRepository.deleteEvent`, confirmation `AlertDialog`, la sheet se ferme sur succès et un snackbar remonte l'erreur réseau). **Modifier** = simple hook `onEdit` (placeholder snackbar) ; le vrai flux d'édition est un ticket séparé.
-- Calendrier : onglet désactivé (v2).
+- Détail événement (NAN-032) : tap sur une carte timeline → `JournalEventDetailBottomSheetWidget.show()` (réutilise le `JournalCubit` ambiant via `BlocProvider.value`). Affiche photos (scroll horizontal, URL signées), titre, date, description, animaux (chips) + actions **Modifier**/**Supprimer**. Suppression câblée (`JournalCubit.deleteEvent` → `EventRepository.deleteEvent`, confirmation `AlertDialog`, la sheet se ferme sur succès et un snackbar remonte l'erreur réseau). **Modifier** ferme la sheet et push `/home/edit-event/:eventId` (NAN-033).
+- Édition de souvenir (NAN-033) : route `/home/edit-event/:eventId`, `EditEventCubit` scopé route (créé par le `BlocProvider` du GoRoute, `load()` au push). Formulaire pré-rempli, photos gérées via bottom sheets (grille, ajout/remplacement/suppression — quota photos du plan appliqué comme en création), `EventRepository.updateEvent`/`updateEventPets` + upload/suppression d'images. URLs signées mémoïsées (TTL 45 min) + `cacheKey` stable sur les `CachedNetworkImage`.
+- Calendrier (NAN-016) : vue mois avec dots sur les jours à événements, switch timeline/calendrier (`JournalSwitchViewWidget`), mois courant affiché en bas au premier rendu, chargement par blocs de 6 mois sans remonter avant le premier événement. Tap sur un jour → `JournalDayEventsBottomSheetWidget` → détail événement. État vide partagé `JournalEmptyStateWidget`.
 
 ### Créer souvenir
 
@@ -345,7 +346,7 @@ Workflow `.github/workflows/ci.yml` découpé en 3 jobs :
 - **Fichiers** : snake_case (auth_cubit.dart, pet_model.dart)
 - **Cubits** : `[feature]_cubit.dart` + `[feature]_state.dart`
 - **Pages** : `[feature]_page.dart`
-- **Commentaires** : Une ligne courte en anglais pour chaque méthode publique avec /// pour différencier des balises flutter
+- **Commentaires** : Uniquement sur les fonctions qui en ont vraiment besoin — logique non évidente, contrainte invisible dans le code, workaround. Ne pas commenter une méthode dont le nom suffit. Format : une ligne courte en anglais avec /// pour différencier des balises flutter
 - **Erreurs** : Toujours wrap Supabase calls en try/catch
 - **Mounted** : Toujours vérifier `if (!mounted) return;` après await avant setState
 

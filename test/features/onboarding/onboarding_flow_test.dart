@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nanimo/config/router/app_router.dart';
-import 'package:nanimo/core/errors/repository_network_exception.dart';
+import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/data/models/referential/pet_race_model.dart';

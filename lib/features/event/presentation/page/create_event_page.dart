@@ -10,6 +10,7 @@ import 'package:nanimo/core/widgets/app_scaffold.dart';
 import 'package:nanimo/core/widgets/species_icon_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/date_field_widget.dart';
+import 'package:nanimo/core/widgets/time_field_widget.dart';
 import 'package:nanimo/features/event/presentation/cubit/event_creation_cubit.dart';
 import 'package:nanimo/features/event/presentation/event_type_styles.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/create_event_bottom_sheet/add_image_bottom_sheet_widget.dart';
@@ -20,7 +21,12 @@ import 'package:nanimo/features/event/presentation/widgets/create_event/sticker_
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 
 class CreateEventPage extends StatefulWidget {
-  const CreateEventPage({super.key});
+  const CreateEventPage({
+    super.key,
+    this.initialEntryDate,
+  });
+
+  final DateTime? initialEntryDate;
 
   @override
   State<CreateEventPage> createState() => _CreateEventPageState();
@@ -31,12 +37,13 @@ class _CreateEventPageState extends State<CreateEventPage> {
 
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  DateTime _entryDate = DateTime.now();
+  late DateTime _entryDate;
   final List<XFile> _images = [];
 
   @override
   void initState() {
     super.initState();
+    _entryDate = widget.initialEntryDate ?? DateTime.now();
     _titleController.addListener(_onTitleChanged);
   }
 
@@ -45,9 +52,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
   /// Photos allowed for this event: the plan quota, capped by the collage max.
   int _maxImages(BuildContext context) {
     final quota = context.read<SubscriptionCubit>().state.maxImagesPerEvent;
-    return quota < PolaroidCollageWidget.maxImages
-        ? quota
-        : PolaroidCollageWidget.maxImages;
+    return quota < PolaroidCollageWidget.maxImages ? quota : PolaroidCollageWidget.maxImages;
   }
 
   String _quotaMessage(int maxImages) {
@@ -56,6 +61,33 @@ class _CreateEventPageState extends State<CreateEventPage> {
           'Passez au premium pour en ajouter plus.';
     }
     return 'Vous pouvez ajouter $maxImages photos maximum.';
+  }
+
+  void _setEntryDate(DateTime date) {
+    setState(() {
+      _entryDate = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        _entryDate.hour,
+        _entryDate.minute,
+        _entryDate.second,
+        _entryDate.millisecond,
+        _entryDate.microsecond,
+      );
+    });
+  }
+
+  void _setEntryTime(TimeOfDay time) {
+    setState(() {
+      _entryDate = DateTime(
+        _entryDate.year,
+        _entryDate.month,
+        _entryDate.day,
+        time.hour,
+        time.minute,
+      );
+    });
   }
 
   @override
@@ -73,8 +105,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
       listener: (context, state) {
         if (state.status == EventCreationStatus.success) {
           context.pop();
-        } else if (state.status == EventCreationStatus.error &&
-            state.error != null) {
+        } else if (state.status == EventCreationStatus.error && state.error != null) {
           ScaffoldMessenger.of(context)
             ..clearSnackBars()
             ..showSnackBar(SnackBar(content: Text(state.error!)));
@@ -93,12 +124,9 @@ class _CreateEventPageState extends State<CreateEventPage> {
           orElse: () => state.types.first,
         );
         final selectedStyle = EventTypeStyle.fromCode(selectedType.code);
-        final selectedPets = state.pets
-            .where((pet) => state.selectedPetIds.contains(pet.petId))
-            .toList();
+        final selectedPets = state.pets.where((pet) => state.selectedPetIds.contains(pet.petId)).toList();
 
-        final canSubmit =
-            _titleController.text.trim().isNotEmpty && selectedPets.isNotEmpty;
+        final canSubmit = _titleController.text.trim().isNotEmpty && selectedPets.isNotEmpty;
         final String petLabel;
         if (selectedPets.isEmpty) {
           petLabel = 'Animal';
@@ -112,14 +140,43 @@ class _CreateEventPageState extends State<CreateEventPage> {
           body: ListView(
             padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
-              /// Date selector
-              DateFieldWidget(
-                label: 'Date',
-                value: _entryDate,
-                onChanged: (date) => setState(() => _entryDate = date),
-                bordered: false,
-                textAlign: TextAlign.center,
-                textStyle: AppTextStyles.textBold,
+              Row(
+                children: [
+                  /// Back button
+                  IconButton(
+                    onPressed: () => context.pop(),
+                    icon: const Icon(Icons.arrow_back),
+                    color: AppColors.textPrimary,
+                    tooltip: 'Retour',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+
+                  /// Date and time selector
+                  Expanded(
+                    child: DateFieldWidget(
+                      label: 'Date',
+                      value: _entryDate,
+                      onChanged: _setEntryDate,
+                      bordered: false,
+                      textAlign: TextAlign.center,
+                      textStyle: AppTextStyles.textBold,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: TimeFieldWidget(
+                      label: 'Heure',
+                      value: _entryDate,
+                      onChanged: _setEntryTime,
+                      bordered: false,
+                      textAlign: TextAlign.center,
+                      textStyle: AppTextStyles.textBold,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: AppSpacing.md),
 
@@ -167,9 +224,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                         );
                         if (selected == null || !mounted) return;
                         setState(() {
-                          context
-                              .read<EventCreationCubit>()
-                              .setSelectedPets(selected);
+                          context.read<EventCreationCubit>().setSelectedPets(selected);
                         });
                       },
                     ),
@@ -195,9 +250,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                         );
                         if (selected == null || !mounted) return;
                         setState(() {
-                          context
-                              .read<EventCreationCubit>()
-                              .selectType(selected);
+                          context.read<EventCreationCubit>().selectType(selected);
                         });
                       },
                     ),
@@ -207,7 +260,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
 
               /// Images selector
               PolaroidCollageWidget(
-                images: _images,
+                images: [for (final image in _images) LocalCollageImage(image)],
                 onTap: () async {
                   final messenger = ScaffoldMessenger.of(context);
                   final maxImages = _maxImages(context);
@@ -226,21 +279,15 @@ class _CreateEventPageState extends State<CreateEventPage> {
                   }
                   setState(() => _images.addAll(picked.take(remaining)));
                 },
-                onReplaceImage: (_) async {
+                onImageTap: (_) async {
                   final maxImages = _maxImages(context);
                   if (maxImages <= 0) return;
-
-                  /// Re-pick the whole set, replacing the current selection.
-                  /// `pickMultiImage` requires a limit of at least 2, so a
-                  /// single-photo plan re-picks one image instead.
                   final List<XFile> picked;
                   if (maxImages == 1) {
-                    final one = await ImagePicker()
-                        .pickImage(source: ImageSource.gallery);
+                    final one = await ImagePicker().pickImage(source: ImageSource.gallery);
                     picked = one == null ? const [] : [one];
                   } else {
-                    picked =
-                        await ImagePicker().pickMultiImage(limit: maxImages);
+                    picked = await ImagePicker().pickMultiImage(limit: maxImages);
                   }
                   if (picked.isEmpty || !mounted) return;
                   setState(() {

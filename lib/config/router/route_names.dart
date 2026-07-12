@@ -7,6 +7,7 @@ class RouteNames {
   static const home = '/home';
   static const journal = '/home/journal';
   static const createEvent = '/home/create-event';
+  static const editEvent = '/home/edit-event';
   static const pet = '/home/pet';
   static const healthDiary = '/home/pet/health-diary';
   static const profile = '/home/profile';

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:nanimo/core/errors/repository_network_exception.dart';
+import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/event/data/event_repository.dart';
@@ -14,8 +14,7 @@ class _MockEventRepository extends Mock implements EventRepository {}
 
 class _MockPetRepository extends Mock implements PetRepository {}
 
-class _MockReferentialRepository extends Mock
-    implements ReferentialRepository {}
+class _MockReferentialRepository extends Mock implements ReferentialRepository {}
 
 final _pet1 = PetModel(
   petId: 'p1',
@@ -90,8 +89,7 @@ void main() {
     petRepo = _MockPetRepository();
     refRepo = _MockReferentialRepository();
 
-    when(() => eventRepo.watchEvents())
-        .thenAnswer((_) => Stream.value([_eventWalk, _eventHug]));
+    when(() => eventRepo.watchEvents()).thenAnswer((_) => Stream.value([_eventWalk, _eventHug]));
     when(() => eventRepo.watchPetEvents()).thenAnswer(
       (_) => Stream.value({
         'e1': ['p1'],
@@ -104,8 +102,7 @@ void main() {
       }),
     );
     when(() => petRepo.getPets()).thenAnswer((_) async => [_pet1, _pet2]);
-    when(() => refRepo.fetchEventTypes())
-        .thenAnswer((_) async => [_walkType, _hugType]);
+    when(() => refRepo.fetchEventTypes()).thenAnswer((_) async => [_walkType, _hugType]);
     when(() => refRepo.fetchSpecies()).thenAnswer((_) async => _species);
   });
 
@@ -115,14 +112,14 @@ void main() {
         referentialRepository: refRepo,
       );
 
-  Future<void> settle() =>
-      Future<void>.delayed(const Duration(milliseconds: 20));
+  Future<void> settle() => Future<void>.delayed(const Duration(milliseconds: 20));
 
   test('loads events, links, images, pets and icons', () async {
     final cubit = createCubit();
     await settle();
 
     expect(cubit.state.status, JournalStatus.loaded);
+    expect(cubit.state.viewMode, JournalViewMode.timeline);
     expect(cubit.state.events, [_eventWalk, _eventHug]);
     expect(cubit.state.pets, [_pet1, _pet2]);
     expect(cubit.state.types, [_walkType, _hugType]);
@@ -130,6 +127,28 @@ void main() {
     expect(cubit.state.imagePathsByEvent['e1'], ['path/a.jpg']);
     expect(cubit.state.iconsKey['s1'], 'cat');
     expect(cubit.state.filteredEvents, [_eventWalk, _eventHug]);
+
+    await cubit.close();
+  });
+
+  test('switches journal view mode', () async {
+    final cubit = createCubit();
+    await settle();
+
+    cubit.setViewMode(JournalViewMode.calendar);
+
+    expect(cubit.state.viewMode, JournalViewMode.calendar);
+
+    await cubit.close();
+  });
+
+  test('selectCalendarDay stores a local day key', () async {
+    final cubit = createCubit();
+    await settle();
+
+    cubit.selectCalendarDay(DateTime(2026, 3, 5, 11, 43));
+
+    expect(cubit.state.selectedCalendarDay, DateTime(2026, 3, 5));
 
     await cubit.close();
   });
@@ -218,6 +237,47 @@ void main() {
     await cubit.close();
   });
 
+  test('calendar groups filtered events by local day', () async {
+    final cubit = createCubit();
+    await settle();
+
+    cubit.togglePetFilter('p1');
+
+    expect(cubit.state.calendarEventsByDay.keys, [DateTime(2026, 3, 5)]);
+    expect(
+      cubit.state.eventsForCalendarDay(DateTime(2026, 3, 5, 23)),
+      [_eventWalk],
+    );
+    expect(cubit.state.hasEventsOnCalendarDay(DateTime(2026, 3, 4)), isFalse);
+
+    await cubit.close();
+  });
+
+  test('calendar months are sorted from newest to oldest', () {
+    final state = JournalState(
+      events: [
+        EventModel(
+          eventId: 'e3',
+          title: 'Avril',
+          entryDate: DateTime(2026, 4, 1),
+          eventTypeId: 't1',
+        ),
+        _eventWalk,
+        const EventModel(
+          eventId: 'e4',
+          title: 'Sans date',
+          eventTypeId: 't1',
+        ),
+      ],
+    );
+
+    expect(state.calendarMonths, [
+      DateTime(2026, 4),
+      DateTime(2026, 3),
+    ]);
+    expect(state.firstCalendarEventMonth, DateTime(2026, 3));
+  });
+
   test('emits an error when referential loading throws', () async {
     when(() => refRepo.fetchEventTypes()).thenThrow(Exception('boom'));
     final cubit = createCubit();
@@ -242,8 +302,7 @@ void main() {
   });
 
   test('deleteEvent surfaces the network exception message', () async {
-    when(() => eventRepo.deleteEvent('e1'))
-        .thenThrow(const RepositoryNetworkException('Pas de réseau'));
+    when(() => eventRepo.deleteEvent('e1')).thenThrow(const RepositoryNetworkException('Pas de réseau'));
     final cubit = createCubit();
     await settle();
 
@@ -265,8 +324,7 @@ void main() {
   });
 
   test('imageUrl delegates to the repository signed url', () async {
-    when(() => eventRepo.signedImageUrl('path/a.jpg'))
-        .thenAnswer((_) async => 'https://signed/a.jpg');
+    when(() => eventRepo.signedImageUrl('path/a.jpg')).thenAnswer((_) async => 'https://signed/a.jpg');
     final cubit = createCubit();
     await settle();
 
@@ -277,10 +335,8 @@ void main() {
   });
 
   test('imageUrl memoizes the signed url per asset path', () async {
-    when(() => eventRepo.signedImageUrl('path/a.jpg'))
-        .thenAnswer((_) async => 'https://signed/a.jpg');
-    when(() => eventRepo.signedImageUrl('path/b.jpg'))
-        .thenAnswer((_) async => 'https://signed/b.jpg');
+    when(() => eventRepo.signedImageUrl('path/a.jpg')).thenAnswer((_) async => 'https://signed/a.jpg');
+    when(() => eventRepo.signedImageUrl('path/b.jpg')).thenAnswer((_) async => 'https://signed/b.jpg');
     final cubit = createCubit();
     await settle();
 

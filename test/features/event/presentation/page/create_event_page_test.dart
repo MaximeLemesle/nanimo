@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
+import 'package:nanimo/core/widgets/date_field_widget.dart';
+import 'package:nanimo/core/widgets/time_field_widget.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/event/data/event_repository.dart';
@@ -38,7 +40,6 @@ class _FakeSubscriptionCubit extends Cubit<SubscriptionState>
           maxImagesPerEvent: maxImagesPerEvent,
           maxPets: 1,
           maxStorageMb: 500,
-          canAccessPremiumIcons: false,
         )));
 
   @override
@@ -133,6 +134,7 @@ void main() {
   Future<EventCreationCubit> pumpPage(
     WidgetTester tester, {
     int maxImagesPerEvent = 5,
+    DateTime? initialEntryDate,
   }) async {
     await tester.binding.setSurfaceSize(const Size(1080, 2400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -156,7 +158,7 @@ void main() {
               BlocProvider<EventCreationCubit>.value(value: cubit),
               BlocProvider<SubscriptionCubit>.value(value: subscriptionCubit),
             ],
-            child: const CreateEventPage(),
+            child: CreateEventPage(initialEntryDate: initialEntryDate),
           ),
         ),
       ],
@@ -221,7 +223,11 @@ void main() {
 
   testWidgets('submits the event linked to the pet and pops on success',
       (tester) async {
-    await pumpPage(tester);
+    final initialEntryDate = DateTime(2026, 3, 5, 14, 37, 12);
+    await pumpPage(tester, initialEntryDate: initialEntryDate);
+
+    expect(find.text('05/03/2026'), findsOneWidget);
+    expect(find.text('14:37'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField).first, 'Première balade');
     await tester.pump();
@@ -235,10 +241,48 @@ void main() {
         petIds: captureAny(named: 'petIds'),
       ),
     ).captured;
-    expect((captured[0] as EventModel).title, 'Première balade');
+    final event = captured[0] as EventModel;
+    expect(event.title, 'Première balade');
+    expect(event.entryDate, initialEntryDate);
     expect(captured[1] as List<String>, ['pet-milo']);
     // Popped back to the host route.
     expect(find.byType(CreateEventPage), findsNothing);
+  });
+
+  testWidgets('combines the selected date and time before submitting',
+      (tester) async {
+    await pumpPage(
+      tester,
+      initialEntryDate: DateTime(2026, 3, 5, 14, 37, 12),
+    );
+
+    tester
+        .widget<DateFieldWidget>(find.byType(DateFieldWidget))
+        .onChanged(DateTime(2026, 4, 2));
+    await tester.pump();
+    tester
+        .widget<TimeFieldWidget>(find.byType(TimeFieldWidget))
+        .onChanged(const TimeOfDay(hour: 9, minute: 5));
+    await tester.pump();
+
+    expect(find.text('02/04/2026'), findsOneWidget);
+    expect(find.text('09:05'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).first, 'Matin câlin');
+    await tester.pump();
+    await tester.tap(find.text('Enregistrer'));
+    await tester.pumpAndSettle();
+
+    final captured = verify(
+      () => eventRepo.createEvent(
+        captureAny(),
+        petIds: captureAny(named: 'petIds'),
+      ),
+    ).captured;
+    expect(
+      (captured[0] as EventModel).entryDate,
+      DateTime(2026, 4, 2, 9, 5),
+    );
   });
 
   testWidgets('changes the selected type from the bottom sheet',
