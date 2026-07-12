@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
-import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
+import 'package:nanimo/core/widgets/rounded_border_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card_widget/pet_card_item_widget.dart';
 
 class PetCardWidget extends StatelessWidget {
@@ -26,16 +26,9 @@ class PetCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: ShapeDecoration(
-        color: backgroundColor,
-        shape: ContinuousRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg * 2),
-          side: BorderSide(color: borderColor ?? Colors.transparent),
-        ),
-      ),
+    return RoundedBorderWidget(
+      backgroundColor: backgroundColor,
+      borderColor: borderColor ?? Colors.transparent,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

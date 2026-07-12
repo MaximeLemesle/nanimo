@@ -8,8 +8,6 @@ import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/utils/date_formatter.dart';
 import 'package:nanimo/features/event/data/models/event_model.dart';
 
-/// Hero polaroid of the home page: the memory that happened on the same
-/// date [yearsAgo] years ago, or the latest memory as a fallback.
 class HomeMemoryPolaroidWidget extends StatelessWidget {
   final EventModel event;
   final int? yearsAgo;
@@ -25,12 +23,6 @@ class HomeMemoryPolaroidWidget extends StatelessWidget {
     this.yearsAgo,
     this.onTap,
   });
-
-  String get _flagLabel {
-    final years = yearsAgo;
-    if (years == null) return 'Dernier souvenir';
-    return years == 1 ? 'Il y a 1 an' : 'Il y a $years ans';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +41,7 @@ class HomeMemoryPolaroidWidget extends StatelessWidget {
             children: [
               _buildFrame(),
               _buildTape(),
-              _buildFlag(),
+              _buildTag(),
             ],
           ),
         ),
@@ -127,34 +119,51 @@ class HomeMemoryPolaroidWidget extends StatelessWidget {
       future: urlResolver(imagePaths.first),
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return _placeholder();
+          return Container(
+            color: AppColors.background,
+            alignment: Alignment.center,
+            child: Icon(Icons.photo, color: AppColors.textSecondary, size: AppSpacing.xl),
+          );
         }
         if (!snapshot.hasData || snapshot.hasError) {
-          return _placeholder(icon: Icons.broken_image_outlined);
+          return Container(
+            color: AppColors.background,
+            alignment: Alignment.center,
+            child: Icon(Icons.broken_image_outlined, color: AppColors.textSecondary, size: AppSpacing.xl),
+          );
         }
         return CachedNetworkImage(
-          imageUrl: snapshot.data!,
-          // The signed url token changes on every call; key the disk cache
-          // on the stable storage path instead.
-          cacheKey: imagePaths.first,
-          fit: BoxFit.cover,
-          placeholder: (context, url) => _placeholder(),
-          errorWidget: (context, url, error) =>
-              _placeholder(icon: Icons.broken_image_outlined),
-        );
+            imageUrl: snapshot.data!,
+            cacheKey: imagePaths.first,
+            fit: BoxFit.cover,
+            placeholder: (context, url) {
+              return Container(
+                color: AppColors.background,
+                alignment: Alignment.center,
+                child: Icon(
+                  Icons.photo,
+                  color: AppColors.textSecondary,
+                  size: AppSpacing.xl,
+                ),
+              );
+            },
+            errorWidget: (context, url, error) {
+              return Container(
+                color: AppColors.background,
+                alignment: Alignment.center,
+                child: Icon(
+                  Icons.broken_image_outlined,
+                  color: AppColors.textSecondary,
+                  size: AppSpacing.xl,
+                ),
+              );
+            });
       },
     );
   }
 
-  Widget _placeholder({IconData icon = Icons.photo}) {
-    return Container(
-      color: AppColors.background,
-      alignment: Alignment.center,
-      child: Icon(icon, color: AppColors.textSecondary, size: AppSpacing.xl),
-    );
-  }
-
   Widget _buildTape() {
+    /// The tape that holds the polaroid frame
     return Positioned(
       top: -AppSpacing.md,
       left: 0,
@@ -172,7 +181,8 @@ class HomeMemoryPolaroidWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildFlag() {
+  Widget _buildTag() {
+    /// Tag with the memory's label
     return Positioned(
       top: -AppSpacing.sm,
       left: -AppSpacing.sm,
@@ -195,10 +205,12 @@ class HomeMemoryPolaroidWidget extends StatelessWidget {
             ],
           ),
           child: Text(
-            _flagLabel,
-            style: AppTextStyles.textSmallBold.copyWith(
-              color: AppColors.tertiary900,
-            ),
+            yearsAgo == null
+                ? 'Dernier souvenir'
+                : yearsAgo == 1
+                    ? 'Il y a 1 an'
+                    : 'Il y a $yearsAgo ans',
+            style: AppTextStyles.textSmallBold,
           ),
         ),
       ),

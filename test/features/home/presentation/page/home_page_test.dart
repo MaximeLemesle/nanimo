@@ -128,7 +128,7 @@ void main() {
     await cubit.close();
   });
 
-  testWidgets('shows the masthead, the family tile and an all-clear health',
+  testWidgets('shows the masthead, the pets strip and an all-clear health',
       (tester) async {
     final cubit = buildCubit();
     await tester.pumpWidget(buildPage(cubit));
@@ -136,44 +136,39 @@ void main() {
     petsController.add([_milo]);
     await tester.pumpAndSettle();
 
-    expect(find.text('La gazette de Maxime'), findsOneWidget);
+    expect(find.text('Board de Maxime'), findsOneWidget);
     expect(find.text('Milo'), findsOneWidget);
-    expect(find.text('Ma famille'), findsOneWidget);
+    expect(find.text('Santé'), findsOneWidget);
     expect(find.text('Tout est à jour !'), findsOneWidget);
-    expect(find.text('Cette semaine'), findsOneWidget);
-    expect(find.text('Aucun souvenir'), findsOneWidget);
     await cubit.close();
   });
 
-  testWidgets('counts the memories captured over the last 7 days',
-      (tester) async {
-    // Tall phone viewport so the bento tiles below the polaroid are built.
+  testWidgets('opens the canicule article in a bottom sheet', (tester) async {
+    // Tall phone viewport so the article card at the bottom is built.
     tester.view.physicalSize = const Size(1080, 2340);
     tester.view.devicePixelRatio = 2.0;
     addTearDown(tester.view.reset);
 
-    when(() => eventRepo.watchEvents()).thenAnswer(
-      (_) => Stream.value([
-        EventModel(
-          eventId: 'e1',
-          title: 'Balade au lac',
-          entryDate: DateTime.now().subtract(const Duration(days: 1)),
-          eventTypeId: 't1',
-        ),
-      ]),
-    );
-
     final cubit = buildCubit();
     await tester.pumpWidget(buildPage(cubit));
 
     petsController.add([_milo]);
     await tester.pumpAndSettle();
 
-    expect(find.text('1'), findsOneWidget);
-    expect(find.text('souvenir capturé'), findsOneWidget);
-    // The latest memory is also featured as the fallback polaroid.
-    expect(find.text('Dernier souvenir'), findsOneWidget);
-    expect(find.text('Balade au lac'), findsOneWidget);
+    expect(find.text('Canicule : protégez votre animal'), findsOneWidget);
+    expect(find.text('Lire la suite'), findsOneWidget);
+
+    await tester.tap(find.text('Lire la suite'));
+    await tester.pumpAndSettle();
+
+    // Title now appears on both the card and the opened sheet.
+    expect(find.text('Canicule : protégez votre animal'), findsNWidgets(2));
+    expect(find.textContaining('coup de chaleur'), findsWidgets);
+
+    // The back button at the top of the sheet closes it.
+    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.pumpAndSettle();
+    expect(find.text('Canicule : protégez votre animal'), findsOneWidget);
     await cubit.close();
   });
 

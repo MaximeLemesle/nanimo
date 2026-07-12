@@ -196,12 +196,14 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 
 ### Home
 
-**Implémentation (NAN-022)** — design « Gazette + Bento » (le parc illustré reste la signature de la Pet Page, la home a la sienne : la une d'un album souvenir).
+**Implémentation (NAN-022)** — design « Gazette » (le parc illustré reste la signature de la Pet Page, la home a la sienne : la une d'un album souvenir).
 
-- **Masthead gazette** centré : date du jour (`DateFormatter.weekdayDayMonth`, « Mardi 8 juillet ») + « La gazette de {prénom} » en Gluten — prénom via `AuthRepository.watchCurrentUser()` (fallback « Votre gazette »).
+- **Header gazette** (`HomeHeaderWidget`) centré : date du jour (`DateFormatter.weekdayDayMonth`) + « Gazette de {prénom} » en Gluten — prénom via `AuthRepository.watchCurrentUser()` (fallback « Votre gazette »).
 - **Polaroïd héros « Il y a X ans »** (`HomeMemoryPolaroidWidget`) : souvenir survenu le même jour/mois une année précédente (`HomeState.anniversaryEvent`), fallback dernier souvenir (flag « Dernier souvenir »). Photo = 1ʳᵉ image de l'event, URL signée memoizée 45 min (`HomeCubit.imageUrl`, même pattern que le Journal). Tap → journal.
-- **Tuile Santé** (rose) : vaccins en retard ou dus sous 30 j (`HomeState.vaccineAlerts`, tri par urgence), badge `VaccineStatusBadgeWidget` réutilisé ; variante verte « Tout est à jour ! » sinon. Tap sur une ligne → sélection du pet (`PetDetailsCubit` partagé) + push carnet de santé.
-- **Bento** : tuile Semaine (menthe — compteur Comfortaa des souvenirs sur 7 jours glissants + pastilles L→D via `weekEvents`/`weekActiveDays`, tap → journal) côte à côte avec la tuile Famille (une ligne par animal avec point de statut vaccinal, `vaccineStatusByPet` = pire statut gagne, tap → pet page).
+- **Strip d'animaux** (`HomePetListWidget`) : rangée horizontale scrollable d'avatars (`PetAvatarWidget` medium) + prénom sous chacun. Tap → sélection du pet (`PetDetailsCubit` partagé) + push pet page.
+- **Carte Santé** (rose) : vaccins en retard ou dus sous 30 j (`HomeState.vaccineAlerts`, tri par urgence), badge `VaccineStatusBadgeWidget` réutilisé ; variante verte « Tout est à jour ! » sinon. Tap sur une ligne → sélection du pet + push carnet de santé.
+- **Carte article canicule** (`HomeArticleCardWidget`, jaune) : teaser (kicker + titre + extrait + « Lire la suite ») d'un article de conseils, contenu **en dur** dans le fichier (pas de backend blog en V1). Tap → article complet dans une bottom sheet à 80 % de l'écran (`FractionallySizedBox`), bouton retour épinglé en haut, corps scrollable.
+- **`RoundedBorderWidget`** (`core/widgets/`) : shell squircle commun à toutes les cartes de l'app — `ShapeDecoration` + `ContinuousRectangleBorder(AppRadius.lg * 2)`, fond/bordure/padding configurables, `fullWidth`, `onTap` optionnel (InkWell). Utilisé par les cartes home (Santé, article), les cartes Pet Page (`PetCardWidget`, `PetDiaryCardWidget`, `PetWeightCardWidget`), `GridTileWidget` (création) et `VaccineStatusBadgeWidget`. Les shapes `AppRadius.md * 2` (boutons, clip photo du journal) restent hors périmètre.
 - **`HomeCubit`** : offline-first, écoute 6 streams Isar (pets, events, pets_events, images, diaries, vaccins) + le user courant. Les helpers dérivés du state prennent un `now` injectable pour les tests.
 - La logique de statut vaccin (`VaccineStatus`/`vaccineStatusFor`) vit dans `core/utils/vaccine_status.dart` (ré-exportée par `vaccine_status_badge_widget.dart` pour compat) ; `HealthRepository.watchAllDiaries()`/`watchAllVaccines()` fournissent les streams globaux pour mapper vaccin → pet.
 

@@ -102,7 +102,7 @@ En production, un bug devient invisible et indiagnosticable — d'autant qu'il n
 | `pet_details_cubit.dart` : 378 lignes, 5 subscriptions | Scinder en `PetDetailsCubit` + `HealthDiaryCubit` |
 | Lints par défaut uniquement | Activer `unawaited_futures`, `always_use_package_imports`, `prefer_final_locals` |
 | Matching des erreurs Supabase par chaîne exacte anglaise | Utiliser `AuthException.code` quand disponible |
-| CI : pas de build APK/AAB, versions d'actions incohérentes | Job `flutter build` sur tag + Dependabot pour actions et pubspec |
+| CI : pas de build APK/AAB, versions d'actions incohérentes | Job `flutter build` sur tag |
 
 ---
 
