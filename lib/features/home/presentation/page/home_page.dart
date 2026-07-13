@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:nanimo/config/theme/app_colors.dart';
-import 'package:nanimo/config/theme/app_radius.dart';
+import 'package:go_router/go_router.dart';
+import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
-import 'package:nanimo/core/widgets/pet_avatar_widget.dart';
 import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
-import 'package:nanimo/features/pet/data/models/pet_model.dart';
+import 'package:nanimo/features/home/presentation/widgets/home_article_card_widget.dart';
+import 'package:nanimo/features/home/presentation/widgets/home_header_widget.dart';
+import 'package:nanimo/features/home/presentation/widgets/home_health_card_widget.dart';
+import 'package:nanimo/features/home/presentation/widgets/home_memory_polaroid_widget.dart';
+import 'package:nanimo/features/home/presentation/widgets/home_pet_list_widget.dart';
+import 'package:nanimo/features/journal/presentation/widgets/journal_event_detail/journal_event_detail_bottom_sheet_widget.dart';
+import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -23,68 +28,61 @@ class HomePage extends StatelessWidget {
             if (state.pets.isEmpty) {
               return const Center(child: Text('Aucun animal pour le moment'));
             }
+
+            final now = DateTime.now();
+            final anniversary = state.anniversaryEvent(now: now);
+            final memory = anniversary ?? state.latestEvent;
+
             return ListView(
               padding: const EdgeInsets.all(AppSpacing.lg),
               children: [
-                for (final pet in state.pets)
-                  _PetCard(
-                    pet: pet,
-                    iconKey: state.iconsKey[pet.petSpeciesId],
+                HomeHeaderWidget(userName: state.userName, now: now),
+                const SizedBox(height: AppSpacing.xl),
+
+                /// Display the last memory or the remember "X years ago"
+                if (memory != null) ...[
+                  HomeMemoryPolaroidWidget(
+                    event: memory,
+                    yearsAgo: anniversary == null ? null : state.yearsAgo(anniversary, now: now),
+                    imagePaths: state.imagePathsByEvent[memory.eventId] ?? const [],
+                    urlResolver: context.read<HomeCubit>().imageUrl,
+                    onTap: () => JournalEventDetailBottomSheetWidget.show(
+                      context,
+                      event: memory,
+                      onEdit: () => context
+                          .push('${RouteNames.editEvent}/${memory.eventId}'),
+                    ),
                   ),
+                  const SizedBox(height: AppSpacing.xl),
+                ],
+
+                /// List of the user's pets
+                HomePetListWidget(
+                  pets: state.pets,
+                  iconsKey: state.iconsKey,
+                  onPetTap: (petId) {
+                    context.read<PetDetailsCubit>().selectPet(petId);
+                    context.push(RouteNames.pet);
+                  },
+                ),
+                const SizedBox(height: AppSpacing.xl),
+
+                /// List of vaccine alerts for the user's pets
+                HomeHealthCardWidget(
+                  alerts: state.vaccineAlerts(now: now),
+                  iconsKey: state.iconsKey,
+                  onAlertTap: (petId) {
+                    context.read<PetDetailsCubit>().selectPet(petId);
+                    context.push(RouteNames.healthDiary);
+                  },
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                
+                /// Display the latest article
+                const HomeArticleCardWidget(),
               ],
             );
           },
-        ),
-      ),
-    );
-  }
-}
-
-class _PetCard extends StatelessWidget {
-  final PetModel pet;
-  final String? iconKey;
-
-  const _PetCard({required this.pet, this.iconKey});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: AppColors.backgroundSurface,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        side: const BorderSide(color: AppColors.backgroundStroke),
-      ),
-      margin: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Row(
-          children: [
-            if (iconKey != null)
-              PetAvatarWidget(iconKey: iconKey!, size: PetAvatarSize.small)
-            else
-              const Icon(Icons.pets, size: 40, color: AppColors.textSecondary),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    pet.petName,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  Text(
-                    'Né le ${pet.birthdate.day.toString().padLeft(2, '0')}'
-                    '/${pet.birthdate.month.toString().padLeft(2, '0')}'
-                    '/${pet.birthdate.year}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ),
       ),
     );

@@ -30,6 +30,14 @@ class HealthRepository {
     return row?.toModel();
   }
 
+  /// Watches every cached diary, used to map vaccines back to their pet.
+  Stream<List<HealthDiaryModel>> watchAllDiaries() {
+    return _isar.healthDiaryCaches
+        .where()
+        .watch(fireImmediately: true)
+        .map((rows) => rows.map((c) => c.toModel()).toList());
+  }
+
   Future<void> upsertDiary(HealthDiaryModel diary) async {
     try {
       await _supabase
@@ -55,6 +63,15 @@ class HealthRepository {
     return _isar.healthDiaryVaccineCaches
         .filter()
         .healthDiaryIdEqualTo(healthDiaryId)
+        .sortByNextDate()
+        .watch(fireImmediately: true)
+        .map((rows) => rows.map((c) => c.toModel()).toList());
+  }
+
+  /// Watches every cached vaccine, across all diaries.
+  Stream<List<HealthDiaryVaccineModel>> watchAllVaccines() {
+    return _isar.healthDiaryVaccineCaches
+        .where()
         .sortByNextDate()
         .watch(fireImmediately: true)
         .map((rows) => rows.map((c) => c.toModel()).toList());

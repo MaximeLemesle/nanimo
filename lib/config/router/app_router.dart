@@ -8,6 +8,7 @@ import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/core/widgets/app_shell.dart';
 import 'package:nanimo/core/widgets/error_screen.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
+import 'package:nanimo/features/auth/data/auth_repository.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nanimo/features/auth/presentation/page/login_page.dart';
 import 'package:nanimo/features/auth/presentation/page/signup_page.dart';
@@ -46,6 +47,7 @@ class _AuthCubitListenable extends ChangeNotifier {
 
 GoRouter createRouter(
   AuthCubit authCubit, {
+  required AuthRepository authRepository,
   required EventRepository eventRepository,
   required ReferentialRepository referentialRepository,
   required PetRepository petRepository,
@@ -97,12 +99,22 @@ GoRouter createRouter(
               create: (_) => HomeCubit(
                 petRepository: petRepository,
                 referentialRepository: referentialRepository,
+                eventRepository: eventRepository,
+                healthRepository: healthRepository,
+                authRepository: authRepository,
               ),
             ),
             BlocProvider(
               create: (_) => PetDetailsCubit(
                 petRepository: petRepository,
                 healthRepository: healthRepository,
+                referentialRepository: referentialRepository,
+              ),
+            ),
+            BlocProvider(
+              create: (_) => JournalCubit(
+                eventRepository: eventRepository,
+                petRepository: petRepository,
                 referentialRepository: referentialRepository,
               ),
             ),
@@ -138,14 +150,7 @@ GoRouter createRouter(
               ),
               GoRoute(
                 path: 'journal',
-                builder: (_, __) => BlocProvider(
-                  create: (_) => JournalCubit(
-                    eventRepository: eventRepository,
-                    petRepository: petRepository,
-                    referentialRepository: referentialRepository,
-                  ),
-                  child: const JournalPage(),
-                ),
+                builder: (_, __) => const JournalPage(),
               ),
               GoRoute(
                 path: 'pet',

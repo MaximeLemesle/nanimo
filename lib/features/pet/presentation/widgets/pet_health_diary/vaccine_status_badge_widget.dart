@@ -1,18 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
-import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
+import 'package:nanimo/core/utils/vaccine_status.dart';
+import 'package:nanimo/core/widgets/rounded_border_widget.dart';
 
-enum VaccineStatus { done, soon, overdue }
-
-VaccineStatus vaccineStatusFor(DateTime nextDate, {DateTime? now}) {
-  final reference = now ?? DateTime.now();
-  final days = nextDate.difference(reference).inDays;
-  if (days < 0) return VaccineStatus.overdue;
-  if (days <= 30) return VaccineStatus.soon;
-  return VaccineStatus.done;
-}
+export 'package:nanimo/core/utils/vaccine_status.dart';
 
 class VaccineStatusBadgeWidget extends StatelessWidget {
   final DateTime nextDate;
@@ -43,16 +36,12 @@ class VaccineStatusBadgeWidget extends StatelessWidget {
         foreground = AppColors.secondary700;
     }
 
-    return Container(
+    return RoundedBorderWidget(
+      backgroundColor: background,
+      fullWidth: false,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
         vertical: AppSpacing.sm,
-      ),
-      decoration: ShapeDecoration(
-        color: background,
-        shape: ContinuousRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg * 2),
-        ),
       ),
       child: Text(
         label,

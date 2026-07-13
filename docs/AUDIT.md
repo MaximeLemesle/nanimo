@@ -237,7 +237,6 @@ _Résiduel :_ réconciliation `supabase db diff` avec la base live et tests RLS 
 `.env.example` documenté (valeurs publiques uniquement) + README racine réécrit (setup, `.env`, hooks, build_runner, tests, pointeur DB).
 
 **A-13 · Dettes diverses — ✅ Partiellement traité**
-Fait : Dependabot (actions + pub), `release.yml` en `checkout@v5` + build APK/AAB attaché à la release.
 _Résiduel (tickets dédiés) :_ cohérence UTC dans `getUpcomingVaccinesForPet`, i18n des messages remontés en présentation, scission de `pet_details_cubit.dart`, lints additionnels, `AuthCubit._formatError` via `AuthException.code`.
 
 ---

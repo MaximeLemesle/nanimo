@@ -1,5 +1,6 @@
 import 'dart:developer' as developer;
 
+import 'package:flutter/foundation.dart';
 import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_cache.dart';
@@ -49,6 +50,7 @@ class SyncService {
   Future<void> _syncUser() async {
     try {
       final userId = _supabase.auth.currentUser?.id;
+      debugPrint('[log] currentUser=$userId');
       if (userId == null) return;
 
       final data = await _supabase.from('users').select().eq('id_user', userId).single();
@@ -84,7 +86,7 @@ class SyncService {
   Future<void> _syncPets() async {
     try {
       final data = await _supabase.from('pets').select();
-      final pets = (data as List).map((e) => PetCache.fromJson(e as Map<String, dynamic>)).toList();
+      final pets = data.map((e) => PetCache.fromJson(e)).toList();
       await _isar.writeTxn(() async {
         await _isar.petCaches.clear();
         await _isar.petCaches.putAllByPetId(pets);
@@ -97,7 +99,7 @@ class SyncService {
   Future<void> _syncEvents() async {
     try {
       final data = await _supabase.from('events').select();
-      final events = (data as List).map((e) => EventCache.fromJson(e as Map<String, dynamic>)).toList();
+      final events = data.map((e) => EventCache.fromJson(e)).toList();
       await _isar.writeTxn(() async {
         await _isar.eventCaches.clear();
         await _isar.eventCaches.putAllByEventId(events);

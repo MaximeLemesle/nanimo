@@ -40,10 +40,15 @@ class AuthRepository {
     }
   }
 
-  /// Creates a new account with email and password.
-  Future<void> register(String email, String password) async {
+  /// Creates a new account with email, password and username.
+  Future<void> register(String email, String password, String userName) async {
     try {
-      await _supabase.auth.signUp(email: email, password: password);
+      await _supabase.auth.signUp(
+        email: email,
+        password: password,
+        data: {'user_name': userName},
+      );
+      await _saveUserName(userName);
     } on AuthException {
       rethrow;
     } catch (e, st) {
@@ -52,6 +57,25 @@ class AuthRepository {
           networkMessage: 'Une connexion internet est requise pour créer un compte.',
           serverMessage: 'Impossible de créer le compte pour le moment.');
     }
+  }
+
+  /// Persists userName on the local cache
+  Future<void> _saveUserName(String userName) async {
+    final id = currentUserId;
+    if (id == null) return;
+
+    try {
+      await _supabase
+          .from('users')
+          .update({'user_name': userName}).eq('id_user', id);
+
+      final data =
+          await _supabase.from('users').select().eq('id_user', id).single();
+      final cache = UserCache.fromJson(data);
+      await _isar.writeTxn(() async {
+        await _isar.userCaches.putByUserId(cache);
+      });
+    } catch (_) {}
   }
 
   /// Signs in with Google
