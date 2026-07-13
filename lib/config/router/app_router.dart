@@ -111,6 +111,13 @@ GoRouter createRouter(
                 referentialRepository: referentialRepository,
               ),
             ),
+            BlocProvider(
+              create: (_) => JournalCubit(
+                eventRepository: eventRepository,
+                petRepository: petRepository,
+                referentialRepository: referentialRepository,
+              ),
+            ),
           ],
           child: AppShell(child: child),
         ),
@@ -143,14 +150,7 @@ GoRouter createRouter(
               ),
               GoRoute(
                 path: 'journal',
-                builder: (_, __) => BlocProvider(
-                  create: (_) => JournalCubit(
-                    eventRepository: eventRepository,
-                    petRepository: petRepository,
-                    referentialRepository: referentialRepository,
-                  ),
-                  child: const JournalPage(),
-                ),
+                builder: (_, __) => const JournalPage(),
               ),
               GoRoute(
                 path: 'pet',

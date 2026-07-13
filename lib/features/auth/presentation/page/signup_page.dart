@@ -18,6 +18,7 @@ class SignupPage extends StatefulWidget {
 }
 
 class _SignupPageState extends State<SignupPage> {
+  final _userNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
@@ -27,9 +28,20 @@ class _SignupPageState extends State<SignupPage> {
   @override
   void initState() {
     super.initState();
+    _userNameController.addListener(_updateFormValidity);
     _emailController.addListener(_updateFormValidity);
     _passwordController.addListener(_updateFormValidity);
     _confirmController.addListener(_updateFormValidity);
+  }
+
+  String? _userNameValidator(String? validation) {
+    if (validation == null || validation.trim().isEmpty) {
+      return 'Prénom requis';
+    }
+    if (validation.trim().length < 2) {
+      return '2 caractères minimum';
+    }
+    return null;
   }
 
   String? _emailValidator(String? validation) =>
@@ -56,7 +68,8 @@ class _SignupPageState extends State<SignupPage> {
   }
 
   void _updateFormValidity() {
-    final valid = _emailValidator(_emailController.text.trim()) == null &&
+    final valid = _userNameValidator(_userNameController.text.trim()) == null &&
+        _emailValidator(_emailController.text.trim()) == null &&
         _passwordValidator(_passwordController.text.trim()) == null &&
         _confirmValidator(_confirmController.text.trim()) == null;
     if (valid != _isFormValid) setState(() => _isFormValid = valid);
@@ -64,9 +77,11 @@ class _SignupPageState extends State<SignupPage> {
 
   @override
   void dispose() {
+    _userNameController.removeListener(_updateFormValidity);
     _emailController.removeListener(_updateFormValidity);
     _passwordController.removeListener(_updateFormValidity);
     _confirmController.removeListener(_updateFormValidity);
+    _userNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmController.dispose();
@@ -78,6 +93,7 @@ class _SignupPageState extends State<SignupPage> {
     context.read<AuthCubit>().register(
           _emailController.text.trim(),
           _passwordController.text.trim(),
+          _userNameController.text.trim(),
         );
   }
 
@@ -107,6 +123,16 @@ class _SignupPageState extends State<SignupPage> {
                       ?.copyWith(color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: AppSpacing.xl),
+                TextFieldWidget(
+                  controller: _userNameController,
+                  label: 'Prénom',
+                  hint: 'Entrez votre prénom',
+                  keyboardType: TextInputType.name,
+                  textInputAction: TextInputAction.next,
+                  onChanged: _onFieldChanged,
+                  validator: _userNameValidator,
+                ),
+                const SizedBox(height: AppSpacing.sm),
                 TextFieldWidget(
                   controller: _emailController,
                   label: 'Email',

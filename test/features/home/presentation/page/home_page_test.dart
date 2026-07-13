@@ -16,6 +16,7 @@ import 'package:nanimo/features/health/data/models/health_diary_vaccine_model.da
 import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
 import 'package:nanimo/features/home/presentation/page/home_page.dart';
 import 'package:nanimo/features/home/presentation/widgets/home_memory_polaroid_widget.dart';
+import 'package:nanimo/features/journal/presentation/cubit/journal_cubit.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 
@@ -130,6 +131,11 @@ void main() {
 
   testWidgets('shows the masthead, the pets strip and an all-clear health',
       (tester) async {
+    // Tall phone viewport so the health card below the pets strip is built.
+    tester.view.physicalSize = const Size(1080, 2340);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.reset);
+
     final cubit = buildCubit();
     await tester.pumpWidget(buildPage(cubit));
 
@@ -138,7 +144,7 @@ void main() {
 
     expect(find.text('Board de Maxime'), findsOneWidget);
     expect(find.text('Milo'), findsOneWidget);
-    expect(find.text('Santé'), findsOneWidget);
+    expect(find.text('Vaccins à venir'), findsOneWidget);
     expect(find.text('Tout est à jour !'), findsOneWidget);
     await cubit.close();
   });
@@ -195,6 +201,64 @@ void main() {
     expect(find.byType(HomeMemoryPolaroidWidget), findsOneWidget);
     expect(find.text('Il y a 1 an'), findsOneWidget);
     expect(find.text('Première baignade'), findsOneWidget);
+    await cubit.close();
+  });
+
+  testWidgets('opens the event detail sheet when tapping the polaroid',
+      (tester) async {
+    // Tall AND wide viewport: the polaroid must be tappable and the sheet
+    // action buttons need room for the wide test font glyphs.
+    tester.view.physicalSize = const Size(1600, 2560);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.reset);
+
+    final now = DateTime.now();
+    when(() => eventRepo.watchEvents()).thenAnswer(
+      (_) => Stream.value([
+        EventModel(
+          eventId: 'e1',
+          title: 'Première baignade',
+          entryDate: DateTime(now.year - 1, now.month, now.day, 12),
+          eventTypeId: 't1',
+        ),
+      ]),
+    );
+    // Stubs required by the JournalCubit backing the detail sheet.
+    when(() => petRepo.getPets()).thenAnswer((_) async => [_milo]);
+    when(() => referentialRepo.fetchEventTypes())
+        .thenAnswer((_) async => const []);
+
+    final cubit = buildCubit();
+    final journalCubit = JournalCubit(
+      eventRepository: eventRepo,
+      petRepository: petRepo,
+      referentialRepository: referentialRepo,
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: MultiBlocProvider(
+            providers: [
+              BlocProvider.value(value: cubit),
+              BlocProvider.value(value: journalCubit),
+            ],
+            child: const HomePage(),
+          ),
+        ),
+      ),
+    );
+
+    petsController.add([_milo]);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(HomeMemoryPolaroidWidget));
+    await tester.pumpAndSettle();
+
+    // The event title now appears on both the polaroid and the sheet.
+    expect(find.text('Première baignade'), findsNWidgets(2));
+    expect(find.text('Modifier'), findsOneWidget);
+    expect(find.text('Supprimer'), findsOneWidget);
+    await journalCubit.close();
     await cubit.close();
   });
 

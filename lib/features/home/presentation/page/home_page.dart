@@ -9,6 +9,7 @@ import 'package:nanimo/features/home/presentation/widgets/home_header_widget.dar
 import 'package:nanimo/features/home/presentation/widgets/home_health_card_widget.dart';
 import 'package:nanimo/features/home/presentation/widgets/home_memory_polaroid_widget.dart';
 import 'package:nanimo/features/home/presentation/widgets/home_pet_list_widget.dart';
+import 'package:nanimo/features/journal/presentation/widgets/journal_event_detail/journal_event_detail_bottom_sheet_widget.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 
 class HomePage extends StatelessWidget {
@@ -45,7 +46,12 @@ class HomePage extends StatelessWidget {
                     yearsAgo: anniversary == null ? null : state.yearsAgo(anniversary, now: now),
                     imagePaths: state.imagePathsByEvent[memory.eventId] ?? const [],
                     urlResolver: context.read<HomeCubit>().imageUrl,
-                    onTap: () => context.push(RouteNames.journal),
+                    onTap: () => JournalEventDetailBottomSheetWidget.show(
+                      context,
+                      event: memory,
+                      onEdit: () => context
+                          .push('${RouteNames.editEvent}/${memory.eventId}'),
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
                 ],

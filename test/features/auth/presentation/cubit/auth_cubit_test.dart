@@ -189,10 +189,10 @@ void main() {
   });
 
   test('register maps a known AuthException to a french message', () async {
-    when(() => repository.register('a@b.fr', 'secret')).thenThrow(const supabase.AuthException('User already registered'));
+    when(() => repository.register('a@b.fr', 'secret', 'Maxime')).thenThrow(const supabase.AuthException('User already registered'));
     final cubit = createCubit();
 
-    await cubit.register('a@b.fr', 'secret');
+    await cubit.register('a@b.fr', 'secret', 'Maxime');
 
     expect(cubit.state.errorMessage, 'Un compte existe déjà avec cet email.');
     await cubit.close();

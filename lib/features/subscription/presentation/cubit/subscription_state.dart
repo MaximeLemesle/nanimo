@@ -30,9 +30,6 @@ class SubscriptionState extends Equatable {
 
   int get maxPets => config?.maxPets ?? 1;
 
-  /// True if the user has access to premium icons
-  bool get canAccessPremiumIcons => config?.canAccessPremiumIcons ?? false;
-
   /// True if storage usage (in MB) is below the plan limit
   bool canUseStorage(int currentMb) => config != null && currentMb < config!.maxStorageMb;
 

@@ -49,7 +49,7 @@ class _FakeAuthCubit extends Cubit<AuthState> implements AuthCubit {
   }
 
   @override
-  Future<void> register(String email, String password) async {
+  Future<void> register(String email, String password, String userName) async {
     emit(const AuthState.authenticated());
   }
 
@@ -305,9 +305,10 @@ void main() {
         (tester) async {
       await goThroughOnboarding(tester);
 
-      await tester.enterText(find.byType(TextField).at(0), 'milo@nanimo.fr');
-      await tester.enterText(find.byType(TextField).at(1), 'azerty1');
+      await tester.enterText(find.byType(TextField).at(0), 'Maxime');
+      await tester.enterText(find.byType(TextField).at(1), 'milo@nanimo.fr');
       await tester.enterText(find.byType(TextField).at(2), 'azerty1');
+      await tester.enterText(find.byType(TextField).at(3), 'azerty1');
       await tester.pumpAndSettle();
       await tester.tap(find.text('Créer mon compte'));
       await tester.pumpAndSettle();
@@ -340,9 +341,10 @@ void main() {
 
       await goThroughOnboarding(tester);
 
-      await tester.enterText(find.byType(TextField).at(0), 'milo@nanimo.fr');
-      await tester.enterText(find.byType(TextField).at(1), 'azerty1');
+      await tester.enterText(find.byType(TextField).at(0), 'Maxime');
+      await tester.enterText(find.byType(TextField).at(1), 'milo@nanimo.fr');
       await tester.enterText(find.byType(TextField).at(2), 'azerty1');
+      await tester.enterText(find.byType(TextField).at(3), 'azerty1');
       await tester.pumpAndSettle();
       await tester.tap(find.text('Créer mon compte'));
       await tester.pump();

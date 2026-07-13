@@ -89,19 +89,74 @@ void main() {
       when(() => auth.signUp(
             email: any(named: 'email'),
             password: any(named: 'password'),
+            data: any(named: 'data'),
           )).thenAnswer((_) async => AuthResponse());
+      when(() => auth.currentUser).thenReturn(null);
 
-      await expectLater(repo.register('m@example.com', 'secret'), completes);
+      await expectLater(
+        repo.register('m@example.com', 'secret', 'Maxime'),
+        completes,
+      );
+    });
+
+    test('passes the user name in the signUp metadata', () async {
+      when(() => auth.signUp(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+            data: any(named: 'data'),
+          )).thenAnswer((_) async => AuthResponse());
+      when(() => auth.currentUser).thenReturn(null);
+
+      await repo.register('m@example.com', 'secret', 'Maxime');
+
+      verify(() => auth.signUp(
+            email: 'm@example.com',
+            password: 'secret',
+            data: {'user_name': 'Maxime'},
+          )).called(1);
+    });
+
+    test('updates the users row and the cache when a session exists',
+        () async {
+      when(() => auth.signUp(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+            data: any(named: 'data'),
+          )).thenAnswer((_) async => AuthResponse());
+      when(() => auth.currentUser).thenReturn(user);
+      when(() => user.id).thenReturn('u1');
+
+      final qb = MockSupabaseQueryBuilder();
+      when(() => supabase.from('users')).thenAnswer((_) => qb);
+      when(() => qb.update(any()))
+          .thenAnswer((_) => FakePostgrestChain(() => null) as dynamic);
+      when(() => qb.select(any())).thenAnswer(
+        (_) => FakeSelectChain(() => {
+          'id_user': 'u1',
+          'user_name': 'Maxime',
+          'mail': 'm@example.com',
+          'subscription_status': 'freemium',
+          'subscription_expires_at': null,
+          'id_subscription_config': '1',
+        }),
+      );
+
+      await repo.register('m@example.com', 'secret', 'Maxime');
+
+      verify(() => qb.update({'user_name': 'Maxime'})).called(1);
+      final cached = await harness.isar.userCaches.getByUserId('u1');
+      expect(cached?.userName, 'Maxime');
     });
 
     test('rethrows an AuthException untouched', () async {
       when(() => auth.signUp(
             email: any(named: 'email'),
             password: any(named: 'password'),
+            data: any(named: 'data'),
           )).thenThrow(const AuthException('User already registered'));
 
       await expectLater(
-        repo.register('m@example.com', 'secret'),
+        repo.register('m@example.com', 'secret', 'Maxime'),
         throwsA(isA<AuthException>()),
       );
     });
@@ -110,10 +165,11 @@ void main() {
       when(() => auth.signUp(
             email: any(named: 'email'),
             password: any(named: 'password'),
+            data: any(named: 'data'),
           )).thenThrow(Exception('offline'));
 
       await expectLater(
-        repo.register('m@example.com', 'secret'),
+        repo.register('m@example.com', 'secret', 'Maxime'),
         throwsA(isA<RepositoryNetworkException>()),
       );
     });

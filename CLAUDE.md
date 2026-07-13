@@ -172,6 +172,7 @@ fl_chart: ^0.69.2
 - **Google** : Client IDs (iOS, Web) lus depuis `.env` (`GOOGLE_IOS_CLIENT_ID`, `GOOGLE_WEB_CLIENT_ID`) et injectés dans `AuthRepository` au boot via `main.dart`. URL scheme inversée Google déclarée dans `ios/Runner/Info.plist`.
 - **Plateformes** : Apple visible uniquement sur iOS (`SsoButtonsWidget`), Google sur iOS et Android.
 - **Création user** : un trigger SQL existant sur `auth.users` insère la ligne `public.users` quel que soit le provider — aucun code Dart supplémentaire.
+- **Prénom (user_name)** : le signup email collecte un champ user_name. `AuthRepository.register` l'envoie en metadata `signUp` (`data: {'user_name': …}`) **et** fait un UPDATE `users.user_name` post-signup (policy RLS `users_update_self`) + refresh du cache Isar — best-effort, n'échoue jamais le signup. Affiché par le header de la home via `watchCurrentUser()` ; `HomeCubit` ignore les noms vides (comptes créés avant ce champ).
 
 ---
 
@@ -199,7 +200,7 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 **Implémentation (NAN-022)** — design « Gazette » (le parc illustré reste la signature de la Pet Page, la home a la sienne : la une d'un album souvenir).
 
 - **Header gazette** (`HomeHeaderWidget`) centré : date du jour (`DateFormatter.weekdayDayMonth`) + « Gazette de {prénom} » en Gluten — prénom via `AuthRepository.watchCurrentUser()` (fallback « Votre gazette »).
-- **Polaroïd héros « Il y a X ans »** (`HomeMemoryPolaroidWidget`) : souvenir survenu le même jour/mois une année précédente (`HomeState.anniversaryEvent`), fallback dernier souvenir (flag « Dernier souvenir »). Photo = 1ʳᵉ image de l'event, URL signée memoizée 45 min (`HomeCubit.imageUrl`, même pattern que le Journal). Tap → journal.
+- **Polaroïd héros « Il y a X ans »** (`HomeMemoryPolaroidWidget`) : souvenir survenu le même jour/mois une année précédente (`HomeState.anniversaryEvent`), fallback dernier souvenir (flag « Dernier souvenir »). Photo = 1ʳᵉ image de l'event, URL signée memoizée 45 min (`HomeCubit.imageUrl`, même pattern que le Journal). Tap → ouvre directement `JournalEventDetailBottomSheetWidget` sur l'event (avec Modifier/Supprimer câblés).
 - **Strip d'animaux** (`HomePetListWidget`) : rangée horizontale scrollable d'avatars (`PetAvatarWidget` medium) + prénom sous chacun. Tap → sélection du pet (`PetDetailsCubit` partagé) + push pet page.
 - **Carte Santé** (rose) : vaccins en retard ou dus sous 30 j (`HomeState.vaccineAlerts`, tri par urgence), badge `VaccineStatusBadgeWidget` réutilisé ; variante verte « Tout est à jour ! » sinon. Tap sur une ligne → sélection du pet + push carnet de santé.
 - **Carte article canicule** (`HomeArticleCardWidget`, jaune) : teaser (kicker + titre + extrait + « Lire la suite ») d'un article de conseils, contenu **en dur** dans le fichier (pas de backend blog en V1). Tap → article complet dans une bottom sheet à 80 % de l'écran (`FractionallySizedBox`), bouton retour épinglé en haut, corps scrollable.
@@ -216,7 +217,7 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 
 > Navbar (`AppShell`) : `Accueil / Journal / Animal / Créer (+)`. Le bouton `+` **push** `/home/create-event` (pas un onglet). La page Profil (`/home/profile`, déconnexion) n'est plus dans la navbar — accès à recâbler.
 
-- `JournalCubit` : offline-first, écoute 3 streams Isar (`watchEvents`, `watchPetEvents`, `watchAllImages`) + charge pets/types/`iconsKey`.
+- `JournalCubit` : offline-first, écoute 3 streams Isar (`watchEvents`, `watchPetEvents`, `watchAllImages`) + charge pets/types/`iconsKey`. Fourni au niveau du `ShellRoute` (à côté de `HomeCubit`/`PetDetailsCubit`) pour que la home puisse ouvrir la sheet de détail — les filtres survivent donc aux allers-retours de navigation.
 - Lien `pets_events` : cache Isar `PetEventCache` (clé `"$petId|$eventId"`), pour les pastilles d'animaux et le filtre animal.
 - Images : bucket `journal-media` privé → `EventRepository.signedImageUrl()` (URL signée 1h).
 - Filtres (NAN-015) : multi-sélection animaux **et/ou** types via bottom sheet, toggle live sur le cubit (`togglePetFilter`/`toggleTypeFilter`/`clearFilters`), appliqués par `JournalState.filteredEvents` (OR intra-groupe, AND inter-groupes).
@@ -269,7 +270,7 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 
 - `SubscriptionCubit` global (au root, à côté de `AuthCubit`) charge la config de l'user au login, en parallèle de `_syncUser` / `_syncPets` dans `SyncService.syncCritical`.
 - Cache Isar (`SubscriptionConfigCache`) → offline-first : la dernière config connue est servie même sans réseau.
-- Helpers sémantiques sur `SubscriptionState` (`canCreatePet`, `canAddImageToEvent`, `canAccessPremiumIcons`, `canUseStorage`) ; **fail-closed** si la config est absente.
+- Helpers sémantiques sur `SubscriptionState` (`canCreatePet`, `canAddImageToEvent`, `canUseStorage`) ; **fail-closed** si la config est absente. L'accès aux icônes premium ne passe plus par la config (cf. §3 : `is_premium` croisé au `subscription_status` de l'user).
 - Upgrade détecté via `AuthRepository.watchCurrentUser()` : un changement de `subscriptionConfigId` déclenche un refresh forcé depuis Supabase.
 
 ---

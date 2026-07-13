@@ -66,11 +66,11 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  /// Creates a new account with [email] and [password]
-  Future<void> register(String email, String password) async {
+  /// Creates a new account with [email], [password] and [userName]
+  Future<void> register(String email, String password, String userName) async {
     emit(state.copyWith(isSubmitting: true, clearError: true));
     try {
-      await _repository.register(email, password);
+      await _repository.register(email, password, userName);
     } catch (e) {
       emit(state.copyWith(
         isSubmitting: false,

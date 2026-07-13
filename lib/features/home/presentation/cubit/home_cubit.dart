@@ -85,7 +85,9 @@ class HomeCubit extends Cubit<HomeState> {
   }
 
   void _onUserChanged(UserModel? user) {
-    emit(state.copyWith(userName: user?.userName));
+    final name = user?.userName.trim();
+    if (name == null || name.isEmpty) return;
+    emit(state.copyWith(userName: name));
   }
 
   /// Loads the species and icon

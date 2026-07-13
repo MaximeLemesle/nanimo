@@ -23,6 +23,21 @@ void main() {
       expect(cache.subscriptionConfigId, 'sub-cfg-1');
     });
 
+    test('coerces an int id_subscription_config to string (live schema)', () {
+      final json = {
+        'id_user': 'abc-123',
+        'user_name': 'Alice',
+        'mail': 'alice@example.com',
+        'subscription_status': 'free',
+        'subscription_expires_at': null,
+        'id_subscription_config': 1,
+      };
+
+      final cache = UserCache.fromJson(json);
+
+      expect(cache.subscriptionConfigId, '1');
+    });
+
     test('handles null optional fields', () {
       final json = {
         'id_user': 'abc-123',

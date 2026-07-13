@@ -26,7 +26,7 @@ class UserModel {
       subscriptionExpiresAt: json['subscription_expires_at'] != null
           ? DateTime.parse(json['subscription_expires_at'] as String)
           : null,
-      subscriptionConfigId: json['id_subscription_config'],
+      subscriptionConfigId: json['id_subscription_config'].toString(),
     );
   }
 
