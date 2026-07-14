@@ -10,5 +10,5 @@ class RouteNames {
   static const editEvent = '/home/edit-event';
   static const pet = '/home/pet';
   static const healthDiary = '/home/pet/health-diary';
-  static const profile = '/home/profile';
+  static const settings = '/home/settings';
 }
