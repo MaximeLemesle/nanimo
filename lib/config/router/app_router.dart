@@ -24,8 +24,10 @@ import 'package:nanimo/features/journal/presentation/page/journal_page.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/home/presentation/page/home_page.dart';
-import 'package:nanimo/features/home/presentation/page/profile_page.dart';
 import 'package:nanimo/features/pet/presentation/page/create_pet_page.dart';
+import 'package:nanimo/features/settings/data/settings_repository.dart';
+import 'package:nanimo/features/settings/presentation/cubit/settings_cubit.dart';
+import 'package:nanimo/features/settings/presentation/page/settings_page.dart';
 import 'package:nanimo/features/onboarding/presentation/page/onboarding_page.dart';
 import 'package:nanimo/features/onboarding/presentation/page/splash_page.dart';
 import 'package:nanimo/features/pet/presentation/page/pet_page.dart';
@@ -52,6 +54,7 @@ GoRouter createRouter(
   required ReferentialRepository referentialRepository,
   required PetRepository petRepository,
   required HealthRepository healthRepository,
+  required SettingsRepository settingsRepository,
 }) {
   /// Flips to true after the splash display duration
   final splashElapsed = ValueNotifier(false);
@@ -163,8 +166,14 @@ GoRouter createRouter(
                 ],
               ),
               GoRoute(
-                path: 'profile',
-                builder: (_, __) => const ProfilePage(),
+                path: 'settings',
+                builder: (_, __) => BlocProvider(
+                  create: (_) => SettingsCubit(
+                    authRepository: authRepository,
+                    settingsRepository: settingsRepository,
+                  )..load(),
+                  child: const SettingsPage(),
+                ),
               ),
             ],
           ),

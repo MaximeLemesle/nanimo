@@ -25,6 +25,7 @@ import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
+import 'package:nanimo/features/settings/data/settings_repository.dart';
 
 class _MockReferentialRepository extends Mock
     implements ReferentialRepository {}
@@ -36,6 +37,8 @@ class _MockHealthRepository extends Mock implements HealthRepository {}
 class _MockEventRepository extends Mock implements EventRepository {}
 
 class _MockAuthRepository extends Mock implements AuthRepository {}
+
+class _MockSettingsRepository extends Mock implements SettingsRepository {}
 
 class _FakeAuthCubit extends Cubit<AuthState> implements AuthCubit {
   _FakeAuthCubit() : super(const AuthState.unknown());
@@ -236,6 +239,7 @@ void main() {
       referentialRepository: referentialRepo,
       petRepository: petRepo,
       healthRepository: healthRepo,
+      settingsRepository: _MockSettingsRepository(),
     );
     await tester.pumpWidget(
       MultiBlocProvider(

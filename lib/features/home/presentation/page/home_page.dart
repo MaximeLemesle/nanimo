@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nanimo/config/router/route_names.dart';
+import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
 import 'package:nanimo/features/home/presentation/widgets/home_article_card_widget.dart';
@@ -18,7 +19,7 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: BlocBuilder<HomeCubit, HomeState>(
           builder: (context, state) {
@@ -36,7 +37,11 @@ class HomePage extends StatelessWidget {
             return ListView(
               padding: const EdgeInsets.all(AppSpacing.lg),
               children: [
-                HomeHeaderWidget(userName: state.userName, now: now),
+                HomeHeaderWidget(
+                  userName: state.userName,
+                  now: now,
+                  onSettingsTap: () => context.push(RouteNames.settings),
+                ),
                 const SizedBox(height: AppSpacing.xl),
 
                 /// Display the last memory or the remember "X years ago"
@@ -49,8 +54,7 @@ class HomePage extends StatelessWidget {
                     onTap: () => JournalEventDetailBottomSheetWidget.show(
                       context,
                       event: memory,
-                      onEdit: () => context
-                          .push('${RouteNames.editEvent}/${memory.eventId}'),
+                      onEdit: () => context.push('${RouteNames.editEvent}/${memory.eventId}'),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
@@ -77,7 +81,7 @@ class HomePage extends StatelessWidget {
                   },
                 ),
                 const SizedBox(height: AppSpacing.xl),
-                
+
                 /// Display the latest article
                 const HomeArticleCardWidget(),
               ],

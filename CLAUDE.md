@@ -51,15 +51,15 @@ lib/
     │       ├── cubit/
     │       └── page/     # splash_page.dart + onboarding_page.dart
     ├── home/
-    │   └── presentation/ # profile_page.dart y vit (accès à recâbler, cf. §6)
     ├── event/            # création de souvenir (EventCreationCubit)
     ├── journal/          # timeline + filtres (JournalCubit)
     ├── health/           # data/ uniquement (piloté par pet/PetDetailsCubit)
     ├── pet/
+    ├── settings/         # page Paramètres (SettingsCubit, prefs notifications locales, cf. §6)
     └── subscription/     # SubscriptionCubit + quotas freemium
 ```
 
-> Pas de feature `settings/` à ce jour. Les notifications (FCM) sont prévues en V2.
+> Les notifications push (FCM) restent prévues en V2 — seules les **préférences** existent déjà (feature `settings/`, stockage local Isar).
 
 **Pattern** : Cubit pour états simples, repositories = source de vérité
 **Navigation** : Go Router avec deep linking + redirection auth conditionnelle  
@@ -99,7 +99,7 @@ lib/
 - ON DELETE CASCADE pour FK liées à pets
 - Indexes sur : entry_date, next_date, sending_at, pet_id
 - Buckets Storage : `pet-avatars` (public), `journal-media` (privé), `documents` (privé)
-- **Schéma versionné** dans `supabase/migrations/` (tables, RLS, triggers de quotas, RPC `create_event`) — cf. `supabase/README.md`
+- **Schéma versionné** dans `supabase/migrations/` (tables, RLS, triggers de quotas, RPC `create_event`, RPC `delete_account`) — cf. `supabase/README.md`
 
 ---
 
@@ -215,7 +215,7 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 
 **Implémentation (NAN-018)** — feature `lib/features/journal/`, route `/home/journal` (2ᵉ onglet de la navbar).
 
-> Navbar (`AppShell`) : `Accueil / Journal / Animal / Créer (+)`. Le bouton `+` **push** `/home/create-event` (pas un onglet). La page Profil (`/home/profile`, déconnexion) n'est plus dans la navbar — accès à recâbler.
+> Navbar (`AppShell`) : `Accueil / Journal / Animal / Créer (+)`. Le bouton `+` **push** `/home/create-event` (pas un onglet). L'ancienne page Profil a été remplacée par la page Paramètres (`/home/settings`, NAN-030) — accès via la roue crantée en haut à droite du header de la home.
 
 - `JournalCubit` : offline-first, écoute 3 streams Isar (`watchEvents`, `watchPetEvents`, `watchAllImages`) + charge pets/types/`iconsKey`. Fourni au niveau du `ShellRoute` (à côté de `HomeCubit`/`PetDetailsCubit`) pour que la home puisse ouvrir la sheet de détail — les filtres survivent donc aux allers-retours de navigation.
 - Lien `pets_events` : cache Isar `PetEventCache` (clé `"$petId|$eventId"`), pour les pastilles d'animaux et le filtre animal.
@@ -251,6 +251,18 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 - Visites véto : timeline
 - Graphique poids : min/max/actuel
 - Export PDF (premium, grisé en free)
+
+### Paramètres (NAN-030)
+
+Feature `lib/features/settings/`, route `/home/settings` (push depuis la roue crantée du header de la home, `HomeHeaderWidget.onSettingsTap`). Remplace l'ancienne `ProfilePage`.
+
+- **`SettingsCubit`** scopé route (créé dans le `BlocProvider` du GoRoute, `load()` au push) : écoute `AuthRepository.watchCurrentUser()` + `SettingsRepository.watchNotificationPrefs()`.
+- **Mon compte** : tuiles `SettingsTileWidget` (shell `RoundedBorderWidget` blanc + stroke, icône + label + valeur + trailing). Prénom éditable via bottom sheet (`SettingsEditNameBottomSheetWidget` → `AuthRepository.updateUserName`, méthode publique désormais partagée avec le post-signup `_saveUserName`). Email en lecture seule.
+- **Abonnement** : lecture seule depuis le `UserModel` (badge Freemium/Premium + « Jusqu'au JJ/MM/AAAA » si premium). Pas de flow de paiement en V1.
+- **Notifications** : master switch + 4 toggles (vaccins, visites véto, vermifuges, anniversaires — alignés sur `notification_type_enum`). **Stockage local uniquement** (`NotificationPrefsCache` Isar, une ligne par user, effacé au sign-out comme les autres caches) ; le câblage FCM (V2) lira ces flags.
+- **Déconnexion** : `AuthCubit.logout()` — la redirection passe par le redirect du router.
+- **Suppression de compte** : `AlertDialog` de confirmation → `AuthRepository.deleteAccount()` → RPC Supabase `delete_account` (security definer : events → pets → public.users → auth.users, cf. `supabase/migrations/0006_delete_account_rpc.sql` — **à exécuter manuellement sur la base live**, les fichiers Storage ne sont pas nettoyés en V1). Le signOut post-RPC ignore les erreurs (session déjà invalidée côté serveur).
+- **Footer** : logo texte + tagline + version (constante `_appVersion` à garder synchro avec `pubspec.yaml`).
 
 ---
 

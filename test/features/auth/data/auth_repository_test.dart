@@ -128,17 +128,17 @@ void main() {
 
       final qb = MockSupabaseQueryBuilder();
       when(() => supabase.from('users')).thenAnswer((_) => qb);
-      when(() => qb.update(any()))
-          .thenAnswer((_) => FakePostgrestChain(() => null) as dynamic);
-      when(() => qb.select(any())).thenAnswer(
-        (_) => FakeSelectChain(() => {
-          'id_user': 'u1',
-          'user_name': 'Maxime',
-          'mail': 'm@example.com',
-          'subscription_status': 'freemium',
-          'subscription_expires_at': null,
-          'id_subscription_config': '1',
-        }),
+      when(() => qb.update(any())).thenAnswer(
+        (_) => FakePostgrestChain(() => [
+          {
+            'id_user': 'u1',
+            'user_name': 'Maxime',
+            'mail': 'm@example.com',
+            'subscription_status': 'freemium',
+            'subscription_expires_at': null,
+            'id_subscription_config': '1',
+          }
+        ]) as dynamic,
       );
 
       await repo.register('m@example.com', 'secret', 'Maxime');
@@ -306,6 +306,122 @@ void main() {
       // request fails and is mapped by the generic catch.
       await expectLater(
         repo.signInWithApple(),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+    });
+  });
+
+  group('updateUserName', () {
+    test('updates the users row and refreshes the cache', () async {
+      when(() => auth.currentUser).thenReturn(user);
+      when(() => user.id).thenReturn('u1');
+
+      final qb = MockSupabaseQueryBuilder();
+      when(() => supabase.from('users')).thenAnswer((_) => qb);
+      when(() => qb.update(any())).thenAnswer(
+        (_) => FakePostgrestChain(() => [
+          {
+            'id_user': 'u1',
+            'user_name': 'Nouveau',
+            'mail': 'm@example.com',
+            'subscription_status': 'freemium',
+            'subscription_expires_at': null,
+            'id_subscription_config': '1',
+          }
+        ]) as dynamic,
+      );
+
+      await repo.updateUserName('Nouveau');
+
+      verify(() => qb.update({'user_name': 'Nouveau'})).called(1);
+      final cached = await harness.isar.userCaches.getByUserId('u1');
+      expect(cached?.userName, 'Nouveau');
+    });
+
+    test('throws when RLS blocks the update (zero rows returned)', () async {
+      when(() => auth.currentUser).thenReturn(user);
+      when(() => user.id).thenReturn('u1');
+
+      final qb = MockSupabaseQueryBuilder();
+      when(() => supabase.from('users')).thenAnswer((_) => qb);
+      when(() => qb.update(any()))
+          .thenAnswer((_) => FakePostgrestChain(() => <Map<String, dynamic>>[])
+              as dynamic);
+
+      await expectLater(
+        repo.updateUserName('Nouveau'),
+        throwsA(isA<RepositoryServerException>()),
+      );
+      expect(await harness.isar.userCaches.getByUserId('u1'), isNull);
+    });
+
+    test('is a no-op when signed out', () async {
+      when(() => auth.currentUser).thenReturn(null);
+
+      await repo.updateUserName('Nouveau');
+
+      verifyNever(() => supabase.from(any()));
+    });
+
+    test('maps a Postgrest error to a server exception', () async {
+      when(() => auth.currentUser).thenReturn(user);
+      when(() => user.id).thenReturn('u1');
+
+      final qb = MockSupabaseQueryBuilder();
+      when(() => supabase.from('users')).thenAnswer((_) => qb);
+      when(() => qb.update(any())).thenAnswer(
+        (_) => FakePostgrestChain(
+          () => throw const PostgrestException(message: 'boom'),
+        ) as dynamic,
+      );
+
+      await expectLater(
+        repo.updateUserName('Nouveau'),
+        throwsA(isA<RepositoryServerException>()),
+      );
+    });
+  });
+
+  group('deleteAccount', () {
+    test('calls the RPC then signs out', () async {
+      when(() => supabase.rpc('delete_account'))
+          .thenAnswer((_) => FakePostgrestChain(() => null) as dynamic);
+      when(() => auth.signOut()).thenAnswer((_) async {});
+
+      await repo.deleteAccount();
+
+      verify(() => supabase.rpc('delete_account')).called(1);
+      verify(() => auth.signOut()).called(1);
+    });
+
+    test('ignores a sign-out failure once the account is deleted', () async {
+      when(() => supabase.rpc('delete_account'))
+          .thenAnswer((_) => FakePostgrestChain(() => null) as dynamic);
+      when(() => auth.signOut())
+          .thenThrow(const AuthException('session_not_found'));
+
+      await expectLater(repo.deleteAccount(), completes);
+    });
+
+    test('maps a Postgrest error and never signs out', () async {
+      when(() => supabase.rpc('delete_account')).thenAnswer(
+        (_) => FakePostgrestChain(
+          () => throw const PostgrestException(message: 'RLS'),
+        ) as dynamic,
+      );
+
+      await expectLater(
+        repo.deleteAccount(),
+        throwsA(isA<RepositoryServerException>()),
+      );
+      verifyNever(() => auth.signOut());
+    });
+
+    test('maps an offline failure to a network exception', () async {
+      when(() => supabase.rpc('delete_account')).thenThrow(Exception('offline'));
+
+      await expectLater(
+        repo.deleteAccount(),
         throwsA(isA<RepositoryNetworkException>()),
       );
     });

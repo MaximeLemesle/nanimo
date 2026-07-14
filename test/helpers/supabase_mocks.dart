@@ -83,6 +83,15 @@ class FakePostgrestChain extends Fake
   @override
   PostgrestTransformBuilder<Map<String, dynamic>> single() =>
       this as PostgrestTransformBuilder<Map<String, dynamic>>;
+
+  // `.update(...).eq(...).select()` returns the affected rows. Delegate to a
+  // [FakeSelectChain] so the resolver's value is cast to a typed row list,
+  // matching the real `PostgrestList` the repository awaits.
+  @override
+  PostgrestFilterBuilder<List<Map<String, dynamic>>> select([
+    String columns = '*',
+  ]) =>
+      FakeSelectChain(_resolver);
 }
 
 /// Typed stand-in for a `.select()` chain. Unlike [FakePostgrestChain], it

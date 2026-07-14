@@ -27,15 +27,28 @@ class RoundedBorderWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final shape = ContinuousRectangleBorder(
       borderRadius: BorderRadius.circular(AppRadius.lg * 2),
-      side: BorderSide(color: borderColor, width: borderWidth),
     );
 
-    final card = Container(
-      width: fullWidth ? double.infinity : null,
+    Widget card = Container(
       padding: padding,
       decoration: ShapeDecoration(color: backgroundColor, shape: shape),
       child: child,
     );
+
+    /// Border drawn as an outer filled squircle, not a BorderSide:
+    /// ContinuousRectangleBorder.side leaves whisker artifacts at the corners.
+    final hasBorder = borderColor != Colors.transparent && borderWidth > 0;
+    if (hasBorder) {
+      card = Container(
+        padding: EdgeInsets.all(borderWidth),
+        decoration: ShapeDecoration(color: borderColor, shape: shape),
+        child: card,
+      );
+    }
+
+    if (fullWidth) {
+      card = SizedBox(width: double.infinity, child: card);
+    }
 
     if (onTap == null) return card;
 

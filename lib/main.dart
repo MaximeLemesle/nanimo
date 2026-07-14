@@ -15,6 +15,7 @@ import 'package:nanimo/features/health/data/health_repository.dart';
 import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
+import 'package:nanimo/features/settings/data/settings_repository.dart';
 import 'package:nanimo/features/subscription/data/subscription_repository.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -56,6 +57,7 @@ void main() async {
   final petRepository = PetRepository(supabase, isar);
   final healthRepository = HealthRepository(supabase, isar);
   final eventRepository = EventRepository(supabase, isar);
+  final settingsRepository = SettingsRepository(supabase, isar);
 
   final authCubit = AuthCubit(
     repository: authRepository,
@@ -87,6 +89,7 @@ void main() async {
     referentialRepository: referentialRepository,
     petRepository: petRepository,
     healthRepository: healthRepository,
+    settingsRepository: settingsRepository,
   ));
 }
 
@@ -100,6 +103,7 @@ class MyApp extends StatelessWidget {
   final ReferentialRepository referentialRepository;
   final PetRepository petRepository;
   final HealthRepository healthRepository;
+  final SettingsRepository settingsRepository;
   const MyApp({
     super.key,
     required this.authCubit,
@@ -111,6 +115,7 @@ class MyApp extends StatelessWidget {
     required this.referentialRepository,
     required this.petRepository,
     required this.healthRepository,
+    required this.settingsRepository,
   });
 
   @override
@@ -142,6 +147,7 @@ class MyApp extends StatelessWidget {
           referentialRepository: referentialRepository,
           petRepository: petRepository,
           healthRepository: healthRepository,
+          settingsRepository: settingsRepository,
         ),
       ),
     );

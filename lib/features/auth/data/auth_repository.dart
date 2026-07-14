@@ -61,21 +61,39 @@ class AuthRepository {
 
   /// Persists userName on the local cache
   Future<void> _saveUserName(String userName) async {
+    try {
+      await updateUserName(userName);
+    } catch (_) {}
+  }
+
+  Future<void> updateUserName(String userName) async {
     final id = currentUserId;
     if (id == null) return;
 
     try {
-      await _supabase
-          .from('users')
-          .update({'user_name': userName}).eq('id_user', id);
 
-      final data =
-          await _supabase.from('users').select().eq('id_user', id).single();
-      final cache = UserCache.fromJson(data);
+      final rows = await _supabase
+          .from('users')
+          .update({'user_name': userName})
+          .eq('id_user', id)
+          .select();
+
+      if (rows.isEmpty) {
+        throw const RepositoryServerException(
+          'Impossible de modifier votre prénom (droits insuffisants).',
+        );
+      }
+
+      final cache = UserCache.fromJson(rows.first);
       await _isar.writeTxn(() async {
         await _isar.userCaches.putByUserId(cache);
       });
-    } catch (_) {}
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'updateUserName',
+          networkMessage: 'Une connexion internet est requise pour modifier votre prénom.',
+          serverMessage: 'Impossible de modifier votre prénom pour le moment.');
+    }
   }
 
   /// Signs in with Google
@@ -163,6 +181,21 @@ class AuthRepository {
     await _supabase.auth.signOut();
   }
 
+  Future<void> deleteAccount() async {
+    try {
+      await _supabase.rpc('delete_account');
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'deleteAccount',
+          networkMessage: 'Une connexion internet est requise pour supprimer votre compte.',
+          serverMessage: 'Impossible de supprimer votre compte pour le moment.');
+    }
+
+    try {
+      await _supabase.auth.signOut();
+    } catch (_) {}
+  }
+
   /// Live auth state — used by Go Router to redirect on sign-in / sign-out.
   Stream<AuthState> get authStateChanges => _supabase.auth.onAuthStateChange;
 
@@ -199,8 +232,7 @@ class AuthRepository {
     if (cached != null) return cached.toModel();
 
     try {
-      final data =
-          await _supabase.from('users').select().eq('id_user', id).single();
+      final data = await _supabase.from('users').select().eq('id_user', id).single();
       final cache = UserCache.fromJson(data);
       await _isar.writeTxn(() async {
         await _isar.userCaches.putByUserId(cache);
