@@ -13,7 +13,6 @@ class SubscriptionConfigModel {
     required this.maxStorageMb,
   });
 
-  /// Maps a Supabase row to a [SubscriptionConfigModel]
   factory SubscriptionConfigModel.fromJson(Map<String, dynamic> json) {
     return SubscriptionConfigModel(
       configId: json['id_subscription_config'].toString(),
@@ -24,7 +23,6 @@ class SubscriptionConfigModel {
     );
   }
 
-  /// Serializes this model for a Supabase write
   Map<String, dynamic> toJson() => {
         'id_subscription_config': configId,
         'plan_name': planName,

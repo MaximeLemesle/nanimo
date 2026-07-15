@@ -80,6 +80,33 @@ void main() {
       expect(pending.petSpeciesId, 's1');
       expect(cubit.state.status, PetCreationStatus.idle);
     });
+
+    test('creates immediately when already authenticated (in-app add)',
+        () async {
+      when(() => authCubit.state)
+          .thenReturn(const AuthState.authenticated());
+      when(() => petRepo.createPet(any())).thenAnswer((_) async {});
+
+      final cubit = createCubit();
+      prepareDraft(cubit);
+      await Future<void>.delayed(Duration.zero);
+
+      verify(() => petRepo.createPet(any())).called(1);
+      expect(cubit.state.status, PetCreationStatus.success);
+      expect(cubit.state.pendingPet, isNull);
+      await cubit.close();
+    });
+
+    test('keeps waiting for signup when unauthenticated (onboarding)',
+        () async {
+      final cubit = createCubit();
+      prepareDraft(cubit);
+      await Future<void>.delayed(Duration.zero);
+
+      verifyNever(() => petRepo.createPet(any()));
+      expect(cubit.state.pendingPet, isNotNull);
+      await cubit.close();
+    });
   });
 
   group('auth listener', () {

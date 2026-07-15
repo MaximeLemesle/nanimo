@@ -32,7 +32,7 @@ class AppScaffold extends StatelessWidget {
       content = Padding(padding: padding!, child: content);
     }
     if (safeArea) {
-      content = SafeArea(child: content);
+      content = SafeArea(bottom: false, child: content);
     }
 
     return Scaffold(

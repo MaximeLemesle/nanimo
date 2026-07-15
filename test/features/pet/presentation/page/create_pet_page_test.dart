@@ -6,6 +6,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:nanimo/data/models/referential/pet_race_model.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
+import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
@@ -14,6 +15,8 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_creation/pet_creati
 
 class _MockReferentialRepository extends Mock
     implements ReferentialRepository {}
+
+class _MockAuthCubit extends Mock implements AuthCubit {}
 
 const _species = PetSpeciesModel(
   petSpeciesId: 's1',
@@ -50,9 +53,15 @@ void main() {
   }
 
   Widget buildPage(OnboardingCubit cubit) {
+    final authCubit = _MockAuthCubit();
+    when(() => authCubit.state).thenReturn(const AuthState.unauthenticated());
+    when(() => authCubit.stream)
+        .thenAnswer((_) => const Stream<AuthState>.empty());
+
     return MultiBlocProvider(
       providers: [
         BlocProvider<OnboardingCubit>.value(value: cubit),
+        BlocProvider<AuthCubit>.value(value: authCubit),
         BlocProvider<PetCreationCubit>(
           create: (_) => throw UnimplementedError('not needed in this test'),
         ),

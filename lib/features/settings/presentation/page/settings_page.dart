@@ -37,7 +37,12 @@ class SettingsPage extends StatelessWidget {
           body: state.status == SettingsStatus.loading
               ? const Center(child: CircularProgressIndicator())
               : ListView(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    AppSpacing.lg,
+                    AppSpacing.lg,
+                    AppSpacing.bottomBarInset,
+                  ),
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(bottom: AppSpacing.md),

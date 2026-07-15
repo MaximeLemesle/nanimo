@@ -5,8 +5,8 @@ import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
-import 'package:nanimo/core/widgets/pet_avatar_widget.dart';
 import 'package:nanimo/features/journal/presentation/cubit/journal_cubit.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_picker_widget.dart';
 
 class JournalFilterBottomSheetWidget extends StatelessWidget {
   const JournalFilterBottomSheetWidget({super.key});
@@ -45,39 +45,11 @@ class JournalFilterBottomSheetWidget extends StatelessWidget {
                 )
               : null,
           children: [
-            Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
-              children: [
-                for (final pet in state.pets)
-                  InkWell(
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                    onTap: () => cubit.togglePetFilter(pet.petId),
-                    child: Container(
-                      width: 64,
-                      height: 64,
-                      padding: const EdgeInsets.all(AppSpacing.sm),
-                      decoration: BoxDecoration(
-                        color: state.selectedPetIds.contains(pet.petId)
-                            ? AppColors.backgroundPrimary
-                            : AppColors.backgroundSurface,
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(
-                          color: state.selectedPetIds.contains(pet.petId)
-                              ? AppColors.primary
-                              : AppColors.backgroundStroke,
-                          width: 2,
-                        ),
-                      ),
-                      child: state.iconsKey[pet.petSpeciesId] == null
-                          ? const SizedBox.shrink()
-                          : PetAvatarWidget(
-                              iconKey: state.iconsKey[pet.petSpeciesId]!,
-                              size: PetAvatarSize.small,
-                            ),
-                    ),
-                  ),
-              ],
+            PetPickerWidget.multi(
+              pets: state.pets,
+              iconsKey: state.iconsKey,
+              selectedPetIds: state.selectedPetIds,
+              onToggled: cubit.togglePetFilter,
             ),
             const SizedBox(height: AppSpacing.lg),
             Text("Choisir un type\nd’évènement", style: AppTextStyles.title02),

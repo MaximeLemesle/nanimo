@@ -22,28 +22,23 @@ const UserCacheSchema = CollectionSchema(
       name: r'mail',
       type: IsarType.string,
     ),
-    r'subscriptionConfigId': PropertySchema(
-      id: 1,
-      name: r'subscriptionConfigId',
-      type: IsarType.string,
-    ),
     r'subscriptionExpiresAt': PropertySchema(
-      id: 2,
+      id: 1,
       name: r'subscriptionExpiresAt',
       type: IsarType.dateTime,
     ),
     r'subscriptionStatus': PropertySchema(
-      id: 3,
+      id: 2,
       name: r'subscriptionStatus',
       type: IsarType.string,
     ),
     r'userId': PropertySchema(
-      id: 4,
+      id: 3,
       name: r'userId',
       type: IsarType.string,
     ),
     r'userName': PropertySchema(
-      id: 5,
+      id: 4,
       name: r'userName',
       type: IsarType.string,
     )
@@ -83,7 +78,6 @@ int _userCacheEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.mail.length * 3;
-  bytesCount += 3 + object.subscriptionConfigId.length * 3;
   bytesCount += 3 + object.subscriptionStatus.length * 3;
   bytesCount += 3 + object.userId.length * 3;
   {
@@ -102,11 +96,10 @@ void _userCacheSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeString(offsets[0], object.mail);
-  writer.writeString(offsets[1], object.subscriptionConfigId);
-  writer.writeDateTime(offsets[2], object.subscriptionExpiresAt);
-  writer.writeString(offsets[3], object.subscriptionStatus);
-  writer.writeString(offsets[4], object.userId);
-  writer.writeString(offsets[5], object.userName);
+  writer.writeDateTime(offsets[1], object.subscriptionExpiresAt);
+  writer.writeString(offsets[2], object.subscriptionStatus);
+  writer.writeString(offsets[3], object.userId);
+  writer.writeString(offsets[4], object.userName);
 }
 
 UserCache _userCacheDeserialize(
@@ -118,11 +111,10 @@ UserCache _userCacheDeserialize(
   final object = UserCache();
   object.id = id;
   object.mail = reader.readString(offsets[0]);
-  object.subscriptionConfigId = reader.readString(offsets[1]);
-  object.subscriptionExpiresAt = reader.readDateTimeOrNull(offsets[2]);
-  object.subscriptionStatus = reader.readString(offsets[3]);
-  object.userId = reader.readString(offsets[4]);
-  object.userName = reader.readStringOrNull(offsets[5]);
+  object.subscriptionExpiresAt = reader.readDateTimeOrNull(offsets[1]);
+  object.subscriptionStatus = reader.readString(offsets[2]);
+  object.userId = reader.readString(offsets[3]);
+  object.userName = reader.readStringOrNull(offsets[4]);
   return object;
 }
 
@@ -136,14 +128,12 @@ P _userCacheDeserializeProp<P>(
     case 0:
       return (reader.readString(offset)) as P;
     case 1:
-      return (reader.readString(offset)) as P;
-    case 2:
       return (reader.readDateTimeOrNull(offset)) as P;
+    case 2:
+      return (reader.readString(offset)) as P;
     case 3:
       return (reader.readString(offset)) as P;
     case 4:
-      return (reader.readString(offset)) as P;
-    case 5:
       return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -519,142 +509,6 @@ extension UserCacheQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'mail',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<UserCache, UserCache, QAfterFilterCondition>
-      subscriptionConfigIdEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'subscriptionConfigId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<UserCache, UserCache, QAfterFilterCondition>
-      subscriptionConfigIdGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'subscriptionConfigId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<UserCache, UserCache, QAfterFilterCondition>
-      subscriptionConfigIdLessThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'subscriptionConfigId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<UserCache, UserCache, QAfterFilterCondition>
-      subscriptionConfigIdBetween(
-    String lower,
-    String upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'subscriptionConfigId',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<UserCache, UserCache, QAfterFilterCondition>
-      subscriptionConfigIdStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'subscriptionConfigId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<UserCache, UserCache, QAfterFilterCondition>
-      subscriptionConfigIdEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'subscriptionConfigId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<UserCache, UserCache, QAfterFilterCondition>
-      subscriptionConfigIdContains(String value, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'subscriptionConfigId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<UserCache, UserCache, QAfterFilterCondition>
-      subscriptionConfigIdMatches(String pattern, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'subscriptionConfigId',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<UserCache, UserCache, QAfterFilterCondition>
-      subscriptionConfigIdIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'subscriptionConfigId',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<UserCache, UserCache, QAfterFilterCondition>
-      subscriptionConfigIdIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'subscriptionConfigId',
         value: '',
       ));
     });
@@ -1169,20 +1023,6 @@ extension UserCacheQuerySortBy on QueryBuilder<UserCache, UserCache, QSortBy> {
   }
 
   QueryBuilder<UserCache, UserCache, QAfterSortBy>
-      sortBySubscriptionConfigId() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'subscriptionConfigId', Sort.asc);
-    });
-  }
-
-  QueryBuilder<UserCache, UserCache, QAfterSortBy>
-      sortBySubscriptionConfigIdDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'subscriptionConfigId', Sort.desc);
-    });
-  }
-
-  QueryBuilder<UserCache, UserCache, QAfterSortBy>
       sortBySubscriptionExpiresAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'subscriptionExpiresAt', Sort.asc);
@@ -1261,20 +1101,6 @@ extension UserCacheQuerySortThenBy
   }
 
   QueryBuilder<UserCache, UserCache, QAfterSortBy>
-      thenBySubscriptionConfigId() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'subscriptionConfigId', Sort.asc);
-    });
-  }
-
-  QueryBuilder<UserCache, UserCache, QAfterSortBy>
-      thenBySubscriptionConfigIdDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'subscriptionConfigId', Sort.desc);
-    });
-  }
-
-  QueryBuilder<UserCache, UserCache, QAfterSortBy>
       thenBySubscriptionExpiresAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'subscriptionExpiresAt', Sort.asc);
@@ -1335,14 +1161,6 @@ extension UserCacheQueryWhereDistinct
     });
   }
 
-  QueryBuilder<UserCache, UserCache, QDistinct> distinctBySubscriptionConfigId(
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'subscriptionConfigId',
-          caseSensitive: caseSensitive);
-    });
-  }
-
   QueryBuilder<UserCache, UserCache, QDistinct>
       distinctBySubscriptionExpiresAt() {
     return QueryBuilder.apply(this, (query) {
@@ -1384,13 +1202,6 @@ extension UserCacheQueryProperty
   QueryBuilder<UserCache, String, QQueryOperations> mailProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'mail');
-    });
-  }
-
-  QueryBuilder<UserCache, String, QQueryOperations>
-      subscriptionConfigIdProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'subscriptionConfigId');
     });
   }
 

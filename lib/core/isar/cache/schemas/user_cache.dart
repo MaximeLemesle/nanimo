@@ -14,7 +14,6 @@ class UserCache {
   late String mail;
   late String subscriptionStatus;
   DateTime? subscriptionExpiresAt;
-  late String subscriptionConfigId;
 
   UserCache();
 
@@ -27,8 +26,7 @@ class UserCache {
       ..subscriptionStatus = json['subscription_status'] as String
       ..subscriptionExpiresAt = json['subscription_expires_at'] != null
           ? DateTime.parse(json['subscription_expires_at'] as String)
-          : null
-      ..subscriptionConfigId = json['id_subscription_config'].toString();
+          : null;
   }
 
   /// Builds a [UserCache] from a [UserModel]
@@ -38,8 +36,7 @@ class UserCache {
       ..userName = model.userName
       ..mail = model.mail
       ..subscriptionStatus = _statusToString(model.subscriptionStatus)
-      ..subscriptionExpiresAt = model.subscriptionExpiresAt
-      ..subscriptionConfigId = model.subscriptionConfigId;
+      ..subscriptionExpiresAt = model.subscriptionExpiresAt;
   }
 
   /// Converts this cache row into the domain [UserModel]
@@ -50,7 +47,6 @@ class UserCache {
       mail: mail,
       subscriptionStatus: _parseStatus(subscriptionStatus),
       subscriptionExpiresAt: subscriptionExpiresAt,
-      subscriptionConfigId: subscriptionConfigId,
     );
   }
 }

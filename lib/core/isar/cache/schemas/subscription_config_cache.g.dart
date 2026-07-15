@@ -50,14 +50,14 @@ const SubscriptionConfigCacheSchema = CollectionSchema(
   deserializeProp: _subscriptionConfigCacheDeserializeProp,
   idName: r'id',
   indexes: {
-    r'configId': IndexSchema(
-      id: 7164334513802924883,
-      name: r'configId',
+    r'planName': IndexSchema(
+      id: -2372009361415681807,
+      name: r'planName',
       unique: true,
       replace: false,
       properties: [
         IndexPropertySchema(
-          name: r'configId',
+          name: r'planName',
           type: IndexType.hash,
           caseSensitive: true,
         )
@@ -150,60 +150,60 @@ void _subscriptionConfigCacheAttach(
 
 extension SubscriptionConfigCacheByIndex
     on IsarCollection<SubscriptionConfigCache> {
-  Future<SubscriptionConfigCache?> getByConfigId(String configId) {
-    return getByIndex(r'configId', [configId]);
+  Future<SubscriptionConfigCache?> getByPlanName(String planName) {
+    return getByIndex(r'planName', [planName]);
   }
 
-  SubscriptionConfigCache? getByConfigIdSync(String configId) {
-    return getByIndexSync(r'configId', [configId]);
+  SubscriptionConfigCache? getByPlanNameSync(String planName) {
+    return getByIndexSync(r'planName', [planName]);
   }
 
-  Future<bool> deleteByConfigId(String configId) {
-    return deleteByIndex(r'configId', [configId]);
+  Future<bool> deleteByPlanName(String planName) {
+    return deleteByIndex(r'planName', [planName]);
   }
 
-  bool deleteByConfigIdSync(String configId) {
-    return deleteByIndexSync(r'configId', [configId]);
+  bool deleteByPlanNameSync(String planName) {
+    return deleteByIndexSync(r'planName', [planName]);
   }
 
-  Future<List<SubscriptionConfigCache?>> getAllByConfigId(
-      List<String> configIdValues) {
-    final values = configIdValues.map((e) => [e]).toList();
-    return getAllByIndex(r'configId', values);
+  Future<List<SubscriptionConfigCache?>> getAllByPlanName(
+      List<String> planNameValues) {
+    final values = planNameValues.map((e) => [e]).toList();
+    return getAllByIndex(r'planName', values);
   }
 
-  List<SubscriptionConfigCache?> getAllByConfigIdSync(
-      List<String> configIdValues) {
-    final values = configIdValues.map((e) => [e]).toList();
-    return getAllByIndexSync(r'configId', values);
+  List<SubscriptionConfigCache?> getAllByPlanNameSync(
+      List<String> planNameValues) {
+    final values = planNameValues.map((e) => [e]).toList();
+    return getAllByIndexSync(r'planName', values);
   }
 
-  Future<int> deleteAllByConfigId(List<String> configIdValues) {
-    final values = configIdValues.map((e) => [e]).toList();
-    return deleteAllByIndex(r'configId', values);
+  Future<int> deleteAllByPlanName(List<String> planNameValues) {
+    final values = planNameValues.map((e) => [e]).toList();
+    return deleteAllByIndex(r'planName', values);
   }
 
-  int deleteAllByConfigIdSync(List<String> configIdValues) {
-    final values = configIdValues.map((e) => [e]).toList();
-    return deleteAllByIndexSync(r'configId', values);
+  int deleteAllByPlanNameSync(List<String> planNameValues) {
+    final values = planNameValues.map((e) => [e]).toList();
+    return deleteAllByIndexSync(r'planName', values);
   }
 
-  Future<Id> putByConfigId(SubscriptionConfigCache object) {
-    return putByIndex(r'configId', object);
+  Future<Id> putByPlanName(SubscriptionConfigCache object) {
+    return putByIndex(r'planName', object);
   }
 
-  Id putByConfigIdSync(SubscriptionConfigCache object,
+  Id putByPlanNameSync(SubscriptionConfigCache object,
       {bool saveLinks = true}) {
-    return putByIndexSync(r'configId', object, saveLinks: saveLinks);
+    return putByIndexSync(r'planName', object, saveLinks: saveLinks);
   }
 
-  Future<List<Id>> putAllByConfigId(List<SubscriptionConfigCache> objects) {
-    return putAllByIndex(r'configId', objects);
+  Future<List<Id>> putAllByPlanName(List<SubscriptionConfigCache> objects) {
+    return putAllByIndex(r'planName', objects);
   }
 
-  List<Id> putAllByConfigIdSync(List<SubscriptionConfigCache> objects,
+  List<Id> putAllByPlanNameSync(List<SubscriptionConfigCache> objects,
       {bool saveLinks = true}) {
-    return putAllByIndexSync(r'configId', objects, saveLinks: saveLinks);
+    return putAllByIndexSync(r'planName', objects, saveLinks: saveLinks);
   }
 }
 
@@ -288,44 +288,44 @@ extension SubscriptionConfigCacheQueryWhere on QueryBuilder<
   }
 
   QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache,
-      QAfterWhereClause> configIdEqualTo(String configId) {
+      QAfterWhereClause> planNameEqualTo(String planName) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'configId',
-        value: [configId],
+        indexName: r'planName',
+        value: [planName],
       ));
     });
   }
 
   QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache,
-      QAfterWhereClause> configIdNotEqualTo(String configId) {
+      QAfterWhereClause> planNameNotEqualTo(String planName) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'configId',
+              indexName: r'planName',
               lower: [],
-              upper: [configId],
+              upper: [planName],
               includeUpper: false,
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'configId',
-              lower: [configId],
+              indexName: r'planName',
+              lower: [planName],
               includeLower: false,
               upper: [],
             ));
       } else {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'configId',
-              lower: [configId],
+              indexName: r'planName',
+              lower: [planName],
               includeLower: false,
               upper: [],
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'configId',
+              indexName: r'planName',
               lower: [],
-              upper: [configId],
+              upper: [planName],
               includeUpper: false,
             ));
       }

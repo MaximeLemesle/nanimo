@@ -102,7 +102,7 @@ class _JournalCalendarWidgetState extends State<JournalCalendarWidget> {
       reverse: true,
       padding: const EdgeInsets.only(
         top: AppSpacing.xl,
-        bottom: AppSpacing.xxl,
+        bottom: AppSpacing.bottomBarInset,
       ),
       itemCount: months.length + (hasEndMessage ? 1 : 0),
       separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.xxl),

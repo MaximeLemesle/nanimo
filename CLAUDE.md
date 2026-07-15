@@ -73,7 +73,7 @@ lib/
 
 | Table                   | Colonnes clés                                                                                                                                | Notes                            |
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| `users`                 | id_user (UUID PK), user_name, mail (unique), subscription_status, subscription_expires_at, id_subscription_config FK                         | Auth Supabase                    |
+| `users`                 | id_user (UUID PK), user_name, mail (unique), subscription_status, subscription_expires_at                                                     | Auth Supabase. `subscription_status` = seule source de vérité du plan (cf. `subscription_config`) |
 | `pets`                  | id_pet (UUID PK), pet_name, birthdate (DATE), gender (enum), created_at, pet_race_id FK, pet_species_id FK, pet_icon_id FK                   | RLS: user_id                     |
 | `events`                | id_event (UUID PK), title, description, created_at, entry_date (TIMESTAMPTZ), event_type_id FK                                                      | Aucun lien direct pet/user — passe par `pets_events`. RLS via `pets_events → users_pets` |
 | `pets_events`           | pet_id FK, event_id FK (jointure M:N)                                                                                                        | Un event ↔ plusieurs animaux, un animal ↔ plusieurs events |
@@ -84,7 +84,7 @@ lib/
 | `health_diary_weight_log` | id_health_diary_weight_log (UUID PK), weight (DECIMAL), logged_at (TIMESTAMPTZ), pet_id FK                                                 | Graphique 6 mois                 |
 | `vet_visits`            | id_vet_visit (UUID PK), title, visited_at (DATE), vet_name, clinic_name, pet_id FK (CASCADE)                                                 | Timeline visites véto (carnet)   |
 | `notifications`         | id_notification (UUID PK), type (enum), title, description, sending_at (TIMESTAMPTZ), id_pet FK                                              | Push Firebase FCM _(table prête, feature V2)_ |
-| `subscription_config`   | id_subscription_config (UUID PK), plan_name, max_images_per_event, max_pets, max_storage_in_mb                                               | Quotas freemium. Icônes premium = `is_premium` (event_type/pet_icons) croisé au `subscription_status` de l'user, pas une colonne de config |
+| `subscription_config`   | id_subscription_config (UUID PK), plan_name (UNIQUE: freemium/premium), max_images_per_event, max_pets, max_storage_in_mb                    | Quotas freemium. Résolu en joignant `plan_name` sur `users.subscription_status` (cf. §7). Icônes premium = `is_premium` (event_type/pet_icons) croisé au `subscription_status` de l'user, pas une colonne de config |
 
 ### ENUMs
 
@@ -215,7 +215,9 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 
 **Implémentation (NAN-018)** — feature `lib/features/journal/`, route `/home/journal` (2ᵉ onglet de la navbar).
 
-> Navbar (`AppShell`) : `Accueil / Journal / Animal / Créer (+)`. Le bouton `+` **push** `/home/create-event` (pas un onglet). L'ancienne page Profil a été remplacée par la page Paramètres (`/home/settings`, NAN-030) — accès via la roue crantée en haut à droite du header de la home.
+> Navbar (`AppShell`, NAN-034) : pilule flottante blanche à 3 onglets (Accueil / Journal / Animal, icône sélectionnée dans un cercle blanc ombré) + bouton `+` rond sombre à droite. Le `+` ouvre/ferme un **menu de création** (panneau squircle sombre au-dessus de la barre, `AppCreateMenuWidget`) avec 3 actions : « Ajouter un nouveau poids » (bottom sheet `AddWeightBottomSheetWidget`, avec **sélecteur d'animal** (`PetPickerWidget.single`, cf. §4) ; affiché seulement si `pets.length > 1`, pré-coché sur le pet sélectionné du `PetDetailsCubit` ; `addWeightLog(weight, loggedAt, {petId})` cible ce pet **sans déplacer la sélection globale**, pour ne pas faire basculer la Pet Page dans le dos de l'user. Le sélecteur est opt-in via le paramètre `pets` : la Pet Page et le carnet ne le passent pas, l'animal y étant le sujet de la page), « Ajouter un évènement » (push `/home/create-event`) et « Ajouter un animal » (reset `OnboardingCubit` + push `/onboarding/create-pet` en mode in-app, quota freemium vérifié via `SubscriptionCubit.canCreatePet` avant navigation). Tap hors du menu = fermeture (scrim transparent), le `+` pivote en croix. Widgets dans `core/widgets/app_bottom_bar_widget.dart` / `app_create_menu_widget.dart`. **CreatePetPage est bi-mode** : onboarding (pending pet, bouton « Créer mon compte » → signup) ou in-app si authentifié (`PetCreationCubit.prepare` crée immédiatement, bouton « Créer » → retour page animal, erreurs via le snackbar retry du shell) ; la route `create-pet` n'est plus dans les routes publiques du guard pour rester accessible connecté. L'ancienne page Profil a été remplacée par la page Paramètres (`/home/settings`, NAN-030) — accès via la roue crantée en haut à droite du header de la home.
+
+> **`PetDetailsCubit` est fourni en `lazy: false`** (`app_router.dart`). `BlocProvider` est lazy par défaut : or aucune page ne lit ce cubit au premier rendu (la home n'y touche que dans les callbacks `onPetTap`), donc il naissait au tap du menu `+` avec `pets: []` — quota freemium contourné (`canCreatePet(0)` = `true`) et sélecteur d'animal de la sheet poids jamais affiché. `HomeCubit`/`JournalCubit` n'ont pas le souci, leurs pages les lisent au montage.
 
 - `JournalCubit` : offline-first, écoute 3 streams Isar (`watchEvents`, `watchPetEvents`, `watchAllImages`) + charge pets/types/`iconsKey`. Fourni au niveau du `ShellRoute` (à côté de `HomeCubit`/`PetDetailsCubit`) pour que la home puisse ouvrir la sheet de détail — les filtres survivent donc aux allers-retours de navigation.
 - Lien `pets_events` : cache Isar `PetEventCache` (clé `"$petId|$eventId"`), pour les pastilles d'animaux et le filtre animal.
@@ -281,9 +283,9 @@ Feature `lib/features/settings/`, route `/home/settings` (push depuis la roue cr
 **Runtime** :
 
 - `SubscriptionCubit` global (au root, à côté de `AuthCubit`) charge la config de l'user au login, en parallèle de `_syncUser` / `_syncPets` dans `SyncService.syncCritical`.
-- Cache Isar (`SubscriptionConfigCache`) → offline-first : la dernière config connue est servie même sans réseau.
+- Cache Isar (`SubscriptionConfigCache`, indexé unique sur `planName`) → offline-first : la dernière config connue est servie même sans réseau. `SyncService` cache **tous** les plans (table référentielle, 2 lignes, policy `referential_read_config`) : plus d'embedded join PostgREST sur la FK, et un upgrade se résout sans round-trip.
 - Helpers sémantiques sur `SubscriptionState` (`canCreatePet`, `canAddImageToEvent`, `canUseStorage`) ; **fail-closed** si la config est absente. L'accès aux icônes premium ne passe plus par la config (cf. §3 : `is_premium` croisé au `subscription_status` de l'user).
-- Upgrade détecté via `AuthRepository.watchCurrentUser()` : un changement de `subscriptionConfigId` déclenche un refresh forcé depuis Supabase.
+- Upgrade détecté via `AuthRepository.watchCurrentUser()` : un changement de `planName` déclenche un refresh forcé depuis Supabase.
 
 ---
 

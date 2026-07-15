@@ -6,23 +6,40 @@ import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/date_field_widget.dart';
+import 'package:nanimo/features/pet/data/models/pet_model.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_picker_widget.dart';
 
-typedef WeightSubmit = void Function(double weight, DateTime loggedAt);
+typedef WeightSubmit = void Function(
+  double weight,
+  DateTime loggedAt, {
+  String? petId,
+});
 
 class AddWeightBottomSheetWidget extends StatefulWidget {
   final WeightSubmit onSubmit;
+  final List<PetModel> pets;
+  final Map<String, String> iconsKey;
+  final String? initialPetId;
 
-  const AddWeightBottomSheetWidget({super.key, required this.onSubmit});
+  const AddWeightBottomSheetWidget({
+    super.key,
+    required this.onSubmit,
+    this.pets = const [],
+    this.iconsKey = const {},
+    this.initialPetId,
+  });
 
   @override
-  State<AddWeightBottomSheetWidget> createState() =>
-      _AddWeightBottomSheetWidgetState();
+  State<AddWeightBottomSheetWidget> createState() => _AddWeightBottomSheetWidgetState();
 }
 
 class _AddWeightBottomSheetWidgetState extends State<AddWeightBottomSheetWidget> {
   final TextEditingController _controller = TextEditingController();
   DateTime _loggedAt = DateTime.now();
   bool _isValid = false;
+  late String? _petId = widget.initialPetId ?? (widget.pets.isNotEmpty ? widget.pets.first.petId : null);
+
+  bool get _showPetPicker => widget.pets.length > 1;
 
   @override
   void dispose() {
@@ -43,7 +60,7 @@ class _AddWeightBottomSheetWidgetState extends State<AddWeightBottomSheetWidget>
   void _submit() {
     final value = _parse(_controller.text);
     if (value == null) return;
-    widget.onSubmit(value, _loggedAt);
+    widget.onSubmit(value, _loggedAt, petId: _petId);
     Navigator.of(context).pop();
   }
 
@@ -58,6 +75,15 @@ class _AddWeightBottomSheetWidgetState extends State<AddWeightBottomSheetWidget>
         fullWidth: true,
       ),
       children: [
+        if (_showPetPicker) ...[
+          PetPickerWidget.single(
+            pets: widget.pets,
+            iconsKey: widget.iconsKey,
+            selectedPetId: _petId,
+            onSelected: (id) => setState(() => _petId = id),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+        ],
         TextField(
           controller: _controller,
           autofocus: true,

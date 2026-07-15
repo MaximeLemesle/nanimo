@@ -36,7 +36,6 @@ String? handleRedirect(
 
 const _publicRoutes = {
   RouteNames.onboarding,
-  RouteNames.createPet,
   RouteNames.login,
   RouteNames.signup,
 };

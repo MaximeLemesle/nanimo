@@ -6,14 +6,12 @@ class UserModel {
   final String mail;
   final SubscriptionStatus subscriptionStatus;
   final DateTime? subscriptionExpiresAt;
-  final String subscriptionConfigId;
 
   const UserModel({
     required this.userId,
     required this.userName,
     required this.mail,
     required this.subscriptionStatus,
-    required this.subscriptionConfigId,
     this.subscriptionExpiresAt,
   });
 
@@ -23,12 +21,11 @@ class UserModel {
       userName: json['user_name'],
       mail: json['mail'],
       subscriptionStatus: _parseSubscriptionStatus(json['subscription_status']),
-      subscriptionExpiresAt: json['subscription_expires_at'] != null
-          ? DateTime.parse(json['subscription_expires_at'] as String)
-          : null,
-      subscriptionConfigId: json['id_subscription_config'].toString(),
+      subscriptionExpiresAt: json['subscription_expires_at'] != null ? DateTime.parse(json['subscription_expires_at'] as String) : null,
     );
   }
+
+  String get planName => _subscriptionStatusToString(subscriptionStatus);
 
   Map<String, dynamic> toJson() => {
         'id_user': userId,
@@ -36,7 +33,6 @@ class UserModel {
         'mail': mail,
         'subscription_status': _subscriptionStatusToString(subscriptionStatus),
         'subscription_expires_at': subscriptionExpiresAt?.toIso8601String(),
-        'id_subscription_config': subscriptionConfigId,
       };
 }
 
@@ -45,6 +41,7 @@ SubscriptionStatus _parseSubscriptionStatus(String value) {
     case 'premium':
       return SubscriptionStatus.premium;
     case 'freemium':
+      return SubscriptionStatus.freemium;
     default:
       return SubscriptionStatus.freemium;
   }

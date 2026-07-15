@@ -76,8 +76,7 @@ void main() {
             ..userId = 'u1'
             ..userName = 'Maxime'
             ..mail = 'maxime@example.com'
-            ..subscriptionStatus = 'free'
-            ..subscriptionConfigId = '1',
+            ..subscriptionStatus = 'freemium',
         );
       });
       await seedPet('p1');
@@ -97,17 +96,25 @@ void main() {
             'id_user': 'u1',
             'user_name': 'Maxime',
             'mail': 'maxime@example.com',
-            'subscription_status': 'free',
+            'subscription_status': 'freemium',
             'subscription_expires_at': null,
-            'id_subscription_config': '1',
-            'subscription_config': {
-              'id_subscription_config': 1,
-              'plan_name': 'free',
+          });
+      stubSelect(supabase, 'subscription_config', resolver: () => [
+            {
+              'id_subscription_config': 'cfg-freemium',
+              'plan_name': 'freemium',
               'max_images_per_event': 1,
               'max_pets': 1,
               'max_storage_in_mb': 500,
             },
-          });
+            {
+              'id_subscription_config': 'cfg-premium',
+              'plan_name': 'premium',
+              'max_images_per_event': 5,
+              'max_pets': 10,
+              'max_storage_in_mb': 5000,
+            },
+          ]);
       stubSelect(supabase, 'pets', resolver: () => [
             {
               'id_pet': 'p9',
@@ -125,7 +132,11 @@ void main() {
 
       expect(await harness.isar.userCaches.getByUserId('u1'), isNotNull);
       expect(
-        await harness.isar.subscriptionConfigCaches.getByConfigId('1'),
+        await harness.isar.subscriptionConfigCaches.getByPlanName('freemium'),
+        isNotNull,
+      );
+      expect(
+        await harness.isar.subscriptionConfigCaches.getByPlanName('premium'),
         isNotNull,
       );
       expect(await harness.isar.petCaches.count(), 1);

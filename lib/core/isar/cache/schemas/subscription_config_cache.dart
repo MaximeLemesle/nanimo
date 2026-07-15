@@ -7,10 +7,11 @@ part 'subscription_config_cache.g.dart';
 class SubscriptionConfigCache {
   Id id = Isar.autoIncrement;
 
-  @Index(unique: true)
   late String configId;
 
+  @Index(unique: true)
   late String planName;
+  
   late int maxImagesPerEvent;
   late int maxPets;
   late int maxStorageMb;

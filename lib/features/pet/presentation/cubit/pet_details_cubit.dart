@@ -61,15 +61,19 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     _subscribeToPet(petId);
   }
 
-  Future<void> addWeightLog(double weight, DateTime loggedAt) async {
-    final petId = state.selectedPetId;
-    if (petId == null) return;
+  Future<void> addWeightLog(
+    double weight,
+    DateTime loggedAt, {
+    String? petId,
+  }) async {
+    final targetId = petId ?? state.selectedPetId;
+    if (targetId == null) return;
     try {
       final log = HealthDiaryWeightLogModel(
         healthDiaryWeightLogId: const Uuid().v4(),
         weight: weight,
         loggedAt: loggedAt,
-        petId: petId,
+        petId: targetId,
       );
       await _healthRepository.addWeightLog(log);
     } catch (err) {

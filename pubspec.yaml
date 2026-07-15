@@ -72,6 +72,9 @@ dev_dependencies:
   mocktail: ^1.0.4
   image_picker_platform_interface: ^2.10.0
 
+dependency_overrides:
+  path_provider_foundation: 2.5.1
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
@@ -89,6 +92,7 @@ flutter:
     - assets/parc.png
     - assets/icons/species/
     - assets/icons/event_types/
+    - assets/icons/ui/
     - assets/animation/
 
   # An image asset can refer to one or more resolution-specific "variants", see

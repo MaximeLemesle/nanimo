@@ -18,9 +18,9 @@ class _MockAuthRepository extends Mock implements AuthRepository {}
 class _MockSubscriptionRepository extends Mock
     implements SubscriptionRepository {}
 
-const _freeConfig = SubscriptionConfigModel(
-  configId: 'cfg-free',
-  planName: 'free',
+const _freemiumConfig = SubscriptionConfigModel(
+  configId: 'cfg-freemium',
+  planName: 'freemium',
   maxImagesPerEvent: 1,
   maxPets: 1,
   maxStorageMb: 500,
@@ -34,12 +34,11 @@ const _premiumConfig = SubscriptionConfigModel(
   maxStorageMb: 5000,
 );
 
-UserModel _user(String configId) => UserModel(
+UserModel _user(user_model.SubscriptionStatus status) => UserModel(
       userId: 'user-1',
       userName: 'Maxime',
       mail: 'maxime@example.com',
-      subscriptionStatus: user_model.SubscriptionStatus.freemium,
-      subscriptionConfigId: configId,
+      subscriptionStatus: status,
     );
 
 void main() {
@@ -81,52 +80,111 @@ void main() {
 
   test('loads from cache when a user is emitted after authentication',
       () async {
-    when(() => subRepo.getConfigById('cfg-free'))
-        .thenAnswer((_) async => _freeConfig);
+    when(() => subRepo.getConfigByPlanName('freemium'))
+        .thenAnswer((_) async => _freemiumConfig);
 
     final cubit = createCubit();
     authStream.add(const AuthState.authenticated());
     await Future<void>.delayed(Duration.zero);
 
-    userStream.add(_user('cfg-free'));
+    userStream.add(_user(user_model.SubscriptionStatus.freemium));
     await Future<void>.delayed(Duration.zero);
 
     expect(cubit.state.status, SubscriptionStatus.loaded);
-    expect(cubit.state.config, _freeConfig);
-    verifyNever(() => subRepo.fetchConfigById(any()));
+    expect(cubit.state.config, _freemiumConfig);
+    verifyNever(() => subRepo.fetchConfigByPlanName(any()));
+    await cubit.close();
+  });
+
+  test('resolves the config from the status of a premium user', () async {
+    when(() => subRepo.getConfigByPlanName('premium'))
+        .thenAnswer((_) async => _premiumConfig);
+
+    final cubit = createCubit();
+    authStream.add(const AuthState.authenticated());
+    await Future<void>.delayed(Duration.zero);
+
+    userStream.add(_user(user_model.SubscriptionStatus.premium));
+    await Future<void>.delayed(Duration.zero);
+
+    expect(cubit.state.config, _premiumConfig);
+    expect(cubit.state.maxPets, 10);
     await cubit.close();
   });
 
   test('falls back to fetch when the cache is empty', () async {
-    when(() => subRepo.getConfigById('cfg-free'))
+    when(() => subRepo.getConfigByPlanName('freemium'))
         .thenAnswer((_) async => null);
-    when(() => subRepo.fetchConfigById('cfg-free'))
-        .thenAnswer((_) async => _freeConfig);
+    when(() => subRepo.fetchConfigByPlanName('freemium'))
+        .thenAnswer((_) async => _freemiumConfig);
 
     final cubit = createCubit();
     authStream.add(const AuthState.authenticated());
     await Future<void>.delayed(Duration.zero);
 
-    userStream.add(_user('cfg-free'));
+    userStream.add(_user(user_model.SubscriptionStatus.freemium));
     await Future<void>.delayed(Duration.zero);
 
     expect(cubit.state.status, SubscriptionStatus.loaded);
-    expect(cubit.state.config, _freeConfig);
-    verify(() => subRepo.fetchConfigById('cfg-free')).called(1);
+    expect(cubit.state.config, _freemiumConfig);
+    verify(() => subRepo.fetchConfigByPlanName('freemium')).called(1);
     await cubit.close();
   });
 
-  test('emits an error when both cache and fetch fail', () async {
-    when(() => subRepo.getConfigById('cfg-free'))
-        .thenAnswer((_) async => null);
-    when(() => subRepo.fetchConfigById('cfg-free'))
+  test('falls back to the network when the cache read throws', () async {
+    when(() => subRepo.getConfigByPlanName('freemium'))
+        .thenThrow(Exception('isar schema mismatch'));
+    when(() => subRepo.fetchConfigByPlanName('freemium'))
+        .thenAnswer((_) async => _freemiumConfig);
+
+    final cubit = createCubit();
+    authStream.add(const AuthState.authenticated());
+    await Future<void>.delayed(Duration.zero);
+
+    userStream.add(_user(user_model.SubscriptionStatus.freemium));
+    await Future<void>.delayed(Duration.zero);
+
+    // A throwing cache used to escape _load and strand the cubit in `loading`.
+    expect(cubit.state.status, SubscriptionStatus.loaded);
+    expect(cubit.state.config, _freemiumConfig);
+    await cubit.close();
+  });
+
+  test('serves the cached config when an upgrade refresh fails', () async {
+    when(() => subRepo.getConfigByPlanName('freemium'))
+        .thenAnswer((_) async => _freemiumConfig);
+    when(() => subRepo.getConfigByPlanName('premium'))
+        .thenAnswer((_) async => _premiumConfig);
+    when(() => subRepo.fetchConfigByPlanName('premium'))
         .thenThrow(Exception('offline'));
 
     final cubit = createCubit();
     authStream.add(const AuthState.authenticated());
     await Future<void>.delayed(Duration.zero);
 
-    userStream.add(_user('cfg-free'));
+    userStream.add(_user(user_model.SubscriptionStatus.freemium));
+    await Future<void>.delayed(Duration.zero);
+
+    userStream.add(_user(user_model.SubscriptionStatus.premium));
+    await Future<void>.delayed(Duration.zero);
+
+    // Failing the refresh must not lock a premium user out of every quota.
+    expect(cubit.state.status, SubscriptionStatus.loaded);
+    expect(cubit.state.config, _premiumConfig);
+    await cubit.close();
+  });
+
+  test('emits an error when both cache and fetch fail', () async {
+    when(() => subRepo.getConfigByPlanName('freemium'))
+        .thenAnswer((_) async => null);
+    when(() => subRepo.fetchConfigByPlanName('freemium'))
+        .thenThrow(Exception('offline'));
+
+    final cubit = createCubit();
+    authStream.add(const AuthState.authenticated());
+    await Future<void>.delayed(Duration.zero);
+
+    userStream.add(_user(user_model.SubscriptionStatus.freemium));
     await Future<void>.delayed(Duration.zero);
 
     expect(cubit.state.status, SubscriptionStatus.error);
@@ -143,18 +201,18 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     expect(cubit.state.status, SubscriptionStatus.unknown);
-    verifyNever(() => subRepo.getConfigById(any()));
+    verifyNever(() => subRepo.getConfigByPlanName(any()));
     await cubit.close();
   });
 
   test('resets to unknown when the user logs out', () async {
-    when(() => subRepo.getConfigById('cfg-free'))
-        .thenAnswer((_) async => _freeConfig);
+    when(() => subRepo.getConfigByPlanName('freemium'))
+        .thenAnswer((_) async => _freemiumConfig);
 
     final cubit = createCubit();
     authStream.add(const AuthState.authenticated());
     await Future<void>.delayed(Duration.zero);
-    userStream.add(_user('cfg-free'));
+    userStream.add(_user(user_model.SubscriptionStatus.freemium));
     await Future<void>.delayed(Duration.zero);
     expect(cubit.state.status, SubscriptionStatus.loaded);
 
@@ -165,40 +223,40 @@ void main() {
     await cubit.close();
   });
 
-  test('forces a refresh on a config upgrade, bypassing the cache', () async {
-    when(() => subRepo.getConfigById('cfg-free'))
-        .thenAnswer((_) async => _freeConfig);
-    when(() => subRepo.fetchConfigById('cfg-premium'))
+  test('forces a refresh on a plan upgrade, bypassing the cache', () async {
+    when(() => subRepo.getConfigByPlanName('freemium'))
+        .thenAnswer((_) async => _freemiumConfig);
+    when(() => subRepo.fetchConfigByPlanName('premium'))
         .thenAnswer((_) async => _premiumConfig);
 
     final cubit = createCubit();
     authStream.add(const AuthState.authenticated());
     await Future<void>.delayed(Duration.zero);
 
-    userStream.add(_user('cfg-free'));
+    userStream.add(_user(user_model.SubscriptionStatus.freemium));
     await Future<void>.delayed(Duration.zero);
-    expect(cubit.state.config, _freeConfig);
+    expect(cubit.state.config, _freemiumConfig);
 
-    userStream.add(_user('cfg-premium'));
+    userStream.add(_user(user_model.SubscriptionStatus.premium));
     await Future<void>.delayed(Duration.zero);
 
     expect(cubit.state.config, _premiumConfig);
     // Upgrade must skip the cache and hit the network for the new config.
-    verifyNever(() => subRepo.getConfigById('cfg-premium'));
-    verify(() => subRepo.fetchConfigById('cfg-premium')).called(1);
+    verifyNever(() => subRepo.getConfigByPlanName('premium'));
+    verify(() => subRepo.fetchConfigByPlanName('premium')).called(1);
     await cubit.close();
   });
 
   test('subscribes immediately when already authenticated at construction',
       () async {
     when(() => authCubit.state).thenReturn(const AuthState.authenticated());
-    when(() => subRepo.getConfigById('cfg-free'))
-        .thenAnswer((_) async => _freeConfig);
+    when(() => subRepo.getConfigByPlanName('freemium'))
+        .thenAnswer((_) async => _freemiumConfig);
 
     final cubit = createCubit();
     await Future<void>.delayed(Duration.zero);
 
-    userStream.add(_user('cfg-free'));
+    userStream.add(_user(user_model.SubscriptionStatus.freemium));
     await Future<void>.delayed(Duration.zero);
 
     expect(cubit.state.status, SubscriptionStatus.loaded);

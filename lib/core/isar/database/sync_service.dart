@@ -66,17 +66,10 @@ class SyncService {
 
   Future<void> _syncSubscriptionConfig() async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return;
-
-      final data = await _supabase.from('users').select('id_subscription_config, subscription_config(*)').eq('id_user', userId).single();
-
-      final configJson = data['subscription_config'];
-      if (configJson is! Map<String, dynamic>) return;
-
-      final cache = SubscriptionConfigCache.fromJson(configJson);
+      final data = await _supabase.from('subscription_config').select();
+      final configs = data.map((e) => SubscriptionConfigCache.fromJson(e)).toList();
       await _isar.writeTxn(() async {
-        await _isar.subscriptionConfigCaches.putByConfigId(cache);
+        await _isar.subscriptionConfigCaches.putAllByPlanName(configs);
       });
     } catch (e, st) {
       developer.log('syncSubscriptionConfig failed', name: 'sync', error: e, stackTrace: st);

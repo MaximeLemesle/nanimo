@@ -32,7 +32,12 @@ class PetHealthDiaryPage extends StatelessWidget {
             title: Text('Carnet de santé', style: AppTextStyles.title02),
           ),
           body: ListView(
-            padding: const EdgeInsets.all(AppSpacing.lg),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.bottomBarInset,
+            ),
             children: [
               /// Summary health info card
               PetSummaryDiaryCardWidget(

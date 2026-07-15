@@ -49,6 +49,10 @@ class PetCreationCubit extends Cubit<PetCreationState> {
       petSpeciesId: petSpeciesId,
     );
     emit(PetCreationState(pendingPet: pet));
+
+    if (_authCubit.state.status == AuthStatus.authenticated) {
+      _createPet();
+    }
   }
 
   /// Check if the user is authenticated

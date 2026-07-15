@@ -13,9 +13,9 @@ void main() {
   late MockSupabaseClient supabase;
   late SubscriptionRepository repo;
 
-  const freeConfig = SubscriptionConfigModel(
-    configId: 'cfg-free',
-    planName: 'free',
+  const freemiumConfig = SubscriptionConfigModel(
+    configId: 'cfg-freemium',
+    planName: 'freemium',
     maxImagesPerEvent: 1,
     maxPets: 1,
     maxStorageMb: 500,
@@ -35,63 +35,69 @@ void main() {
 
   Future<void> seedConfig(SubscriptionConfigModel model) async {
     await harness.isar.writeTxn(() async {
-      await harness.isar.subscriptionConfigCaches.putByConfigId(SubscriptionConfigCache.fromModel(model));
+      await harness.isar.subscriptionConfigCaches.putByPlanName(SubscriptionConfigCache.fromModel(model));
     });
   }
 
-  group('watchConfigById', () {
+  group('watchConfigByPlanName', () {
     test('emits null when the cache is empty', () async {
-      final emission = await repo.watchConfigById('cfg-free').first;
+      final emission = await repo.watchConfigByPlanName('freemium').first;
       expect(emission, isNull);
     });
 
     test('emits the cached config when present', () async {
-      await seedConfig(freeConfig);
+      await seedConfig(freemiumConfig);
 
-      final emission = await repo.watchConfigById('cfg-free').first;
+      final emission = await repo.watchConfigByPlanName('freemium').first;
       expect(emission, isNotNull);
-      expect(emission!.configId, 'cfg-free');
-      expect(emission.planName, 'free');
+      expect(emission!.configId, 'cfg-freemium');
+      expect(emission.planName, 'freemium');
     });
   });
 
-  group('getConfigById', () {
+  group('getConfigByPlanName', () {
     test('returns null when the cache is empty', () async {
-      expect(await repo.getConfigById('cfg-free'), isNull);
+      expect(await repo.getConfigByPlanName('freemium'), isNull);
     });
 
     test('returns the cached config when present', () async {
-      await seedConfig(freeConfig);
+      await seedConfig(freemiumConfig);
 
-      final result = await repo.getConfigById('cfg-free');
+      final result = await repo.getConfigByPlanName('freemium');
       expect(result, isNotNull);
       expect(result!.maxStorageMb, 500);
     });
+
+    test('does not leak another plan config', () async {
+      await seedConfig(freemiumConfig);
+
+      expect(await repo.getConfigByPlanName('premium'), isNull);
+    });
   });
 
-  group('fetchConfigById', () {
+  group('fetchConfigByPlanName', () {
     test('fetches from Supabase and writes through the cache', () async {
       stubSelect(supabase, 'subscription_config',
           resolver: () => {
-                'id_subscription_config': 2,
+                'id_subscription_config': 'cfg-premium',
                 'plan_name': 'premium',
                 'max_images_per_event': 5,
                 'max_pets': 10,
                 'max_storage_in_mb': 5000,
               });
 
-      final result = await repo.fetchConfigById('2');
+      final result = await repo.fetchConfigByPlanName('premium');
 
       expect(result.planName, 'premium');
       expect(result.maxPets, 10);
-      expect(await repo.getConfigById('2'), isNotNull);
+      expect(await repo.getConfigByPlanName('premium'), isNotNull);
     });
 
     test('throws a network exception on failure', () async {
       when(() => supabase.from(any())).thenThrow(Exception('offline'));
 
       await expectLater(
-        repo.fetchConfigById('2'),
+        repo.fetchConfigByPlanName('premium'),
         throwsA(isA<RepositoryNetworkException>()),
       );
     });
