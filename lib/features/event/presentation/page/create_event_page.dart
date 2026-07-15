@@ -55,9 +55,13 @@ class _CreateEventPageState extends State<CreateEventPage> {
     return quota < PolaroidCollageWidget.maxImages ? quota : PolaroidCollageWidget.maxImages;
   }
 
-  String _quotaMessage(int maxImages) {
-    if (maxImages <= 1) {
-      return 'Le plan gratuit est limité à $maxImages photo par souvenir. '
+
+  String _quotaMessage(SubscriptionState subscription, int maxImages) {
+    if (!subscription.isLoaded) {
+      return 'Impossible de vérifier votre abonnement. Vérifiez votre connexion, puis réessayez.';
+    }
+    if (!subscription.isPremium) {
+      return 'Le plan gratuit est limité à $maxImages photo${maxImages > 1 ? 's' : ''} par souvenir. '
           'Passez au premium pour en ajouter plus.';
     }
     return 'Vous pouvez ajouter $maxImages photos maximum.';
@@ -138,7 +142,12 @@ class _CreateEventPageState extends State<CreateEventPage> {
 
         return AppScaffold(
           body: ListView(
-            padding: const EdgeInsets.all(AppSpacing.lg),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.bottomBarInset,
+            ),
             children: [
               Row(
                 children: [
@@ -264,6 +273,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                 onTap: () async {
                   final messenger = ScaffoldMessenger.of(context);
                   final maxImages = _maxImages(context);
+                  final subscription = context.read<SubscriptionCubit>().state;
                   final picked = await AddImageBottomSheetWidget.show(context);
                   if (picked == null || picked.isEmpty) return;
                   final remaining = maxImages - _images.length;
@@ -272,7 +282,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                       ..clearSnackBars()
                       ..showSnackBar(
                         SnackBar(
-                          content: Text(_quotaMessage(maxImages)),
+                          content: Text(_quotaMessage(subscription, maxImages)),
                         ),
                       );
                     return;

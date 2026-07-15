@@ -36,7 +36,12 @@ class HomePage extends StatelessWidget {
             final memory = anniversary ?? state.latestEvent;
 
             return ListView(
-              padding: const EdgeInsets.all(AppSpacing.lg),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.bottomBarInset,
+              ),
               children: [
                 HomeHeaderWidget(
                   userName: state.userName,

@@ -53,7 +53,6 @@ const _maxime = UserModel(
   userName: 'Maxime',
   mail: 'maxime@nanimo.fr',
   subscriptionStatus: SubscriptionStatus.freemium,
-  subscriptionConfigId: '1',
 );
 
 void main() {

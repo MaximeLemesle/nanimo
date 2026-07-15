@@ -73,7 +73,7 @@ lib/
 
 | Table                   | Colonnes clés                                                                                                                                | Notes                            |
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| `users`                 | id_user (UUID PK), user_name, mail (unique), subscription_status, subscription_expires_at, id_subscription_config FK                         | Auth Supabase                    |
+| `users`                 | id_user (UUID PK), user_name, mail (unique), subscription_status, subscription_expires_at                                                     | Auth Supabase. `subscription_status` = seule source de vérité du plan (cf. `subscription_config`) |
 | `pets`                  | id_pet (UUID PK), pet_name, birthdate (DATE), gender (enum), created_at, pet_race_id FK, pet_species_id FK, pet_icon_id FK                   | RLS: user_id                     |
 | `events`                | id_event (UUID PK), title, description, created_at, entry_date (TIMESTAMPTZ), event_type_id FK                                                      | Aucun lien direct pet/user — passe par `pets_events`. RLS via `pets_events → users_pets` |
 | `pets_events`           | pet_id FK, event_id FK (jointure M:N)                                                                                                        | Un event ↔ plusieurs animaux, un animal ↔ plusieurs events |
@@ -84,7 +84,7 @@ lib/
 | `health_diary_weight_log` | id_health_diary_weight_log (UUID PK), weight (DECIMAL), logged_at (TIMESTAMPTZ), pet_id FK                                                 | Graphique 6 mois                 |
 | `vet_visits`            | id_vet_visit (UUID PK), title, visited_at (DATE), vet_name, clinic_name, pet_id FK (CASCADE)                                                 | Timeline visites véto (carnet)   |
 | `notifications`         | id_notification (UUID PK), type (enum), title, description, sending_at (TIMESTAMPTZ), id_pet FK                                              | Push Firebase FCM _(table prête, feature V2)_ |
-| `subscription_config`   | id_subscription_config (UUID PK), plan_name, max_images_per_event, max_pets, max_storage_in_mb                                               | Quotas freemium. Icônes premium = `is_premium` (event_type/pet_icons) croisé au `subscription_status` de l'user, pas une colonne de config |
+| `subscription_config`   | id_subscription_config (UUID PK), plan_name (UNIQUE: freemium/premium), max_images_per_event, max_pets, max_storage_in_mb                    | Quotas freemium. Résolu en joignant `plan_name` sur `users.subscription_status` (cf. §7). Icônes premium = `is_premium` (event_type/pet_icons) croisé au `subscription_status` de l'user, pas une colonne de config |
 
 ### ENUMs
 
@@ -283,9 +283,9 @@ Feature `lib/features/settings/`, route `/home/settings` (push depuis la roue cr
 **Runtime** :
 
 - `SubscriptionCubit` global (au root, à côté de `AuthCubit`) charge la config de l'user au login, en parallèle de `_syncUser` / `_syncPets` dans `SyncService.syncCritical`.
-- Cache Isar (`SubscriptionConfigCache`) → offline-first : la dernière config connue est servie même sans réseau.
+- Cache Isar (`SubscriptionConfigCache`, indexé unique sur `planName`) → offline-first : la dernière config connue est servie même sans réseau. `SyncService` cache **tous** les plans (table référentielle, 2 lignes, policy `referential_read_config`) : plus d'embedded join PostgREST sur la FK, et un upgrade se résout sans round-trip.
 - Helpers sémantiques sur `SubscriptionState` (`canCreatePet`, `canAddImageToEvent`, `canUseStorage`) ; **fail-closed** si la config est absente. L'accès aux icônes premium ne passe plus par la config (cf. §3 : `is_premium` croisé au `subscription_status` de l'user).
-- Upgrade détecté via `AuthRepository.watchCurrentUser()` : un changement de `subscriptionConfigId` déclenche un refresh forcé depuis Supabase.
+- Upgrade détecté via `AuthRepository.watchCurrentUser()` : un changement de `planName` déclenche un refresh forcé depuis Supabase.
 
 ---
 

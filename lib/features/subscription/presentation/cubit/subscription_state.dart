@@ -20,6 +20,8 @@ class SubscriptionState extends Equatable {
 
   bool get isLoaded => status == SubscriptionStatus.loaded;
 
+  bool get isPremium => config?.planName == 'premium';
+
   /// True if the user can create another pet given the current count
   bool canCreatePet(int currentCount) => config != null && currentCount < config!.maxPets;
 

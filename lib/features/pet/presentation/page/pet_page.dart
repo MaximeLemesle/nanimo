@@ -54,7 +54,7 @@ class PetPage extends StatelessWidget {
         return Scaffold(
           backgroundColor: AppColors.background,
           body: ListView(
-            padding: EdgeInsets.zero,
+            padding: const EdgeInsets.only(bottom: AppSpacing.bottomBarInset),
             children: [
               PetParkHeaderWidget(
                 pets: state.pets,

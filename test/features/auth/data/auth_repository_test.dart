@@ -45,7 +45,6 @@ void main() {
       userName: 'Maxime',
       mail: 'm@example.com',
       subscriptionStatus: SubscriptionStatus.freemium,
-      subscriptionConfigId: 'cfg-free',
     );
   }
 

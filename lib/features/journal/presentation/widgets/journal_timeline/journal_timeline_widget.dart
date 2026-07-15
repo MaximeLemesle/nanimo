@@ -37,7 +37,10 @@ class JournalTimelineWidget extends StatelessWidget {
     return RefreshIndicator(
       onRefresh: () => context.read<AuthCubit>().resync(),
       child: ListView.builder(
-        padding: const EdgeInsets.only(top: AppSpacing.xl),
+        padding: const EdgeInsets.only(
+          top: AppSpacing.xl,
+          bottom: AppSpacing.bottomBarInset,
+        ),
         itemCount: events.length,
         itemBuilder: (context, index) {
           final event = events[index];

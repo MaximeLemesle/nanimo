@@ -102,14 +102,22 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     context.push(RouteNames.createEvent);
   }
 
+  String _petQuotaMessage(SubscriptionState subscription) {
+    if (!subscription.isLoaded) {
+      return 'Impossible de vérifier votre abonnement. Vérifiez votre connexion, puis réessayez.';
+    }
+    if (subscription.isPremium) {
+      return 'Limite de ${subscription.maxPets} animaux atteinte.';
+    }
+    return 'Limite d\'animaux atteinte. Passez Premium pour en ajouter un nouveau.';
+  }
+
   void _onAddPet() {
     _closeCreateMenu();
+    final subscription = context.read<SubscriptionCubit>().state;
     final petCount = context.read<PetDetailsCubit>().state.pets.length;
-    debugPrint('petCount: ${context.read<SubscriptionCubit>().state.canCreatePet(petCount)}');
-    if (!context.read<SubscriptionCubit>().state.canCreatePet(petCount)) {
-      _showSnackBar(
-        'Limite d\'animaux atteinte. Passez Premium pour en ajouter un nouveau.',
-      );
+    if (!subscription.canCreatePet(petCount)) {
+      _showSnackBar(_petQuotaMessage(subscription));
       return;
     }
 

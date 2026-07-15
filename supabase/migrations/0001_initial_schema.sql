@@ -18,7 +18,7 @@ create extension if not exists moddatetime schema extensions;
 -- ---------------------------------------------------------------------------
 create type gender_enum as enum ('male', 'female', 'unknown');
 create type weight_unit_enum as enum ('kg', 'g');
-create type subscription_status_enum as enum ('free', 'premium');
+create type subscription_status_enum as enum ('freemium', 'premium');
 create type notification_type_enum as enum (
   'anniversary', 'vaccine', 'vet', 'deworming', 'custom'
 );
@@ -26,9 +26,13 @@ create type notification_type_enum as enum (
 -- ---------------------------------------------------------------------------
 -- Referential (public read, no per-user rows)
 -- ---------------------------------------------------------------------------
+-- `plan_name` is the key the quotas are resolved by, so the entitlement has a
+-- single source of truth. Typed as the status enum rather than text so `users`
+-- can carry a real FK to it — the database then guarantees every status has a
+-- config row, instead of the app hoping so.
 create table subscription_config (
   id_subscription_config   serial primary key,
-  plan_name                text not null,
+  plan_name                subscription_status_enum not null unique,
   max_images_per_event     int  not null default 1,
   max_pets                 int  not null default 1,
   max_storage_mb           int  not null default 500,
@@ -70,9 +74,9 @@ create table users (
   id_user                   uuid primary key references auth.users (id) on delete cascade,
   user_name                 text,
   mail                      text unique not null,
-  subscription_status       subscription_status_enum not null default 'free',
-  subscription_expires_at   timestamptz,
-  id_subscription_config    int not null default 1 references subscription_config (id_subscription_config)
+  subscription_status       subscription_status_enum not null default 'freemium'
+                              references subscription_config (plan_name),
+  subscription_expires_at   timestamptz
 );
 
 -- ---------------------------------------------------------------------------

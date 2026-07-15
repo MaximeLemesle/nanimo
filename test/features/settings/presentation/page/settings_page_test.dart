@@ -19,7 +19,6 @@ const _user = UserModel(
   userName: 'Maxime',
   mail: 'max@example.com',
   subscriptionStatus: SubscriptionStatus.freemium,
-  subscriptionConfigId: 'cfg-free',
 );
 
 const _loadedState = SettingsState(
@@ -106,7 +105,6 @@ void main() {
           mail: _user.mail,
           subscriptionStatus: SubscriptionStatus.premium,
           subscriptionExpiresAt: DateTime(2026, 12, 31),
-          subscriptionConfigId: 'cfg-premium',
         ),
       ),
     );

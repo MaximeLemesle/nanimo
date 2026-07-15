@@ -10,7 +10,6 @@ void main() {
         'mail': 'maxime@example.com',
         'subscription_status': 'premium',
         'subscription_expires_at': '2026-12-31T00:00:00.000Z',
-        'id_subscription_config': 'cfg-2',
       };
 
       final model = UserModel.fromJson(json);
@@ -21,21 +20,7 @@ void main() {
       expect(model.subscriptionStatus, SubscriptionStatus.premium);
       expect(model.subscriptionExpiresAt,
           DateTime.parse('2026-12-31T00:00:00.000Z'));
-      expect(model.subscriptionConfigId, 'cfg-2');
     });
-
-    test('keeps a missing config FK null instead of the string "null"', () {
-      final model = UserModel.fromJson({
-        'id_user': 'user-3',
-        'user_name': 'No config',
-        'mail': 'no-config@example.com',
-        'subscription_status': 'freemium',
-        'id_subscription_config': null,
-      });
-
-      expect(model.subscriptionConfigId, isNull);
-    });
-
 
     test('defaults to freemium for unknown status and null expiry', () {
       final json = {
@@ -44,13 +29,32 @@ void main() {
         'mail': 'free@example.com',
         'subscription_status': 'something-else',
         'subscription_expires_at': null,
-        'id_subscription_config': 'cfg-1',
       };
 
       final model = UserModel.fromJson(json);
 
       expect(model.subscriptionStatus, SubscriptionStatus.freemium);
       expect(model.subscriptionExpiresAt, isNull);
+    });
+  });
+
+  group('UserModel.planName', () {
+    test('matches the subscription_config plan_name of each status', () {
+      const freemium = UserModel(
+        userId: 'user-1',
+        userName: 'Free user',
+        mail: 'free@example.com',
+        subscriptionStatus: SubscriptionStatus.freemium,
+      );
+      const premium = UserModel(
+        userId: 'user-2',
+        userName: 'Paid user',
+        mail: 'paid@example.com',
+        subscriptionStatus: SubscriptionStatus.premium,
+      );
+
+      expect(freemium.planName, 'freemium');
+      expect(premium.planName, 'premium');
     });
   });
 
@@ -61,7 +65,6 @@ void main() {
         userName: 'Maxime',
         mail: 'maxime@example.com',
         subscriptionStatus: SubscriptionStatus.premium,
-        subscriptionConfigId: 'cfg-2',
         subscriptionExpiresAt: DateTime.parse('2026-12-31T00:00:00.000Z'),
       );
 
@@ -72,7 +75,6 @@ void main() {
       expect(roundTripped.mail, original.mail);
       expect(roundTripped.subscriptionStatus, original.subscriptionStatus);
       expect(roundTripped.subscriptionExpiresAt, original.subscriptionExpiresAt);
-      expect(roundTripped.subscriptionConfigId, original.subscriptionConfigId);
     });
 
     test('serializes freemium status and null expiry', () {
@@ -81,7 +83,6 @@ void main() {
         userName: 'Free user',
         mail: 'free@example.com',
         subscriptionStatus: SubscriptionStatus.freemium,
-        subscriptionConfigId: 'cfg-1',
       );
 
       final json = original.toJson();

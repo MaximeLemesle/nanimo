@@ -1,6 +1,13 @@
 -- Nanimo — server-side freemium quotas (audit A-2)
 -- The client greys out over-quota actions for UX, but the plan limits are
 -- enforced here so they cannot be bypassed by a crafted request.
+--
+-- Limits are resolved by joining `subscription_config.plan_name` on the user's
+-- `subscription_status` — the entitlement itself, and a real FK (see 0001). An
+-- earlier revision carried a `users.id_subscription_config` FK alongside the
+-- status; the two could drift, silently capping a premium user at the freemium
+-- quotas. `allowed` can no longer come back null for an existing user, but the
+-- coalesce stays: it fails closed rather than trusting that invariant.
 
 -- ---------------------------------------------------------------------------
 -- Resolve the plan limits of the user who owns a pet.
@@ -15,7 +22,7 @@ as $$
   select sc.*
   from users_pets up
   join users u on u.id_user = up.user_id
-  join subscription_config sc on sc.id_subscription_config = u.id_subscription_config
+  join subscription_config sc on sc.plan_name = u.subscription_status
   where up.pet_id = target_pet
   limit 1;
 $$;
@@ -36,7 +43,7 @@ begin
   select count(*) into current_count from users_pets where user_id = new.user_id;
   select sc.max_pets into allowed
   from users u
-  join subscription_config sc on sc.id_subscription_config = u.id_subscription_config
+  join subscription_config sc on sc.plan_name = u.subscription_status
   where u.id_user = new.user_id;
 
   if current_count >= coalesce(allowed, 0) then
@@ -71,7 +78,7 @@ begin
   from pets_events pe
   join users_pets up on up.pet_id = pe.pet_id
   join users u on u.id_user = up.user_id
-  join subscription_config sc on sc.id_subscription_config = u.id_subscription_config
+  join subscription_config sc on sc.plan_name = u.subscription_status
   where pe.event_id = new.event_id;
 
   if current_count >= coalesce(allowed, 0) then

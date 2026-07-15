@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -17,7 +18,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
 
   late final StreamSubscription<AuthState> _authSub;
   StreamSubscription<UserModel?>? _userSub;
-  String? _lastConfigId;
+  String? _lastPlanName;
 
   SubscriptionCubit({
     required AuthCubit authCubit,
@@ -51,32 +52,27 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
   void _onUnauthenticated() {
     _userSub?.cancel();
     _userSub = null;
-    _lastConfigId = null;
+    _lastPlanName = null;
     emit(const SubscriptionState.unknown());
   }
 
   Future<void> _onUserChanged(UserModel? user) async {
     if (user == null) return;
-    final configId = user.subscriptionConfigId;
-    if (configId == null) {
-      _lastConfigId = null;
-      emit(const SubscriptionState.unknown());
-      return;
-    }
+    final planName = user.planName;
 
-    if (configId == _lastConfigId && state.status == SubscriptionStatus.loaded) {
+    if (planName == _lastPlanName && state.status == SubscriptionStatus.loaded) {
       return;
     }
-    final isUpgrade = _lastConfigId != null && _lastConfigId != configId;
-    _lastConfigId = configId;
-    await _load(configId, forceRefresh: isUpgrade);
+    final isUpgrade = _lastPlanName != null && _lastPlanName != planName;
+    _lastPlanName = planName;
+    await _load(planName, forceRefresh: isUpgrade);
   }
 
-  Future<void> _load(String configId, {required bool forceRefresh}) async {
+  Future<void> _load(String planName, {required bool forceRefresh}) async {
     emit(const SubscriptionState.loading());
 
     if (!forceRefresh) {
-      final cached = await _subscriptionRepository.getConfigById(configId);
+      final cached = await _readCache(planName);
       if (cached != null) {
         emit(SubscriptionState.loaded(cached));
         return;
@@ -84,10 +80,26 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
     }
 
     try {
-      final fresh = await _subscriptionRepository.fetchConfigById(configId);
+      final fresh = await _subscriptionRepository.fetchConfigByPlanName(planName);
       emit(SubscriptionState.loaded(fresh));
-    } catch (e) {
+    } catch (e, st) {
+      developer.log('config load failed for plan "$planName"', name: 'subscription', error: e, stackTrace: st);
+      final cached = forceRefresh ? await _readCache(planName) : null;
+      if (cached != null) {
+        emit(SubscriptionState.loaded(cached));
+        return;
+      }
       emit(SubscriptionState.error(e.toString()));
+    }
+  }
+
+  Future<SubscriptionConfigModel?> _readCache(String planName) async {
+    try {
+      return await _subscriptionRepository.getConfigByPlanName(planName);
+    } catch (e, st) {
+      developer.log('config cache read failed for plan "$planName", falling back to network',
+          name: 'subscription', error: e, stackTrace: st);
+      return null;
     }
   }
 
