@@ -6,7 +6,7 @@ class UserModel {
   final String mail;
   final SubscriptionStatus subscriptionStatus;
   final DateTime? subscriptionExpiresAt;
-  final String subscriptionConfigId;
+  final String? subscriptionConfigId;
 
   const UserModel({
     required this.userId,
@@ -26,7 +26,7 @@ class UserModel {
       subscriptionExpiresAt: json['subscription_expires_at'] != null
           ? DateTime.parse(json['subscription_expires_at'] as String)
           : null,
-      subscriptionConfigId: json['id_subscription_config'].toString(),
+      subscriptionConfigId: json['id_subscription_config']?.toString(),
     );
   }
 

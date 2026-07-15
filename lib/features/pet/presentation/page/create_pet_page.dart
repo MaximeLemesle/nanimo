@@ -6,6 +6,7 @@ import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/step_indicator_widget.dart';
+import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_creation/pet_creation_step_one_widget.dart';
@@ -35,11 +36,17 @@ class _CreatePetPageState extends State<CreatePetPage> {
     super.dispose();
   }
 
-  /// Go to the last step or the onboarding page if it's the first step
+  bool _isInApp(BuildContext context) =>
+      context.read<AuthCubit>().state.status == AuthStatus.authenticated;
+
   void _handleBack(BuildContext context, OnboardingState state) {
     if (state.currentStep == 1) {
       context.read<OnboardingCubit>().reset();
-      context.go(RouteNames.onboarding);
+      if (_isInApp(context)) {
+        context.pop();
+      } else {
+        context.go(RouteNames.onboarding);
+      }
     } else {
       context.read<OnboardingCubit>().previousStep();
     }
@@ -49,14 +56,20 @@ class _CreatePetPageState extends State<CreatePetPage> {
   void _handleNext(BuildContext context, OnboardingState state) {
     if (state.currentStep < 3) {
       context.read<OnboardingCubit>().nextStep();
+      return;
+    }
+
+    context.read<PetCreationCubit>().prepare(
+          petName: state.petName.trim(),
+          petSpeciesId: state.petSpeciesId!,
+          petRaceId: state.petRaceId!,
+          gender: state.gender!,
+          birthdate: state.birthdate!,
+        );
+    if (_isInApp(context)) {
+      context.read<OnboardingCubit>().reset();
+      context.go(RouteNames.pet);
     } else {
-      context.read<PetCreationCubit>().prepare(
-            petName: state.petName.trim(),
-            petSpeciesId: state.petSpeciesId!,
-            petRaceId: state.petRaceId!,
-            gender: state.gender!,
-            birthdate: state.birthdate!,
-          );
       context.go(RouteNames.signup);
     }
   }
@@ -133,7 +146,7 @@ class _CreatePetPageState extends State<CreatePetPage> {
                     padding: const EdgeInsets.all(AppSpacing.lg),
                     child: ButtonWidget(
                       label: state.currentStep == 3
-                          ? 'Créer mon compte'
+                          ? (_isInApp(context) ? 'Créer' : 'Créer mon compte')
                           : 'Continuer',
                       onPressed: _isNextEnabled(state)
                           ? () => _handleNext(context, state)

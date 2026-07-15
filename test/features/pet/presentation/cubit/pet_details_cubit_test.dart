@@ -182,6 +182,22 @@ void main() {
     await cubit.close();
   });
 
+  test('addWeightLog targets petId without moving the selection', () async {
+    final cubit = createCubit();
+    await settle();
+    expect(cubit.state.selectedPetId, 'p1');
+
+    await cubit.addWeightLog(6.2, DateTime(2026, 6, 21), petId: 'p2');
+
+    final captured = verify(() => healthRepo.addWeightLog(captureAny()))
+        .captured
+        .single as HealthDiaryWeightLogModel;
+    expect(captured.petId, 'p2');
+    expect(cubit.state.selectedPetId, 'p1');
+
+    await cubit.close();
+  });
+
   test('addWeightLog emits an error when the repository throws', () async {
     when(() => healthRepo.addWeightLog(any())).thenThrow(Exception('boom'));
     final cubit = createCubit();

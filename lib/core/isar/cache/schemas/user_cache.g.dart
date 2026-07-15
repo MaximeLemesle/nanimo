@@ -83,7 +83,12 @@ int _userCacheEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.mail.length * 3;
-  bytesCount += 3 + object.subscriptionConfigId.length * 3;
+  {
+    final value = object.subscriptionConfigId;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.subscriptionStatus.length * 3;
   bytesCount += 3 + object.userId.length * 3;
   {
@@ -118,7 +123,7 @@ UserCache _userCacheDeserialize(
   final object = UserCache();
   object.id = id;
   object.mail = reader.readString(offsets[0]);
-  object.subscriptionConfigId = reader.readString(offsets[1]);
+  object.subscriptionConfigId = reader.readStringOrNull(offsets[1]);
   object.subscriptionExpiresAt = reader.readDateTimeOrNull(offsets[2]);
   object.subscriptionStatus = reader.readString(offsets[3]);
   object.userId = reader.readString(offsets[4]);
@@ -136,7 +141,7 @@ P _userCacheDeserializeProp<P>(
     case 0:
       return (reader.readString(offset)) as P;
     case 1:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 2:
       return (reader.readDateTimeOrNull(offset)) as P;
     case 3:
@@ -525,8 +530,26 @@ extension UserCacheQueryFilter
   }
 
   QueryBuilder<UserCache, UserCache, QAfterFilterCondition>
+      subscriptionConfigIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'subscriptionConfigId',
+      ));
+    });
+  }
+
+  QueryBuilder<UserCache, UserCache, QAfterFilterCondition>
+      subscriptionConfigIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'subscriptionConfigId',
+      ));
+    });
+  }
+
+  QueryBuilder<UserCache, UserCache, QAfterFilterCondition>
       subscriptionConfigIdEqualTo(
-    String value, {
+    String? value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -540,7 +563,7 @@ extension UserCacheQueryFilter
 
   QueryBuilder<UserCache, UserCache, QAfterFilterCondition>
       subscriptionConfigIdGreaterThan(
-    String value, {
+    String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -556,7 +579,7 @@ extension UserCacheQueryFilter
 
   QueryBuilder<UserCache, UserCache, QAfterFilterCondition>
       subscriptionConfigIdLessThan(
-    String value, {
+    String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -572,8 +595,8 @@ extension UserCacheQueryFilter
 
   QueryBuilder<UserCache, UserCache, QAfterFilterCondition>
       subscriptionConfigIdBetween(
-    String lower,
-    String upper, {
+    String? lower,
+    String? upper, {
     bool includeLower = true,
     bool includeUpper = true,
     bool caseSensitive = true,
@@ -1387,7 +1410,7 @@ extension UserCacheQueryProperty
     });
   }
 
-  QueryBuilder<UserCache, String, QQueryOperations>
+  QueryBuilder<UserCache, String?, QQueryOperations>
       subscriptionConfigIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'subscriptionConfigId');

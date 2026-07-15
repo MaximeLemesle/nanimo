@@ -58,6 +58,12 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
   Future<void> _onUserChanged(UserModel? user) async {
     if (user == null) return;
     final configId = user.subscriptionConfigId;
+    if (configId == null) {
+      _lastConfigId = null;
+      emit(const SubscriptionState.unknown());
+      return;
+    }
+
     if (configId == _lastConfigId && state.status == SubscriptionStatus.loaded) {
       return;
     }

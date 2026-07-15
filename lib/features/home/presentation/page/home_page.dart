@@ -21,6 +21,7 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
+        bottom: false,
         child: BlocBuilder<HomeCubit, HomeState>(
           builder: (context, state) {
             if (state.status == HomeStatus.loading) {

@@ -14,7 +14,7 @@ class UserCache {
   late String mail;
   late String subscriptionStatus;
   DateTime? subscriptionExpiresAt;
-  late String subscriptionConfigId;
+  String? subscriptionConfigId;
 
   UserCache();
 
@@ -28,7 +28,7 @@ class UserCache {
       ..subscriptionExpiresAt = json['subscription_expires_at'] != null
           ? DateTime.parse(json['subscription_expires_at'] as String)
           : null
-      ..subscriptionConfigId = json['id_subscription_config'].toString();
+      ..subscriptionConfigId = json['id_subscription_config']?.toString();
   }
 
   /// Builds a [UserCache] from a [UserModel]

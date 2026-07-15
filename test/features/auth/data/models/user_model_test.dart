@@ -24,6 +24,19 @@ void main() {
       expect(model.subscriptionConfigId, 'cfg-2');
     });
 
+    test('keeps a missing config FK null instead of the string "null"', () {
+      final model = UserModel.fromJson({
+        'id_user': 'user-3',
+        'user_name': 'No config',
+        'mail': 'no-config@example.com',
+        'subscription_status': 'freemium',
+        'id_subscription_config': null,
+      });
+
+      expect(model.subscriptionConfigId, isNull);
+    });
+
+
     test('defaults to freemium for unknown status and null expiry', () {
       final json = {
         'id_user': 'user-2',

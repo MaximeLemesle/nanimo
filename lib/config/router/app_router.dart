@@ -108,6 +108,7 @@ GoRouter createRouter(
               ),
             ),
             BlocProvider(
+              lazy: false,
               create: (_) => PetDetailsCubit(
                 petRepository: petRepository,
                 healthRepository: healthRepository,

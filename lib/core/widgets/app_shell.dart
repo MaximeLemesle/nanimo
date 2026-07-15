@@ -2,8 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nanimo/config/router/route_names.dart';
+import 'package:nanimo/config/theme/app_colors.dart';
+import 'package:nanimo/core/widgets/bottom_bar_widget/bottom_bar_menu_widget.dart';
+import 'package:nanimo/core/widgets/bottom_bar_widget/bottom_bar_widget.dart';
+import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
+import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_bottom_sheet/add_weight_bottom_sheet_widget.dart';
+import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 
 class AppShell extends StatefulWidget {
   final Widget child;
@@ -14,6 +22,8 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
+  bool _isCreateMenuOpen = false;
+
   @override
   void initState() {
     super.initState();
@@ -40,17 +50,13 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     RouteNames.pet,
   ];
 
-  static const _createIndex = 3;
-
   int _currentIndex(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
-    if (location.startsWith(RouteNames.createEvent)) return _createIndex;
 
     var index = 0;
     var routeLength = -1;
     for (var i = 0; i < _tabRoutes.length; i++) {
-      if (location.startsWith(_tabRoutes[i]) &&
-          _tabRoutes[i].length > routeLength) {
+      if (location.startsWith(_tabRoutes[i]) && _tabRoutes[i].length > routeLength) {
         index = i;
         routeLength = _tabRoutes[i].length;
       }
@@ -58,12 +64,58 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     return index;
   }
 
-  void _onDestinationSelected(BuildContext context, int index) {
-    if (index == _createIndex) {
-      context.push(RouteNames.createEvent);
-    } else {
-      context.go(_tabRoutes[index]);
+  void _closeCreateMenu() {
+    if (_isCreateMenuOpen) setState(() => _isCreateMenuOpen = false);
+  }
+
+  void _onTabSelected(BuildContext context, int index) {
+    _closeCreateMenu();
+    context.go(_tabRoutes[index]);
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void _onAddWeight() {
+    _closeCreateMenu();
+    final petDetails = context.read<PetDetailsCubit>();
+    if (petDetails.state.pets.isEmpty) {
+      _showSnackBar('Ajoutez d\'abord un animal.');
+      return;
     }
+    BottomSheetWidget.show(
+      context,
+      AddWeightBottomSheetWidget(
+        pets: petDetails.state.pets,
+        iconsKey: petDetails.state.iconsKey,
+        initialPetId: petDetails.state.selectedPetId,
+        onSubmit: (weight, loggedAt, {petId}) => petDetails.addWeightLog(weight, loggedAt, petId: petId),
+      ),
+    );
+  }
+
+  void _onAddEvent() {
+    _closeCreateMenu();
+    context.push(RouteNames.createEvent);
+  }
+
+  void _onAddPet() {
+    _closeCreateMenu();
+    final petCount = context.read<PetDetailsCubit>().state.pets.length;
+    debugPrint('petCount: ${context.read<SubscriptionCubit>().state.canCreatePet(petCount)}');
+    if (!context.read<SubscriptionCubit>().state.canCreatePet(petCount)) {
+      _showSnackBar(
+        'Limite d\'animaux atteinte. Passez Premium pour en ajouter un nouveau.',
+      );
+      return;
+    }
+
+    /// Start the create-pet flow from a clean step 1
+    context.read<OnboardingCubit>().reset();
+    context.push(RouteNames.createPet);
   }
 
   @override
@@ -94,32 +146,45 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
 
   Widget _buildScaffold(BuildContext context, int index) {
     return Scaffold(
-      body: widget.child,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: index,
-        onDestinationSelected: (i) => _onDestinationSelected(context, i),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Accueil',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.menu_book_outlined),
-            selectedIcon: Icon(Icons.menu_book),
-            label: 'Journal',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.pets_outlined),
-            selectedIcon: Icon(Icons.pets),
-            label: 'Animal',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.add_circle_outline),
-            selectedIcon: Icon(Icons.add_circle),
-            label: 'Créer',
+      backgroundColor: AppColors.background,
+      extendBody: true,
+      body: Stack(
+        children: [
+          Positioned.fill(child: widget.child),
+
+          /// Tap outside the create menu closes it
+          if (_isCreateMenuOpen)
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _closeCreateMenu,
+              ),
+            ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: BottomBarMenuWidget(
+              isOpen: _isCreateMenuOpen,
+              onAddWeight: _onAddWeight,
+              onAddEvent: _onAddEvent,
+              onAddPet: _onAddPet,
+            ),
           ),
         ],
+      ),
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0x002D8B83), Color(0x302D8B83)],
+          ),
+        ),
+        child: BottomBarWidget(
+          currentIndex: index,
+          isCreateMenuOpen: _isCreateMenuOpen,
+          onTabSelected: (i) => _onTabSelected(context, i),
+          onCreateTap: () => setState(() => _isCreateMenuOpen = !_isCreateMenuOpen),
+        ),
       ),
     );
   }
