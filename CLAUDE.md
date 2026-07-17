@@ -230,7 +230,8 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 
 ### Créer souvenir
 
-- Date + heure tappables
+- Date + heure tappables — rendues en **pill** (`PillFieldWidget`, core) : squircle `AppRadius.md * 2` blanc + stroke, icône calendrier/horloge primary, `Semantics(button: true)`. Avant, `DateFieldWidget`/`TimeFieldWidget` en mode « sans bordure » n'affichaient que la valeur en gras : rien ne signalait qu'elles étaient modifiables.
+- `DateFieldWidget`/`TimeFieldWidget` exposent un `FieldVariant` (`core/widgets/field_variant.dart`) : `field` = `InputDecorator` labellisé des formulaires et bottom sheets (carnet, poids, vaccins, visites véto), `pill` = chip compacte des en-têtes create/edit-event. Remplace l'ancien booléen `bordered`, dont le `false` produisait désormais une bordure.
 - Titre grand
 - Photos en collage polaroid aléatoire
 - Description optionnelle

@@ -10,6 +10,7 @@ import 'package:nanimo/core/widgets/app_scaffold.dart';
 import 'package:nanimo/core/widgets/species_icon_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/date_field_widget.dart';
+import 'package:nanimo/core/widgets/field_variant.dart';
 import 'package:nanimo/core/widgets/time_field_widget.dart';
 import 'package:nanimo/features/event/presentation/cubit/event_creation_cubit.dart';
 import 'package:nanimo/features/event/presentation/event_type_styles.dart';
@@ -169,7 +170,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                       label: 'Date',
                       value: _entryDate,
                       onChanged: _setEntryDate,
-                      bordered: false,
+                      variant: FieldVariant.pill,
                       textAlign: TextAlign.center,
                       textStyle: AppTextStyles.textBold,
                     ),
@@ -180,7 +181,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                       label: 'Heure',
                       value: _entryDate,
                       onChanged: _setEntryTime,
-                      bordered: false,
+                      variant: FieldVariant.pill,
                       textAlign: TextAlign.center,
                       textStyle: AppTextStyles.textBold,
                     ),
