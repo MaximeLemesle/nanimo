@@ -88,11 +88,11 @@ class _ArticleBottomSheet extends StatelessWidget {
     return FractionallySizedBox(
       heightFactor: 0.8,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(
+        padding: EdgeInsets.fromLTRB(
           AppSpacing.lg,
           AppSpacing.sm,
           AppSpacing.lg,
-          AppSpacing.lg,
+          bottomInsetFor(context),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

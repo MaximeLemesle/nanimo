@@ -4,6 +4,19 @@ import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 
+/// Bottom padding a sheet's content needs to stay readable.
+///
+/// Sheets are pushed onto the shell's Navigator, while the nav bar is the shell
+/// Scaffold's `bottomNavigationBar` — so the bar paints *over* the sheet and
+/// would hide whatever sits at its bottom. Content must clear it. An open
+/// keyboard already lifts the content past the bar, so the two never add up.
+double bottomInsetFor(BuildContext context) {
+  final keyboardInset = MediaQuery.of(context).viewInsets.bottom;
+  return keyboardInset > 0
+      ? keyboardInset + AppSpacing.lg
+      : AppSpacing.bottomBarInset;
+}
+
 class BottomSheetWidget extends StatelessWidget {
   final String title;
   final List<Widget> children;
@@ -51,7 +64,7 @@ class BottomSheetWidget extends StatelessWidget {
         left: AppSpacing.lg,
         right: AppSpacing.lg,
         top: AppSpacing.lg,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
+        bottom: bottomInsetFor(context),
       ),
       child: scrollable ? SingleChildScrollView(child: column) : column,
     );
