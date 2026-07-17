@@ -33,6 +33,21 @@ import 'package:nanimo/features/onboarding/presentation/page/splash_page.dart';
 import 'package:nanimo/features/pet/presentation/page/pet_page.dart';
 import 'package:nanimo/features/pet/presentation/page/pet_health_diary_page.dart';
 
+/// Tab routes are nested under /home, so go_router stacks them and the platform
+/// push transition slides them in. Tabs should not slide: cross-fade instead.
+CustomTransitionPage<void> _fadePage(GoRouterState state, Widget child) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 180),
+    reverseTransitionDuration: const Duration(milliseconds: 180),
+    transitionsBuilder: (_, animation, __, child) => FadeTransition(
+      opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+      child: child,
+    ),
+  );
+}
+
 class _AuthCubitListenable extends ChangeNotifier {
   late final StreamSubscription<AuthState> _subscription;
 
@@ -128,7 +143,7 @@ GoRouter createRouter(
         routes: [
           GoRoute(
             path: RouteNames.home,
-            builder: (_, __) => const HomePage(),
+            pageBuilder: (_, state) => _fadePage(state, const HomePage()),
             routes: [
               GoRoute(
                 path: 'create-event',
@@ -154,11 +169,11 @@ GoRouter createRouter(
               ),
               GoRoute(
                 path: 'journal',
-                builder: (_, __) => const JournalPage(),
+                pageBuilder: (_, state) => _fadePage(state, const JournalPage()),
               ),
               GoRoute(
                 path: 'pet',
-                builder: (_, __) => const PetPage(),
+                pageBuilder: (_, state) => _fadePage(state, const PetPage()),
                 routes: [
                   GoRoute(
                     path: 'health-diary',

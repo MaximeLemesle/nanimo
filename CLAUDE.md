@@ -63,6 +63,7 @@ lib/
 
 **Pattern** : Cubit pour états simples, repositories = source de vérité
 **Navigation** : Go Router avec deep linking + redirection auth conditionnelle  
+**Transitions (NAN-042)** : les 3 routes d'onglet (`/home`, `/home/journal`, `/home/pet`) sont nichées sous `/home`, donc go_router les empile et applique la transition push de la plateforme — un onglet qui slide comme une page poussée. Elles passent par `_fadePage` (`app_router.dart`) : `CustomTransitionPage` + `FadeTransition` 180 ms `easeOut`. Les routes réellement poussées (create/edit-event, carnet, paramètres, create-pet) gardent le `builder` par défaut pour conserver la transition native et le swipe-back iOS.  
 **State** : Cubit → repositories uniquement, pages = affichage seulement
 
 ---
