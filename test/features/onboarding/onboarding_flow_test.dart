@@ -426,6 +426,8 @@ void main() {
         ),
       ]);
       await tester.pumpAndSettle();
+      await tester.pumpAndSettle();
+      await tester.pumpAndSettle();
 
       // Home is shown with the synced pets, onboarding stayed pristine.
       expect(find.text('Saïko'), findsOneWidget);
