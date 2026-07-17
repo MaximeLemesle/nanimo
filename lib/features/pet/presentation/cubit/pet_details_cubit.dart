@@ -272,6 +272,11 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     _weightSub?.cancel();
     _vetVisitsSub?.cancel();
 
+    /// Species-specific data belongs to the pet it was fetched for. Keeping the
+    /// previous pet's list while the new fetch is in flight offers e.g. cat
+    /// vaccines for a rabbit — and they get saved to the rabbit's diary.
+    emit(state.copyWith(recommendedVaccines: const []));
+
     _diarySub =
         _healthRepository.watchDiaryForPet(petId).listen(_onDiaryChanged);
     _weightSub = _healthRepository
@@ -362,10 +367,10 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     try {
       final vaccines = await _referentialRepository
           .fetchRecommendedVaccinesBySpecies(pet.petSpeciesId);
-      if (isClosed) return;
+      if (isClosed || state.selectedPetId != petId) return;
       emit(state.copyWith(recommendedVaccines: vaccines));
     } catch (_) {
-      if (isClosed) return;
+      if (isClosed || state.selectedPetId != petId) return;
       emit(state.copyWith(recommendedVaccines: const []));
     }
   }
