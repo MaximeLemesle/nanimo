@@ -8,6 +8,7 @@ import 'package:nanimo/config/router/app_router.dart';
 import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/core/widgets/bottom_bar_widget/bottom_bar_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
+import 'package:nanimo/core/widgets/text_field_widget.dart';
 import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/data/models/referential/pet_race_model.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
@@ -102,6 +103,13 @@ const _berger = PetRaceModel(
   raceName: 'Berger',
   petSpeciesId: 's-chien',
 );
+
+Finder _textFieldWithLabel(String label) {
+  final field = find.byWidgetPredicate(
+    (widget) => widget is TextFieldWidget && widget.label == label,
+  );
+  return find.descendant(of: field, matching: find.byType(TextFormField));
+}
 
 void main() {
   late _FakeAuthCubit authCubit;
@@ -293,10 +301,9 @@ void main() {
     testWidgets('cold start: splash → welcome → 3 steps → email signup → home shows Milo', (tester) async {
       await goThroughOnboarding(tester);
 
-      await tester.enterText(find.byType(TextField).at(0), 'Maxime');
-      await tester.enterText(find.byType(TextField).at(1), 'milo@nanimo.fr');
-      await tester.enterText(find.byType(TextField).at(2), 'azerty1');
-      await tester.enterText(find.byType(TextField).at(3), 'azerty1');
+      await tester.enterText(_textFieldWithLabel('Prénom'), 'Maxime');
+      await tester.enterText(_textFieldWithLabel('Email'), 'milo@nanimo.fr');
+      await tester.enterText(_textFieldWithLabel('Mot de passe'), 'azerty1');
       await tester.pumpAndSettle();
       await tester.tap(find.text('Créer mon compte'));
       await tester.pumpAndSettle();
@@ -327,10 +334,9 @@ void main() {
 
       await goThroughOnboarding(tester);
 
-      await tester.enterText(find.byType(TextField).at(0), 'Maxime');
-      await tester.enterText(find.byType(TextField).at(1), 'milo@nanimo.fr');
-      await tester.enterText(find.byType(TextField).at(2), 'azerty1');
-      await tester.enterText(find.byType(TextField).at(3), 'azerty1');
+      await tester.enterText(_textFieldWithLabel('Prénom'), 'Maxime');
+      await tester.enterText(_textFieldWithLabel('Email'), 'milo@nanimo.fr');
+      await tester.enterText(_textFieldWithLabel('Mot de passe'), 'azerty1');
       await tester.pumpAndSettle();
       await tester.tap(find.text('Créer mon compte'));
       await tester.pump();

@@ -21,7 +21,6 @@ class _SignupPageState extends State<SignupPage> {
   final _userNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _confirmController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isFormValid = false;
 
@@ -31,7 +30,6 @@ class _SignupPageState extends State<SignupPage> {
     _userNameController.addListener(_updateFormValidity);
     _emailController.addListener(_updateFormValidity);
     _passwordController.addListener(_updateFormValidity);
-    _confirmController.addListener(_updateFormValidity);
   }
 
   String? _userNameValidator(String? validation) {
@@ -44,8 +42,7 @@ class _SignupPageState extends State<SignupPage> {
     return null;
   }
 
-  String? _emailValidator(String? validation) =>
-      validation == null || !validation.contains('@') ? 'Email invalide' : null;
+  String? _emailValidator(String? validation) => validation == null || !validation.contains('@') ? 'Email invalide' : null;
 
   String? _passwordValidator(String? validation) {
     if (validation == null || validation.length < 6) {
@@ -57,21 +54,10 @@ class _SignupPageState extends State<SignupPage> {
     return null;
   }
 
-  String? _confirmValidator(String? validation) {
-    if (validation == null || validation.isEmpty) {
-      return 'Confirme ton mot de passe';
-    }
-    if (validation != _passwordController.text) {
-      return 'Les mots de passe ne correspondent pas';
-    }
-    return null;
-  }
-
   void _updateFormValidity() {
     final valid = _userNameValidator(_userNameController.text.trim()) == null &&
         _emailValidator(_emailController.text.trim()) == null &&
-        _passwordValidator(_passwordController.text.trim()) == null &&
-        _confirmValidator(_confirmController.text.trim()) == null;
+        _passwordValidator(_passwordController.text.trim()) == null;
     if (valid != _isFormValid) setState(() => _isFormValid = valid);
   }
 
@@ -80,11 +66,9 @@ class _SignupPageState extends State<SignupPage> {
     _userNameController.removeListener(_updateFormValidity);
     _emailController.removeListener(_updateFormValidity);
     _passwordController.removeListener(_updateFormValidity);
-    _confirmController.removeListener(_updateFormValidity);
     _userNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
-    _confirmController.dispose();
     super.dispose();
   }
 
@@ -119,8 +103,7 @@ class _SignupPageState extends State<SignupPage> {
                 Text('Inscription', style: textTheme.displayLarge),
                 Text(
                   'Crée ton compte pour démarrer.',
-                  style: textTheme.bodyLarge
-                      ?.copyWith(color: AppColors.textSecondary),
+                  style: textTheme.bodyLarge?.copyWith(color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 TextFieldWidget(
@@ -152,20 +135,9 @@ class _SignupPageState extends State<SignupPage> {
                   onChanged: _onFieldChanged,
                   validator: _passwordValidator,
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                TextFieldWidget(
-                  controller: _confirmController,
-                  label: 'Confirmation du mot de passe',
-                  hint: 'Confirmer votre mot de passe',
-                  obscureText: true,
-                  textInputAction: TextInputAction.done,
-                  onChanged: _onFieldChanged,
-                  validator: _confirmValidator,
-                ),
                 const SizedBox(height: AppSpacing.xl),
                 BlocBuilder<AuthCubit, AuthState>(
-                  buildWhen: (previous, current) =>
-                      previous.errorMessage != current.errorMessage,
+                  buildWhen: (previous, current) => previous.errorMessage != current.errorMessage,
                   builder: (context, state) {
                     if (state.errorMessage == null) {
                       return const SizedBox.shrink();
@@ -177,16 +149,13 @@ class _SignupPageState extends State<SignupPage> {
                   },
                 ),
                 BlocBuilder<AuthCubit, AuthState>(
-                  buildWhen: (previous, current) =>
-                      previous.isSubmitting != current.isSubmitting,
+                  buildWhen: (previous, current) => previous.isSubmitting != current.isSubmitting,
                   builder: (context, state) {
                     return ButtonWidget(
                       label: 'Créer mon compte',
                       onPressed: _onRegister,
                       isLoading: state.isSubmitting,
-                      state: _isFormValid
-                          ? ButtonState.normal
-                          : ButtonState.disabled,
+                      state: _isFormValid ? ButtonState.normal : ButtonState.disabled,
                       fullWidth: true,
                     );
                   },
@@ -196,21 +165,15 @@ class _SignupPageState extends State<SignupPage> {
                 /// Separator
                 Row(
                   children: [
-                    const Expanded(
-                        child: Divider(color: AppColors.backgroundStroke)),
+                    const Expanded(child: Divider(color: AppColors.backgroundStroke)),
                     Padding(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                       child: Text(
                         'ou',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.copyWith(color: AppColors.textSecondary),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
                       ),
                     ),
-                    const Expanded(
-                        child: Divider(color: AppColors.backgroundStroke)),
+                    const Expanded(child: Divider(color: AppColors.backgroundStroke)),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.xl),
