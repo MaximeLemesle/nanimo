@@ -57,29 +57,28 @@ void main() {
     expect(find.text('Mes Nanimo'), findsOneWidget);
   });
 
-  testWidgets('shows no fade when every pet already fits', (tester) async {
-    await pumpAt(tester, build([_pet('a'), _pet('b')]));
-
-    expect(find.byType(ShaderMask), findsNothing);
-  });
-
-  testWidgets('fades the trailing edge when the row overflows',
+  testWidgets('peeks half of the overflowing avatar at the trailing edge',
       (tester) async {
     await pumpAt(
       tester,
       build([for (var i = 0; i < 6; i++) _pet('$i')]),
     );
 
-    expect(find.byType(ShaderMask), findsOneWidget);
+    // One item (its GestureDetector) per pet, laid out in order.
+    final items = find.byType(GestureDetector);
+    expect(items, findsNWidgets(6));
+
+    // Two avatars fit fully in the 240px viewport, so the third is cut at its
+    // middle: its left edge sits exactly half an avatar (40px) from the edge.
+    final peeking = tester.getTopLeft(items.at(2));
+    expect(peeking.dx, moreOrLessEquals(viewport.width - 40, epsilon: 0.5));
   });
 
-  testWidgets('drops the fade once the row is scrolled to the end',
-      (tester) async {
+  testWidgets('lets the user scroll to the overflowed pets', (tester) async {
     await pumpAt(
       tester,
       build([for (var i = 0; i < 6; i++) _pet('$i')]),
     );
-    expect(find.byType(ShaderMask), findsOneWidget);
 
     await tester.drag(
       find.byType(SingleChildScrollView),
@@ -87,7 +86,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byType(ShaderMask), findsNothing);
+    expect(find.text('Pet 5'), findsOneWidget);
   });
 
   testWidgets('calls onPetTap with the tapped pet', (tester) async {
