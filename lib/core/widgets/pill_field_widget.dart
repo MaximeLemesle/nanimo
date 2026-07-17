@@ -3,14 +3,12 @@ import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 
-/// Tappable chip showing an icon plus a value, for pickers that sit inline in a
-/// header. The icon and the chip outline are the whole affordance: without them
-/// a bare value reads as static text and users never try to tap it.
 class PillFieldWidget extends StatelessWidget {
   final IconData icon;
   final Widget child;
   final VoidCallback onTap;
   final String? semanticLabel;
+  final bool showBorder;
 
   const PillFieldWidget({
     super.key,
@@ -18,6 +16,7 @@ class PillFieldWidget extends StatelessWidget {
     required this.child,
     required this.onTap,
     this.semanticLabel,
+    this.showBorder = true,
   });
 
   @override
@@ -32,7 +31,7 @@ class PillFieldWidget extends StatelessWidget {
         vertical: AppSpacing.sm + AppSpacing.xs,
       ),
       decoration: ShapeDecoration(
-        color: AppColors.backgroundSurface,
+        color: showBorder ? AppColors.backgroundSurface : Colors.transparent,
         shape: shape,
       ),
       child: Row(
@@ -46,16 +45,16 @@ class PillFieldWidget extends StatelessWidget {
       ),
     );
 
-    /// Same outer-squircle trick as RoundedBorderWidget: a BorderSide on a
-    /// ContinuousRectangleBorder leaves whisker artifacts at the corners.
-    pill = Container(
-      padding: const EdgeInsets.all(1),
-      decoration: ShapeDecoration(
-        color: AppColors.backgroundStroke,
-        shape: shape,
-      ),
-      child: pill,
-    );
+    if (showBorder) {
+      pill = Container(
+        padding: const EdgeInsets.all(1),
+        decoration: ShapeDecoration(
+          color: AppColors.backgroundStroke,
+          shape: shape,
+        ),
+        child: pill,
+      );
+    }
 
     return Semantics(
       button: true,

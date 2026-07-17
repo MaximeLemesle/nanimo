@@ -15,6 +15,7 @@ class TimeFieldWidget extends StatelessWidget {
   final FieldVariant variant;
   final TextAlign textAlign;
   final TextStyle? textStyle;
+  final bool showPillBorder;
 
   const TimeFieldWidget({
     super.key,
@@ -25,6 +26,7 @@ class TimeFieldWidget extends StatelessWidget {
     this.variant = FieldVariant.field,
     this.textAlign = TextAlign.start,
     this.textStyle,
+    this.showPillBorder = true,
   });
 
   Future<void> _pick(BuildContext context) async {
@@ -69,6 +71,7 @@ class TimeFieldWidget extends StatelessWidget {
         icon: Icons.schedule_outlined,
         semanticLabel: label,
         onTap: () => _pick(context),
+        showBorder: showPillBorder,
         child: timeText,
       );
     }

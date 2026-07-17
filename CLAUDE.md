@@ -230,8 +230,8 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 
 ### Créer souvenir
 
-- Date + heure tappables — rendues en **pill** (`PillFieldWidget`, core) : squircle `AppRadius.md * 2` blanc + stroke, icône calendrier/horloge primary, `Semantics(button: true)`. Avant, `DateFieldWidget`/`TimeFieldWidget` en mode « sans bordure » n'affichaient que la valeur en gras : rien ne signalait qu'elles étaient modifiables.
-- `DateFieldWidget`/`TimeFieldWidget` exposent un `FieldVariant` (`core/widgets/field_variant.dart`) : `field` = `InputDecorator` labellisé des formulaires et bottom sheets (carnet, poids, vaccins, visites véto), `pill` = chip compacte des en-têtes create/edit-event. Remplace l'ancien booléen `bordered`, dont le `false` produisait désormais une bordure.
+- Date + heure tappables — regroupées dans **un seul encadré** (`DateTimeFieldWidget`, core) : squircle `AppRadius.md * 2` blanc + stroke commun, deux moitiés (calendrier | horloge) séparées par un séparateur 1px (`IntrinsicHeight` + `Container` largeur 1), chacune restant tappable et ouvrant son propre picker. Chaque moitié = un `PillFieldWidget` avec `showBorder: false` (le bord/le fond sont peints par l'encadré parent). Avant, deux pills séparées côte à côte dans un `Row` : la date wrappait à l'étroit. `Semantics(button: true)` sur chaque moitié.
+- `DateFieldWidget`/`TimeFieldWidget` exposent un `FieldVariant` (`core/widgets/field_variant.dart`) : `field` = `InputDecorator` labellisé des formulaires et bottom sheets (carnet, poids, vaccins, visites véto), `pill` = chip compacte (icône + valeur) des en-têtes create/edit-event, avec `showPillBorder` pour l'embarquer sans bordure propre dans `DateTimeFieldWidget`. Remplace l'ancien booléen `bordered`, dont le `false` produisait désormais une bordure.
 - Titre grand
 - Photos en collage polaroid aléatoire
 - Description optionnelle

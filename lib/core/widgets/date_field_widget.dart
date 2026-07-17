@@ -17,6 +17,7 @@ class DateFieldWidget extends StatelessWidget {
   final FieldVariant variant;
   final TextAlign textAlign;
   final TextStyle? textStyle;
+  final bool showPillBorder;
 
   const DateFieldWidget({
     super.key,
@@ -29,6 +30,7 @@ class DateFieldWidget extends StatelessWidget {
     this.variant = FieldVariant.field,
     this.textAlign = TextAlign.start,
     this.textStyle,
+    this.showPillBorder = true,
   });
 
   Future<void> _pick(BuildContext context) async {
@@ -81,6 +83,7 @@ class DateFieldWidget extends StatelessWidget {
         icon: Icons.calendar_today_outlined,
         semanticLabel: label,
         onTap: () => _pick(context),
+        showBorder: showPillBorder,
         child: dateText,
       );
     }
