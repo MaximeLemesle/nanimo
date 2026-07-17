@@ -32,8 +32,7 @@ class PetBirthdateSelectorWidget extends StatelessWidget {
               ),
         ),
         BlocBuilder<OnboardingCubit, OnboardingState>(
-          buildWhen: (previous, current) =>
-              previous.birthdate != current.birthdate,
+          buildWhen: (previous, current) => previous.birthdate != current.birthdate,
           builder: (context, state) {
             final hasDate = state.birthdate != null;
             return InkWell(
@@ -44,16 +43,19 @@ class PetBirthdateSelectorWidget extends StatelessWidget {
                 await showModalBottomSheet<void>(
                   context: context,
                   builder: (context) {
-                    return SizedBox(
-                      height: 350,
-                      width: double.infinity,
-                      child: CupertinoDatePicker(
-                        mode: CupertinoDatePickerMode.date,
-                        dateOrder: DatePickerDateOrder.dmy,
-                        initialDateTime: picked,
-                        minimumDate: DateTime(now.year - 40),
-                        maximumDate: now,
-                        onDateTimeChanged: (date) => picked = date,
+                    return Padding(
+                      padding: EdgeInsets.only(bottom: AppSpacing.lg),
+                      child: SizedBox(
+                        height: 350,
+                        width: double.infinity,
+                        child: CupertinoDatePicker(
+                          mode: CupertinoDatePickerMode.date,
+                          dateOrder: DatePickerDateOrder.dmy,
+                          initialDateTime: picked,
+                          minimumDate: DateTime(now.year - 40),
+                          maximumDate: now,
+                          onDateTimeChanged: (date) => picked = date,
+                        ),
                       ),
                     );
                   },
@@ -73,9 +75,7 @@ class PetBirthdateSelectorWidget extends StatelessWidget {
                   color: AppColors.backgroundSurface,
                   borderRadius: BorderRadius.circular(AppRadius.md),
                   border: Border.all(
-                    color: hasDate
-                        ? AppColors.primary
-                        : AppColors.backgroundStroke,
+                    color: hasDate ? AppColors.primary : AppColors.backgroundStroke,
                     width: hasDate ? 1.5 : 1,
                   ),
                 ),
@@ -83,18 +83,13 @@ class PetBirthdateSelectorWidget extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.calendar_today_outlined,
-                      color:
-                          hasDate ? AppColors.primary : AppColors.textSecondary,
+                      color: hasDate ? AppColors.primary : AppColors.textSecondary,
                     ),
                     const SizedBox(width: AppSpacing.md),
                     Text(
-                      hasDate
-                          ? _format(state.birthdate!)
-                          : 'Sélectionner une date',
+                      hasDate ? _format(state.birthdate!) : 'Sélectionner une date',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: hasDate
-                                ? AppColors.textPrimary
-                                : AppColors.textSecondary,
+                            color: hasDate ? AppColors.textPrimary : AppColors.textSecondary,
                           ),
                     ),
                   ],

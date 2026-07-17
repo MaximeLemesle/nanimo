@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -15,7 +16,13 @@ import 'package:nanimo/features/subscription/presentation/cubit/subscription_cub
 
 class AppShell extends StatefulWidget {
   final Widget child;
-  const AppShell({super.key, required this.child});
+  final ValueListenable<bool> isModalOpen;
+
+  const AppShell({
+    super.key,
+    required this.child,
+    required this.isModalOpen,
+  });
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -179,19 +186,33 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
           ),
         ],
       ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0x002D8B83), Color(0x302D8B83)],
+      bottomNavigationBar: ValueListenableBuilder<bool>(
+        valueListenable: widget.isModalOpen,
+        builder: (context, isModalOpen, bar) {
+          return IgnorePointer(
+            key: const Key('bottom_bar_ignore_pointer'),
+            ignoring: isModalOpen,
+            child: AnimatedOpacity(
+              opacity: isModalOpen ? 0 : 1,
+              duration: const Duration(milliseconds: 150),
+              child: bar,
+            ),
+          );
+        },
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0x002D8B83), Color(0x302D8B83)],
+            ),
           ),
-        ),
-        child: BottomBarWidget(
-          currentIndex: index,
-          isCreateMenuOpen: _isCreateMenuOpen,
-          onTabSelected: (i) => _onTabSelected(context, i),
-          onCreateTap: () => setState(() => _isCreateMenuOpen = !_isCreateMenuOpen),
+          child: BottomBarWidget(
+            currentIndex: index,
+            isCreateMenuOpen: _isCreateMenuOpen,
+            onTabSelected: (i) => _onTabSelected(context, i),
+            onCreateTap: () => setState(() => _isCreateMenuOpen = !_isCreateMenuOpen),
+          ),
         ),
       ),
     );
