@@ -9,8 +9,7 @@ import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/widgets/app_scaffold.dart';
 import 'package:nanimo/core/widgets/species_icon_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
-import 'package:nanimo/core/widgets/date_field_widget.dart';
-import 'package:nanimo/core/widgets/time_field_widget.dart';
+import 'package:nanimo/core/widgets/date_time_field_widget.dart';
 import 'package:nanimo/features/event/presentation/cubit/event_creation_cubit.dart';
 import 'package:nanimo/features/event/presentation/event_type_styles.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/create_event_bottom_sheet/add_image_bottom_sheet_widget.dart';
@@ -165,23 +164,10 @@ class _CreateEventPageState extends State<CreateEventPage> {
 
                   /// Date and time selector
                   Expanded(
-                    child: DateFieldWidget(
-                      label: 'Date',
+                    child: DateTimeFieldWidget(
                       value: _entryDate,
-                      onChanged: _setEntryDate,
-                      bordered: false,
-                      textAlign: TextAlign.center,
-                      textStyle: AppTextStyles.textBold,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: TimeFieldWidget(
-                      label: 'Heure',
-                      value: _entryDate,
-                      onChanged: _setEntryTime,
-                      bordered: false,
-                      textAlign: TextAlign.center,
+                      onDateChanged: _setEntryDate,
+                      onTimeChanged: _setEntryTime,
                       textStyle: AppTextStyles.textBold,
                     ),
                   ),

@@ -9,8 +9,7 @@ import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/widgets/app_scaffold.dart';
 import 'package:nanimo/core/widgets/species_icon_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
-import 'package:nanimo/core/widgets/date_field_widget.dart';
-import 'package:nanimo/core/widgets/time_field_widget.dart';
+import 'package:nanimo/core/widgets/date_time_field_widget.dart';
 import 'package:nanimo/features/event/data/models/event_image_model.dart';
 import 'package:nanimo/features/event/data/models/event_model.dart';
 import 'package:nanimo/features/event/presentation/cubit/edit_event_cubit.dart';
@@ -283,23 +282,10 @@ class _EditEventPageState extends State<EditEventPage> {
 
                   /// Date and time selector
                   Expanded(
-                    child: DateFieldWidget(
-                      label: 'Date',
+                    child: DateTimeFieldWidget(
                       value: _entryDate,
-                      onChanged: _setEntryDate,
-                      bordered: false,
-                      textAlign: TextAlign.center,
-                      textStyle: AppTextStyles.textBold,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: TimeFieldWidget(
-                      label: 'Heure',
-                      value: _entryDate,
-                      onChanged: _setEntryTime,
-                      bordered: false,
-                      textAlign: TextAlign.center,
+                      onDateChanged: _setEntryDate,
+                      onTimeChanged: _setEntryTime,
                       textStyle: AppTextStyles.textBold,
                     ),
                   ),

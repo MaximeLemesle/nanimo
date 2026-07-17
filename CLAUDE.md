@@ -63,6 +63,7 @@ lib/
 
 **Pattern** : Cubit pour états simples, repositories = source de vérité
 **Navigation** : Go Router avec deep linking + redirection auth conditionnelle  
+**Transitions (NAN-042)** : **toutes** les routes passent par `_fadePage` (`app_router.dart`, en `pageBuilder`) : `CustomTransitionPage` + `FadeTransition` 180 ms `easeOut`. Cross-fade uniforme iOS/Android sur l'ensemble du flow — splash, onboarding, create-pet, login, signup, les 3 onglets (`/home`, `/home/journal`, `/home/pet`) et les pages poussées (create/edit-event, carnet, paramètres). Contexte : les onglets sont nichés sous `/home`, go_router les empile et appliquerait sinon la transition push plateforme (onglet qui slide comme une page poussée). Trade-off assumé : le fade sur les pages poussées supprime le swipe-back iOS natif.  
 **State** : Cubit → repositories uniquement, pages = affichage seulement
 
 ---
@@ -230,7 +231,8 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 
 ### Créer souvenir
 
-- Date + heure tappables
+- Date + heure tappables — regroupées dans **un seul encadré** (`DateTimeFieldWidget`, core) : squircle `AppRadius.md * 2` blanc + stroke commun, deux moitiés (calendrier | horloge) séparées par un séparateur 1px (`IntrinsicHeight` + `Container` largeur 1), chacune restant tappable et ouvrant son propre picker. Chaque moitié = un `PillFieldWidget` avec `showBorder: false` (le bord/le fond sont peints par l'encadré parent). Avant, deux pills séparées côte à côte dans un `Row` : la date wrappait à l'étroit. `Semantics(button: true)` sur chaque moitié.
+- `DateFieldWidget`/`TimeFieldWidget` exposent un `FieldVariant` (`core/widgets/field_variant.dart`) : `field` = `InputDecorator` labellisé des formulaires et bottom sheets (carnet, poids, vaccins, visites véto), `pill` = chip compacte (icône + valeur) des en-têtes create/edit-event, avec `showPillBorder` pour l'embarquer sans bordure propre dans `DateTimeFieldWidget`. Remplace l'ancien booléen `bordered`, dont le `false` produisait désormais une bordure.
 - Titre grand
 - Photos en collage polaroid aléatoire
 - Description optionnelle
