@@ -240,7 +240,7 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 
 ### Pet Page
 
-- Parc illustré (maison, arbres) + avatars des animaux cliquables
+- Parc illustré (maison, arbres) + avatars des animaux cliquables — la rangée d'avatars (`PetParkHeaderWidget`) est un `SingleChildScrollView` horizontal : c'était un `Row` nu qui débordait (RenderFlex overflow) au-delà de ~4 animaux. Le `ConstrainedBox(minWidth: viewport)` autour du `Row` garde une liste courte **centrée** dans le parc comme avant, et laisse le scroll prendre le relais au-delà. Les avatars non sélectionnés sont réduits par `AnimatedScale` (transform) : ils occupent donc toujours 80 px de layout.
 - Identité (espèce, race, genre, poids) en grille 2x2
 - Poids : dropdown "6 mois", graphique, bouton "Ajouter +"
 - Santé : stérilisé, pucé, prochain vermifuge, prochain véto
