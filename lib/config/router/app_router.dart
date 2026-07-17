@@ -33,8 +33,6 @@ import 'package:nanimo/features/onboarding/presentation/page/splash_page.dart';
 import 'package:nanimo/features/pet/presentation/page/pet_page.dart';
 import 'package:nanimo/features/pet/presentation/page/pet_health_diary_page.dart';
 
-/// Tab routes are nested under /home, so go_router stacks them and the platform
-/// push transition slides them in. Tabs should not slide: cross-fade instead.
 CustomTransitionPage<void> _fadePage(GoRouterState state, Widget child) {
   return CustomTransitionPage<void>(
     key: state.pageKey,
@@ -92,53 +90,56 @@ GoRouter createRouter(
     routes: [
       GoRoute(
         path: RouteNames.splash,
-        builder: (_, __) => const SplashPage(),
+        pageBuilder: (_, state) => _fadePage(state, const SplashPage()),
       ),
       GoRoute(
         path: RouteNames.onboarding,
-        builder: (_, __) => const OnboardingPage(),
+        pageBuilder: (_, state) => _fadePage(state, const OnboardingPage()),
       ),
       GoRoute(
         path: RouteNames.createPet,
-        builder: (_, __) => const CreatePetPage(),
+        pageBuilder: (_, state) => _fadePage(state, const CreatePetPage()),
       ),
       GoRoute(
         path: RouteNames.login,
-        builder: (_, __) => const LoginPage(),
+        pageBuilder: (_, state) => _fadePage(state, const LoginPage()),
       ),
       GoRoute(
         path: RouteNames.signup,
-        builder: (_, __) => const SignupPage(),
+        pageBuilder: (_, state) => _fadePage(state, const SignupPage()),
       ),
       ShellRoute(
-        builder: (context, state, child) => MultiBlocProvider(
-          providers: [
-            BlocProvider(
-              create: (_) => HomeCubit(
-                petRepository: petRepository,
-                referentialRepository: referentialRepository,
-                eventRepository: eventRepository,
-                healthRepository: healthRepository,
-                authRepository: authRepository,
+        pageBuilder: (context, state, child) => _fadePage(
+          state,
+          MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (_) => HomeCubit(
+                  petRepository: petRepository,
+                  referentialRepository: referentialRepository,
+                  eventRepository: eventRepository,
+                  healthRepository: healthRepository,
+                  authRepository: authRepository,
+                ),
               ),
-            ),
-            BlocProvider(
-              lazy: false,
-              create: (_) => PetDetailsCubit(
-                petRepository: petRepository,
-                healthRepository: healthRepository,
-                referentialRepository: referentialRepository,
+              BlocProvider(
+                lazy: false,
+                create: (_) => PetDetailsCubit(
+                  petRepository: petRepository,
+                  healthRepository: healthRepository,
+                  referentialRepository: referentialRepository,
+                ),
               ),
-            ),
-            BlocProvider(
-              create: (_) => JournalCubit(
-                eventRepository: eventRepository,
-                petRepository: petRepository,
-                referentialRepository: referentialRepository,
+              BlocProvider(
+                create: (_) => JournalCubit(
+                  eventRepository: eventRepository,
+                  petRepository: petRepository,
+                  referentialRepository: referentialRepository,
+                ),
               ),
-            ),
-          ],
-          child: AppShell(child: child),
+            ],
+            child: AppShell(child: child),
+          ),
         ),
         routes: [
           GoRoute(
@@ -147,24 +148,30 @@ GoRouter createRouter(
             routes: [
               GoRoute(
                 path: 'create-event',
-                builder: (_, __) => BlocProvider(
-                  create: (_) => EventCreationCubit(
-                    eventRepository: eventRepository,
-                    referentialRepository: referentialRepository,
-                    petRepository: petRepository,
-                  )..load(),
-                  child: const CreateEventPage(),
+                pageBuilder: (_, state) => _fadePage(
+                  state,
+                  BlocProvider(
+                    create: (_) => EventCreationCubit(
+                      eventRepository: eventRepository,
+                      referentialRepository: referentialRepository,
+                      petRepository: petRepository,
+                    )..load(),
+                    child: const CreateEventPage(),
+                  ),
                 ),
               ),
               GoRoute(
                 path: 'edit-event/:eventId',
-                builder: (_, state) => BlocProvider(
-                  create: (_) => EditEventCubit(
-                    eventRepository: eventRepository,
-                    referentialRepository: referentialRepository,
-                    petRepository: petRepository,
-                  )..load(state.pathParameters['eventId']!),
-                  child: const EditEventPage(),
+                pageBuilder: (_, state) => _fadePage(
+                  state,
+                  BlocProvider(
+                    create: (_) => EditEventCubit(
+                      eventRepository: eventRepository,
+                      referentialRepository: referentialRepository,
+                      petRepository: petRepository,
+                    )..load(state.pathParameters['eventId']!),
+                    child: const EditEventPage(),
+                  ),
                 ),
               ),
               GoRoute(
@@ -177,18 +184,21 @@ GoRouter createRouter(
                 routes: [
                   GoRoute(
                     path: 'health-diary',
-                    builder: (_, __) => const PetHealthDiaryPage(),
+                    pageBuilder: (_, state) => _fadePage(state, const PetHealthDiaryPage()),
                   ),
                 ],
               ),
               GoRoute(
                 path: 'settings',
-                builder: (_, __) => BlocProvider(
-                  create: (_) => SettingsCubit(
-                    authRepository: authRepository,
-                    settingsRepository: settingsRepository,
-                  )..load(),
-                  child: const SettingsPage(),
+                pageBuilder: (_, state) => _fadePage(
+                  state,
+                  BlocProvider(
+                    create: (_) => SettingsCubit(
+                      authRepository: authRepository,
+                      settingsRepository: settingsRepository,
+                    )..load(),
+                    child: const SettingsPage(),
+                  ),
                 ),
               ),
             ],
