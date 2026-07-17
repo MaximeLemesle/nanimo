@@ -141,11 +141,11 @@ GoRouter createRouter(
                   referentialRepository: referentialRepository,
                 ),
               ),
+            ],
+            child: AppShell(
+              isModalOpen: modalRouteObserver.isModalOpen,
+              child: child,
             ),
-          ],
-          child: AppShell(
-            isModalOpen: modalRouteObserver.isModalOpen,
-            child: child,
           ),
         ),
         routes: [
@@ -183,7 +183,8 @@ GoRouter createRouter(
               ),
               GoRoute(
                 path: 'journal',
-                pageBuilder: (_, state) => _fadePage(state, const JournalPage()),
+                pageBuilder: (_, state) =>
+                    _fadePage(state, const JournalPage()),
               ),
               GoRoute(
                 path: 'pet',
@@ -191,7 +192,8 @@ GoRouter createRouter(
                 routes: [
                   GoRoute(
                     path: 'health-diary',
-                    pageBuilder: (_, state) => _fadePage(state, const PetHealthDiaryPage()),
+                    pageBuilder: (_, state) =>
+                        _fadePage(state, const PetHealthDiaryPage()),
                   ),
                 ],
               ),
