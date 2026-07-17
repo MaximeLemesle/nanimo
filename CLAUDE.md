@@ -248,6 +248,8 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 - Vaccins à venir (badges couleur)
 - CTA "Voir le carnet de santé"
 
+> **Vaccins recommandés et espèce** — `recommended_vaccines` est déjà indexée par `pet_species_id` et `fetchRecommendedVaccinesBySpecies` filtre correctement : le bug « vaccins de chat proposés pour un lapin » venait de `PetDetailsCubit`, pas de la requête. `state.recommendedVaccines` conservait la liste de l'animal précédent pendant que le nouveau fetch était en vol, et un tap rapide sur « Remplir » ouvrait `CreateHealthDiaryBottomSheetWidget` avec la mauvaise espèce — les vaccins cochés étaient alors **persistés** dans le carnet du lapin, puis affichés par la carte Santé de la home (qui lit `health_diary_vaccines`, pas le référentiel). Deux garde-fous : `_subscribeToPet` vide `recommendedVaccines` au changement d'animal, et `_loadRecommendedVaccines` n'émet que si `state.selectedPetId` est toujours le pet demandé (réponses hors-ordre). `_loadRaceName` porte la même course, non traitée ici.
+
 ### Carnet de santé
 
 - Récapitulatif : toutes infos identité
