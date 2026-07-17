@@ -41,9 +41,6 @@ class PetParkHeaderWidget extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
                   child: ConstrainedBox(
-                    /// Forcing the row to at least the viewport width keeps a
-                    /// short list centred in the park, exactly as before; past
-                    /// that the row grows and the scroll view takes over.
                     constraints: BoxConstraints(
                       minWidth: constraints.maxWidth - AppSpacing.sm * 2,
                     ),
