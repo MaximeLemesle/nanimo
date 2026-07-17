@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
+import 'package:nanimo/core/utils/date_formatter.dart';
+import 'package:nanimo/core/widgets/pet_avatar_widget.dart';
 import 'package:nanimo/core/widgets/rounded_border_widget.dart';
-import 'package:nanimo/core/widgets/species_icon_widget.dart';
 import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/vaccine_status_badge_widget.dart';
 
@@ -46,20 +47,23 @@ class HomeHealthCardWidget extends StatelessWidget {
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
-                      child: Text('Tout est à jour !', style: AppTextStyles.textBold),
+                      child: Text('Tout est à jour !',
+                          style: AppTextStyles.textBold),
                     ),
                   ],
                 )
               else
                 for (var i = 0; i < alerts.length; i++) ...[
-                  if (i > 0) const Divider(color: AppColors.secondary200, height: 1),
+                  if (i > 0)
+                    const Divider(color: AppColors.secondary200, height: 1),
                   if (i > 0) const SizedBox(height: AppSpacing.sm),
                   _AlertRow(
                     alert: alerts[i],
                     iconKey: iconsKey[alerts[i].pet?.petSpeciesId],
                     onTap: onAlertTap,
                   ),
-                  if (i < alerts.length - 1) const SizedBox(height: AppSpacing.sm),
+                  if (i < alerts.length - 1)
+                    const SizedBox(height: AppSpacing.sm),
                 ],
             ],
           ),
@@ -84,14 +88,15 @@ class _AlertRow extends StatelessWidget {
       onTap: pet == null || onTap == null ? null : () => onTap!(pet.petId),
       child: Row(
         children: [
-          if (iconKey != null)
-            SpeciesIconWidget(iconKey: iconKey!, height: AppSpacing.xl)
-          else
-            const Icon(
-              Icons.pets,
-              size: AppSpacing.lg,
-              color: AppColors.textSecondary,
-            ),
+          SizedBox.square(
+            dimension: PetAvatarSize.small.dimension,
+            child: iconKey == null
+                ? null
+                : PetAvatarWidget(
+                    iconKey: iconKey!,
+                    size: PetAvatarSize.small,
+                  ),
+          ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
@@ -103,13 +108,12 @@ class _AlertRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (pet != null)
-                  Text(
-                    pet.petName,
-                    style: AppTextStyles.textSmall.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
+                Text(
+                  DateFormatter.date(alert.vaccine.nextDate),
+                  style: AppTextStyles.textSmall.copyWith(
+                    color: AppColors.textSecondary,
                   ),
+                ),
               ],
             ),
           ),

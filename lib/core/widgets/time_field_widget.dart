@@ -5,15 +5,18 @@ import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/utils/date_formatter.dart';
+import 'package:nanimo/core/widgets/field_variant.dart';
+import 'package:nanimo/core/widgets/pill_field_widget.dart';
 
 class TimeFieldWidget extends StatelessWidget {
   final String label;
   final DateTime? value;
   final ValueChanged<TimeOfDay> onChanged;
   final String placeholder;
-  final bool bordered;
+  final FieldVariant variant;
   final TextAlign textAlign;
   final TextStyle? textStyle;
+  final bool showPillBorder;
 
   const TimeFieldWidget({
     super.key,
@@ -21,9 +24,10 @@ class TimeFieldWidget extends StatelessWidget {
     required this.value,
     required this.onChanged,
     this.placeholder = 'Sélectionner une heure',
-    this.bordered = true,
+    this.variant = FieldVariant.field,
     this.textAlign = TextAlign.start,
     this.textStyle,
+    this.showPillBorder = true,
   });
 
   Future<void> _pick(BuildContext context) async {
@@ -64,11 +68,13 @@ class TimeFieldWidget extends StatelessWidget {
       ),
     );
 
-    if (!bordered) {
-      return InkWell(
+    if (variant == FieldVariant.pill) {
+      return PillFieldWidget(
+        icon: Icons.schedule_outlined,
+        semanticLabel: label,
         onTap: () => _pick(context),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: SizedBox(width: double.infinity, child: timeText),
+        showBorder: showPillBorder,
+        child: timeText,
       );
     }
 

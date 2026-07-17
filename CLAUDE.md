@@ -63,6 +63,7 @@ lib/
 
 **Pattern** : Cubit pour états simples, repositories = source de vérité
 **Navigation** : Go Router avec deep linking + redirection auth conditionnelle  
+**Transitions (NAN-042)** : **toutes** les routes passent par `_fadePage` (`app_router.dart`, en `pageBuilder`) : `CustomTransitionPage` + `FadeTransition` 180 ms `easeOut`. Cross-fade uniforme iOS/Android sur l'ensemble du flow — splash, onboarding, create-pet, login, signup, les 3 onglets (`/home`, `/home/journal`, `/home/pet`) et les pages poussées (create/edit-event, carnet, paramètres). Contexte : les onglets sont nichés sous `/home`, go_router les empile et appliquerait sinon la transition push plateforme (onglet qui slide comme une page poussée). Trade-off assumé : le fade sur les pages poussées supprime le swipe-back iOS natif.  
 **State** : Cubit → repositories uniquement, pages = affichage seulement
 
 ---
@@ -201,7 +202,7 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 
 - **Header gazette** (`HomeHeaderWidget`) centré : date du jour (`DateFormatter.weekdayDayMonth`) + « Gazette de {prénom} » en Gluten — prénom via `AuthRepository.watchCurrentUser()` (fallback « Votre gazette »).
 - **Polaroïd héros « Il y a X ans »** (`HomeMemoryPolaroidWidget`) : souvenir survenu le même jour/mois une année précédente (`HomeState.anniversaryEvent`), fallback dernier souvenir (flag « Dernier souvenir »). Photo = 1ʳᵉ image de l'event, URL signée memoizée 45 min (`HomeCubit.imageUrl`, même pattern que le Journal). Tap → ouvre directement `JournalEventDetailBottomSheetWidget` sur l'event (avec Modifier/Supprimer câblés).
-- **Strip d'animaux** (`HomePetListWidget`) : rangée horizontale scrollable d'avatars (`PetAvatarWidget` medium) + prénom sous chacun. Tap → sélection du pet (`PetDetailsCubit` partagé) + push pet page.
+- **Strip d'animaux** (`HomePetListWidget`) : rangée horizontale scrollable d'avatars (`PetAvatarWidget` medium, slot largeur fixe = 80) + prénom sous chacun. Tap → sélection du pet (`PetDetailsCubit` partagé) + push pet page. Widget **stateless** : un `LayoutBuilder` calcule combien d'avatars tiennent en entier puis étire le gap pour que l'avatar suivant soit coupé **exactement en son milieu** au bord droit (`gap = (width - avatar/2) / fullCount - avatar`) — la demi-vignette est le cue permanent que la rangée continue, adaptatif à toutes les tailles d'écran. Slot de largeur fixe pour rendre le pitch déterministe (et ellipser les noms longs). Pas de scroll ⇒ pas de peek (gap = `AppSpacing.xl`). Anciennes approches retirées (NAN-044) : `ShaderMask`/`ScrollController` (faisait buguer le carrousel) puis chevron statique — remplacées par le demi-peek, sans état.
 - **Carte Santé** (rose) : vaccins en retard ou dus sous 30 j (`HomeState.vaccineAlerts`, tri par urgence), badge `VaccineStatusBadgeWidget` réutilisé ; variante verte « Tout est à jour ! » sinon. Tap sur une ligne → sélection du pet + push carnet de santé.
 - **Carte article canicule** (`HomeArticleCardWidget`, jaune) : teaser (kicker + titre + extrait + « Lire la suite ») d'un article de conseils, contenu **en dur** dans le fichier (pas de backend blog en V1). Tap → article complet dans une bottom sheet à 80 % de l'écran (`FractionallySizedBox`), bouton retour épinglé en haut, corps scrollable.
 - **Navbar masquée sous les bottom sheets (NAN-046)** — les sheets ouvertes depuis une page sont poussées sur le Navigator du `ShellRoute`, alors que la navbar est le `bottomNavigationBar` du Scaffold d'`AppShell`, **hors** de ce Navigator : la barre peignait donc par-dessus. `ModalRouteObserver` (`core/widgets/bottom_bar_widget/`) est branché sur `ShellRoute.observers` et expose un `ValueListenable<bool>` que le router passe à `AppShell`, qui fond la barre (`AnimatedOpacity` 150 ms + `IgnorePointer`, clé `bottom_bar_ignore_pointer`). **Opacité, pas retrait** : la barre garde son slot, donc le body ne se relayoute pas sous une sheet qui s'ouvre. L'observer **compte** les modales (`PopupRoute`) au lieu d'un booléen, car les sheets s'imbriquent (carnet → visite véto). Les sheets ouvertes depuis `AppShell` lui-même (bouton `+` → poids) partent sur le Navigator **root** et recouvrent déjà la barre : l'observer ne les voit pas, et c'est sans conséquence.
@@ -231,7 +232,8 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 
 ### Créer souvenir
 
-- Date + heure tappables
+- Date + heure tappables — regroupées dans **un seul encadré** (`DateTimeFieldWidget`, core) : squircle `AppRadius.md * 2` blanc + stroke commun, deux moitiés (calendrier | horloge) séparées par un séparateur 1px (`IntrinsicHeight` + `Container` largeur 1), chacune restant tappable et ouvrant son propre picker. Chaque moitié = un `PillFieldWidget` avec `showBorder: false` (le bord/le fond sont peints par l'encadré parent). Avant, deux pills séparées côte à côte dans un `Row` : la date wrappait à l'étroit. `Semantics(button: true)` sur chaque moitié.
+- `DateFieldWidget`/`TimeFieldWidget` exposent un `FieldVariant` (`core/widgets/field_variant.dart`) : `field` = `InputDecorator` labellisé des formulaires et bottom sheets (carnet, poids, vaccins, visites véto), `pill` = chip compacte (icône + valeur) des en-têtes create/edit-event, avec `showPillBorder` pour l'embarquer sans bordure propre dans `DateTimeFieldWidget`. Remplace l'ancien booléen `bordered`, dont le `false` produisait désormais une bordure.
 - Titre grand
 - Photos en collage polaroid aléatoire
 - Description optionnelle
@@ -239,13 +241,15 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 
 ### Pet Page
 
-- Parc illustré (maison, arbres) + avatars des animaux cliquables
+- Parc illustré (maison, arbres) + avatars des animaux cliquables — la rangée d'avatars (`PetParkHeaderWidget`) est un `SingleChildScrollView` horizontal : c'était un `Row` nu qui débordait (RenderFlex overflow) au-delà de ~4 animaux. Le `ConstrainedBox(minWidth: viewport)` autour du `Row` garde une liste courte **centrée** dans le parc comme avant, et laisse le scroll prendre le relais au-delà. Les avatars non sélectionnés sont réduits par `AnimatedScale` (transform) : ils occupent donc toujours 80 px de layout.
 - Identité (espèce, race, genre, poids) en grille 2x2
 - Poids : dropdown "6 mois", graphique, bouton "Ajouter +"
 - Santé : stérilisé, pucé, prochain vermifuge, prochain véto
 - Alerte saisonnière dynamique
 - Vaccins à venir (badges couleur)
 - CTA "Voir le carnet de santé"
+
+> **Vaccins recommandés et espèce** — `recommended_vaccines` est déjà indexée par `pet_species_id` et `fetchRecommendedVaccinesBySpecies` filtre correctement : le bug « vaccins de chat proposés pour un lapin » venait de `PetDetailsCubit`, pas de la requête. `state.recommendedVaccines` conservait la liste de l'animal précédent pendant que le nouveau fetch était en vol, et un tap rapide sur « Remplir » ouvrait `CreateHealthDiaryBottomSheetWidget` avec la mauvaise espèce — les vaccins cochés étaient alors **persistés** dans le carnet du lapin, puis affichés par la carte Santé de la home (qui lit `health_diary_vaccines`, pas le référentiel). Deux garde-fous : `_subscribeToPet` vide `recommendedVaccines` au changement d'animal, et `_loadRecommendedVaccines` n'émet que si `state.selectedPetId` est toujours le pet demandé (réponses hors-ordre). `_loadRaceName` porte la même course, non traitée ici.
 
 ### Carnet de santé
 

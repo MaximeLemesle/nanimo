@@ -41,9 +41,10 @@ class CalendarMonthSectionWidget extends StatelessWidget {
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: DateTime.daysPerWeek,
-            childAspectRatio: 0.9,
+            mainAxisExtent: 54,
           ),
           itemCount: totalCells,
           itemBuilder: (context, index) {

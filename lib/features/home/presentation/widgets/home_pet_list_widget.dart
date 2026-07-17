@@ -17,6 +17,42 @@ class HomePetListWidget extends StatelessWidget {
     this.onPetTap,
   });
 
+  static final double _avatar = PetAvatarSize.medium.dimension;
+
+  Widget _petItem(PetModel pet) {
+    return GestureDetector(
+      onTap: onPetTap == null ? null : () => onPetTap!(pet.petId),
+      behavior: HitTestBehavior.opaque,
+
+      child: SizedBox(
+        width: _avatar,
+        child: Column(
+          children: [
+            if (iconsKey[pet.petSpeciesId] != null)
+              PetAvatarWidget(iconKey: iconsKey[pet.petSpeciesId]!)
+            else
+              SizedBox(
+                width: _avatar,
+                height: _avatar,
+                child: const Icon(
+                  Icons.pets,
+                  color: AppColors.textSecondary,
+                  size: AppSpacing.xl,
+                ),
+              ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              pet.petName,
+              style: AppTextStyles.textSmallBold,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -27,42 +63,34 @@ class HomePetListWidget extends StatelessWidget {
           pets.length > 1 ? 'Mes Nanimo' : 'Mon Nanimo',
           style: AppTextStyles.text.copyWith(color: AppColors.textSecondary),
         ),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              for (var i = 0; i < pets.length; i++) ...[
-                if (i > 0) const SizedBox(width: AppSpacing.xl),
-                GestureDetector(
-                  onTap: onPetTap == null ? null : () => onPetTap!(pets[i].petId),
-                  behavior: HitTestBehavior.opaque,
-                  child: Column(
-                    children: [
-                      if (iconsKey[pets[i].petSpeciesId] != null)
-                        PetAvatarWidget(iconKey: iconsKey[pets[i].petSpeciesId]!)
-                      else
-                        SizedBox(
-                          width: PetAvatarSize.medium.dimension,
-                          height: PetAvatarSize.medium.dimension,
-                          child: const Icon(
-                            Icons.pets,
-                            color: AppColors.textSecondary,
-                            size: AppSpacing.xl,
-                          ),
-                        ),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        pets[i].petName,
-                        style: AppTextStyles.textSmallBold,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final peek = _avatar / 2;
+            final width = constraints.maxWidth;
+            // How many avatars sit fully on screen before one peeks in half.
+            final fullCount = ((width - peek) / (_avatar + AppSpacing.xl))
+                .round()
+                .clamp(1, pets.length);
+            final overflows = pets.length > fullCount;
+            // When the row overflows, stretch the gap so avatar #fullCount is
+            // cut exactly at its middle on any screen width — a permanent cue
+            // that the row keeps going. Otherwise use the design gap.
+            final gap = overflows
+                ? (width - peek) / fullCount - _avatar
+                : AppSpacing.xl;
+
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (var i = 0; i < pets.length; i++) ...[
+                    if (i > 0) SizedBox(width: gap),
+                    _petItem(pets[i]),
+                  ],
+                ],
+              ),
+            );
+          },
         ),
       ],
     );

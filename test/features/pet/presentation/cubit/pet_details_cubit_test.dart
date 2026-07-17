@@ -7,6 +7,7 @@ import 'package:nanimo/features/health/data/health_repository.dart';
 import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/health/data/models/health_diary_vaccine_model.dart';
 import 'package:nanimo/features/health/data/models/health_diary_weight_log_model.dart';
+import 'package:nanimo/features/health/data/models/recommended_vaccines_model.dart';
 import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
@@ -347,6 +348,90 @@ void main() {
     verifyNever(() => healthRepo.addWeightLog(any()));
 
     await cubit.close();
+  });
+
+  group('recommendedVaccines follow the selected pet species', () {
+    final rabbit = PetModel(
+      petId: 'p3',
+      petName: 'Pompon',
+      birthdate: DateTime(2025, 3, 1),
+      gender: Gender.male,
+      createdAt: DateTime(2025, 3, 1),
+      petRaceId: 'r2',
+      petSpeciesId: 's2',
+    );
+
+    const catVaccines = [
+      RecommendedVaccineModel(
+        name: 'Typhus félin',
+        category: 'core',
+        recurrenceDays: 365,
+      ),
+    ];
+    const rabbitVaccines = [
+      RecommendedVaccineModel(
+        name: 'Myxomatose',
+        category: 'core',
+        recurrenceDays: 180,
+      ),
+    ];
+
+    setUp(() {
+      when(() => petRepo.watchPets())
+          .thenAnswer((_) => Stream.value([_pet1, rabbit]));
+      when(() => refRepo.fetchRecommendedVaccinesBySpecies('s1'))
+          .thenAnswer((_) async => catVaccines);
+      when(() => refRepo.fetchRecommendedVaccinesBySpecies('s2'))
+          .thenAnswer((_) async => rabbitVaccines);
+    });
+
+    test('loads the vaccines of the initially selected pet', () async {
+      final cubit = createCubit();
+      await settle();
+
+      expect(cubit.state.recommendedVaccines, catVaccines);
+
+      await cubit.close();
+    });
+
+    test('drops the previous species vaccines as soon as the pet switches',
+        () async {
+      final cubit = createCubit();
+      await settle();
+      expect(cubit.state.recommendedVaccines, catVaccines);
+
+      /// No await: this is the window where the health diary sheet could be
+      /// opened, and it must never be offered the cat's vaccines for a rabbit.
+      cubit.selectPet('p3');
+      expect(cubit.state.recommendedVaccines, isEmpty);
+
+      await settle();
+      expect(cubit.state.recommendedVaccines, rabbitVaccines);
+
+      await cubit.close();
+    });
+
+    test('ignores a response that lands after the pet was switched away',
+        () async {
+      when(() => refRepo.fetchRecommendedVaccinesBySpecies('s1')).thenAnswer(
+        (_) => Future.delayed(
+          const Duration(milliseconds: 60),
+          () => catVaccines,
+        ),
+      );
+
+      final cubit = createCubit();
+
+      /// Switch away while the cat request is still in flight.
+      await settle();
+      cubit.selectPet('p3');
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+
+      expect(cubit.state.selectedPetId, 'p3');
+      expect(cubit.state.recommendedVaccines, rabbitVaccines);
+
+      await cubit.close();
+    });
   });
 
   group('hasHealthData', () {
