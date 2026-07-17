@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:nanimo/config/router/route_guard.dart';
 import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/core/widgets/app_shell.dart';
+import 'package:nanimo/core/widgets/bottom_bar_widget/modal_route_observer.dart';
 import 'package:nanimo/core/widgets/error_screen.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
@@ -60,6 +61,8 @@ GoRouter createRouter(
   final splashElapsed = ValueNotifier(false);
   Timer(const Duration(milliseconds: 1200), () => splashElapsed.value = true);
 
+  final modalRouteObserver = ModalRouteObserver();
+
   return GoRouter(
     initialLocation: RouteNames.splash,
     refreshListenable: Listenable.merge([
@@ -96,6 +99,7 @@ GoRouter createRouter(
         builder: (_, __) => const SignupPage(),
       ),
       ShellRoute(
+        observers: [modalRouteObserver],
         builder: (context, state, child) => MultiBlocProvider(
           providers: [
             BlocProvider(
@@ -123,7 +127,10 @@ GoRouter createRouter(
               ),
             ),
           ],
-          child: AppShell(child: child),
+          child: AppShell(
+            isModalOpen: modalRouteObserver.isModalOpen,
+            child: child,
+          ),
         ),
         routes: [
           GoRoute(
