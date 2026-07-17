@@ -2,15 +2,6 @@ import 'package:flutter/material.dart';
 
 /// Tracks whether a modal route (bottom sheet, dialog) is open on the shell's
 /// navigator.
-///
-/// The shell's nav bar is the Scaffold's `bottomNavigationBar`, so it sits
-/// *outside* the navigator the sheets are pushed onto and paints over them.
-/// The bar has to be told to get out of the way, and only the navigator knows
-/// when a sheet is up.
-///
-/// Counted rather than a plain flag: sheets open other sheets (the health diary
-/// sheet opens the vet visit one), and popping the inner one must not bring the
-/// bar back while the outer is still up.
 class ModalRouteObserver extends NavigatorObserver {
   final ValueNotifier<bool> isModalOpen = ValueNotifier(false);
 

@@ -123,6 +123,42 @@ void main() {
     await cubit.close();
   });
 
+  testWidgets('caps its height at 80 percent and scrolls long content',
+      (tester) async {
+    tester.view.physicalSize = const Size(800, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final longEvent = EventModel(
+      eventId: 'e1',
+      title: 'Promenade au parc',
+      description: List.filled(40, 'Une belle journée ensoleillée.').join(' '),
+      entryDate: DateTime(2026, 3, 5, 11, 43),
+      eventTypeId: 't1',
+    );
+    when(() => eventRepo.watchEvents())
+        .thenAnswer((_) => Stream.value([longEvent]));
+
+    final cubit = await pumpSheet(tester);
+
+    final sheet =
+        tester.getSize(find.byType(JournalEventDetailBottomSheetWidget));
+    expect(sheet.height, lessThanOrEqualTo(800));
+
+    final scrollable = tester.state<ScrollableState>(
+      find
+          .descendant(
+            of: find.byType(JournalEventDetailBottomSheetWidget),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    expect(scrollable.position.maxScrollExtent, greaterThan(0));
+
+    await cubit.close();
+  });
+
   testWidgets('tapping Modifier closes the sheet and fires onEdit', (tester) async {
     var edited = false;
     final cubit = await pumpSheet(tester, onEdit: () => edited = true);

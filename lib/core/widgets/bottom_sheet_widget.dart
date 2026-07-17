@@ -51,7 +51,7 @@ class BottomSheetWidget extends StatelessWidget {
         left: AppSpacing.lg,
         right: AppSpacing.lg,
         top: AppSpacing.lg,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
+        bottom: AppSpacing.xxl,
       ),
       child: scrollable ? SingleChildScrollView(child: column) : column,
     );

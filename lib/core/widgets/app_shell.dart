@@ -16,8 +16,6 @@ import 'package:nanimo/features/subscription/presentation/cubit/subscription_cub
 
 class AppShell extends StatefulWidget {
   final Widget child;
-
-  /// True while a bottom sheet or dialog is up on the shell's navigator.
   final ValueListenable<bool> isModalOpen;
 
   const AppShell({
@@ -191,9 +189,6 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       bottomNavigationBar: ValueListenableBuilder<bool>(
         valueListenable: widget.isModalOpen,
         builder: (context, isModalOpen, bar) {
-          /// Faded out rather than removed: the bar keeps its slot, so the
-          /// body never reflows under an opening sheet. IgnorePointer hands
-          /// the taps to the sheet's barrier once it is invisible.
           return IgnorePointer(
             key: const Key('bottom_bar_ignore_pointer'),
             ignoring: isModalOpen,

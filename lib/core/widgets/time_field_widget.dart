@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_radius.dart';
+import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/utils/date_formatter.dart';
 
@@ -32,14 +33,17 @@ class TimeFieldWidget extends StatelessWidget {
     await showModalBottomSheet<void>(
       context: context,
       builder: (context) {
-        return SizedBox(
-          height: 350,
-          width: double.infinity,
-          child: CupertinoDatePicker(
-            mode: CupertinoDatePickerMode.time,
-            use24hFormat: true,
-            initialDateTime: initial,
-            onDateTimeChanged: (date) => picked = date,
+        return Padding(
+          padding: EdgeInsets.only(bottom: AppSpacing.lg),
+          child: SizedBox(
+            height: 350,
+            width: double.infinity,
+            child: CupertinoDatePicker(
+              mode: CupertinoDatePickerMode.time,
+              use24hFormat: true,
+              initialDateTime: initial,
+              onDateTimeChanged: (date) => picked = date,
+            ),
           ),
         );
       },
@@ -56,9 +60,7 @@ class TimeFieldWidget extends StatelessWidget {
       value == null ? placeholder : DateFormatter.time(value!),
       textAlign: textAlign,
       style: baseStyle.copyWith(
-        color: value == null
-            ? AppColors.textSecondary
-            : (textStyle?.color ?? AppColors.textPrimary),
+        color: value == null ? AppColors.textSecondary : (textStyle?.color ?? AppColors.textPrimary),
       ),
     );
 

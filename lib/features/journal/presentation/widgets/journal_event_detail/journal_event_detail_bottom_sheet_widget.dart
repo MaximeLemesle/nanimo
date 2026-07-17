@@ -13,6 +13,8 @@ import 'package:nanimo/features/event/data/models/event_model.dart';
 import 'package:nanimo/features/journal/presentation/cubit/journal_cubit.dart';
 
 class JournalEventDetailBottomSheetWidget extends StatefulWidget {
+  static const double _maxHeightFactor = 0.8;
+
   final String eventId;
   final VoidCallback? onEdit;
 
@@ -60,80 +62,88 @@ class _JournalEventDetailBottomSheetWidgetState extends State<JournalEventDetail
         final pets = state.pets.where((pet) => petIds.contains(pet.petId)).toList();
         final date = event.entryDate;
 
-        return BottomSheetWidget(
-          title: event.title,
-          scrollable: true,
-          action: _Actions(
-            isDeleting: _isDeleting,
-            onEdit: () {
-              Navigator.of(context).pop();
-              widget.onEdit?.call();
-            },
-            onDelete: () => _confirmAndDelete(context),
+        return ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height *
+                JournalEventDetailBottomSheetWidget._maxHeightFactor,
           ),
-          children: [
-            if (date != null) ...[
-              Text(
-                DateFormatter.eventHeader(date),
-                style: AppTextStyles.numberSmall.copyWith(color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: AppSpacing.md),
-            ],
-            if (imagePaths.isNotEmpty) ...[
-              SizedBox(
-                height: 200,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: imagePaths.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.md),
-                  itemBuilder: (_, index) => _EventPhoto(
-                    assetPath: imagePaths[index],
-                    urlResolver: context.read<JournalCubit>().imageUrl,
+          child: BottomSheetWidget(
+            title: event.title,
+            scrollable: true,
+            action: _Actions(
+              isDeleting: _isDeleting,
+              onEdit: () {
+                Navigator.of(context).pop();
+                widget.onEdit?.call();
+              },
+              onDelete: () => _confirmAndDelete(context),
+            ),
+            children: [
+              if (date != null) ...[
+                Text(
+                  DateFormatter.eventHeader(date),
+                  style: AppTextStyles.numberSmall.copyWith(color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: AppSpacing.md),
+              ],
+              if (imagePaths.isNotEmpty) ...[
+                SizedBox(
+                  height: 200,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: imagePaths.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.md),
+                    itemBuilder: (_, index) => _EventPhoto(
+                      assetPath: imagePaths[index],
+                      urlResolver: context.read<JournalCubit>().imageUrl,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-            ],
-            if (event.description != null && event.description!.trim().isNotEmpty) ...[
-              Text(event.description!, style: AppTextStyles.text),
-              const SizedBox(height: AppSpacing.lg),
-            ],
-            if (pets.isNotEmpty) ...[
-              Text(
-                'Animaux',
-                style: AppTextStyles.textSmallBold.copyWith(color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
-                children: [
-                  for (final pet in pets)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md,
-                        vertical: AppSpacing.sm,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.backgroundSurface,
-                        border: Border.all(color: AppColors.backgroundStroke),
-                        borderRadius: BorderRadius.circular(AppRadius.full),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (state.iconsKey[pet.petSpeciesId] != null) ...[
-                            SpeciesIconWidget(iconKey: state.iconsKey[pet.petSpeciesId]!, height: 28),
-                            const SizedBox(width: AppSpacing.sm),
+                const SizedBox(height: AppSpacing.md),
+              ],
+              if (event.description != null &&
+                  event.description!.trim().isNotEmpty) ...[
+                Text(event.description!, style: AppTextStyles.text),
+                const SizedBox(height: AppSpacing.lg),
+              ],
+              if (pets.isNotEmpty) ...[
+                Text(
+                  'Animaux',
+                  style: AppTextStyles.textSmallBold
+                      .copyWith(color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
+                  children: [
+                    for (final pet in pets)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.sm,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.backgroundSurface,
+                          border: Border.all(color: AppColors.backgroundStroke),
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (state.iconsKey[pet.petSpeciesId] != null) ...[
+                              SpeciesIconWidget(iconKey: state.iconsKey[pet.petSpeciesId]!, height: 28),
+                              const SizedBox(width: AppSpacing.sm),
+                            ],
+                            Text(pet.petName, style: AppTextStyles.textBold),
                           ],
-                          Text(pet.petName, style: AppTextStyles.textBold),
-                        ],
+                        ),
                       ),
-                    ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ],
-          ],
+          ),
         );
       },
     );
