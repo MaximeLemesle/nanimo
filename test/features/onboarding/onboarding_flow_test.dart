@@ -28,8 +28,7 @@ import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/settings/data/settings_repository.dart';
 
-class _MockReferentialRepository extends Mock
-    implements ReferentialRepository {}
+class _MockReferentialRepository extends Mock implements ReferentialRepository {}
 
 class _MockPetRepository extends Mock implements PetRepository {}
 
@@ -156,34 +155,22 @@ void main() {
     authRepo = _MockAuthRepository();
 
     /// Home streams: empty journal/health caches and no cached user.
-    when(() => eventRepo.watchEvents())
-        .thenAnswer((_) => Stream.value(const []));
-    when(() => eventRepo.watchPetEvents())
-        .thenAnswer((_) => Stream.value(const {}));
-    when(() => eventRepo.watchAllImages())
-        .thenAnswer((_) => Stream.value(const {}));
-    when(() => healthRepo.watchAllDiaries())
-        .thenAnswer((_) => Stream.value(const []));
-    when(() => healthRepo.watchAllVaccines())
-        .thenAnswer((_) => Stream.value(const []));
-    when(() => authRepo.watchCurrentUser())
-        .thenAnswer((_) => Stream.value(null));
+    when(() => eventRepo.watchEvents()).thenAnswer((_) => Stream.value(const []));
+    when(() => eventRepo.watchPetEvents()).thenAnswer((_) => Stream.value(const {}));
+    when(() => eventRepo.watchAllImages()).thenAnswer((_) => Stream.value(const {}));
+    when(() => healthRepo.watchAllDiaries()).thenAnswer((_) => Stream.value(const []));
+    when(() => healthRepo.watchAllVaccines()).thenAnswer((_) => Stream.value(const []));
+    when(() => authRepo.watchCurrentUser()).thenAnswer((_) => Stream.value(null));
     petsController = StreamController<List<PetModel>>.broadcast();
     lastPets = const [];
 
-    when(() => healthRepo.watchDiaryForPet(any()))
-        .thenAnswer((_) => Stream.value(null));
-    when(() => healthRepo.getWeightLogsForPet(any()))
-        .thenAnswer((_) => Stream.value(const <HealthDiaryWeightLogModel>[]));
-    when(() => healthRepo.getVetVisitsForPet(any()))
-        .thenAnswer((_) => Stream.value(const <VetVisitModel>[]));
+    when(() => healthRepo.watchDiaryForPet(any())).thenAnswer((_) => Stream.value(null));
+    when(() => healthRepo.getWeightLogsForPet(any())).thenAnswer((_) => Stream.value(const <HealthDiaryWeightLogModel>[]));
+    when(() => healthRepo.getVetVisitsForPet(any())).thenAnswer((_) => Stream.value(const <VetVisitModel>[]));
 
-    when(() => referentialRepo.fetchSpecies())
-        .thenAnswer((_) async => [_chat, _chien]);
-    when(() => referentialRepo.fetchRacesBySpecies(_chat.petSpeciesId))
-        .thenAnswer((_) async => [_europeen]);
-    when(() => referentialRepo.fetchRacesBySpecies(_chien.petSpeciesId))
-        .thenAnswer((_) async => [_berger]);
+    when(() => referentialRepo.fetchSpecies()).thenAnswer((_) async => [_chat, _chien]);
+    when(() => referentialRepo.fetchRacesBySpecies(_chat.petSpeciesId)).thenAnswer((_) async => [_europeen]);
+    when(() => referentialRepo.fetchRacesBySpecies(_chien.petSpeciesId)).thenAnswer((_) async => [_berger]);
     // Replay the latest pets to any late subscriber (cubits scoped to the
     // shell route subscribe only once Home mounts, after emissions may have
     // fired), mirroring a real Isar `watch` that seeds the current rows.
@@ -195,8 +182,7 @@ void main() {
     /// The splash redirect lands an authenticated user on the create-event
     /// page, whose cubit loads pets and event types on init.
     when(() => petRepo.getPets()).thenAnswer((_) async => const <PetModel>[]);
-    when(() => referentialRepo.fetchEventTypes())
-        .thenAnswer((_) async => const <EventTypeModel>[]);
+    when(() => referentialRepo.fetchEventTypes()).thenAnswer((_) async => const <EventTypeModel>[]);
 
     /// Mimics the write-through cache: a created pet lands in the pets stream.
     when(() => petRepo.createPet(any())).thenAnswer((invocation) async {
@@ -312,9 +298,7 @@ void main() {
   }
 
   group('Onboarding flow', () {
-    testWidgets(
-        'cold start: splash → welcome → 3 steps → email signup → home shows Milo',
-        (tester) async {
+    testWidgets('cold start: splash → welcome → 3 steps → email signup → home shows Milo', (tester) async {
       await goThroughOnboarding(tester);
 
       await tester.enterText(_textFieldWithLabel('Prénom'), 'Maxime');
@@ -332,9 +316,7 @@ void main() {
       expect(find.text('Milo'), findsOneWidget);
     });
 
-    testWidgets(
-        'failed post-signup insert shows a retry banner that re-inserts the pet',
-        (tester) async {
+    testWidgets('failed post-signup insert shows a retry banner that re-inserts the pet', (tester) async {
       // The first insert fails (e.g. the users_pets FK race after signup),
       // the retry succeeds.
       var attempts = 0;
@@ -375,8 +357,7 @@ void main() {
       expect(find.text('Milo'), findsOneWidget);
     });
 
-    testWidgets('SSO Google signup inserts the pending pet and shows home',
-        (tester) async {
+    testWidgets('SSO Google signup inserts the pending pet and shows home', (tester) async {
       await goThroughOnboarding(tester);
 
       await tester.tap(find.text('Continuer avec Google'));
@@ -388,8 +369,7 @@ void main() {
       expect(find.text('Milo'), findsOneWidget);
     });
 
-    testWidgets('backtrack: changing species on step 1 resets the race',
-        (tester) async {
+    testWidgets('backtrack: changing species on step 1 resets the race', (tester) async {
       await pumpApp(tester);
       authCubit.sessionNotFound();
       await tester.pump(const Duration(seconds: 2));
@@ -424,8 +404,7 @@ void main() {
       expect(find.text('Européen'), findsNothing);
     });
 
-    testWidgets('existing user logs in via /login without touching onboarding',
-        (tester) async {
+    testWidgets('existing user logs in via /login without touching onboarding', (tester) async {
       await pumpApp(tester);
       authCubit.sessionNotFound();
       await tester.pumpAndSettle();
@@ -462,9 +441,7 @@ void main() {
       expect(onboardingCubit.state, const OnboardingState());
     });
 
-    testWidgets(
-        'warm start: restored session goes from splash straight to home',
-        (tester) async {
+    testWidgets('warm start: restored session goes from splash straight to home', (tester) async {
       await pumpApp(tester);
       expect(find.byKey(const Key('splash_page')), findsOneWidget);
 
