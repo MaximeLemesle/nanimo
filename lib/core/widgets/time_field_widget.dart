@@ -70,7 +70,6 @@ class TimeFieldWidget extends StatelessWidget {
 
     if (variant == FieldVariant.pill) {
       return PillFieldWidget(
-        icon: Icons.schedule_outlined,
         semanticLabel: label,
         onTap: () => _pick(context),
         showBorder: showPillBorder,

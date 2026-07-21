@@ -24,7 +24,7 @@ void main() {
       expect(find.text('Date de naissance'), findsOneWidget);
     });
 
-    testWidgets('pill variant renders a tappable chip with a calendar icon',
+    testWidgets('pill variant renders a tappable chip with the date',
         (tester) async {
       await tester.pumpWidget(host(DateFieldWidget(
         label: 'Date',
@@ -34,7 +34,7 @@ void main() {
       )));
 
       expect(find.byType(PillFieldWidget), findsOneWidget);
-      expect(find.byIcon(Icons.calendar_today_outlined), findsOneWidget);
+      expect(find.text('17/07/2026'), findsOneWidget);
       expect(find.byType(InputDecorator), findsNothing);
     });
 
@@ -54,7 +54,7 @@ void main() {
   });
 
   group('TimeFieldWidget', () {
-    testWidgets('pill variant renders a tappable chip with a clock icon',
+    testWidgets('pill variant renders a tappable chip with the time',
         (tester) async {
       await tester.pumpWidget(host(TimeFieldWidget(
         label: 'Heure',
@@ -64,7 +64,7 @@ void main() {
       )));
 
       expect(find.byType(PillFieldWidget), findsOneWidget);
-      expect(find.byIcon(Icons.schedule_outlined), findsOneWidget);
+      expect(find.text('14:30'), findsOneWidget);
     });
 
     testWidgets('pill variant opens the time picker on tap', (tester) async {

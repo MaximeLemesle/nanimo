@@ -8,7 +8,6 @@ void main() {
     return MaterialApp(
       home: Scaffold(
         body: PillFieldWidget(
-          icon: Icons.calendar_today_outlined,
           semanticLabel: 'Date',
           onTap: onTap ?? () {},
           child: const Text('17/07/2026'),
@@ -17,10 +16,9 @@ void main() {
     );
   }
 
-  testWidgets('renders the icon and the value', (tester) async {
+  testWidgets('renders the value', (tester) async {
     await tester.pumpWidget(build());
 
-    expect(find.byIcon(Icons.calendar_today_outlined), findsOneWidget);
     expect(find.text('17/07/2026'), findsOneWidget);
   });
 

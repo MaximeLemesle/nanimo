@@ -20,8 +20,6 @@ void main() {
 
       expect(find.byType(DateFieldWidget), findsOneWidget);
       expect(find.byType(TimeFieldWidget), findsOneWidget);
-      expect(find.byIcon(Icons.calendar_today_outlined), findsOneWidget);
-      expect(find.byIcon(Icons.schedule_outlined), findsOneWidget);
       expect(find.text('17/07/2026'), findsOneWidget);
       expect(find.text('22:57'), findsOneWidget);
     });

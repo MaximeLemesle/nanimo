@@ -82,7 +82,6 @@ class DateFieldWidget extends StatelessWidget {
 
     if (variant == FieldVariant.pill) {
       return PillFieldWidget(
-        icon: Icons.calendar_today_outlined,
         semanticLabel: label,
         onTap: () => _pick(context),
         showBorder: showPillBorder,

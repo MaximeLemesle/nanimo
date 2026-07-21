@@ -40,36 +40,33 @@ class DateTimeFieldWidget extends StatelessWidget {
         color: AppColors.backgroundSurface,
         shape: shape,
       ),
-      child: IntrinsicHeight(
-        child: Row(
-          children: [
-            Expanded(
-              child: DateFieldWidget(
-                label: dateLabel,
-                value: value,
-                onChanged: onDateChanged,
-                firstDate: firstDate,
-                lastDate: lastDate,
-                variant: FieldVariant.pill,
-                showPillBorder: false,
-                textAlign: TextAlign.center,
-                textStyle: style,
-              ),
+      child: Row(
+        children: [
+          Expanded(
+            child: DateFieldWidget(
+              label: dateLabel,
+              value: value,
+              onChanged: onDateChanged,
+              firstDate: firstDate,
+              lastDate: lastDate,
+              variant: FieldVariant.pill,
+              showPillBorder: false,
+              textAlign: TextAlign.center,
+              textStyle: style,
             ),
-            Container(width: 1, color: AppColors.backgroundStroke),
-            Expanded(
-              child: TimeFieldWidget(
-                label: timeLabel,
-                value: value,
-                onChanged: onTimeChanged,
-                variant: FieldVariant.pill,
-                showPillBorder: false,
-                textAlign: TextAlign.center,
-                textStyle: style,
-              ),
+          ),
+          Expanded(
+            child: TimeFieldWidget(
+              label: timeLabel,
+              value: value,
+              onChanged: onTimeChanged,
+              variant: FieldVariant.pill,
+              showPillBorder: false,
+              textAlign: TextAlign.center,
+              textStyle: style,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
     

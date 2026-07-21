@@ -4,7 +4,6 @@ import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 
 class PillFieldWidget extends StatelessWidget {
-  final IconData icon;
   final Widget child;
   final VoidCallback onTap;
   final String? semanticLabel;
@@ -12,7 +11,6 @@ class PillFieldWidget extends StatelessWidget {
 
   const PillFieldWidget({
     super.key,
-    required this.icon,
     required this.child,
     required this.onTap,
     this.semanticLabel,
@@ -34,15 +32,7 @@ class PillFieldWidget extends StatelessWidget {
         color: showBorder ? AppColors.backgroundSurface : Colors.transparent,
         shape: shape,
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: AppSpacing.md, color: AppColors.primary),
-          const SizedBox(width: AppSpacing.sm),
-          Flexible(child: child),
-        ],
-      ),
+      child: Center(child: child),
     );
 
     if (showBorder) {
