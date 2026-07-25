@@ -6,6 +6,7 @@ import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/error_banner_widget.dart';
+import 'package:nanimo/core/widgets/nanimo_logo_widget.dart';
 import 'package:nanimo/core/widgets/text_field_widget.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nanimo/features/auth/presentation/widgets/sso_buttons_widget.dart';
@@ -87,6 +88,10 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const SizedBox(height: AppSpacing.xl),
+                const Center(
+                  child: NanimoLogoWidget(size: NanimoLogoSize.large),
+                ),
                 const SizedBox(height: AppSpacing.xl),
                 Text('Connexion', style: textTheme.displayLarge),
                 Text(
