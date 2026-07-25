@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
@@ -14,13 +13,11 @@ import 'package:nanimo/features/event/data/models/event_image_model.dart';
 import 'package:nanimo/features/event/data/models/event_model.dart';
 import 'package:nanimo/features/event/presentation/cubit/edit_event_cubit.dart';
 import 'package:nanimo/features/event/presentation/event_type_styles.dart';
-import 'package:nanimo/features/event/presentation/widgets/create_event/create_event_bottom_sheet/add_image_bottom_sheet_widget.dart';
-import 'package:nanimo/features/event/presentation/widgets/create_event/create_event_bottom_sheet/edit_event_image_bottom_sheet_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/create_event_bottom_sheet/event_type_bottom_sheet_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/create_event_bottom_sheet/pet_select_bottom_sheet_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/polaroid_collage_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/sticker_selector_widget.dart';
-import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
+import 'package:nanimo/features/event/presentation/widgets/event_photo/event_photo_picker_widget.dart';
 
 class EditEventPage extends StatefulWidget {
   const EditEventPage({super.key});
@@ -46,24 +43,6 @@ class _EditEventPageState extends State<EditEventPage> {
   }
 
   void _onTitleChanged() => setState(() {});
-
-  /// Photos allowed for this event: the plan quota, capped by the collage max.
-  int _maxImages(BuildContext context) {
-    final quota = context.read<SubscriptionCubit>().state.maxImagesPerEvent;
-    return quota < PolaroidCollageWidget.maxImages ? quota : PolaroidCollageWidget.maxImages;
-  }
-
-
-  String _quotaMessage(SubscriptionState subscription, int maxImages) {
-    if (!subscription.isLoaded) {
-      return 'Impossible de vérifier votre abonnement. Vérifiez votre connexion, puis réessayez.';
-    }
-    if (!subscription.isPremium) {
-      return 'Le plan gratuit est limité à $maxImages photo${maxImages > 1 ? 's' : ''} par souvenir. '
-          'Passez au premium pour en ajouter plus.';
-    }
-    return 'Vous pouvez ajouter $maxImages photos maximum.';
-  }
 
   void _setEntryDate(DateTime date) {
     setState(() {
@@ -117,92 +96,9 @@ class _EditEventPageState extends State<EditEventPage> {
     _descriptionController.text = event.description ?? '';
   }
 
-  Future<void> _addImages() async {
-    final messenger = ScaffoldMessenger.of(context);
-    final maxImages = _maxImages(context);
-    final subscription = context.read<SubscriptionCubit>().state;
-    final picked = await AddImageBottomSheetWidget.show(context);
-    if (picked == null || picked.isEmpty || !mounted) return;
-
-    final remaining = maxImages - _images.length;
-    if (remaining <= 0) {
-      messenger
-        ..clearSnackBars()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(_quotaMessage(subscription, maxImages)),
-          ),
-        );
-      return;
-    }
-
-    setState(() => _images.addAll([
-          for (final image in picked.take(remaining)) LocalCollageImage(image),
-        ]));
-  }
-
-  Future<void> _showImageGrid(String eventId) async {
-    if (_images.isEmpty) {
-      await _addImages();
-      return;
-    }
-
-    final selection = await EditEventImageGridBottomSheetWidget.show(
-      context,
-      images: List.of(_images),
-      urlResolver: context.read<EditEventCubit>().imageUrl,
-      canAdd: _images.length < _maxImages(context),
-    );
-    if (selection == null || !mounted) return;
-
-    switch (selection) {
-      case EditEventImageGridAddSelected():
-        await _addImages();
-      case EditEventImageGridImageSelected(:final index):
-        await _showImageActions(eventId, index);
-    }
-  }
-
-  Future<void> _showImageActions(
-    String eventId,
-    int index,
-  ) async {
-    if (index < 0 || index >= _images.length) return;
-
-    final action = await EditEventImageActionBottomSheetWidget.show(context);
-    if (action == null || !mounted) return;
-
-    switch (action) {
-      case EditEventImageAction.takePhoto:
-        await _replaceImage(index, eventId, ImageSource.camera);
-      case EditEventImageAction.selectPhoto:
-        await _replaceImage(index, eventId, ImageSource.gallery);
-      case EditEventImageAction.deletePhoto:
-        setState(() => _removeImageAt(index, eventId));
-    }
-  }
-
-  Future<void> _replaceImage(
-    int index,
-    String eventId,
-    ImageSource source,
-  ) async {
-    final picked = await ImagePicker().pickImage(source: source);
-    if (picked == null || !mounted || index >= _images.length) return;
-
-    setState(() {
-      _markImageRemoved(_images[index], eventId);
-      _images[index] = LocalCollageImage(picked);
-    });
-  }
-
-  void _removeImageAt(int index, String eventId) {
-    final image = _images.removeAt(index);
-    _markImageRemoved(image, eventId);
-  }
-
-  void _markImageRemoved(CollageImage image, String eventId) {
-    if (image is! RemoteCollageImage) return;
+  /// Queues a stored photo for deletion on submit. Dropping it from [_images]
+  /// only removes it from the form — the row and its file live on until then.
+  void _markImageRemoved(RemoteCollageImage image, String eventId) {
     final alreadyRemoved = _removedImages.any(
       (removed) => removed.eventImageId == image.eventImageId,
     );
@@ -372,11 +268,12 @@ class _EditEventPageState extends State<EditEventPage> {
               ),
 
               /// Images selector
-              PolaroidCollageWidget(
+              EventPhotoPickerWidget(
                 images: _images,
                 urlResolver: context.read<EditEventCubit>().imageUrl,
-                onTap: () => _showImageGrid(state.event!.eventId),
-                onImageTap: (_) => _showImageGrid(state.event!.eventId),
+                onChanged: (images) => setState(() => _images = images),
+                onRemoteImageRemoved: (image) =>
+                    _markImageRemoved(image, state.event!.eventId),
               ),
               const SizedBox(height: AppSpacing.lg),
 

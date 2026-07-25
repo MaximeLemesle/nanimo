@@ -306,7 +306,7 @@ void main() {
     await tester.tap(find.byType(PolaroidCollageWidget));
     await tester.pumpAndSettle();
     await tester.tap(
-      find.byKey(const ValueKey('edit-event-image-grid-tile-0')),
+      find.byKey(const ValueKey('event-image-grid-tile-0')),
     );
     await tester.pumpAndSettle();
 

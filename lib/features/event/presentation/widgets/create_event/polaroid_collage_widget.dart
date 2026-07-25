@@ -162,7 +162,8 @@ class PolaroidCollageWidget extends StatelessWidget {
           height: size,
           fit: BoxFit.cover,
         ),
-      RemoteCollageImage(:final assetPath) => FutureBuilder<String>(
+      RemoteCollageImage(:final assetPath) when urlResolver != null =>
+        FutureBuilder<String>(
           future: urlResolver!(assetPath),
           builder: (context, snapshot) {
             if (snapshot.connectionState != ConnectionState.done) {
@@ -183,6 +184,10 @@ class PolaroidCollageWidget extends StatelessWidget {
             );
           },
         ),
+
+      /// A stored photo with no resolver to sign its url cannot be fetched.
+      RemoteCollageImage() =>
+        _imagePlaceholder(size, icon: Icons.broken_image_outlined),
     };
   }
 
