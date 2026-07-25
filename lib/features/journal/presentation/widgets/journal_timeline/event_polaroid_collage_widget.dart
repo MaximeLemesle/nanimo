@@ -22,6 +22,17 @@ class JournalTimelinePolaroidCollageWidget extends StatelessWidget {
   static const double _frontFrameSize = 70;
   static const Offset _backOffset = Offset(8, -22);
   static const double _backAngle = 0.04;
+  static const double _frameBorderWidth = 2;
+  static const double _frameShadowBlur = 8;
+  static const double _frameShadowDy = 4;
+
+  /// Width the polaroid frame adds around the photo: inner padding + border.
+  static const double _frameChrome = AppSpacing.xs * 2 + _frameBorderWidth * 2;
+
+  /// How far the drop shadow bleeds past the frame edge, per axis. Counted in
+  /// the collage box so the shadow is not cut in turn once the frames fit.
+  static const double _shadowBleedX = _frameShadowBlur;
+  static const double _shadowBleedY = _frameShadowBlur + _frameShadowDy;
 
   /// Smaller frames in front of the back one
   static const List<Offset> _frontOffsets = [
@@ -36,10 +47,24 @@ class JournalTimelinePolaroidCollageWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     if (assetPaths.isEmpty) return const SizedBox.shrink();
 
-    return SizedBox(
-      height: _resolveHeight(),
-      width: double.infinity,
+    final natural = _naturalSize();
+    final collage = SizedBox.fromSize(
+      size: natural,
       child: assetPaths.length == 1 ? _buildSingle() : _buildCollage(),
+    );
+
+    /// The collage is laid out at its natural size, then scaled down when the
+    /// half-row it sits in is narrower than that — the frames fan out well past
+    /// the widest photo, and would otherwise be clipped on the sides.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final scale = math.min(1.0, constraints.maxWidth / natural.width);
+        return SizedBox(
+          height: natural.height * scale,
+          width: double.infinity,
+          child: FittedBox(child: collage),
+        );
+      },
     );
   }
 
@@ -57,20 +82,28 @@ class JournalTimelinePolaroidCollageWidget extends StatelessWidget {
     return result;
   }
 
-  double _resolveHeight() {
-    const padding = AppSpacing.xs * 2;
+  /// Bounding box of everything the collage paints, shadows included. The
+  /// [Stack] only reserves room for its largest frame, so without this the
+  /// frames fanned out by [Transform.translate] land outside the widget box and
+  /// get cut by the journal's scroll viewport.
+  Size _naturalSize() {
     if (assetPaths.length == 1) {
-      return _singleFrameSize + padding;
+      const full = _singleFrameSize + _frameChrome;
+      return const Size(full + _shadowBleedX * 2, full + _shadowBleedY * 2);
     }
 
     final count = assetPaths.take(maxImages).length;
-    var half = 0.0;
+    var halfWidth = 0.0;
+    var halfHeight = 0.0;
     for (final p in _placements(count)) {
-      final full = p.size + padding;
+      final full = p.size + _frameChrome;
+
+      /// Half-extent of the frame's axis-aligned bounding box once rotated.
       final extent = (full / 2) * (math.cos(p.angle).abs() + math.sin(p.angle).abs());
-      half = math.max(half, p.offset.dy.abs() + extent);
+      halfWidth = math.max(halfWidth, p.offset.dx.abs() + extent + _shadowBleedX);
+      halfHeight = math.max(halfHeight, p.offset.dy.abs() + extent + _shadowBleedY);
     }
-    return 2 * half;
+    return Size(2 * halfWidth, 2 * halfHeight);
   }
 
   Widget _buildSingle() {
@@ -82,26 +115,26 @@ class JournalTimelinePolaroidCollageWidget extends StatelessWidget {
     );
   }
 
+  /// Sized by the parent, not by its largest child: the [Stack] is handed the
+  /// tight [_naturalSize] box so the translated frames stay inside the widget.
   Widget _buildCollage() {
     final visible = assetPaths.take(maxImages).toList();
     final placements = _placements(visible.length);
-    return Center(
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          for (var i = 0; i < visible.length; i++)
-            Transform.translate(
-              offset: placements[i].offset,
-              child: Transform.rotate(
-                angle: placements[i].angle,
-                child: _frame(
-                  assetPath: visible[i],
-                  size: placements[i].size,
-                ),
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        for (var i = 0; i < visible.length; i++)
+          Transform.translate(
+            offset: placements[i].offset,
+            child: Transform.rotate(
+              angle: placements[i].angle,
+              child: _frame(
+                assetPath: visible[i],
+                size: placements[i].size,
               ),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 
@@ -114,12 +147,12 @@ class JournalTimelinePolaroidCollageWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.backgroundSurface,
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: AppColors.backgroundStroke, width: 2),
+        border: Border.all(color: AppColors.backgroundStroke, width: _frameBorderWidth),
         boxShadow: const [
           BoxShadow(
             color: AppColors.shadow,
-            blurRadius: 8,
-            offset: Offset(0, 4),
+            blurRadius: _frameShadowBlur,
+            offset: Offset(0, _frameShadowDy),
           ),
         ],
       ),
