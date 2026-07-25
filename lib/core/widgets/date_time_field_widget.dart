@@ -40,11 +40,17 @@ class DateTimeFieldWidget extends StatelessWidget {
         color: AppColors.backgroundSurface,
         shape: shape,
       ),
+      /// The time half takes only what « HH:mm » needs and the date half keeps
+      /// the rest: two equal halves left the date short of room, and it wrapped
+      /// onto a second line. Both fall back to their bare label rather than the
+      /// full « Sélectionner … » sentence, which no longer has anywhere to go
+      /// now that the time half is sized on its content.
       child: Row(
         children: [
           Expanded(
             child: DateFieldWidget(
               label: dateLabel,
+              placeholder: dateLabel,
               value: value,
               onChanged: onDateChanged,
               firstDate: firstDate,
@@ -55,21 +61,20 @@ class DateTimeFieldWidget extends StatelessWidget {
               textStyle: style,
             ),
           ),
-          Expanded(
-            child: TimeFieldWidget(
-              label: timeLabel,
-              value: value,
-              onChanged: onTimeChanged,
-              variant: FieldVariant.pill,
-              showPillBorder: false,
-              textAlign: TextAlign.center,
-              textStyle: style,
-            ),
+          TimeFieldWidget(
+            label: timeLabel,
+            placeholder: timeLabel,
+            value: value,
+            onChanged: onTimeChanged,
+            variant: FieldVariant.pill,
+            showPillBorder: false,
+            textAlign: TextAlign.center,
+            textStyle: style,
           ),
         ],
       ),
     );
-    
+
     return Container(
       padding: const EdgeInsets.all(1),
       decoration: ShapeDecoration(
