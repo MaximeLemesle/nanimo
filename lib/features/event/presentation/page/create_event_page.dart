@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
@@ -12,12 +11,11 @@ import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/date_time_field_widget.dart';
 import 'package:nanimo/features/event/presentation/cubit/event_creation_cubit.dart';
 import 'package:nanimo/features/event/presentation/event_type_styles.dart';
-import 'package:nanimo/features/event/presentation/widgets/create_event/create_event_bottom_sheet/add_image_bottom_sheet_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/create_event_bottom_sheet/event_type_bottom_sheet_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/create_event_bottom_sheet/pet_select_bottom_sheet_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/polaroid_collage_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/sticker_selector_widget.dart';
-import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
+import 'package:nanimo/features/event/presentation/widgets/event_photo/event_photo_picker_widget.dart';
 
 class CreateEventPage extends StatefulWidget {
   const CreateEventPage({
@@ -37,7 +35,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   late DateTime _entryDate;
-  final List<XFile> _images = [];
+  List<CollageImage> _images = [];
 
   @override
   void initState() {
@@ -47,24 +45,6 @@ class _CreateEventPageState extends State<CreateEventPage> {
   }
 
   void _onTitleChanged() => setState(() {});
-
-  /// Photos allowed for this event: the plan quota, capped by the collage max.
-  int _maxImages(BuildContext context) {
-    final quota = context.read<SubscriptionCubit>().state.maxImagesPerEvent;
-    return quota < PolaroidCollageWidget.maxImages ? quota : PolaroidCollageWidget.maxImages;
-  }
-
-
-  String _quotaMessage(SubscriptionState subscription, int maxImages) {
-    if (!subscription.isLoaded) {
-      return 'Impossible de vérifier votre abonnement. Vérifiez votre connexion, puis réessayez.';
-    }
-    if (!subscription.isPremium) {
-      return 'Le plan gratuit est limité à $maxImages photo${maxImages > 1 ? 's' : ''} par souvenir. '
-          'Passez au premium pour en ajouter plus.';
-    }
-    return 'Vous pouvez ajouter $maxImages photos maximum.';
-  }
 
   void _setEntryDate(DateTime date) {
     setState(() {
@@ -254,44 +234,9 @@ class _CreateEventPageState extends State<CreateEventPage> {
               ),
 
               /// Images selector
-              PolaroidCollageWidget(
-                images: [for (final image in _images) LocalCollageImage(image)],
-                onTap: () async {
-                  final messenger = ScaffoldMessenger.of(context);
-                  final maxImages = _maxImages(context);
-                  final subscription = context.read<SubscriptionCubit>().state;
-                  final picked = await AddImageBottomSheetWidget.show(context);
-                  if (picked == null || picked.isEmpty) return;
-                  final remaining = maxImages - _images.length;
-                  if (remaining <= 0) {
-                    messenger
-                      ..clearSnackBars()
-                      ..showSnackBar(
-                        SnackBar(
-                          content: Text(_quotaMessage(subscription, maxImages)),
-                        ),
-                      );
-                    return;
-                  }
-                  setState(() => _images.addAll(picked.take(remaining)));
-                },
-                onImageTap: (_) async {
-                  final maxImages = _maxImages(context);
-                  if (maxImages <= 0) return;
-                  final List<XFile> picked;
-                  if (maxImages == 1) {
-                    final one = await ImagePicker().pickImage(source: ImageSource.gallery);
-                    picked = one == null ? const [] : [one];
-                  } else {
-                    picked = await ImagePicker().pickMultiImage(limit: maxImages);
-                  }
-                  if (picked.isEmpty || !mounted) return;
-                  setState(() {
-                    _images
-                      ..clear()
-                      ..addAll(picked.take(maxImages));
-                  });
-                },
+              EventPhotoPickerWidget(
+                images: _images,
+                onChanged: (images) => setState(() => _images = images),
               ),
               const SizedBox(height: AppSpacing.lg),
 
@@ -320,7 +265,10 @@ class _CreateEventPageState extends State<CreateEventPage> {
                         title: _titleController.text.trim(),
                         description: _descriptionController.text,
                         entryDate: _entryDate,
-                        images: _images,
+                        images: [
+                          for (final image in _images)
+                            if (image is LocalCollageImage) image.file,
+                        ],
                       );
                 },
               ),

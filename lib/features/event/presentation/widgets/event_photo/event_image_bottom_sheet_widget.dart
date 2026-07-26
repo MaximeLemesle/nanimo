@@ -9,50 +9,48 @@ import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/polaroid_collage_widget.dart';
 
-sealed class EditEventImageGridResult {
-  const EditEventImageGridResult();
+sealed class EventImageGridResult {
+  const EventImageGridResult();
 }
 
-class EditEventImageGridImageSelected extends EditEventImageGridResult {
+class EventImageGridImageSelected extends EventImageGridResult {
   final int index;
 
-  const EditEventImageGridImageSelected(this.index);
+  const EventImageGridImageSelected(this.index);
 }
 
-class EditEventImageGridAddSelected extends EditEventImageGridResult {
-  const EditEventImageGridAddSelected();
+class EventImageGridAddSelected extends EventImageGridResult {
+  const EventImageGridAddSelected();
 }
 
-enum EditEventImageAction {
+enum EventImageAction {
   takePhoto,
   selectPhoto,
   deletePhoto,
 }
 
-class EditEventImageGridBottomSheetWidget extends StatelessWidget {
+class EventImageGridBottomSheetWidget extends StatelessWidget {
   final List<CollageImage> images;
-  final Future<String> Function(String assetPath) urlResolver;
-  final bool canAdd;
 
-  const EditEventImageGridBottomSheetWidget({
+  /// Null in the create flow, which only ever holds freshly picked local files.
+  final Future<String> Function(String assetPath)? urlResolver;
+
+  const EventImageGridBottomSheetWidget({
     super.key,
     required this.images,
-    required this.urlResolver,
-    required this.canAdd,
+    this.urlResolver,
   });
 
-  static Future<EditEventImageGridResult?> show(
+  static Future<EventImageGridResult?> show(
     BuildContext context, {
     required List<CollageImage> images,
-    required Future<String> Function(String assetPath) urlResolver,
-    required bool canAdd,
+    Future<String> Function(String assetPath)? urlResolver,
   }) {
-    return BottomSheetWidget.show<EditEventImageGridResult>(
+    return BottomSheetWidget.show<EventImageGridResult>(
       context,
-      EditEventImageGridBottomSheetWidget(
+      EventImageGridBottomSheetWidget(
         images: images,
         urlResolver: urlResolver,
-        canAdd: canAdd,
       ),
     );
   }
@@ -64,10 +62,12 @@ class EditEventImageGridBottomSheetWidget extends StatelessWidget {
       scrollable: true,
       children: [
         GridView.builder(
-          key: const ValueKey('edit-event-image-grid'),
+          key: const ValueKey('event-image-grid'),
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: images.length + (canAdd ? 1 : 0),
+          /// The add tile stays put once the quota is reached: tapping it is
+          /// how the plan limit gets explained, rather than silently vanishing.
+          itemCount: images.length + 1,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
             mainAxisSpacing: AppSpacing.sm,
@@ -78,11 +78,11 @@ class EditEventImageGridBottomSheetWidget extends StatelessWidget {
               return _AddImageTile();
             }
             return _ImageGridTile(
-              key: ValueKey('edit-event-image-grid-tile-$index'),
+              key: ValueKey('event-image-grid-tile-$index'),
               image: images[index],
               urlResolver: urlResolver,
               onTap: () => Navigator.of(context).pop(
-                EditEventImageGridImageSelected(index),
+                EventImageGridImageSelected(index),
               ),
             );
           },
@@ -92,13 +92,13 @@ class EditEventImageGridBottomSheetWidget extends StatelessWidget {
   }
 }
 
-class EditEventImageActionBottomSheetWidget extends StatelessWidget {
-  const EditEventImageActionBottomSheetWidget({super.key});
+class EventImageActionBottomSheetWidget extends StatelessWidget {
+  const EventImageActionBottomSheetWidget({super.key});
 
-  static Future<EditEventImageAction?> show(BuildContext context) {
-    return BottomSheetWidget.show<EditEventImageAction>(
+  static Future<EventImageAction?> show(BuildContext context) {
+    return BottomSheetWidget.show<EventImageAction>(
       context,
-      const EditEventImageActionBottomSheetWidget(),
+      const EventImageActionBottomSheetWidget(),
     );
   }
 
@@ -111,14 +111,14 @@ class EditEventImageActionBottomSheetWidget extends StatelessWidget {
           icon: Icons.photo_camera_outlined,
           label: 'Prendre une photo',
           onTap: () => Navigator.of(context).pop(
-            EditEventImageAction.takePhoto,
+            EventImageAction.takePhoto,
           ),
         ),
         _ActionRow(
           icon: Icons.image_outlined,
           label: 'Sélectionner une photo',
           onTap: () => Navigator.of(context).pop(
-            EditEventImageAction.selectPhoto,
+            EventImageAction.selectPhoto,
           ),
         ),
         _ActionRow(
@@ -127,7 +127,7 @@ class EditEventImageActionBottomSheetWidget extends StatelessWidget {
           foregroundColor: AppColors.secondary600,
           backgroundColor: AppColors.secondary50,
           onTap: () => Navigator.of(context).pop(
-            EditEventImageAction.deletePhoto,
+            EventImageAction.deletePhoto,
           ),
         ),
       ],
@@ -137,7 +137,7 @@ class EditEventImageActionBottomSheetWidget extends StatelessWidget {
 
 class _ImageGridTile extends StatelessWidget {
   final CollageImage image;
-  final Future<String> Function(String assetPath) urlResolver;
+  final Future<String> Function(String assetPath)? urlResolver;
   final VoidCallback onTap;
 
   const _ImageGridTile({
@@ -165,8 +165,9 @@ class _ImageGridTile extends StatelessWidget {
           File(file.path),
           fit: BoxFit.cover,
         ),
-      RemoteCollageImage(:final assetPath) => FutureBuilder<String>(
-          future: urlResolver(assetPath),
+      RemoteCollageImage(:final assetPath) when urlResolver != null =>
+        FutureBuilder<String>(
+          future: urlResolver!(assetPath),
           builder: (context, snapshot) {
             if (snapshot.connectionState != ConnectionState.done) {
               return _placeholder();
@@ -185,6 +186,7 @@ class _ImageGridTile extends StatelessWidget {
             );
           },
         ),
+      RemoteCollageImage() => _placeholder(icon: Icons.broken_image_outlined),
     };
   }
 
@@ -201,10 +203,10 @@ class _AddImageTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      key: const ValueKey('edit-event-image-grid-add-tile'),
+      key: const ValueKey('event-image-grid-add-tile'),
       borderRadius: BorderRadius.circular(AppRadius.sm),
       onTap: () => Navigator.of(context).pop(
-        const EditEventImageGridAddSelected(),
+        const EventImageGridAddSelected(),
       ),
       child: Container(
         decoration: BoxDecoration(
