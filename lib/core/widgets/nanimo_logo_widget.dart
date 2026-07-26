@@ -4,11 +4,6 @@ import 'package:nanimo/config/theme/app_text_styles.dart';
 
 enum NanimoLogoSize { small, large }
 
-/// The Nanimo brand mark.
-///
-/// There is no logo artwork to ship: the design system defines the mark as the
-/// name set in Gluten, so it is drawn as text. It therefore stays crisp at any
-/// size and follows the user's text scale, which a bitmap asset would not.
 class NanimoLogoWidget extends StatelessWidget {
   final NanimoLogoSize size;
   final bool showTagline;
