@@ -31,13 +31,13 @@
             <td class="headerValue">lcov.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
-            <td class="headerCovTableEntryLo">50.0&nbsp;%</td>
-            <td class="headerCovTableEntry">20</td>
-            <td class="headerCovTableEntry">10</td>
+            <td class="headerCovTableEntryHi">95.5&nbsp;%</td>
+            <td class="headerCovTableEntry">22</td>
+            <td class="headerCovTableEntry">21</td>
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-07-01 00:24:34</td>
+            <td class="headerValue">2026-07-23 23:06:35</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">-</td>
@@ -60,59 +60,73 @@
               <td>
 <pre class="sourceHeading">            Line data    Source code</pre>
 <pre class="source">
-<span id="L1"><span class="lineNum">       1</span>              : import 'package:isar/isar.dart';</span>
-<span id="L2"><span class="lineNum">       2</span>              : import 'package:supabase_flutter/supabase_flutter.dart';</span>
-<span id="L3"><span class="lineNum">       3</span>              : import 'package:nanimo/core/errors/repository_network_exception.dart';</span>
-<span id="L4"><span class="lineNum">       4</span>              : import 'package:nanimo/core/isar/cache/schemas/subscription_config_cache.dart';</span>
-<span id="L5"><span class="lineNum">       5</span>              : import 'package:nanimo/features/subscription/data/models/subscription_config_model.dart';</span>
-<span id="L6"><span class="lineNum">       6</span>              : </span>
-<span id="L7"><span class="lineNum">       7</span>              : /// Reads always hit Isar so the UI is instant and works offline. Supabase is</span>
-<span id="L8"><span class="lineNum">       8</span>              : /// kept fresh by [SyncService] at app start. [fetchConfigById] forces a</span>
-<span id="L9"><span class="lineNum">       9</span>              : /// Supabase round-trip and write-throughs the cache — used on upgrade.</span>
-<span id="L10"><span class="lineNum">      10</span>              : class SubscriptionRepository {</span>
-<span id="L11"><span class="lineNum">      11</span>              :   final SupabaseClient _supabase;</span>
-<span id="L12"><span class="lineNum">      12</span>              :   final Isar _isar;</span>
-<span id="L13"><span class="lineNum">      13</span>              : </span>
-<span id="L14"><span class="lineNum">      14</span> <span class="tlaGNC">           1 :   SubscriptionRepository(this._supabase, this._isar);</span></span>
+<span id="L1"><span class="lineNum">       1</span>              : import 'dart:developer' as developer;</span>
+<span id="L2"><span class="lineNum">       2</span>              : </span>
+<span id="L3"><span class="lineNum">       3</span>              : import 'package:isar/isar.dart';</span>
+<span id="L4"><span class="lineNum">       4</span>              : import 'package:supabase_flutter/supabase_flutter.dart';</span>
+<span id="L5"><span class="lineNum">       5</span>              : import 'package:nanimo/core/errors/repository_exception.dart';</span>
+<span id="L6"><span class="lineNum">       6</span>              : import 'package:nanimo/core/isar/cache/schemas/subscription_config_cache.dart';</span>
+<span id="L7"><span class="lineNum">       7</span>              : import 'package:nanimo/features/subscription/data/models/subscription_config_model.dart';</span>
+<span id="L8"><span class="lineNum">       8</span>              : </span>
+<span id="L9"><span class="lineNum">       9</span>              : /// Reads always hit Isar so the UI is instant and works offline. Supabase is</span>
+<span id="L10"><span class="lineNum">      10</span>              : /// kept fresh by [SyncService] at app start. [fetchConfigByPlanName] forces a</span>
+<span id="L11"><span class="lineNum">      11</span>              : /// Supabase round-trip and write-throughs the cache — used on upgrade.</span>
+<span id="L12"><span class="lineNum">      12</span>              : class SubscriptionRepository {</span>
+<span id="L13"><span class="lineNum">      13</span>              :   final SupabaseClient _supabase;</span>
+<span id="L14"><span class="lineNum">      14</span>              :   final Isar _isar;</span>
 <span id="L15"><span class="lineNum">      15</span>              : </span>
-<span id="L16"><span class="lineNum">      16</span>              :   /// Live stream of the subscription config from the local cache.</span>
-<span id="L17"><span class="lineNum">      17</span> <span class="tlaGNC">           1 :   Stream&lt;SubscriptionConfigModel?&gt; watchConfigById(String configId) {</span></span>
-<span id="L18"><span class="lineNum">      18</span> <span class="tlaGNC">           2 :     return _isar.subscriptionConfigCaches</span></span>
-<span id="L19"><span class="lineNum">      19</span> <span class="tlaGNC">           1 :         .filter()</span></span>
-<span id="L20"><span class="lineNum">      20</span> <span class="tlaGNC">           1 :         .configIdEqualTo(configId)</span></span>
-<span id="L21"><span class="lineNum">      21</span> <span class="tlaGNC">           1 :         .watch(fireImmediately: true)</span></span>
-<span id="L22"><span class="lineNum">      22</span> <span class="tlaGNC">           5 :         .map((rows) =&gt; rows.isEmpty ? null : rows.first.toModel());</span></span>
-<span id="L23"><span class="lineNum">      23</span>              :   }</span>
-<span id="L24"><span class="lineNum">      24</span>              : </span>
-<span id="L25"><span class="lineNum">      25</span>              :   /// One-shot read from the cache. Returns null if the config has never been</span>
-<span id="L26"><span class="lineNum">      26</span>              :   /// synced (e.g. first launch offline).</span>
-<span id="L27"><span class="lineNum">      27</span> <span class="tlaGNC">           1 :   Future&lt;SubscriptionConfigModel?&gt; getConfigById(String configId) async {</span></span>
-<span id="L28"><span class="lineNum">      28</span> <span class="tlaGNC">           3 :     final row = await _isar.subscriptionConfigCaches.getByConfigId(configId);</span></span>
-<span id="L29"><span class="lineNum">      29</span> <span class="tlaGNC">           1 :     return row?.toModel();</span></span>
-<span id="L30"><span class="lineNum">      30</span>              :   }</span>
-<span id="L31"><span class="lineNum">      31</span>              : </span>
-<span id="L32"><span class="lineNum">      32</span>              :   /// Forces a Supabase fetch and writes through the cache. Used on upgrade or</span>
-<span id="L33"><span class="lineNum">      33</span>              :   /// when the cache is empty. Throws [RepositoryNetworkException] on failure.</span>
-<span id="L34"><span class="lineNum">      34</span> <span class="tlaUNC">           0 :   Future&lt;SubscriptionConfigModel&gt; fetchConfigById(String configId) async {</span></span>
-<span id="L35"><span class="lineNum">      35</span>              :     try {</span>
-<span id="L36"><span class="lineNum">      36</span> <span class="tlaUNC">           0 :       final data = await _supabase</span></span>
-<span id="L37"><span class="lineNum">      37</span> <span class="tlaUNC">           0 :           .from('subscription_config')</span></span>
-<span id="L38"><span class="lineNum">      38</span> <span class="tlaUNC">           0 :           .select()</span></span>
-<span id="L39"><span class="lineNum">      39</span> <span class="tlaUNC">           0 :           .eq('id_subscription_config', configId)</span></span>
-<span id="L40"><span class="lineNum">      40</span> <span class="tlaUNC">           0 :           .single();</span></span>
-<span id="L41"><span class="lineNum">      41</span>              : </span>
-<span id="L42"><span class="lineNum">      42</span> <span class="tlaUNC">           0 :       final cache = SubscriptionConfigCache.fromJson(data);</span></span>
-<span id="L43"><span class="lineNum">      43</span> <span class="tlaUNC">           0 :       await _isar.writeTxn(() async {</span></span>
-<span id="L44"><span class="lineNum">      44</span> <span class="tlaUNC">           0 :         await _isar.subscriptionConfigCaches.putByConfigId(cache);</span></span>
-<span id="L45"><span class="lineNum">      45</span>              :       });</span>
-<span id="L46"><span class="lineNum">      46</span> <span class="tlaUNC">           0 :       return cache.toModel();</span></span>
-<span id="L47"><span class="lineNum">      47</span>              :     } catch (_) {</span>
-<span id="L48"><span class="lineNum">      48</span>              :       throw const RepositoryNetworkException(</span>
-<span id="L49"><span class="lineNum">      49</span>              :         'Une connexion internet est requise pour charger votre abonnement.',</span>
-<span id="L50"><span class="lineNum">      50</span>              :       );</span>
-<span id="L51"><span class="lineNum">      51</span>              :     }</span>
-<span id="L52"><span class="lineNum">      52</span>              :   }</span>
-<span id="L53"><span class="lineNum">      53</span>              : }</span>
+<span id="L16"><span class="lineNum">      16</span> <span class="tlaGNC">           1 :   SubscriptionRepository(this._supabase, this._isar);</span></span>
+<span id="L17"><span class="lineNum">      17</span>              : </span>
+<span id="L18"><span class="lineNum">      18</span>              :   /// Live stream of the subscription config from the local cache.</span>
+<span id="L19"><span class="lineNum">      19</span> <span class="tlaGNC">           1 :   Stream&lt;SubscriptionConfigModel?&gt; watchConfigByPlanName(String planName) {</span></span>
+<span id="L20"><span class="lineNum">      20</span> <span class="tlaGNC">           2 :     return _isar.subscriptionConfigCaches</span></span>
+<span id="L21"><span class="lineNum">      21</span> <span class="tlaGNC">           1 :         .filter()</span></span>
+<span id="L22"><span class="lineNum">      22</span> <span class="tlaGNC">           1 :         .planNameEqualTo(planName)</span></span>
+<span id="L23"><span class="lineNum">      23</span> <span class="tlaGNC">           1 :         .watch(fireImmediately: true)</span></span>
+<span id="L24"><span class="lineNum">      24</span> <span class="tlaGNC">           5 :         .map((rows) =&gt; rows.isEmpty ? null : rows.first.toModel());</span></span>
+<span id="L25"><span class="lineNum">      25</span>              :   }</span>
+<span id="L26"><span class="lineNum">      26</span>              : </span>
+<span id="L27"><span class="lineNum">      27</span>              :   /// One-shot read from the cache. Returns null if the config has never been</span>
+<span id="L28"><span class="lineNum">      28</span>              :   /// synced (e.g. first launch offline).</span>
+<span id="L29"><span class="lineNum">      29</span> <span class="tlaGNC">           1 :   Future&lt;SubscriptionConfigModel?&gt; getConfigByPlanName(String planName) async {</span></span>
+<span id="L30"><span class="lineNum">      30</span> <span class="tlaGNC">           3 :     final row = await _isar.subscriptionConfigCaches.getByPlanName(planName);</span></span>
+<span id="L31"><span class="lineNum">      31</span> <span class="tlaGNC">           1 :     return row?.toModel();</span></span>
+<span id="L32"><span class="lineNum">      32</span>              :   }</span>
+<span id="L33"><span class="lineNum">      33</span>              : </span>
+<span id="L34"><span class="lineNum">      34</span>              :   /// Forces a Supabase fetch and writes through the cache. Used on upgrade or</span>
+<span id="L35"><span class="lineNum">      35</span>              :   /// when the cache is empty. Throws [RepositoryNetworkException] on failure.</span>
+<span id="L36"><span class="lineNum">      36</span> <span class="tlaGNC">           1 :   Future&lt;SubscriptionConfigModel&gt; fetchConfigByPlanName(String planName) async {</span></span>
+<span id="L37"><span class="lineNum">      37</span>              :     final SubscriptionConfigCache cache;</span>
+<span id="L38"><span class="lineNum">      38</span>              :     try {</span>
+<span id="L39"><span class="lineNum">      39</span> <span class="tlaGNC">           1 :       final data = await _supabase</span></span>
+<span id="L40"><span class="lineNum">      40</span> <span class="tlaGNC">           1 :           .from('subscription_config')</span></span>
+<span id="L41"><span class="lineNum">      41</span> <span class="tlaGNC">           1 :           .select()</span></span>
+<span id="L42"><span class="lineNum">      42</span> <span class="tlaGNC">           1 :           .eq('plan_name', planName)</span></span>
+<span id="L43"><span class="lineNum">      43</span> <span class="tlaGNC">           1 :           .single();</span></span>
+<span id="L44"><span class="lineNum">      44</span>              : </span>
+<span id="L45"><span class="lineNum">      45</span> <span class="tlaGNC">           1 :       cache = SubscriptionConfigCache.fromJson(data);</span></span>
+<span id="L46"><span class="lineNum">      46</span>              :     } catch (e, st) {</span>
+<span id="L47"><span class="lineNum">      47</span> <span class="tlaGNC">           1 :       throw mapRepositoryError(e, st,</span></span>
+<span id="L48"><span class="lineNum">      48</span>              :           operation: 'fetchConfigByPlanName',</span>
+<span id="L49"><span class="lineNum">      49</span>              :           networkMessage:</span>
+<span id="L50"><span class="lineNum">      50</span>              :               'Une connexion internet est requise pour charger votre abonnement.',</span>
+<span id="L51"><span class="lineNum">      51</span>              :           serverMessage: 'Impossible de charger votre abonnement pour le moment.');</span>
+<span id="L52"><span class="lineNum">      52</span>              :     }</span>
+<span id="L53"><span class="lineNum">      53</span>              : </span>
+<span id="L54"><span class="lineNum">      54</span>              :     /// Write-through is an optimisation for the next launch. A broken cache must</span>
+<span id="L55"><span class="lineNum">      55</span>              :     /// not deny the caller a config the server just handed over.</span>
+<span id="L56"><span class="lineNum">      56</span>              :     try {</span>
+<span id="L57"><span class="lineNum">      57</span> <span class="tlaGNC">           3 :       await _isar.writeTxn(() async {</span></span>
+<span id="L58"><span class="lineNum">      58</span> <span class="tlaGNC">           3 :         await _isar.subscriptionConfigCaches.putByPlanName(cache);</span></span>
+<span id="L59"><span class="lineNum">      59</span>              :       });</span>
+<span id="L60"><span class="lineNum">      60</span>              :     } catch (e, st) {</span>
+<span id="L61"><span class="lineNum">      61</span> <span class="tlaUNC">           0 :       developer.log('config cache write failed for plan &quot;$planName&quot;',</span></span>
+<span id="L62"><span class="lineNum">      62</span>              :           name: 'subscription', error: e, stackTrace: st);</span>
+<span id="L63"><span class="lineNum">      63</span>              :     }</span>
+<span id="L64"><span class="lineNum">      64</span>              : </span>
+<span id="L65"><span class="lineNum">      65</span> <span class="tlaGNC">           1 :     return cache.toModel();</span></span>
+<span id="L66"><span class="lineNum">      66</span>              :   }</span>
+<span id="L67"><span class="lineNum">      67</span>              : }</span>
         </pre>
               </td>
             </tr>

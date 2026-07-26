@@ -31,13 +31,13 @@
             <td class="headerValue">lcov.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
-            <td class="headerCovTableEntryMed">89.5&nbsp;%</td>
-            <td class="headerCovTableEntry">19</td>
-            <td class="headerCovTableEntry">17</td>
+            <td class="headerCovTableEntryMed">88.9&nbsp;%</td>
+            <td class="headerCovTableEntry">18</td>
+            <td class="headerCovTableEntry">16</td>
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-07-01 00:24:34</td>
+            <td class="headerValue">2026-07-23 23:06:35</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">-</td>
@@ -76,45 +76,43 @@
 <span id="L14"><span class="lineNum">      14</span>              :   Widget build(BuildContext context) {</span>
 <span id="L15"><span class="lineNum">      15</span> <span class="tlaGNC">           1 :     final cubit = context.read&lt;JournalCubit&gt;();</span></span>
 <span id="L16"><span class="lineNum">      16</span>              : </span>
-<span id="L17"><span class="lineNum">      17</span>              :     final selectedPets =</span>
-<span id="L18"><span class="lineNum">      18</span> <span class="tlaGNC">           8 :         state.pets.where((pet) =&gt; state.selectedPetIds.contains(pet.petId));</span></span>
-<span id="L19"><span class="lineNum">      19</span> <span class="tlaGNC">           2 :     final selectedTypes = state.types</span></span>
-<span id="L20"><span class="lineNum">      20</span> <span class="tlaGNC">           6 :         .where((type) =&gt; state.selectedTypeIds.contains(type.eventTypeId));</span></span>
-<span id="L21"><span class="lineNum">      21</span>              : </span>
-<span id="L22"><span class="lineNum">      22</span> <span class="tlaGNC">           1 :     return SingleChildScrollView(</span></span>
-<span id="L23"><span class="lineNum">      23</span>              :       reverse: true,</span>
-<span id="L24"><span class="lineNum">      24</span>              :       scrollDirection: Axis.horizontal,</span>
-<span id="L25"><span class="lineNum">      25</span> <span class="tlaGNC">           1 :       child: Row(</span></span>
-<span id="L26"><span class="lineNum">      26</span>              :         mainAxisAlignment: MainAxisAlignment.end,</span>
-<span id="L27"><span class="lineNum">      27</span> <span class="tlaGNC">           1 :         children: [</span></span>
-<span id="L28"><span class="lineNum">      28</span> <span class="tlaGNC">           2 :           for (final pet in selectedPets) ...[</span></span>
-<span id="L29"><span class="lineNum">      29</span> <span class="tlaGNC">           1 :             ChipWidget(</span></span>
-<span id="L30"><span class="lineNum">      30</span> <span class="tlaGNC">           1 :               label: pet.petName,</span></span>
-<span id="L31"><span class="lineNum">      31</span>              :               trailingIcon: Icons.close,</span>
-<span id="L32"><span class="lineNum">      32</span>              :               isSelected: true,</span>
-<span id="L33"><span class="lineNum">      33</span> <span class="tlaGNC">           3 :               onTap: () =&gt; cubit.togglePetFilter(pet.petId),</span></span>
-<span id="L34"><span class="lineNum">      34</span>              :             ),</span>
-<span id="L35"><span class="lineNum">      35</span>              :             const SizedBox(width: AppSpacing.sm),</span>
-<span id="L36"><span class="lineNum">      36</span>              :           ],</span>
-<span id="L37"><span class="lineNum">      37</span> <span class="tlaGNC">           2 :           for (final type in selectedTypes) ...[</span></span>
-<span id="L38"><span class="lineNum">      38</span> <span class="tlaGNC">           1 :             ChipWidget(</span></span>
-<span id="L39"><span class="lineNum">      39</span> <span class="tlaGNC">           1 :               label: type.name,</span></span>
-<span id="L40"><span class="lineNum">      40</span>              :               trailingIcon: Icons.close,</span>
-<span id="L41"><span class="lineNum">      41</span>              :               isSelected: true,</span>
-<span id="L42"><span class="lineNum">      42</span> <span class="tlaUNC">           0 :               onTap: () =&gt; cubit.toggleTypeFilter(type.eventTypeId),</span></span>
-<span id="L43"><span class="lineNum">      43</span>              :             ),</span>
-<span id="L44"><span class="lineNum">      44</span>              :             const SizedBox(width: AppSpacing.sm),</span>
-<span id="L45"><span class="lineNum">      45</span>              :           ],</span>
-<span id="L46"><span class="lineNum">      46</span> <span class="tlaGNC">           1 :           ChipWidget(</span></span>
-<span id="L47"><span class="lineNum">      47</span>              :             label: 'Filtres',</span>
-<span id="L48"><span class="lineNum">      48</span>              :             trailingIcon: Icons.tune,</span>
-<span id="L49"><span class="lineNum">      49</span> <span class="tlaUNC">           0 :             onTap: () =&gt; JournalFilterBottomSheetWidget.show(context),</span></span>
-<span id="L50"><span class="lineNum">      50</span>              :           ),</span>
-<span id="L51"><span class="lineNum">      51</span>              :         ],</span>
-<span id="L52"><span class="lineNum">      52</span>              :       ),</span>
-<span id="L53"><span class="lineNum">      53</span>              :     );</span>
-<span id="L54"><span class="lineNum">      54</span>              :   }</span>
-<span id="L55"><span class="lineNum">      55</span>              : }</span>
+<span id="L17"><span class="lineNum">      17</span> <span class="tlaGNC">           8 :     final selectedPets = state.pets.where((pet) =&gt; state.selectedPetIds.contains(pet.petId));</span></span>
+<span id="L18"><span class="lineNum">      18</span> <span class="tlaGNC">           8 :     final selectedTypes = state.types.where((type) =&gt; state.selectedTypeIds.contains(type.eventTypeId));</span></span>
+<span id="L19"><span class="lineNum">      19</span>              : </span>
+<span id="L20"><span class="lineNum">      20</span> <span class="tlaGNC">           1 :     return SingleChildScrollView(</span></span>
+<span id="L21"><span class="lineNum">      21</span>              :       reverse: true,</span>
+<span id="L22"><span class="lineNum">      22</span>              :       scrollDirection: Axis.horizontal,</span>
+<span id="L23"><span class="lineNum">      23</span> <span class="tlaGNC">           1 :       child: Row(</span></span>
+<span id="L24"><span class="lineNum">      24</span>              :         mainAxisAlignment: MainAxisAlignment.end,</span>
+<span id="L25"><span class="lineNum">      25</span> <span class="tlaGNC">           1 :         children: [</span></span>
+<span id="L26"><span class="lineNum">      26</span> <span class="tlaGNC">           2 :           for (final pet in selectedPets) ...[</span></span>
+<span id="L27"><span class="lineNum">      27</span> <span class="tlaGNC">           1 :             ChipWidget(</span></span>
+<span id="L28"><span class="lineNum">      28</span> <span class="tlaGNC">           1 :               label: pet.petName,</span></span>
+<span id="L29"><span class="lineNum">      29</span>              :               trailingIcon: Icons.close,</span>
+<span id="L30"><span class="lineNum">      30</span>              :               isSelected: true,</span>
+<span id="L31"><span class="lineNum">      31</span> <span class="tlaGNC">           3 :               onTap: () =&gt; cubit.togglePetFilter(pet.petId),</span></span>
+<span id="L32"><span class="lineNum">      32</span>              :             ),</span>
+<span id="L33"><span class="lineNum">      33</span>              :             const SizedBox(width: AppSpacing.sm),</span>
+<span id="L34"><span class="lineNum">      34</span>              :           ],</span>
+<span id="L35"><span class="lineNum">      35</span> <span class="tlaGNC">           2 :           for (final type in selectedTypes) ...[</span></span>
+<span id="L36"><span class="lineNum">      36</span> <span class="tlaGNC">           1 :             ChipWidget(</span></span>
+<span id="L37"><span class="lineNum">      37</span> <span class="tlaGNC">           1 :               label: type.name,</span></span>
+<span id="L38"><span class="lineNum">      38</span>              :               trailingIcon: Icons.close,</span>
+<span id="L39"><span class="lineNum">      39</span>              :               isSelected: true,</span>
+<span id="L40"><span class="lineNum">      40</span> <span class="tlaUNC">           0 :               onTap: () =&gt; cubit.toggleTypeFilter(type.eventTypeId),</span></span>
+<span id="L41"><span class="lineNum">      41</span>              :             ),</span>
+<span id="L42"><span class="lineNum">      42</span>              :             const SizedBox(width: AppSpacing.sm),</span>
+<span id="L43"><span class="lineNum">      43</span>              :           ],</span>
+<span id="L44"><span class="lineNum">      44</span> <span class="tlaGNC">           1 :           ChipWidget(</span></span>
+<span id="L45"><span class="lineNum">      45</span>              :             label: 'Filtres',</span>
+<span id="L46"><span class="lineNum">      46</span>              :             trailingIcon: Icons.tune,</span>
+<span id="L47"><span class="lineNum">      47</span> <span class="tlaUNC">           0 :             onTap: () =&gt; JournalFilterBottomSheetWidget.show(context),</span></span>
+<span id="L48"><span class="lineNum">      48</span>              :           ),</span>
+<span id="L49"><span class="lineNum">      49</span>              :         ],</span>
+<span id="L50"><span class="lineNum">      50</span>              :       ),</span>
+<span id="L51"><span class="lineNum">      51</span>              :     );</span>
+<span id="L52"><span class="lineNum">      52</span>              :   }</span>
+<span id="L53"><span class="lineNum">      53</span>              : }</span>
         </pre>
               </td>
             </tr>

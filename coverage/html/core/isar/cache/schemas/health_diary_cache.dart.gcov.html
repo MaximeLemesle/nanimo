@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-07-01 00:24:34</td>
+            <td class="headerValue">2026-07-23 23:06:35</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">-</td>
@@ -81,22 +81,22 @@
 <span id="L19"><span class="lineNum">      19</span>              :   @Index(unique: true)</span>
 <span id="L20"><span class="lineNum">      20</span>              :   late String petId;</span>
 <span id="L21"><span class="lineNum">      21</span>              : </span>
-<span id="L22"><span class="lineNum">      22</span> <span class="tlaGNC">           2 :   HealthDiaryCache();</span></span>
+<span id="L22"><span class="lineNum">      22</span> <span class="tlaGNC">           3 :   HealthDiaryCache();</span></span>
 <span id="L23"><span class="lineNum">      23</span>              : </span>
 <span id="L24"><span class="lineNum">      24</span>              :   /// Maps a Supabase [json] row to a [HealthDiaryCache] instance</span>
-<span id="L25"><span class="lineNum">      25</span> <span class="tlaGNC">           1 :   factory HealthDiaryCache.fromJson(Map&lt;String, dynamic&gt; json) {</span></span>
-<span id="L26"><span class="lineNum">      26</span> <span class="tlaGNC">           1 :     return HealthDiaryCache()</span></span>
-<span id="L27"><span class="lineNum">      27</span> <span class="tlaGNC">           2 :       ..healthDiaryId = json['id_health_diary'] as String</span></span>
-<span id="L28"><span class="lineNum">      28</span> <span class="tlaGNC">           2 :       ..isSterilized = json['is_sterilized'] as bool?</span></span>
-<span id="L29"><span class="lineNum">      29</span> <span class="tlaGNC">           2 :       ..isChipped = json['is_chipped'] as bool?</span></span>
-<span id="L30"><span class="lineNum">      30</span> <span class="tlaGNC">           2 :       ..chipNumber = json['chip_number'] as String?</span></span>
-<span id="L31"><span class="lineNum">      31</span> <span class="tlaGNC">           2 :       ..lastDeworming = json['last_deworming_at'] != null</span></span>
+<span id="L25"><span class="lineNum">      25</span> <span class="tlaGNC">           2 :   factory HealthDiaryCache.fromJson(Map&lt;String, dynamic&gt; json) {</span></span>
+<span id="L26"><span class="lineNum">      26</span> <span class="tlaGNC">           2 :     return HealthDiaryCache()</span></span>
+<span id="L27"><span class="lineNum">      27</span> <span class="tlaGNC">           4 :       ..healthDiaryId = json['id_health_diary'] as String</span></span>
+<span id="L28"><span class="lineNum">      28</span> <span class="tlaGNC">           4 :       ..isSterilized = json['is_sterilized'] as bool?</span></span>
+<span id="L29"><span class="lineNum">      29</span> <span class="tlaGNC">           4 :       ..isChipped = json['is_chipped'] as bool?</span></span>
+<span id="L30"><span class="lineNum">      30</span> <span class="tlaGNC">           4 :       ..chipNumber = json['chip_number'] as String?</span></span>
+<span id="L31"><span class="lineNum">      31</span> <span class="tlaGNC">           4 :       ..lastDeworming = json['last_deworming_at'] != null</span></span>
 <span id="L32"><span class="lineNum">      32</span> <span class="tlaGNC">           2 :           ? DateTime.parse(json['last_deworming_at'] as String)</span></span>
 <span id="L33"><span class="lineNum">      33</span>              :           : null</span>
-<span id="L34"><span class="lineNum">      34</span> <span class="tlaGNC">           2 :       ..lastVetAppointment = json['last_vet_appointment'] != null</span></span>
+<span id="L34"><span class="lineNum">      34</span> <span class="tlaGNC">           4 :       ..lastVetAppointment = json['last_vet_appointment'] != null</span></span>
 <span id="L35"><span class="lineNum">      35</span> <span class="tlaGNC">           2 :           ? DateTime.parse(json['last_vet_appointment'] as String)</span></span>
 <span id="L36"><span class="lineNum">      36</span>              :           : null</span>
-<span id="L37"><span class="lineNum">      37</span> <span class="tlaGNC">           2 :       ..petId = json['pet_id'] as String;</span></span>
+<span id="L37"><span class="lineNum">      37</span> <span class="tlaGNC">           4 :       ..petId = json['pet_id'] as String;</span></span>
 <span id="L38"><span class="lineNum">      38</span>              :   }</span>
 <span id="L39"><span class="lineNum">      39</span>              : </span>
 <span id="L40"><span class="lineNum">      40</span>              :   /// Builds a [HealthDiaryCache] from a [HealthDiaryModel]</span>

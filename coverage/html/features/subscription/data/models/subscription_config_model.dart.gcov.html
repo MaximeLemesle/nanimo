@@ -32,12 +32,12 @@
             <td></td>
             <td class="headerItem">Lines:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
-            <td class="headerCovTableEntry">16</td>
-            <td class="headerCovTableEntry">16</td>
+            <td class="headerCovTableEntry">14</td>
+            <td class="headerCovTableEntry">14</td>
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-07-01 00:24:34</td>
+            <td class="headerValue">2026-07-23 23:06:35</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">-</td>
@@ -66,39 +66,33 @@
 <span id="L4"><span class="lineNum">       4</span>              :   final int maxImagesPerEvent;</span>
 <span id="L5"><span class="lineNum">       5</span>              :   final int maxPets;</span>
 <span id="L6"><span class="lineNum">       6</span>              :   final int maxStorageMb;</span>
-<span id="L7"><span class="lineNum">       7</span>              :   final bool canAccessPremiumIcons;</span>
-<span id="L8"><span class="lineNum">       8</span>              : </span>
-<span id="L9"><span class="lineNum">       9</span> <span class="tlaGNC">           3 :   const SubscriptionConfigModel({</span></span>
-<span id="L10"><span class="lineNum">      10</span>              :     required this.configId,</span>
-<span id="L11"><span class="lineNum">      11</span>              :     required this.planName,</span>
-<span id="L12"><span class="lineNum">      12</span>              :     required this.maxImagesPerEvent,</span>
-<span id="L13"><span class="lineNum">      13</span>              :     required this.maxPets,</span>
-<span id="L14"><span class="lineNum">      14</span>              :     required this.maxStorageMb,</span>
-<span id="L15"><span class="lineNum">      15</span>              :     required this.canAccessPremiumIcons,</span>
-<span id="L16"><span class="lineNum">      16</span>              :   });</span>
-<span id="L17"><span class="lineNum">      17</span>              : </span>
-<span id="L18"><span class="lineNum">      18</span>              :   /// Maps a Supabase row to a [SubscriptionConfigModel]</span>
-<span id="L19"><span class="lineNum">      19</span> <span class="tlaGNC">           1 :   factory SubscriptionConfigModel.fromJson(Map&lt;String, dynamic&gt; json) {</span></span>
-<span id="L20"><span class="lineNum">      20</span> <span class="tlaGNC">           1 :     return SubscriptionConfigModel(</span></span>
-<span id="L21"><span class="lineNum">      21</span> <span class="tlaGNC">           2 :       configId: json['id_subscription_config'].toString(),</span></span>
-<span id="L22"><span class="lineNum">      22</span> <span class="tlaGNC">           1 :       planName: json['plan_name'] as String,</span></span>
-<span id="L23"><span class="lineNum">      23</span> <span class="tlaGNC">           1 :       maxImagesPerEvent: json['max_images_per_event'] as int,</span></span>
-<span id="L24"><span class="lineNum">      24</span> <span class="tlaGNC">           1 :       maxPets: json['max_pets'] as int,</span></span>
-<span id="L25"><span class="lineNum">      25</span> <span class="tlaGNC">           1 :       maxStorageMb: json['max_storage_mb'] as int,</span></span>
-<span id="L26"><span class="lineNum">      26</span> <span class="tlaGNC">           1 :       canAccessPremiumIcons: json['can_access_premium_icons'] as bool,</span></span>
-<span id="L27"><span class="lineNum">      27</span>              :     );</span>
-<span id="L28"><span class="lineNum">      28</span>              :   }</span>
-<span id="L29"><span class="lineNum">      29</span>              : </span>
-<span id="L30"><span class="lineNum">      30</span>              :   /// Serializes this model for a Supabase write</span>
-<span id="L31"><span class="lineNum">      31</span> <span class="tlaGNC">           2 :   Map&lt;String, dynamic&gt; toJson() =&gt; {</span></span>
-<span id="L32"><span class="lineNum">      32</span> <span class="tlaGNC">           1 :         'id_subscription_config': configId,</span></span>
-<span id="L33"><span class="lineNum">      33</span> <span class="tlaGNC">           1 :         'plan_name': planName,</span></span>
-<span id="L34"><span class="lineNum">      34</span> <span class="tlaGNC">           1 :         'max_images_per_event': maxImagesPerEvent,</span></span>
-<span id="L35"><span class="lineNum">      35</span> <span class="tlaGNC">           1 :         'max_pets': maxPets,</span></span>
-<span id="L36"><span class="lineNum">      36</span> <span class="tlaGNC">           1 :         'max_storage_mb': maxStorageMb,</span></span>
-<span id="L37"><span class="lineNum">      37</span> <span class="tlaGNC">           1 :         'can_access_premium_icons': canAccessPremiumIcons,</span></span>
-<span id="L38"><span class="lineNum">      38</span>              :       };</span>
-<span id="L39"><span class="lineNum">      39</span>              : }</span>
+<span id="L7"><span class="lineNum">       7</span>              : </span>
+<span id="L8"><span class="lineNum">       8</span> <span class="tlaGNC">           5 :   const SubscriptionConfigModel({</span></span>
+<span id="L9"><span class="lineNum">       9</span>              :     required this.configId,</span>
+<span id="L10"><span class="lineNum">      10</span>              :     required this.planName,</span>
+<span id="L11"><span class="lineNum">      11</span>              :     required this.maxImagesPerEvent,</span>
+<span id="L12"><span class="lineNum">      12</span>              :     required this.maxPets,</span>
+<span id="L13"><span class="lineNum">      13</span>              :     required this.maxStorageMb,</span>
+<span id="L14"><span class="lineNum">      14</span>              :   });</span>
+<span id="L15"><span class="lineNum">      15</span>              : </span>
+<span id="L16"><span class="lineNum">      16</span> <span class="tlaGNC">           1 :   factory SubscriptionConfigModel.fromJson(Map&lt;String, dynamic&gt; json) {</span></span>
+<span id="L17"><span class="lineNum">      17</span> <span class="tlaGNC">           1 :     return SubscriptionConfigModel(</span></span>
+<span id="L18"><span class="lineNum">      18</span> <span class="tlaGNC">           2 :       configId: json['id_subscription_config'].toString(),</span></span>
+<span id="L19"><span class="lineNum">      19</span> <span class="tlaGNC">           1 :       planName: json['plan_name'] as String,</span></span>
+<span id="L20"><span class="lineNum">      20</span> <span class="tlaGNC">           1 :       maxImagesPerEvent: json['max_images_per_event'] as int,</span></span>
+<span id="L21"><span class="lineNum">      21</span> <span class="tlaGNC">           1 :       maxPets: json['max_pets'] as int,</span></span>
+<span id="L22"><span class="lineNum">      22</span> <span class="tlaGNC">           1 :       maxStorageMb: json['max_storage_in_mb'] as int,</span></span>
+<span id="L23"><span class="lineNum">      23</span>              :     );</span>
+<span id="L24"><span class="lineNum">      24</span>              :   }</span>
+<span id="L25"><span class="lineNum">      25</span>              : </span>
+<span id="L26"><span class="lineNum">      26</span> <span class="tlaGNC">           2 :   Map&lt;String, dynamic&gt; toJson() =&gt; {</span></span>
+<span id="L27"><span class="lineNum">      27</span> <span class="tlaGNC">           1 :         'id_subscription_config': configId,</span></span>
+<span id="L28"><span class="lineNum">      28</span> <span class="tlaGNC">           1 :         'plan_name': planName,</span></span>
+<span id="L29"><span class="lineNum">      29</span> <span class="tlaGNC">           1 :         'max_images_per_event': maxImagesPerEvent,</span></span>
+<span id="L30"><span class="lineNum">      30</span> <span class="tlaGNC">           1 :         'max_pets': maxPets,</span></span>
+<span id="L31"><span class="lineNum">      31</span> <span class="tlaGNC">           1 :         'max_storage_in_mb': maxStorageMb,</span></span>
+<span id="L32"><span class="lineNum">      32</span>              :       };</span>
+<span id="L33"><span class="lineNum">      33</span>              : }</span>
         </pre>
               </td>
             </tr>
