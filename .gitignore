@@ -49,6 +49,7 @@ app.*.map.json
 
 .env
 libisar.dylib
+libisar.so
 nanimo_schema.sql
 coverage/lcov.info
 coverage/html/index-sort-f.html

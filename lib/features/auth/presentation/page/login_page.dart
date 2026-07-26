@@ -33,8 +33,7 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  String? _emailValidator(String? validation) =>
-      validation == null || !validation.contains('@') ? 'Email invalide' : null;
+  String? _emailValidator(String? validation) => validation == null || !validation.contains('@') ? 'Email invalide' : null;
 
   String? _passwordValidator(String? validation) {
     if (validation == null || validation.length < 6) {
@@ -47,8 +46,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _updateFormValidity() {
-    final valid = _emailValidator(_emailController.text.trim()) == null &&
-        _passwordValidator(_passwordController.text.trim()) == null;
+    final valid = _emailValidator(_emailController.text.trim()) == null && _passwordValidator(_passwordController.text.trim()) == null;
     if (valid != _isFormValid) setState(() => _isFormValid = valid);
   }
 
@@ -91,8 +89,7 @@ class _LoginPageState extends State<LoginPage> {
                 Text('Connexion', style: textTheme.displayLarge),
                 Text(
                   'Heureux de te revoir.',
-                  style: textTheme.bodyLarge
-                      ?.copyWith(color: AppColors.textSecondary),
+                  style: textTheme.bodyLarge?.copyWith(color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 TextFieldWidget(
@@ -116,8 +113,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 BlocBuilder<AuthCubit, AuthState>(
-                  buildWhen: (previous, current) =>
-                      previous.errorMessage != current.errorMessage,
+                  buildWhen: (previous, current) => previous.errorMessage != current.errorMessage,
                   builder: (context, state) {
                     if (state.errorMessage == null) {
                       return const SizedBox.shrink();
@@ -129,16 +125,13 @@ class _LoginPageState extends State<LoginPage> {
                   },
                 ),
                 BlocBuilder<AuthCubit, AuthState>(
-                  buildWhen: (previous, current) =>
-                      previous.isSubmitting != current.isSubmitting,
+                  buildWhen: (previous, current) => previous.isSubmitting != current.isSubmitting,
                   builder: (context, state) {
                     return ButtonWidget(
                       label: 'Se connecter',
                       onPressed: _onLogin,
                       isLoading: state.isSubmitting,
-                      state: _isFormValid
-                          ? ButtonState.normal
-                          : ButtonState.disabled,
+                      state: _isFormValid ? ButtonState.normal : ButtonState.disabled,
                       fullWidth: true,
                     );
                   },
@@ -148,21 +141,15 @@ class _LoginPageState extends State<LoginPage> {
                 /// Separator
                 Row(
                   children: [
-                    const Expanded(
-                        child: Divider(color: AppColors.backgroundStroke)),
+                    const Expanded(child: Divider(color: AppColors.backgroundStroke)),
                     Padding(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                       child: Text(
                         'ou',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.copyWith(color: AppColors.textSecondary),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
                       ),
                     ),
-                    const Expanded(
-                        child: Divider(color: AppColors.backgroundStroke)),
+                    const Expanded(child: Divider(color: AppColors.backgroundStroke)),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.xl),

@@ -44,12 +44,14 @@ class IsarTestHarness {
         NotificationPrefsCacheSchema,
       ],
       directory: _tempDir.path,
+      maxSizeMiB: 16,
+      inspector: false,
     );
   }
 
   Future<void> tearDown() async {
     if (isar.isOpen) {
-      await isar.close();
+      await isar.close(deleteFromDisk: true);
     }
     if (_tempDir.existsSync()) {
       _tempDir.deleteSync(recursive: true);

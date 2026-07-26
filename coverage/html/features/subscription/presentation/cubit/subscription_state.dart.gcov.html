@@ -31,13 +31,13 @@
             <td class="headerValue">lcov.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
-            <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
-            <td class="headerCovTableEntry">17</td>
-            <td class="headerCovTableEntry">17</td>
+            <td class="headerCovTableEntryHi">92.9&nbsp;%</td>
+            <td class="headerCovTableEntry">14</td>
+            <td class="headerCovTableEntry">13</td>
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-07-01 00:24:34</td>
+            <td class="headerValue">2026-07-23 23:06:35</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">-</td>
@@ -69,7 +69,7 @@
 <span id="L7"><span class="lineNum">       7</span>              :   final SubscriptionConfigModel? config;</span>
 <span id="L8"><span class="lineNum">       8</span>              :   final String? errorMessage;</span>
 <span id="L9"><span class="lineNum">       9</span>              : </span>
-<span id="L10"><span class="lineNum">      10</span> <span class="tlaGNC">           2 :   const SubscriptionState._({</span></span>
+<span id="L10"><span class="lineNum">      10</span> <span class="tlaGNC">           5 :   const SubscriptionState._({</span></span>
 <span id="L11"><span class="lineNum">      11</span>              :     this.status = SubscriptionStatus.unknown,</span>
 <span id="L12"><span class="lineNum">      12</span>              :     this.config,</span>
 <span id="L13"><span class="lineNum">      13</span>              :     this.errorMessage,</span>
@@ -77,31 +77,29 @@
 <span id="L15"><span class="lineNum">      15</span>              : </span>
 <span id="L16"><span class="lineNum">      16</span> <span class="tlaGNC">           4 :   const SubscriptionState.unknown() : this._();</span></span>
 <span id="L17"><span class="lineNum">      17</span> <span class="tlaGNC">           4 :   const SubscriptionState.loading() : this._(status: SubscriptionStatus.loading);</span></span>
-<span id="L18"><span class="lineNum">      18</span> <span class="tlaGNC">           2 :   const SubscriptionState.loaded(SubscriptionConfigModel config)</span></span>
-<span id="L19"><span class="lineNum">      19</span> <span class="tlaGNC">           2 :       : this._(status: SubscriptionStatus.loaded, config: config);</span></span>
-<span id="L20"><span class="lineNum">      20</span> <span class="tlaGNC">           2 :   const SubscriptionState.error(String msg)</span></span>
-<span id="L21"><span class="lineNum">      21</span> <span class="tlaGNC">           2 :       : this._(status: SubscriptionStatus.error, errorMessage: msg);</span></span>
+<span id="L18"><span class="lineNum">      18</span> <span class="tlaGNC">           6 :   const SubscriptionState.loaded(SubscriptionConfigModel config) : this._(status: SubscriptionStatus.loaded, config: config);</span></span>
+<span id="L19"><span class="lineNum">      19</span> <span class="tlaGNC">           2 :   const SubscriptionState.error(String msg) : this._(status: SubscriptionStatus.error, errorMessage: msg);</span></span>
+<span id="L20"><span class="lineNum">      20</span>              : </span>
+<span id="L21"><span class="lineNum">      21</span> <span class="tlaGNC">           3 :   bool get isLoaded =&gt; status == SubscriptionStatus.loaded;</span></span>
 <span id="L22"><span class="lineNum">      22</span>              : </span>
-<span id="L23"><span class="lineNum">      23</span> <span class="tlaGNC">           3 :   bool get isLoaded =&gt; status == SubscriptionStatus.loaded;</span></span>
+<span id="L23"><span class="lineNum">      23</span> <span class="tlaUNC">           0 :   bool get isPremium =&gt; config?.planName == 'premium';</span></span>
 <span id="L24"><span class="lineNum">      24</span>              : </span>
 <span id="L25"><span class="lineNum">      25</span>              :   /// True if the user can create another pet given the current count</span>
-<span id="L26"><span class="lineNum">      26</span> <span class="tlaGNC">           1 :   bool canCreatePet(int currentCount) =&gt;</span></span>
-<span id="L27"><span class="lineNum">      27</span> <span class="tlaGNC">           4 :       config != null &amp;&amp; currentCount &lt; config!.maxPets;</span></span>
-<span id="L28"><span class="lineNum">      28</span>              : </span>
-<span id="L29"><span class="lineNum">      29</span>              :   /// True if the user can add another image to an event</span>
-<span id="L30"><span class="lineNum">      30</span> <span class="tlaGNC">           1 :   bool canAddImageToEvent(int currentImageCount) =&gt;</span></span>
-<span id="L31"><span class="lineNum">      31</span> <span class="tlaGNC">           4 :       config != null &amp;&amp; currentImageCount &lt; config!.maxImagesPerEvent;</span></span>
+<span id="L26"><span class="lineNum">      26</span> <span class="tlaGNC">           5 :   bool canCreatePet(int currentCount) =&gt; config != null &amp;&amp; currentCount &lt; config!.maxPets;</span></span>
+<span id="L27"><span class="lineNum">      27</span>              : </span>
+<span id="L28"><span class="lineNum">      28</span>              :   /// True if the user can add another image to an event</span>
+<span id="L29"><span class="lineNum">      29</span> <span class="tlaGNC">           5 :   bool canAddImageToEvent(int currentImageCount) =&gt; config != null &amp;&amp; currentImageCount &lt; config!.maxImagesPerEvent;</span></span>
+<span id="L30"><span class="lineNum">      30</span>              : </span>
+<span id="L31"><span class="lineNum">      31</span> <span class="tlaGNC">           9 :   int get maxImagesPerEvent =&gt; config?.maxImagesPerEvent ?? 3;</span></span>
 <span id="L32"><span class="lineNum">      32</span>              : </span>
-<span id="L33"><span class="lineNum">      33</span>              :   /// True if the user has access to premium icons</span>
-<span id="L34"><span class="lineNum">      34</span> <span class="tlaGNC">           3 :   bool get canAccessPremiumIcons =&gt; config?.canAccessPremiumIcons ?? false;</span></span>
-<span id="L35"><span class="lineNum">      35</span>              : </span>
-<span id="L36"><span class="lineNum">      36</span>              :   /// True if storage usage (in MB) is below the plan limit</span>
-<span id="L37"><span class="lineNum">      37</span> <span class="tlaGNC">           1 :   bool canUseStorage(int currentMb) =&gt;</span></span>
-<span id="L38"><span class="lineNum">      38</span> <span class="tlaGNC">           4 :       config != null &amp;&amp; currentMb &lt; config!.maxStorageMb;</span></span>
-<span id="L39"><span class="lineNum">      39</span>              : </span>
-<span id="L40"><span class="lineNum">      40</span> <span class="tlaGNC">           2 :   @override</span></span>
-<span id="L41"><span class="lineNum">      41</span> <span class="tlaGNC">           8 :   List&lt;Object?&gt; get props =&gt; [status, config, errorMessage];</span></span>
-<span id="L42"><span class="lineNum">      42</span>              : }</span>
+<span id="L33"><span class="lineNum">      33</span> <span class="tlaGNC">           6 :   int get maxPets =&gt; config?.maxPets ?? 1;</span></span>
+<span id="L34"><span class="lineNum">      34</span>              : </span>
+<span id="L35"><span class="lineNum">      35</span>              :   /// True if storage usage (in MB) is below the plan limit</span>
+<span id="L36"><span class="lineNum">      36</span> <span class="tlaGNC">           5 :   bool canUseStorage(int currentMb) =&gt; config != null &amp;&amp; currentMb &lt; config!.maxStorageMb;</span></span>
+<span id="L37"><span class="lineNum">      37</span>              : </span>
+<span id="L38"><span class="lineNum">      38</span> <span class="tlaGNC">           2 :   @override</span></span>
+<span id="L39"><span class="lineNum">      39</span> <span class="tlaGNC">           8 :   List&lt;Object?&gt; get props =&gt; [status, config, errorMessage];</span></span>
+<span id="L40"><span class="lineNum">      40</span>              : }</span>
         </pre>
               </td>
             </tr>

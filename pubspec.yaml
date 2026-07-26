@@ -69,6 +69,7 @@ dev_dependencies:
   isar_generator: ^3.1.0
   build_runner: ^2.4.0
   mocktail: ^1.0.4
+  flutter_launcher_icons: ^0.14.4
   image_picker_platform_interface: ^2.10.0
 
 dependency_overrides:
@@ -124,3 +125,15 @@ flutter:
       fonts:
         - asset: assets/fonts/Roboto-Medium.ttf
           weight: 500
+
+# Launcher icons, regenerated with:
+#   fvm dart run flutter_launcher_icons
+# Sources live in assets/logo/. The adaptive foreground keeps the mark inside
+# the safe zone Android may crop to any shape.
+flutter_launcher_icons:
+  image_path: "assets/logo/nanimo_icon.png"
+  ios: true
+  remove_alpha_ios: true
+  android: "ic_launcher"
+  adaptive_icon_background: "#FDFCFB"
+  adaptive_icon_foreground: "assets/logo/nanimo_icon_foreground.png"

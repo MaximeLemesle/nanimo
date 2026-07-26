@@ -35,12 +35,18 @@ void main() {
           WeightLogCacheSchema,
         ],
         directory: tempDir.path,
+        maxSizeMiB: 16,
+        inspector: false,
       );
     });
 
     tearDown(() async {
-      await isar.close();
-      tempDir.deleteSync(recursive: true);
+      if (isar.isOpen) {
+        await isar.close(deleteFromDisk: true);
+      }
+      if (tempDir.existsSync()) {
+        tempDir.deleteSync(recursive: true);
+      }
     });
 
     test('opens with all schemas without throwing', () {

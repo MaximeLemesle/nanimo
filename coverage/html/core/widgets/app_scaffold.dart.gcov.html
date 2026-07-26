@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-07-01 00:24:34</td>
+            <td class="headerValue">2026-07-23 23:06:35</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">-</td>
@@ -74,7 +74,7 @@
 <span id="L12"><span class="lineNum">      12</span>              :   final bool safeArea;</span>
 <span id="L13"><span class="lineNum">      13</span>              :   final bool resizeToAvoidBottomInset;</span>
 <span id="L14"><span class="lineNum">      14</span>              : </span>
-<span id="L15"><span class="lineNum">      15</span> <span class="tlaGNC">           2 :   const AppScaffold({</span></span>
+<span id="L15"><span class="lineNum">      15</span> <span class="tlaGNC">           4 :   const AppScaffold({</span></span>
 <span id="L16"><span class="lineNum">      16</span>              :     super.key,</span>
 <span id="L17"><span class="lineNum">      17</span>              :     required this.body,</span>
 <span id="L18"><span class="lineNum">      18</span>              :     this.appBar,</span>
@@ -87,23 +87,23 @@
 <span id="L25"><span class="lineNum">      25</span>              :     this.resizeToAvoidBottomInset = true,</span>
 <span id="L26"><span class="lineNum">      26</span>              :   });</span>
 <span id="L27"><span class="lineNum">      27</span>              : </span>
-<span id="L28"><span class="lineNum">      28</span> <span class="tlaGNC">           1 :   @override</span></span>
+<span id="L28"><span class="lineNum">      28</span> <span class="tlaGNC">           2 :   @override</span></span>
 <span id="L29"><span class="lineNum">      29</span>              :   Widget build(BuildContext context) {</span>
-<span id="L30"><span class="lineNum">      30</span> <span class="tlaGNC">           1 :     Widget content = body;</span></span>
-<span id="L31"><span class="lineNum">      31</span> <span class="tlaGNC">           1 :     if (padding != null) {</span></span>
+<span id="L30"><span class="lineNum">      30</span> <span class="tlaGNC">           2 :     Widget content = body;</span></span>
+<span id="L31"><span class="lineNum">      31</span> <span class="tlaGNC">           2 :     if (padding != null) {</span></span>
 <span id="L32"><span class="lineNum">      32</span> <span class="tlaUNC">           0 :       content = Padding(padding: padding!, child: content);</span></span>
 <span id="L33"><span class="lineNum">      33</span>              :     }</span>
-<span id="L34"><span class="lineNum">      34</span> <span class="tlaGNC">           1 :     if (safeArea) {</span></span>
-<span id="L35"><span class="lineNum">      35</span> <span class="tlaGNC">           1 :       content = SafeArea(child: content);</span></span>
+<span id="L34"><span class="lineNum">      34</span> <span class="tlaGNC">           2 :     if (safeArea) {</span></span>
+<span id="L35"><span class="lineNum">      35</span> <span class="tlaGNC">           2 :       content = SafeArea(bottom: false, child: content);</span></span>
 <span id="L36"><span class="lineNum">      36</span>              :     }</span>
 <span id="L37"><span class="lineNum">      37</span>              : </span>
-<span id="L38"><span class="lineNum">      38</span> <span class="tlaGNC">           1 :     return Scaffold(</span></span>
-<span id="L39"><span class="lineNum">      39</span> <span class="tlaGNC">           1 :       backgroundColor: backgroundColor,</span></span>
-<span id="L40"><span class="lineNum">      40</span> <span class="tlaGNC">           1 :       appBar: appBar,</span></span>
-<span id="L41"><span class="lineNum">      41</span> <span class="tlaGNC">           1 :       floatingActionButton: floatingActionButton,</span></span>
-<span id="L42"><span class="lineNum">      42</span> <span class="tlaGNC">           1 :       floatingActionButtonLocation: floatingActionButtonLocation,</span></span>
-<span id="L43"><span class="lineNum">      43</span> <span class="tlaGNC">           1 :       bottomNavigationBar: bottomNavigationBar,</span></span>
-<span id="L44"><span class="lineNum">      44</span> <span class="tlaGNC">           1 :       resizeToAvoidBottomInset: resizeToAvoidBottomInset,</span></span>
+<span id="L38"><span class="lineNum">      38</span> <span class="tlaGNC">           2 :     return Scaffold(</span></span>
+<span id="L39"><span class="lineNum">      39</span> <span class="tlaGNC">           2 :       backgroundColor: backgroundColor,</span></span>
+<span id="L40"><span class="lineNum">      40</span> <span class="tlaGNC">           2 :       appBar: appBar,</span></span>
+<span id="L41"><span class="lineNum">      41</span> <span class="tlaGNC">           2 :       floatingActionButton: floatingActionButton,</span></span>
+<span id="L42"><span class="lineNum">      42</span> <span class="tlaGNC">           2 :       floatingActionButtonLocation: floatingActionButtonLocation,</span></span>
+<span id="L43"><span class="lineNum">      43</span> <span class="tlaGNC">           2 :       bottomNavigationBar: bottomNavigationBar,</span></span>
+<span id="L44"><span class="lineNum">      44</span> <span class="tlaGNC">           2 :       resizeToAvoidBottomInset: resizeToAvoidBottomInset,</span></span>
 <span id="L45"><span class="lineNum">      45</span>              :       body: content,</span>
 <span id="L46"><span class="lineNum">      46</span>              :     );</span>
 <span id="L47"><span class="lineNum">      47</span>              :   }</span>
