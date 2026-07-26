@@ -35,7 +35,20 @@ jobs:
       - name: Setup Flutter
         uses: ./.github/actions/setup-flutter
 
+      # Each Isar test file runs in its own flutter_tester process. On Linux
+      # dlopen("libisar.so") finds nothing, so every process falls back to
+      # Isar.initializeIsarCore(download: true) and pulls ~5 MB from GitHub.
+      - name: Pre-download Isar Core
+        run: |
+          curl -fsSL --retry 3 --retry-all-errors \
+            -o libisar.so \
+            'https://github.com/isar/isar/releases/download/3.1.0+1/libisar_linux_x64.so'
+          file libisar.so | grep -q 'ELF 64-bit LSB shared object'
+          ls -la libisar.so
+
       - name: Test with coverage
+        env:
+          LD_LIBRARY_PATH: ${{ github.workspace }}
         run: flutter test --coverage
 
       - name: Upload coverage report
