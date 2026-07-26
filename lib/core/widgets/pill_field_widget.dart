@@ -32,7 +32,13 @@ class PillFieldWidget extends StatelessWidget {
         color: showBorder ? AppColors.backgroundSurface : Colors.transparent,
         shape: shape,
       ),
-      child: Center(child: child),
+
+      /// A pill is one line by contract. [FittedBox] hands the child unbounded
+      /// width so it never wraps, then shrinks it if it still does not fit —
+      /// the date stays whole where an ellipsis would have eaten the year.
+      child: Center(
+        child: FittedBox(fit: BoxFit.scaleDown, child: child),
+      ),
     );
 
     if (showBorder) {
