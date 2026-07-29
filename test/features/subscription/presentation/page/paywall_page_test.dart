@@ -37,7 +37,8 @@ void main() {
     authRepository = _MockAuthRepository();
   });
 
-  Future<void> pumpPaywall(WidgetTester tester) async {
+  Future<void> pumpPaywall(WidgetTester tester,
+      {Future<bool> Function(Uri)? onOpenLegalLink}) async {
     // The paywall is a long scrolling page. A default 800x600 surface leaves the
     // plans, the buttons and the legal notice unbuilt, so the finders would miss
     // widgets that a real user simply scrolls to.
@@ -54,7 +55,7 @@ void main() {
             confirmationTimeout: const Duration(milliseconds: 30),
             pollInterval: const Duration(milliseconds: 10),
           )..loadOffers(),
-          child: const PaywallPage(),
+          child: PaywallPage(onOpenLegalLink: onOpenLegalLink),
         ),
       ),
     );
@@ -99,6 +100,53 @@ void main() {
 
     expect(find.textContaining('renouvellement automatique'), findsOneWidget);
     expect(find.textContaining('résilier à tout moment'), findsOneWidget);
+  });
+
+  /// Apple rejects a subscription screen without both links. This test is the
+  /// guard against someone quietly dropping them from the layout.
+  testWidgets('always shows the terms and privacy links', (tester) async {
+    when(() => purchaseRepository.getOffers())
+        .thenAnswer((_) async => [_annual]);
+
+    await pumpPaywall(tester);
+
+    expect(find.text('Conditions d’utilisation'), findsOneWidget);
+    expect(find.text('Politique de confidentialité'), findsOneWidget);
+  });
+
+  testWidgets('the legal links point at the published pages', (tester) async {
+    when(() => purchaseRepository.getOffers())
+        .thenAnswer((_) async => [_annual]);
+
+    final opened = <Uri>[];
+    await pumpPaywall(tester, onOpenLegalLink: (uri) async {
+      opened.add(uri);
+      return true;
+    });
+
+    await tester.tap(find.text('Conditions d’utilisation'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Politique de confidentialité'));
+    await tester.pumpAndSettle();
+
+    expect(opened, hasLength(2));
+    // Must be the publicly reachable notion.site pages: the private
+    // app.notion.com URLs would open a login wall for a reviewer.
+    expect(opened.every((uri) => uri.host.endsWith('notion.site')), isTrue);
+    expect(opened.first.toString(), contains('Conditions'));
+    expect(opened.last.toString(), contains('Politique'));
+  });
+
+  testWidgets('warns when a legal page cannot be opened', (tester) async {
+    when(() => purchaseRepository.getOffers())
+        .thenAnswer((_) async => [_annual]);
+
+    await pumpPaywall(tester, onOpenLegalLink: (_) async => false);
+
+    await tester.tap(find.text('Conditions d’utilisation'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Impossible d’ouvrir'), findsOneWidget);
   });
 
   testWidgets('the call to action announces the trial when there is one',

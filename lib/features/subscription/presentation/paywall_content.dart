@@ -40,6 +40,17 @@ const List<PaywallBenefit> paywallBenefits = [
   ),
 ];
 
+/// Legal pages, published from Notion.
+///
+/// Apple rejects a subscription screen that does not link to both. They are
+/// constants rather than a remote config on purpose: a paywall that cannot
+/// reach the network must still show them.
+const String termsUrl =
+    'https://plain-ant-39c.notion.site/Conditions-g-n-rales-d-utilisation-de-Nanimo-3ac8fef1b0fc81ce9b5ae88a4a31e7a6';
+
+const String privacyUrl =
+    'https://plain-ant-39c.notion.site/Politique-de-confidentialit-de-Nanimo-3ac8fef1b0fc81ffbc59ca2c47c58743';
+
 /// Wording required by the stores on any auto-renewing subscription screen.
 const String paywallLegalNotice =
     'Abonnement à renouvellement automatique. Le paiement est débité sur votre '

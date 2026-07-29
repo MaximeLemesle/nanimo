@@ -9,10 +9,15 @@ import 'package:nanimo/features/subscription/data/models/paywall_offer_model.dar
 import 'package:nanimo/features/subscription/presentation/cubit/paywall_cubit.dart';
 import 'package:nanimo/features/subscription/presentation/paywall_content.dart';
 import 'package:nanimo/features/subscription/presentation/widgets/paywall_benefit_widget.dart';
+import 'package:nanimo/features/subscription/presentation/widgets/paywall_legal_links_widget.dart';
 import 'package:nanimo/features/subscription/presentation/widgets/paywall_offer_card_widget.dart';
 
 class PaywallPage extends StatelessWidget {
-  const PaywallPage({super.key});
+  /// Test seam for the legal links, so a widget test can assert what would be
+  /// opened without launching an external browser.
+  final Future<bool> Function(Uri url)? onOpenLegalLink;
+
+  const PaywallPage({super.key, this.onOpenLegalLink});
 
   @override
   Widget build(BuildContext context) {
@@ -113,6 +118,8 @@ class PaywallPage extends StatelessWidget {
           paywallLegalNotice,
           style: AppTextStyles.textSmall.copyWith(color: AppColors.textSecondary),
         ),
+        const SizedBox(height: AppSpacing.sm),
+        PaywallLegalLinksWidget(onOpen: onOpenLegalLink),
       ],
     );
   }
