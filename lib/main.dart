@@ -1,3 +1,6 @@
+import 'dart:developer' as developer;
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -16,6 +19,8 @@ import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.d
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
 import 'package:nanimo/features/settings/data/settings_repository.dart';
+import 'package:nanimo/features/subscription/data/purchase_client.dart';
+import 'package:nanimo/features/subscription/data/purchase_repository.dart';
 import 'package:nanimo/features/subscription/data/subscription_repository.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -59,10 +64,27 @@ void main() async {
   final eventRepository = EventRepository(supabase, isar);
   final settingsRepository = SettingsRepository(supabase, isar);
 
+  final purchaseRepository = PurchaseRepository(RevenueCatPurchaseClient());
+  await _configurePurchases(purchaseRepository);
+
   final authCubit = AuthCubit(
     repository: authRepository,
     syncService: SyncService(supabase, isar),
   );
+
+  /// Keeps the RevenueCat account aligned with the Supabase user, so the
+  /// webhook can map `app_user_id` back to a row in `users`.
+  authCubit.stream.listen((auth) {
+    final userId = authRepository.currentUserId;
+    if (auth.isAuthenticated && userId != null) {
+      purchaseRepository.identify(userId);
+    } else if (auth.isUnauthenticated) {
+      purchaseRepository.forget();
+    }
+  });
+  if (authCubit.state.isAuthenticated && authRepository.currentUserId != null) {
+    await purchaseRepository.identify(authRepository.currentUserId!);
+  }
 
   final subscriptionCubit = SubscriptionCubit(
     authCubit: authCubit,
@@ -90,7 +112,34 @@ void main() async {
     petRepository: petRepository,
     healthRepository: healthRepository,
     settingsRepository: settingsRepository,
+    purchaseRepository: purchaseRepository,
   ));
+}
+
+/// Boots RevenueCat when a key is available for the current platform.
+///
+/// Unlike Supabase, a missing key is not fatal: every free feature keeps
+/// working and only the paywall is unavailable. Throwing here would brick the
+/// whole app over a subscription config, which is the wrong trade.
+Future<void> _configurePurchases(PurchaseRepository repository) async {
+  final key = Platform.isIOS
+      ? dotenv.env['REVENUECAT_IOS_API_KEY']
+      : dotenv.env['REVENUECAT_ANDROID_API_KEY'];
+
+  if (key == null || key.isEmpty) {
+    developer.log(
+      'RevenueCat key missing for this platform, purchases are disabled',
+      name: 'purchase',
+    );
+    return;
+  }
+
+  try {
+    await repository.configure(key);
+  } catch (e, st) {
+    developer.log('RevenueCat setup failed, purchases are disabled',
+        name: 'purchase', error: e, stackTrace: st);
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -104,6 +153,7 @@ class MyApp extends StatelessWidget {
   final PetRepository petRepository;
   final HealthRepository healthRepository;
   final SettingsRepository settingsRepository;
+  final PurchaseRepository purchaseRepository;
   const MyApp({
     super.key,
     required this.authCubit,
@@ -116,6 +166,7 @@ class MyApp extends StatelessWidget {
     required this.petRepository,
     required this.healthRepository,
     required this.settingsRepository,
+    required this.purchaseRepository,
   });
 
   @override
@@ -148,6 +199,7 @@ class MyApp extends StatelessWidget {
           petRepository: petRepository,
           healthRepository: healthRepository,
           settingsRepository: settingsRepository,
+          purchaseRepository: purchaseRepository,
         ),
       ),
     );

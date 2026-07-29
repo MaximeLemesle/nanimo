@@ -1,0 +1,205 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+
+import 'package:nanimo/core/errors/repository_exception.dart';
+import 'package:nanimo/features/auth/data/auth_repository.dart';
+import 'package:nanimo/features/auth/data/models/user_model.dart';
+import 'package:nanimo/features/subscription/data/models/paywall_offer_model.dart';
+import 'package:nanimo/features/subscription/data/purchase_repository.dart';
+import 'package:nanimo/features/subscription/presentation/cubit/paywall_cubit.dart';
+import 'package:nanimo/features/subscription/presentation/page/paywall_page.dart';
+
+class _MockPurchaseRepository extends Mock implements PurchaseRepository {}
+
+class _MockAuthRepository extends Mock implements AuthRepository {}
+
+const _monthly = PaywallOfferModel(
+  packageId: '\$rc_monthly',
+  period: PaywallPeriod.monthly,
+  priceLabel: '4,99 €',
+  trialDays: 7,
+);
+
+const _annual = PaywallOfferModel(
+  packageId: '\$rc_annual',
+  period: PaywallPeriod.annual,
+  priceLabel: '39,99 €',
+);
+
+void main() {
+  late _MockPurchaseRepository purchaseRepository;
+  late _MockAuthRepository authRepository;
+
+  setUp(() {
+    purchaseRepository = _MockPurchaseRepository();
+    authRepository = _MockAuthRepository();
+  });
+
+  Future<void> pumpPaywall(WidgetTester tester) async {
+    // The paywall is a long scrolling page. A default 800x600 surface leaves the
+    // plans, the buttons and the legal notice unbuilt, so the finders would miss
+    // widgets that a real user simply scrolls to.
+    tester.view.physicalSize = const Size(1000, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BlocProvider(
+          create: (_) => PaywallCubit(
+            purchaseRepository: purchaseRepository,
+            authRepository: authRepository,
+            confirmationTimeout: const Duration(milliseconds: 30),
+            pollInterval: const Duration(milliseconds: 10),
+          )..loadOffers(),
+          child: const PaywallPage(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('lists the benefits and both plans with their store prices',
+      (tester) async {
+    when(() => purchaseRepository.getOffers())
+        .thenAnswer((_) async => [_monthly, _annual]);
+
+    await pumpPaywall(tester);
+
+    expect(find.text('Nanimo Premium'), findsOneWidget);
+    expect(find.text('Jusqu’à 10 animaux'), findsOneWidget);
+    expect(find.text('5 photos par souvenir'), findsOneWidget);
+    expect(find.text('Mensuel'), findsOneWidget);
+    expect(find.text('Annuel'), findsOneWidget);
+    expect(find.textContaining('4,99 €'), findsOneWidget);
+    expect(find.textContaining('39,99 €'), findsOneWidget);
+  });
+
+  /// Nothing unshipped may appear on the paywall. Premium icons and PDF export
+  /// exist in the backlog, not in the app.
+  testWidgets('never advertises a feature that is not shipped', (tester) async {
+    when(() => purchaseRepository.getOffers())
+        .thenAnswer((_) async => [_monthly, _annual]);
+
+    await pumpPaywall(tester);
+
+    expect(find.textContaining('PDF'), findsNothing);
+    expect(find.textContaining('icône'), findsNothing);
+    expect(find.textContaining('icone'), findsNothing);
+  });
+
+  testWidgets('shows the auto-renewal notice required by the stores',
+      (tester) async {
+    when(() => purchaseRepository.getOffers())
+        .thenAnswer((_) async => [_annual]);
+
+    await pumpPaywall(tester);
+
+    expect(find.textContaining('renouvellement automatique'), findsOneWidget);
+    expect(find.textContaining('résilier à tout moment'), findsOneWidget);
+  });
+
+  testWidgets('the call to action announces the trial when there is one',
+      (tester) async {
+    when(() => purchaseRepository.getOffers())
+        .thenAnswer((_) async => [_monthly]);
+
+    await pumpPaywall(tester);
+
+    expect(find.text('Essayer 7 jours gratuitement'), findsOneWidget);
+  });
+
+  testWidgets('the call to action stays plain without a trial', (tester) async {
+    when(() => purchaseRepository.getOffers())
+        .thenAnswer((_) async => [_annual]);
+
+    await pumpPaywall(tester);
+
+    expect(find.text('Passer premium'), findsOneWidget);
+  });
+
+  testWidgets('tapping a plan selects it and buys that one', (tester) async {
+    when(() => purchaseRepository.getOffers())
+        .thenAnswer((_) async => [_monthly, _annual]);
+    when(() => purchaseRepository.purchase(any())).thenAnswer((_) async => true);
+    when(() => authRepository.refreshCurrentUser()).thenAnswer(
+      (_) async => const UserModel(
+        userId: 'u1',
+        userName: 'Maxime',
+        mail: 'maxime@example.com',
+        subscriptionStatus: SubscriptionStatus.premium,
+      ),
+    );
+
+    await pumpPaywall(tester);
+
+    // Annual is preselected, so tapping monthly must change the purchase target.
+    await tester.tap(find.text('Mensuel'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Essayer 7 jours gratuitement'));
+    await tester.pumpAndSettle();
+
+    verify(() => purchaseRepository.purchase('\$rc_monthly')).called(1);
+  });
+
+  testWidgets('offers a retry when the offers cannot be loaded',
+      (tester) async {
+    when(() => purchaseRepository.getOffers())
+        .thenThrow(const RepositoryNetworkException('Pas de connexion.'));
+
+    await pumpPaywall(tester);
+
+    expect(find.text('Réessayer'), findsOneWidget);
+    expect(find.textContaining('connexion'), findsOneWidget);
+
+    when(() => purchaseRepository.getOffers())
+        .thenAnswer((_) async => [_annual]);
+    await tester.tap(find.text('Réessayer'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Annuel'), findsOneWidget);
+  });
+
+  testWidgets('surfaces a failed purchase without unlocking premium',
+      (tester) async {
+    when(() => purchaseRepository.getOffers())
+        .thenAnswer((_) async => [_annual]);
+    when(() => purchaseRepository.purchase(any()))
+        .thenThrow(const RepositoryServerException('Le store est indisponible.'));
+
+    await pumpPaywall(tester);
+    await tester.tap(find.text('Passer premium'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Le store est indisponible.'), findsOneWidget);
+    verifyNever(() => authRepository.refreshCurrentUser());
+  });
+
+  testWidgets('a cancelled purchase shows nothing at all', (tester) async {
+    when(() => purchaseRepository.getOffers())
+        .thenAnswer((_) async => [_annual]);
+    when(() => purchaseRepository.purchase(any()))
+        .thenThrow(const PurchaseCancelledException());
+
+    await pumpPaywall(tester);
+    await tester.tap(find.text('Passer premium'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SnackBar), findsNothing);
+    expect(find.text('Passer premium'), findsOneWidget);
+  });
+
+  testWidgets('restoring with nothing to restore explains why', (tester) async {
+    when(() => purchaseRepository.getOffers())
+        .thenAnswer((_) async => [_annual]);
+    when(() => purchaseRepository.restore()).thenAnswer((_) async => false);
+
+    await pumpPaywall(tester);
+    await tester.tap(find.text('Restaurer mes achats'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Aucun abonnement à restaurer'), findsOneWidget);
+  });
+}

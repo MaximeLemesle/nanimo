@@ -223,6 +223,24 @@ class AuthRepository {
         .map((rows) => rows.isEmpty ? null : rows.first.toModel());
   }
 
+  /// Forces a Supabase read of the signed-in user and write-throughs the cache.
+  ///
+  /// Needed after a purchase: the premium flip is written server-side by the
+  /// RevenueCat webhook, so the cache is stale by definition and the cache-first
+  /// [getCurrentUser] would keep returning the old status. Writing through Isar
+  /// is what wakes [watchCurrentUser], and therefore the SubscriptionCubit.
+  Future<UserModel?> refreshCurrentUser() async {
+    final id = currentUserId;
+    if (id == null) return null;
+
+    final data = await _supabase.from('users').select().eq('id_user', id).single();
+    final cache = UserCache.fromJson(data);
+    await _isar.writeTxn(() async {
+      await _isar.userCaches.putByUserId(cache);
+    });
+    return cache.toModel();
+  }
+
   /// One-shot read of the signed-in user. Falls back to a Supabase fetch
   Future<UserModel?> getCurrentUser() async {
     final id = currentUserId;
