@@ -55,6 +55,7 @@ dependencies:
   image_picker: ^1.1.2
   lottie: ^3.1.2
   package_info_plus: ^10.2.0
+  sentry_flutter: ^8.14.2
 
 dev_dependencies:
   flutter_test:
