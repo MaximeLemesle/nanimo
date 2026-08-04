@@ -39,9 +39,7 @@ void main() {
 
   Future<void> pumpPaywall(WidgetTester tester,
       {Future<bool> Function(Uri)? onOpenLegalLink}) async {
-    // The paywall is a long scrolling page. A default 800x600 surface leaves the
-    // plans, the buttons and the legal notice unbuilt, so the finders would miss
-    // widgets that a real user simply scrolls to.
+    // A default 800x600 surface leaves the plans and buttons unbuilt.
     tester.view.physicalSize = const Size(1000, 2400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -78,8 +76,7 @@ void main() {
     expect(find.textContaining('39,99 €'), findsOneWidget);
   });
 
-  /// Nothing unshipped may appear on the paywall. Premium icons and PDF export
-  /// exist in the backlog, not in the app.
+  /// Premium icons and PDF export are in the backlog, not in the app.
   testWidgets('never advertises a feature that is not shipped', (tester) async {
     when(() => purchaseRepository.getOffers())
         .thenAnswer((_) async => [_monthly, _annual]);
@@ -102,8 +99,7 @@ void main() {
     expect(find.textContaining('résilier à tout moment'), findsOneWidget);
   });
 
-  /// Apple rejects a subscription screen without both links. This test is the
-  /// guard against someone quietly dropping them from the layout.
+  /// Apple rejects a subscription screen without both links.
   testWidgets('always shows the terms and privacy links', (tester) async {
     when(() => purchaseRepository.getOffers())
         .thenAnswer((_) async => [_annual]);

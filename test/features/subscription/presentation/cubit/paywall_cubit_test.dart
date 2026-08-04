@@ -151,9 +151,7 @@ void main() {
       expect(cubit.state.isUnlocked, isFalse);
     });
 
-    /// Regression guard for the case that costs real money: the store charged
-    /// the user but the webhook never flipped the status. The purchase must
-    /// still be honoured on screen rather than looping forever.
+    /// The store charged the user but the webhook never landed.
     test('unlocks after the timeout even if the server never confirms',
         () async {
       when(() => purchaseRepository.getOffers())

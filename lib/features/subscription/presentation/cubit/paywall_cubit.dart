@@ -15,9 +15,7 @@ class PaywallCubit extends Cubit<PaywallState> {
   final PurchaseRepository _purchaseRepository;
   final AuthRepository _authRepository;
 
-  /// How long to wait for the webhook to flip the status server-side before
-  /// unlocking the UI anyway. The store already confirmed the purchase at that
-  /// point, so making the user wait longer would punish them for our latency.
+  /// After this, unlock anyway: the store already confirmed the purchase.
   final Duration _confirmationTimeout;
   final Duration _pollInterval;
 
@@ -104,11 +102,8 @@ class PaywallCubit extends Cubit<PaywallState> {
     }
   }
 
-  /// Polls the server until it reports premium, or until the timeout expires.
-  ///
-  /// The webhook usually lands in under a second, but it is out of our control.
-  /// Each refresh write-throughs the Isar cache, so a success here is what makes
-  /// the rest of the app switch to premium quotas.
+  /// Each refresh write-throughs the Isar cache, which is what switches the
+  /// rest of the app to premium quotas.
   Future<void> _awaitServerConfirmation() async {
     final deadline = DateTime.now().add(_confirmationTimeout);
 
@@ -127,8 +122,7 @@ class PaywallCubit extends Cubit<PaywallState> {
         name: 'paywall');
   }
 
-  /// Annual is the better deal and the one worth defaulting to, but only if it
-  /// is actually offered.
+  /// Annual is the better deal, when offered.
   String? _defaultSelection(List<PaywallOfferModel> offers) {
     if (offers.isEmpty) return null;
     for (final offer in offers) {

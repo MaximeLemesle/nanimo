@@ -131,8 +131,7 @@ void main() {
       expect(offers.single.trialDays, 14);
     });
 
-    /// A discounted first period is not a trial. Announcing "7 jours offerts"
-    /// on a paid intro price would be a false claim on the paywall.
+    /// A discounted first period is not a trial.
     test('a paid introductory price is not treated as a trial', () async {
       final discounted = _package(
         id: 'discounted',
@@ -182,9 +181,7 @@ void main() {
       verify(() => client.purchasePackage(annual)).called(1);
     });
 
-    /// The store can report a completed flow without granting anything, e.g. a
-    /// deferred family-sharing approval. Treating that as premium would hand
-    /// out paid quotas for free.
+    /// A completed flow can grant nothing, e.g. deferred family-sharing.
     test('returns false when no entitlement was granted', () async {
       when(() => client.getOfferings())
           .thenAnswer((_) async => _offerings([monthly]));
@@ -252,8 +249,7 @@ void main() {
   });
 
   group('identify', () {
-    /// RevenueCat being unreachable must never block sign-in: every free
-    /// feature has to keep working.
+    /// RevenueCat being unreachable must never block sign-in.
     test('swallows a login failure', () async {
       when(() => client.logIn(any())).thenThrow(Exception('offline'));
 

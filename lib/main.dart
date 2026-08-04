@@ -1,12 +1,15 @@
 import 'dart:developer' as developer;
 import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:nanimo/config/router/app_router.dart';
 import 'package:nanimo/config/theme/app_theme.dart';
+import 'package:nanimo/core/monitoring/monitoring_factory.dart';
 import 'package:nanimo/core/isar/database/isar_service.dart';
 import 'package:nanimo/core/isar/database/sync_service.dart';
 import 'package:nanimo/core/widgets/keyboard_dismiss_wrapper.dart';
@@ -44,6 +47,13 @@ void main() async {
       'Please add GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID and APPLE_SERVICE_ID to your .env file',
     );
   }
+
+  final packageInfo = await PackageInfo.fromPlatform();
+  final monitoring = createMonitoringService(
+    dsn: dotenv.env['SENTRY_DSN'],
+    appVersion: '${packageInfo.version}+${packageInfo.buildNumber}',
+    isReleaseBuild: kReleaseMode,
+  );
 
   await Supabase.initialize(url: url, anonKey: anonKey);
   await IsarService.initialize();
@@ -101,7 +111,18 @@ void main() async {
     petRepository: petRepository,
   );
 
-  runApp(MyApp(
+  /// Ties reports to an account so a support request can be matched to a crash.
+  /// The id only, never the e-mail.
+  authCubit.stream.listen((auth) {
+    final userId = authRepository.currentUserId;
+    if (auth.isAuthenticated && userId != null) {
+      monitoring.identifyUser(userId);
+    } else if (auth.isUnauthenticated) {
+      monitoring.forgetUser();
+    }
+  });
+
+  await monitoring.start(() => runApp(MyApp(
     authCubit: authCubit,
     authRepository: authRepository,
     subscriptionCubit: subscriptionCubit,
@@ -113,7 +134,7 @@ void main() async {
     healthRepository: healthRepository,
     settingsRepository: settingsRepository,
     purchaseRepository: purchaseRepository,
-  ));
+  )));
 }
 
 /// Boots RevenueCat when a key is available for the current platform.

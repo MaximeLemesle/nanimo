@@ -1,15 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Selling points shown on the paywall.
-///
-/// The numbers mirror the `subscription_config` rows (migration 0007). They are
-/// duplicated here on purpose: a paywall that waits for a network read to show
-/// its own promise is a paywall nobody converts on. **If the quotas change in
-/// the database, change them here in the same commit.**
-///
-/// Nothing that is not shipped may be listed. Premium icons and PDF export were
-/// deliberately left out: selling a feature that does not exist yet is a refund
-/// request, not an argument.
+/// Mirrors the `subscription_config` rows (migration 0007). If the quotas change
+/// in the database, change them here in the same commit.
+/// Never list a feature that is not shipped.
 class PaywallBenefit {
   final IconData icon;
   final String title;
@@ -40,11 +33,8 @@ const List<PaywallBenefit> paywallBenefits = [
   ),
 ];
 
-/// Legal pages, published from Notion.
-///
-/// Apple rejects a subscription screen that does not link to both. They are
-/// constants rather than a remote config on purpose: a paywall that cannot
-/// reach the network must still show them.
+/// Apple rejects a subscription screen without both links. Constants, so a
+/// paywall that cannot reach the network still shows them.
 const String termsUrl =
     'https://plain-ant-39c.notion.site/Conditions-g-n-rales-d-utilisation-de-Nanimo-3ac8fef1b0fc81ce9b5ae88a4a31e7a6';
 

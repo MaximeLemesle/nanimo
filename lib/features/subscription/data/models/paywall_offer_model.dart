@@ -2,11 +2,8 @@ import 'package:equatable/equatable.dart';
 
 enum PaywallPeriod { monthly, annual, other }
 
-/// A single purchasable plan, already formatted for display.
-///
-/// Prices come from the store, never from the app: the amount and the currency
-/// depend on the user's storefront, so hardcoding "4,99 €" would be wrong for
-/// anyone outside that region.
+/// Prices come from the store: hardcoding "4,99 €" would be wrong outside the
+/// euro zone.
 class PaywallOfferModel extends Equatable {
   /// RevenueCat package identifier, used to start the purchase.
   final String packageId;

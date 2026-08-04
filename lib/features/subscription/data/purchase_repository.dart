@@ -7,19 +7,13 @@ import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/features/subscription/data/models/paywall_offer_model.dart';
 import 'package:nanimo/features/subscription/data/purchase_client.dart';
 
-/// Raised when the user closes the store sheet. Not a failure: the UI stays on
-/// the paywall and shows nothing.
+/// User closed the store sheet. Not a failure.
 class PurchaseCancelledException implements Exception {
   const PurchaseCancelledException();
 }
 
-/// Wraps RevenueCat and exposes only what the paywall needs.
-///
-/// The premium status this repository returns is the *store's* view, used to
-/// drive the UI immediately after a purchase. The authoritative flip of
-/// `users.subscription_status` happens server-side, in the `revenuecat-webhook`
-/// Edge Function. A client that lies to this repository gets a premium screen
-/// and nothing else: quotas are read from the row the server owns.
+/// Returns the store's view of premium, used to drive the UI right after a
+/// purchase. The authoritative flip is server-side, in `revenuecat-webhook`.
 class PurchaseRepository {
   static const String premiumEntitlement = 'premium';
 
@@ -39,8 +33,7 @@ class PurchaseRepository {
     }
   }
 
-  /// Call on login. Failing here must not block the app: a user who cannot
-  /// reach RevenueCat can still use every free feature.
+  /// Failing here must not block login: free features must keep working.
   Future<void> identify(String userId) async {
     try {
       await _client.logIn(userId);
@@ -83,8 +76,7 @@ class PurchaseRepository {
     return offers;
   }
 
-  /// Runs the native store flow. Returns true when premium is active on the
-  /// store side. Throws [PurchaseCancelledException] if the user backs out.
+  /// Throws [PurchaseCancelledException] if the user backs out.
   Future<bool> purchase(String packageId) async {
     final package = await _findPackage(packageId);
 
@@ -102,8 +94,7 @@ class PurchaseRepository {
     }
   }
 
-  /// Restores an existing subscription on a new device. Returns false when the
-  /// store has nothing to restore, which is a normal outcome, not an error.
+  /// False when there is nothing to restore, which is a normal outcome.
   Future<bool> restore() async {
     try {
       final info = await _client.restorePurchases();
@@ -164,8 +155,7 @@ class PurchaseRepository {
     }
   }
 
-  /// The store reports the trial as a duration plus a unit. Weeks and months are
-  /// normalised to days so the UI has a single number to show.
+  /// Normalised to days so the UI has a single number to show.
   int _trialDaysOf(StoreProduct product) {
     final intro = product.introductoryPrice;
     if (intro == null || intro.price != 0) return 0;

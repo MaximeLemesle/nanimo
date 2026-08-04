@@ -1,21 +1,6 @@
-// ---------------------------------------------------------------------------
-// RevenueCat webhook
-//
-// The only writer of `users.subscription_status`. The app never sets premium
-// itself: a client can be tampered with, this function cannot. RevenueCat has
-// already validated the receipt with Apple or Google before calling here.
-//
-// Deploy:
-//   supabase functions deploy revenuecat-webhook --no-verify-jwt
-//
-// Secrets (supabase secrets set):
-//   REVENUECAT_WEBHOOK_TOKEN  shared secret, sent by RevenueCat in Authorization
-//   SUPABASE_URL              injected by the platform
-//   SUPABASE_SERVICE_ROLE_KEY injected by the platform
-//
-// `--no-verify-jwt` is required: RevenueCat has no Supabase JWT. The shared
-// token below replaces it, so the check must never be skipped.
-// ---------------------------------------------------------------------------
+// The only writer of `users.subscription_status`. Deploy with --no-verify-jwt:
+// RevenueCat has no Supabase JWT, the shared token below replaces it.
+// Secret to set: REVENUECAT_WEBHOOK_TOKEN
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
@@ -29,11 +14,7 @@ const GRANTING_EVENTS = new Set([
   'TEMPORARY_ENTITLEMENT_GRANT',
 ]);
 
-/// Event types that end entitlement immediately.
-///
-/// CANCELLATION is deliberately absent: a cancelled subscription runs until its
-/// expiry date, and revoking access on the spot would cut off a user who has
-/// already paid for the remaining period. EXPIRATION is the event that matters.
+/// CANCELLATION is absent on purpose: access runs until the expiry date.
 const REVOKING_EVENTS = new Set(['EXPIRATION', 'SUBSCRIPTION_PAUSED', 'REFUND']);
 
 Deno.serve(async (req: Request): Promise<Response> => {
@@ -69,8 +50,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   const userId = event.app_user_id;
   if (!userId || !isUuid(userId)) {
-    // An anonymous RevenueCat id means the purchase happened before login.
-    // Nothing to attach it to; 200 so RevenueCat stops retrying.
+    // Anonymous id: purchase happened before login, nothing to attach it to.
     console.warn(`event ${event.id}: unusable app_user_id "${userId}"`);
     return json({ ok: true, ignored: 'app_user_id' });
   }
@@ -80,8 +60,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   );
 
-  // Idempotency guard. RevenueCat retries until it gets a 2xx, so the same
-  // event can legitimately arrive several times.
+  // Idempotency guard: RevenueCat retries until it gets a 2xx.
   const { error: insertError } = await supabase
     .from('subscription_purchase')
     .insert({
@@ -125,8 +104,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     .eq('id_user', userId);
 
   if (updateError) {
-    // 500 makes RevenueCat retry, which is what we want: the purchase is
-    // recorded but the user is not yet premium.
+    // 500 makes RevenueCat retry: the purchase is recorded, premium is not set.
     console.error(`event ${event.id}: status update failed`, updateError);
     return json({ error: 'update failed' }, 500);
   }
@@ -134,7 +112,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   return json({ ok: true, status });
 });
 
-/// Returns the status this event implies, or null when it changes nothing.
+/// Null when the event changes nothing.
 function statusFor(event: RevenueCatEvent): 'premium' | 'freemium' | null {
   if (GRANTING_EVENTS.has(event.type)) {
     // A grant whose expiry is already in the past is stale; treat it as expired.

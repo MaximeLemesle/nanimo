@@ -8,10 +8,7 @@ import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/features/subscription/presentation/paywall_content.dart';
 
-/// Links to the terms and the privacy policy.
-///
-/// Required on the paywall itself: their absence is the most common rejection
-/// reason for a first subscription submission, ahead of the purchase flow.
+/// Their absence is the most common rejection reason for a first subscription.
 class PaywallLegalLinksWidget extends StatelessWidget {
   /// Injected so tests can assert what would be opened without leaving the app.
   final Future<bool> Function(Uri url)? onOpen;
