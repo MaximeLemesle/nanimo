@@ -16,8 +16,7 @@ void main() {
       expect(service, isA<SentryMonitoringService>());
     });
 
-    /// Debug builds must stay silent: hot-reload exceptions would bury the real
-    /// production signal and eat the quota.
+    /// Debug builds must stay silent, or hot-reload noise buries the signal.
     test('stays silent on a debug build even with a DSN', () {
       final service = createMonitoringService(
         dsn: 'https://key@o0.ingest.sentry.io/1',
@@ -39,8 +38,7 @@ void main() {
       );
     });
 
-    /// An empty variable in .env is the same as no variable at all. Passing it
-    /// straight to Sentry would raise at startup.
+    /// An empty .env variable would raise at startup if passed to Sentry.
     test('treats an empty DSN as disabled', () {
       expect(
         createMonitoringService(
@@ -54,8 +52,7 @@ void main() {
   });
 
   group('NoopMonitoringService', () {
-    /// The app must boot whether monitoring is on or off. Forgetting to call
-    /// appRunner here would ship a black screen.
+    /// Forgetting appRunner here would ship a black screen.
     test('still runs the app', () async {
       var ran = false;
       await const NoopMonitoringService().start(() => ran = true);
