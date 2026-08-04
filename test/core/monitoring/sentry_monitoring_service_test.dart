@@ -3,8 +3,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 
 import 'package:nanimo/core/monitoring/sentry_monitoring_service.dart';
 
-/// Builds the service with an initializer that records what happened instead of
-/// contacting Sentry.
+/// Records what happened instead of contacting Sentry.
 SentryMonitoringService _service({
   bool throwOnInit = false,
   List<String>? calls,
@@ -36,8 +35,7 @@ void main() {
       expect(calls, ['init', 'app']);
     });
 
-    /// The failure that matters most: monitoring is an accessory, and a broken
-    /// accessory must never prevent the app from starting.
+    /// A broken accessory must never prevent the app from starting.
     test('still runs the app when the reporter cannot start', () async {
       var ran = false;
       await _service(throwOnInit: true).start(() => ran = true);
@@ -55,8 +53,7 @@ void main() {
       expect(options.environment, 'production');
     });
 
-    /// Nanimo screens show private photos and health records. A crash report is
-    /// not worth exfiltrating someone's pet album.
+    /// Screens show private photos and health records.
     test('never attaches screenshots or the view hierarchy', () {
       final options = _configuredOptions();
 
@@ -69,8 +66,7 @@ void main() {
       expect(_configuredOptions().tracesSampleRate, 0.0);
     });
 
-    /// Sessions are what produce the crash-free rate, the indicator used to
-    /// judge whether a release is healthy.
+    /// Sessions produce the crash-free rate.
     test('tracks sessions', () {
       expect(_configuredOptions().enableAutoSessionTracking, isTrue);
     });
@@ -108,8 +104,7 @@ void main() {
       expect(sent!.user, isNull);
     });
 
-    /// Supabase URLs carry access tokens in the query string. Shipping them to
-    /// a third party would hand over a usable credential.
+    /// Supabase URLs carry access tokens in the query string.
     test('strips query strings from breadcrumb data', () async {
       final event = SentryEvent(
         breadcrumbs: [

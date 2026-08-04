@@ -89,8 +89,7 @@ void main() async {
     petRepository: petRepository,
   );
 
-  /// Ties reports to an account so a support request can be matched to a crash.
-  /// The id only, never the e-mail.
+  /// Account id only, never the e-mail.
   authCubit.stream.listen((auth) {
     final userId = authRepository.currentUserId;
     if (auth.isAuthenticated && userId != null) {

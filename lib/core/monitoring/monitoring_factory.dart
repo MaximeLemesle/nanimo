@@ -1,7 +1,8 @@
 import 'package:nanimo/core/monitoring/monitoring_service.dart';
 import 'package:nanimo/core/monitoring/sentry_monitoring_service.dart';
 
-/// Decides whether crash reporting runs, and under which release.
+/// Debug builds stay silent: hot-reload exceptions would bury the production
+/// signal and burn the quota.
 MonitoringService createMonitoringService({
   required String? dsn,
   required String appVersion,
@@ -13,8 +14,7 @@ MonitoringService createMonitoringService({
 
   return SentryMonitoringService(
     dsn: dsn,
-    // Must match the format used when uploading debug symbols, otherwise
-    // stack traces stay obfuscated on Android.
+    // Must match the release used when uploading debug symbols.
     release: 'nanimo@$appVersion',
     environment: 'production',
   );
