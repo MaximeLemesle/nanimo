@@ -6,21 +6,8 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:nanimo/core/monitoring/monitoring_service.dart';
 
 /// Sentry-backed crash reporting.
-///
-/// ## Périmètre de supervision
-///
 /// Captured: unhandled Flutter exceptions, uncaught async errors in the app's
-/// error zone, native crashes, and errors the app reports explicitly through
-/// [captureException].
-///
-/// Deliberately **not** captured:
-/// - Screenshots and view hierarchy. Nanimo screens show private photos of
-///   people's pets and their health records. A crash report is not worth
-///   exfiltrating a user's album.
-/// - Performance traces. They burn the free quota for no operational gain at
-///   this stage, and can be turned on later per release.
-/// - The user's e-mail and IP address. Only the pseudonymous account id is
-///   attached, which is what the privacy policy promises.
+/// error zone, native crashes, and errors the app reports explicitly through [captureException].
 class SentryMonitoringService implements MonitoringService {
   final String _dsn;
   final String _release;
@@ -85,8 +72,6 @@ class SentryMonitoringService implements MonitoringService {
     options.beforeSend = _scrub;
   }
 
-  /// Last line of defence before an event leaves the device.
-  ///
   /// Runs on every event, including those Sentry builds itself, so a future SDK
   /// default that starts collecting more cannot leak through.
   FutureOr<SentryEvent?> _scrub(SentryEvent event, Hint hint) {
@@ -96,14 +81,11 @@ class SentryMonitoringService implements MonitoringService {
           ? null
           : SentryUser(
               id: user.id,
-              // Dropped on purpose: identifying a crash needs the account id,
-              // not a way to contact or locate its owner.
               email: null,
               ipAddress: null,
               username: null,
               geo: null,
             ),
-      // Query strings can carry access tokens on Supabase URLs.
       breadcrumbs: event.breadcrumbs?.map(_scrubBreadcrumb).toList(),
     );
   }
