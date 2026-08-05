@@ -26,6 +26,13 @@ if [[ "$msg" =~ ^Merge\  ]] || [[ "$msg" =~ ^Revert\ \" ]]; then
   exit 0
 fi
 
+# Dependabot writes its own messages and cannot append a ticket id, so its
+# dependency bumps are exempted the same way merges are. The scope is pinned to
+# deps / deps-dev so a handwritten commit cannot borrow the exemption.
+if [[ "$msg" =~ ^chore\((deps|deps-dev)\):\  ]]; then
+  exit 0
+fi
+
 regex='^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)\([a-z0-9-]+\): .+ NAN-[0-9]+$'
 
 if [[ ! "$msg" =~ $regex ]]; then
