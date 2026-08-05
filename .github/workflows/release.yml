@@ -75,13 +75,25 @@ jobs:
       - name: Build App Bundle
         run: flutter build appbundle --release
 
+      # The APK and the AAB are produced in two different directories, and
+      # upload-artifact roots the archive at their least common ancestor
+      # (build/app/outputs). Downloading it then yields flutter-apk/app-release.apk
+      # instead of app-release.apk, which is what the release job expects.
+      # Staging both files in one flat directory keeps the downloaded layout
+      # predictable.
+      - name: Stage artifacts
+        run: |
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/app-release.apk dist/
+          cp build/app/outputs/bundle/release/app-release.aab dist/
+          ls -l dist
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
           name: android-release
-          path: |
-            build/app/outputs/flutter-apk/app-release.apk
-            build/app/outputs/bundle/release/app-release.aab
+          path: dist/
+          if-no-files-found: error
 
   release:
     name: Create GitHub Release
@@ -104,6 +116,20 @@ jobs:
           script: |
             const fs = require('fs');
             const tag = context.ref.replace('refs/tags/', '');
+            const assets = ['app-release.apk', 'app-release.aab'];
+
+            // Both files are checked before the release is created. The previous
+            // version skipped missing assets silently, which produced green runs
+            // and empty releases from v0.11.0 to v0.14.0. Failing here also
+            // avoids leaving an empty release behind on a broken build.
+            const missing = assets.filter((a) => !fs.existsSync(`artifacts/${a}`));
+            if (missing.length > 0) {
+              core.setFailed(
+                `Missing artifact(s): ${missing.join(', ')}. ` +
+                `Downloaded: ${fs.readdirSync('artifacts').join(', ')}`
+              );
+              return;
+            }
 
             const release = await github.rest.repos.createRelease({
               owner: context.repo.owner,
@@ -115,15 +141,12 @@ jobs:
               prerelease: tag.includes('beta') || tag.includes('alpha')
             });
 
-            for (const asset of ['app-release.apk', 'app-release.aab']) {
-              const path = `artifacts/${asset}`;
-              if (fs.existsSync(path)) {
-                await github.rest.repos.uploadReleaseAsset({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  release_id: release.data.id,
-                  name: `nanimo-${tag}-${asset}`,
-                  data: fs.readFileSync(path)
-                });
-              }
+            for (const asset of assets) {
+              await github.rest.repos.uploadReleaseAsset({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: release.data.id,
+                name: `nanimo-${tag}-${asset}`,
+                data: fs.readFileSync(`artifacts/${asset}`)
+              });
             }
