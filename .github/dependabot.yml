@@ -1,10 +1,7 @@
 version: 2
 
-# Nanimo is maintained by a single developer, so the goal here is a steady and
-# reviewable flow rather than exhaustive coverage. Two ecosystems are watched :
-# the Dart packages the app actually ships, and the actions the release pipeline
-# depends on. Gradle and CocoaPods are deliberately left out, their transitive
-# updates arrive through the Flutter SDK bump instead.
+# Gradle and CocoaPods are left out on purpose, their updates arrive with the
+# Flutter SDK bump.
 updates:
   - package-ecosystem: "pub"
     directory: "/"
@@ -17,9 +14,7 @@ updates:
     commit-message:
       prefix: "chore(deps)"
       prefix-development: "chore(deps-dev)"
-    # Minor and patch bumps are batched into a single pull request : reviewing
-    # them one by one costs more attention than the risk they carry. Major bumps
-    # stay isolated so each one can be read on its own.
+    # Major bumps stay isolated so each one can be read on its own.
     groups:
       dart-minor-and-patch:
         update-types:

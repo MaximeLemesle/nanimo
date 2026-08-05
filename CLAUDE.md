@@ -366,7 +366,7 @@ Workflow `.github/workflows/ci.yml` découpé en 3 jobs :
 - **Fichiers** : snake_case (auth_cubit.dart, pet_model.dart)
 - **Cubits** : `[feature]_cubit.dart` + `[feature]_state.dart`
 - **Pages** : `[feature]_page.dart`
-- **Commentaires** : Uniquement sur les fonctions qui en ont vraiment besoin — logique non évidente, contrainte invisible dans le code, workaround. Ne pas commenter une méthode dont le nom suffit. Format : une ligne courte en anglais avec /// pour différencier des balises flutter
+- **Commentaires** : **3 lignes maximum, toujours.** Un commentaire ne s'écrit que si l'information est vraiment importante et introuvable dans le code : contrainte externe, workaround, piège. Dans le doute, ne pas commenter. Jamais de paraphrase du code ni de méthode dont le nom suffit. Format : anglais, `///` pour différencier des balises flutter. **La règle vaut pour tous les fichiers, pas seulement le Dart** : YAML de CI, Gradle, scripts shell
 - **Erreurs** : Toujours wrap Supabase calls en try/catch
 - **Mounted** : Toujours vérifier `if (!mounted) return;` après await avant setState
 
