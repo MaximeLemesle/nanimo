@@ -53,7 +53,7 @@ dependencies:
   cached_network_image: ^3.4.1
   fl_chart: ^0.69.2
   image_picker: ^1.2.3
-  lottie: ^3.5.1
+  lottie: ^3.1.2
   package_info_plus: ^10.2.1
   sentry_flutter: ^8.14.2
 
