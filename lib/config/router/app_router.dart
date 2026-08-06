@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:nanimo/config/router/route_guard.dart';
 import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/core/widgets/app_shell.dart';
+import 'package:nanimo/core/monitoring/breadcrumb_route_observer.dart';
 import 'package:nanimo/core/widgets/bottom_bar_widget/modal_route_observer.dart';
 import 'package:nanimo/core/widgets/error_screen.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
@@ -37,6 +38,7 @@ import 'package:nanimo/features/pet/presentation/page/pet_health_diary_page.dart
 CustomTransitionPage<void> _fadePage(GoRouterState state, Widget child) {
   return CustomTransitionPage<void>(
     key: state.pageKey,
+    name: state.fullPath ?? state.uri.path,
     child: child,
     transitionDuration: const Duration(milliseconds: 180),
     reverseTransitionDuration: const Duration(milliseconds: 180),
@@ -76,7 +78,9 @@ GoRouter createRouter(
 
   final modalRouteObserver = ModalRouteObserver();
 
+  /// One instance per Navigator: an observer cannot be attached to two of them.
   return GoRouter(
+    observers: [BreadcrumbRouteObserver()],
     initialLocation: RouteNames.splash,
     refreshListenable: Listenable.merge([
       _AuthCubitListenable(authCubit),
@@ -112,7 +116,7 @@ GoRouter createRouter(
         pageBuilder: (_, state) => _fadePage(state, const SignupPage()),
       ),
       ShellRoute(
-        observers: [modalRouteObserver],
+        observers: [modalRouteObserver, BreadcrumbRouteObserver()],
         pageBuilder: (context, state, child) => _fadePage(
           state,
           MultiBlocProvider(

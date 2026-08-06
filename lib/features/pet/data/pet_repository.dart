@@ -39,7 +39,8 @@ class PetRepository {
   Future<void> createPet(PetModel pet) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
-      throw const RepositoryNetworkException(
+      throw sessionExpired(
+        'createPet',
         'Vous devez être connecté pour créer un animal.',
       );
     }
