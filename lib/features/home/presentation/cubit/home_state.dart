@@ -88,16 +88,19 @@ class HomeState extends Equatable {
   }
 
   /// Vaccines overdue or due within 30 days, most urgent first.
+  /// Vaccines whose diary resolves to no pet of the account are dropped: they
+  /// belong to another user and would render an alert without any icon.
   List<VaccineAlert> vaccineAlerts({DateTime? now}) {
     final petIdByDiary = _petIdByDiaryId;
     final alerts = <VaccineAlert>[
       for (final vaccine in vaccines)
         if (vaccineStatusFor(vaccine.nextDate, now: now) != VaccineStatus.done)
-          (
-            vaccine: vaccine,
-            pet: _petById(petIdByDiary[vaccine.healthDiaryId]),
-            status: vaccineStatusFor(vaccine.nextDate, now: now),
-          ),
+          if (_petById(petIdByDiary[vaccine.healthDiaryId]) case final pet?)
+            (
+              vaccine: vaccine,
+              pet: pet,
+              status: vaccineStatusFor(vaccine.nextDate, now: now),
+            ),
     ];
     alerts.sort((a, b) => a.vaccine.nextDate.compareTo(b.vaccine.nextDate));
     return alerts;
