@@ -160,19 +160,30 @@ void main() {
       });
     });
 
-    test('a vaccine without a known diary is kept without a pet', () {
+    test('drops a vaccine whose diary belongs to no pet of the account', () {
       final state = HomeState(
         pets: [_milo],
+        diaries: [const HealthDiaryModel(healthDiaryId: 'd1', petId: 'p1')],
         vaccines: [
-          _vaccine('late', _now.subtract(const Duration(days: 2)),
+          _vaccine('mine', _now.subtract(const Duration(days: 2))),
+          _vaccine('foreign', _now.subtract(const Duration(days: 3)),
               diaryId: 'unknown'),
         ],
       );
 
       final alerts = state.vaccineAlerts(now: _now);
 
-      expect(alerts, hasLength(1));
-      expect(alerts.single.pet, isNull);
+      expect(alerts.map((a) => a.vaccine.healthDiaryVaccineId), ['mine']);
+      expect(alerts.single.pet, isNotNull);
+    });
+
+    test('drops every vaccine when the diaries have not synced yet', () {
+      final state = HomeState(
+        pets: [_milo],
+        vaccines: [_vaccine('late', _now.subtract(const Duration(days: 2)))],
+      );
+
+      expect(state.vaccineAlerts(now: _now), isEmpty);
     });
   });
 }

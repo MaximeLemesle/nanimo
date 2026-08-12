@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:nanimo/core/widgets/pet_avatar_widget.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
@@ -15,10 +16,12 @@ import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/health/data/models/health_diary_vaccine_model.dart';
 import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
 import 'package:nanimo/features/home/presentation/page/home_page.dart';
+import 'package:nanimo/features/home/presentation/widgets/home_health_card_widget.dart';
 import 'package:nanimo/features/home/presentation/widgets/home_memory_polaroid_widget.dart';
 import 'package:nanimo/features/journal/presentation/cubit/journal_cubit.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/vaccine_status_badge_widget.dart';
 
 class _MockPetRepository extends Mock implements PetRepository {}
 
@@ -292,6 +295,66 @@ void main() {
     expect(find.text('Rage'), findsOneWidget);
     expect(find.text('Pas fait'), findsOneWidget);
     expect(find.text('Tout est à jour !'), findsNothing);
+    await cubit.close();
+  });
+
+  /// NAN-065: health_diary_vaccines leaks other accounts' rows, whose diary
+  /// resolves to no pet. Those alerts used to render an empty icon slot.
+  testWidgets('shows a pet icon on every vaccine alert of the health tile',
+      (tester) async {
+    tester.view.physicalSize = const Size(1080, 2340);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.reset);
+
+    when(() => healthRepo.watchAllDiaries()).thenAnswer(
+      (_) => Stream.value(
+        const [HealthDiaryModel(healthDiaryId: 'd1', petId: 'p1')],
+      ),
+    );
+    when(() => healthRepo.watchAllVaccines()).thenAnswer(
+      (_) => Stream.value([
+        HealthDiaryVaccineModel(
+          healthDiaryVaccineId: 'v1',
+          vaccineName: 'Rage',
+          lastDate: DateTime(2025, 6, 26),
+          nextDate: DateTime.now().subtract(const Duration(days: 12)),
+          recurrence: 365,
+          doseNumber: 1,
+          totalDoseNumber: 1,
+          healthDiaryId: 'd1',
+        ),
+        HealthDiaryVaccineModel(
+          healthDiaryVaccineId: 'v2',
+          vaccineName: 'Leucose',
+          lastDate: DateTime(2025, 6, 26),
+          nextDate: DateTime.now().add(const Duration(days: 5)),
+          recurrence: 365,
+          doseNumber: 1,
+          totalDoseNumber: 1,
+          healthDiaryId: 'd-someone-else',
+        ),
+      ]),
+    );
+
+    final cubit = buildCubit();
+    await tester.pumpWidget(buildPage(cubit));
+
+    petsController.add([_milo]);
+    await tester.pumpAndSettle();
+
+    final card = find.byType(HomeHealthCardWidget);
+    final rows = find.descendant(
+      of: card,
+      matching: find.byType(VaccineStatusBadgeWidget),
+    );
+    final icons = find.descendant(
+      of: card,
+      matching: find.byType(PetAvatarWidget),
+    );
+
+    expect(icons, findsNWidgets(rows.evaluate().length));
+    expect(rows, findsOneWidget);
+    expect(find.text('Leucose'), findsNothing);
     await cubit.close();
   });
 }
