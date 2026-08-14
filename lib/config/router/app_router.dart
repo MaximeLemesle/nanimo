@@ -187,8 +187,7 @@ GoRouter createRouter(
               ),
               GoRoute(
                 path: 'journal',
-                pageBuilder: (_, state) =>
-                    _fadePage(state, const JournalPage()),
+                pageBuilder: (_, state) => _fadePage(state, const JournalPage()),
               ),
               GoRoute(
                 path: 'pet',
@@ -196,8 +195,7 @@ GoRouter createRouter(
                 routes: [
                   GoRoute(
                     path: 'health-diary',
-                    pageBuilder: (_, state) =>
-                        _fadePage(state, const PetHealthDiaryPage()),
+                    pageBuilder: (_, state) => _fadePage(state, const PetHealthDiaryPage()),
                   ),
                 ],
               ),
@@ -214,22 +212,22 @@ GoRouter createRouter(
                   ),
                 ),
               ),
-              GoRoute(
-                path: 'paywall',
-                pageBuilder: (_, state) => _fadePage(
-                  state,
-                  BlocProvider(
-                    create: (_) => PaywallCubit(
-                      purchaseRepository: purchaseRepository,
-                      authRepository: authRepository,
-                    )..loadOffers(),
-                    child: const PaywallPage(),
-                  ),
-                ),
-              ),
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: RouteNames.paywall,
+        pageBuilder: (_, state) => _fadePage(
+          state,
+          BlocProvider(
+            create: (_) => PaywallCubit(
+              purchaseRepository: purchaseRepository,
+              authRepository: authRepository,
+            )..loadOffers(),
+            child: const PaywallPage(),
+          ),
+        ),
       ),
     ],
     errorBuilder: (context, state) => ErrorScreen(error: state.error),

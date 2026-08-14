@@ -8,9 +8,7 @@ import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/features/subscription/presentation/paywall_content.dart';
 
-/// Their absence is the most common rejection reason for a first subscription.
 class PaywallLegalLinksWidget extends StatelessWidget {
-  /// Injected so tests can assert what would be opened without leaving the app.
   final Future<bool> Function(Uri url)? onOpen;
 
   const PaywallLegalLinksWidget({super.key, this.onOpen});
@@ -41,6 +39,7 @@ class PaywallLegalLinksWidget extends StatelessWidget {
             label,
             textAlign: TextAlign.center,
             style: AppTextStyles.textSmall.copyWith(
+              fontSize: 11,
               color: AppColors.textSecondary,
               decoration: TextDecoration.underline,
               decorationColor: AppColors.textSecondary,

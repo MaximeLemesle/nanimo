@@ -123,18 +123,18 @@ void main() async {
   });
 
   await monitoring.start(() => runApp(MyApp(
-    authCubit: authCubit,
-    authRepository: authRepository,
-    subscriptionCubit: subscriptionCubit,
-    onboardingCubit: onboardingCubit,
-    petCreationCubit: petCreationCubit,
-    eventRepository: eventRepository,
-    referentialRepository: referentialRepository,
-    petRepository: petRepository,
-    healthRepository: healthRepository,
-    settingsRepository: settingsRepository,
-    purchaseRepository: purchaseRepository,
-  )));
+        authCubit: authCubit,
+        authRepository: authRepository,
+        subscriptionCubit: subscriptionCubit,
+        onboardingCubit: onboardingCubit,
+        petCreationCubit: petCreationCubit,
+        eventRepository: eventRepository,
+        referentialRepository: referentialRepository,
+        petRepository: petRepository,
+        healthRepository: healthRepository,
+        settingsRepository: settingsRepository,
+        purchaseRepository: purchaseRepository,
+      )));
 }
 
 /// Boots RevenueCat when a key is available for the current platform.
@@ -143,9 +143,7 @@ void main() async {
 /// working and only the paywall is unavailable. Throwing here would brick the
 /// whole app over a subscription config, which is the wrong trade.
 Future<void> _configurePurchases(PurchaseRepository repository) async {
-  final key = Platform.isIOS
-      ? dotenv.env['REVENUECAT_IOS_API_KEY']
-      : dotenv.env['REVENUECAT_ANDROID_API_KEY'];
+  final key = Platform.isIOS ? dotenv.env['REVENUECAT_IOS_API_KEY'] : dotenv.env['REVENUECAT_ANDROID_API_KEY'];
 
   if (key == null || key.isEmpty) {
     developer.log(
@@ -158,8 +156,7 @@ Future<void> _configurePurchases(PurchaseRepository repository) async {
   try {
     await repository.configure(key);
   } catch (e, st) {
-    developer.log('RevenueCat setup failed, purchases are disabled',
-        name: 'purchase', error: e, stackTrace: st);
+    developer.log('RevenueCat setup failed, purchases are disabled', name: 'purchase', error: e, stackTrace: st);
   }
 }
 

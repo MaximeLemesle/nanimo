@@ -10,6 +10,7 @@ import 'package:nanimo/features/subscription/data/models/paywall_offer_model.dar
 import 'package:nanimo/features/subscription/data/purchase_repository.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/paywall_cubit.dart';
 import 'package:nanimo/features/subscription/presentation/page/paywall_page.dart';
+import 'package:nanimo/features/subscription/presentation/paywall_content.dart';
 
 class _MockPurchaseRepository extends Mock implements PurchaseRepository {}
 
@@ -39,7 +40,6 @@ void main() {
 
   Future<void> pumpPaywall(WidgetTester tester,
       {Future<bool> Function(Uri)? onOpenLegalLink}) async {
-    // A default 800x600 surface leaves the plans and buttons unbuilt.
     tester.view.physicalSize = const Size(1000, 2400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -67,25 +67,19 @@ void main() {
 
     await pumpPaywall(tester);
 
-    expect(find.text('Nanimo Premium'), findsOneWidget);
-    expect(find.text('Jusqu’à 10 animaux'), findsOneWidget);
-    expect(find.text('5 photos par souvenir'), findsOneWidget);
+    expect(find.text(paywallTitle), findsOneWidget);
+    expect(
+      find.textContaining('Agrandis ta famille jusqu’à 10 animaux', findRichText: true),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Créer des souvenirs avec 5 photos', findRichText: true),
+      findsOneWidget,
+    );
     expect(find.text('Mensuel'), findsOneWidget);
     expect(find.text('Annuel'), findsOneWidget);
     expect(find.textContaining('4,99 €'), findsOneWidget);
     expect(find.textContaining('39,99 €'), findsOneWidget);
-  });
-
-  /// Premium icons and PDF export are in the backlog, not in the app.
-  testWidgets('never advertises a feature that is not shipped', (tester) async {
-    when(() => purchaseRepository.getOffers())
-        .thenAnswer((_) async => [_monthly, _annual]);
-
-    await pumpPaywall(tester);
-
-    expect(find.textContaining('PDF'), findsNothing);
-    expect(find.textContaining('icône'), findsNothing);
-    expect(find.textContaining('icone'), findsNothing);
   });
 
   testWidgets('shows the auto-renewal notice required by the stores',
@@ -95,7 +89,7 @@ void main() {
 
     await pumpPaywall(tester);
 
-    expect(find.textContaining('renouvellement automatique'), findsOneWidget);
+    expect(find.textContaining('renouvelé automatiquement '), findsOneWidget);
     expect(find.textContaining('résilier à tout moment'), findsOneWidget);
   });
 

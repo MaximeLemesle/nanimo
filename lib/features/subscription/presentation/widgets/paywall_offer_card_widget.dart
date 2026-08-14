@@ -28,12 +28,13 @@ class PaywallOfferCardWidget extends StatelessWidget {
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.all(AppSpacing.md),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.md,
+          ),
           decoration: BoxDecoration(
-            color: isSelected
-                ? AppColors.backgroundPrimary
-                : AppColors.backgroundSurface,
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            color: isSelected ? AppColors.backgroundPrimary : AppColors.backgroundSurface,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(
               color: isSelected ? AppColors.primary : AppColors.backgroundStroke,
               width: isSelected ? 2 : 1,
@@ -41,38 +42,31 @@ class PaywallOfferCardWidget extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(
-                isSelected
-                    ? Icons.radio_button_checked_rounded
-                    : Icons.radio_button_unchecked_rounded,
-                color: isSelected ? AppColors.primary : AppColors.textSecondary,
-                size: 22,
-              ),
-              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Text(_title, style: AppTextStyles.textBold),
-                        if (offer.hasTrial) ...[
-                          const SizedBox(width: AppSpacing.sm),
-                          LabelWidget(
-                            label: '${offer.trialDays} j offerts',
-                            backgroundColor: AppColors.backgroundTertiary,
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      '${offer.priceLabel} ${offer.periodLabel}'.trim(),
-                      style: AppTextStyles.textSmall
-                          .copyWith(color: AppColors.textSecondary),
-                    ),
+                    Text(_title, style: AppTextStyles.textBold),
+                    if (offer.hasTrial) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      LabelWidget(
+                        label: '${offer.trialDays} jours offerts',
+                        backgroundColor: AppColors.backgroundTertiary,
+                      ),
+                    ],
                   ],
                 ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(offer.priceLabel, style: AppTextStyles.numberBig),
+                  Text(
+                    offer.periodLabel,
+                    style: AppTextStyles.textLabel.copyWith(color: AppColors.textSecondary),
+                  ),
+                ],
               ),
             ],
           ),

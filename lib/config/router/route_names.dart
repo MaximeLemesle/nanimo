@@ -11,5 +11,5 @@ class RouteNames {
   static const pet = '/home/pet';
   static const healthDiary = '/home/pet/health-diary';
   static const settings = '/home/settings';
-  static const paywall = '/home/paywall';
+  static const paywall = '/paywall';
 }
