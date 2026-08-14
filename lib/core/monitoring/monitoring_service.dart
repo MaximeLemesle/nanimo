@@ -1,23 +1,21 @@
 import 'dart:async';
 
+/// Crash reporting seam. The app depends on this, never on Sentry directly.
 abstract class MonitoringService {
-  /// [appRunner] must be called exactly once, even when reporting is disabled:
-  /// a monitoring failure must never stop the app from starting.
+  /// Must call [appRunner] exactly once, even when reporting is disabled.
   Future<void> start(FutureOr<void> Function() appRunner);
 
-  /// Reports an error the app caught and handled itself.
   Future<void> captureException(
     Object exception, {
     StackTrace? stackTrace,
     String? hint,
   });
 
-  /// Attaches the signed-in user id so an anomaly can be traced back to a support request
+  /// Account id only, never the e-mail.
   Future<void> identifyUser(String userId);
 
   Future<void> forgetUser();
 
-  /// Records a step in the user journey, to reconstruct what led to a crash
   Future<void> addBreadcrumb(String message, {String? category});
 }
 

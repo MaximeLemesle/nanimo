@@ -5,15 +5,12 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 
 import 'package:nanimo/core/monitoring/monitoring_service.dart';
 
-/// Sentry-backed crash reporting.
-/// Captured: unhandled Flutter exceptions, uncaught async errors in the app's
-/// error zone, native crashes, and errors the app reports explicitly through [captureException].
 class SentryMonitoringService implements MonitoringService {
   final String _dsn;
   final String _release;
   final String _environment;
 
-  /// Injected so tests drive the whole class without a network call.
+  /// Injected so tests drive the class without a network call.
   final Future<void> Function(
     void Function(SentryFlutterOptions) configure,
     FutureOr<void> Function() appRunner,
@@ -44,36 +41,33 @@ class SentryMonitoringService implements MonitoringService {
     try {
       await _initializer(configure, appRunner);
     } catch (e, st) {
-      // A reporter that cannot start must not take the app down with it.
+      /// A reporter that cannot start must not take the app down with it.
       developer.log('Sentry failed to start, running without monitoring',
           name: 'monitoring', error: e, stackTrace: st);
       await appRunner();
     }
   }
 
-  /// Visible for tests: asserts the privacy posture without booting Sentry.
+  /// Visible for tests.
   void configure(SentryFlutterOptions options) {
     options.dsn = _dsn;
     options.release = _release;
     options.environment = _environment;
 
-    // Never send personal data Sentry would otherwise collect on its own.
+    /// Screens show private pet photos and health records.
     options.sendDefaultPii = false;
     options.attachScreenshot = false;
     options.attachViewHierarchy = false;
 
-    // No performance tracing for now, see the class doc.
     options.tracesSampleRate = 0.0;
 
-    // Sessions give the crash-free session rate, the indicator used to tell a
-    // healthy release from a broken one.
+    /// Source of the crash-free session rate.
     options.enableAutoSessionTracking = true;
 
     options.beforeSend = _scrub;
   }
 
-  /// Runs on every event, including those Sentry builds itself, so a future SDK
-  /// default that starts collecting more cannot leak through.
+  /// Runs on every event, including those the SDK builds itself.
   FutureOr<SentryEvent?> _scrub(SentryEvent event, Hint hint) {
     final user = event.user;
     return event.copyWith(
@@ -101,6 +95,7 @@ class SentryMonitoringService implements MonitoringService {
     return crumb.copyWith(data: cleaned);
   }
 
+  /// Supabase URLs carry access tokens in the query string.
   String _stripQuery(String value) {
     final index = value.indexOf('?');
     return index == -1 ? value : '${value.substring(0, index)}?[filtré]';

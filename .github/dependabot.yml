@@ -1,0 +1,41 @@
+version: 2
+
+# Gradle and CocoaPods are left out on purpose, their updates arrive with the
+# Flutter SDK bump.
+updates:
+  - package-ecosystem: "pub"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:00"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+    # lottie 3.4.0 and above require Dart ^3.12, out of reach until the pinned
+    # Flutter version moves. Lift this once the SDK is bumped.
+    ignore:
+      - dependency-name: "lottie"
+        versions: [">=3.4.0"]
+    # Major bumps stay isolated so each one can be read on its own.
+    groups:
+      dart-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      github-actions:
+        update-types:
+          - "minor"
+          - "patch"

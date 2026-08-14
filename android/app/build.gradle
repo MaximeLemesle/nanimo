@@ -11,6 +11,15 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
+// The keystore lives outside the repository, so it is absent on a fresh clone.
+// Falling back to the debug key avoids a cryptic Gradle failure.
+def releaseStoreFile = keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
+def hasReleaseKeystore = releaseStoreFile != null && releaseStoreFile.exists()
+
+if (!hasReleaseKeystore) {
+    logger.lifecycle("[nanimo] No upload keystore found, release builds will be signed with the debug key. Do not publish these artifacts.")
+}
+
 android {
     namespace = "com.nanimo.nanimo"
     compileSdk = flutter.compileSdkVersion
@@ -37,17 +46,19 @@ android {
     }
 
     signingConfigs {
-        release {
-            keyAlias keystoreProperties['keyAlias']
-            keyPassword keystoreProperties['keyPassword']
-            storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
-            storePassword keystoreProperties['storePassword']
+        if (hasReleaseKeystore) {
+            release {
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                storeFile releaseStoreFile
+                storePassword keystoreProperties['storePassword']
+            }
         }
     }
 
     buildTypes {
         release {
-            signingConfig signingConfigs.release
+            signingConfig hasReleaseKeystore ? signingConfigs.release : signingConfigs.debug
         }
     }
 }

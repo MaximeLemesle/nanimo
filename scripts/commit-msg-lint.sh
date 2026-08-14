@@ -26,6 +26,12 @@ if [[ "$msg" =~ ^Merge\  ]] || [[ "$msg" =~ ^Revert\ \" ]]; then
   exit 0
 fi
 
+# Dependabot cannot append a ticket id. Scope pinned so a handwritten commit
+# cannot borrow the exemption.
+if [[ "$msg" =~ ^chore\((deps|deps-dev)\):\  ]]; then
+  exit 0
+fi
+
 regex='^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)\([a-z0-9-]+\): .+ NAN-[0-9]+$'
 
 if [[ ! "$msg" =~ $regex ]]; then
