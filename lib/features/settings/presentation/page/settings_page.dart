@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/label_widget.dart';
 import 'package:nanimo/features/settings/presentation/widgets/settings_footer_widget.dart';
@@ -85,6 +87,14 @@ class SettingsPage extends StatelessWidget {
                             : AppColors.backgroundStroke,
                       ),
                     ),
+                    if (state.user?.subscriptionStatus != SubscriptionStatus.premium) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      ButtonWidget(
+                        label: 'Passer premium',
+                        fullWidth: true,
+                        onPressed: () => context.push(RouteNames.paywall),
+                      ),
+                    ],
                     const SizedBox(height: AppSpacing.xl),
                     SettingsNotificationSectionWidget(prefs: state.prefs),
                     const SizedBox(height: AppSpacing.xl),

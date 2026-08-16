@@ -1,3 +1,6 @@
+import 'dart:developer' as developer;
+import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -19,6 +22,8 @@ import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.d
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
 import 'package:nanimo/features/settings/data/settings_repository.dart';
+import 'package:nanimo/features/subscription/data/purchase_client.dart';
+import 'package:nanimo/features/subscription/data/purchase_repository.dart';
 import 'package:nanimo/features/subscription/data/subscription_repository.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -69,10 +74,26 @@ void main() async {
   final eventRepository = EventRepository(supabase, isar);
   final settingsRepository = SettingsRepository(supabase, isar);
 
+  final purchaseRepository = await _buildPurchaseRepository();
+
   final authCubit = AuthCubit(
     repository: authRepository,
     syncService: SyncService(supabase, isar),
   );
+
+  /// Keeps the RevenueCat account aligned with the Supabase user, so the
+  /// webhook can map `app_user_id` back to a row in `users`.
+  authCubit.stream.listen((auth) {
+    final userId = authRepository.currentUserId;
+    if (auth.isAuthenticated && userId != null) {
+      purchaseRepository.identify(userId);
+    } else if (auth.isUnauthenticated) {
+      purchaseRepository.forget();
+    }
+  });
+  if (authCubit.state.isAuthenticated && authRepository.currentUserId != null) {
+    await purchaseRepository.identify(authRepository.currentUserId!);
+  }
 
   final subscriptionCubit = SubscriptionCubit(
     authCubit: authCubit,
@@ -100,17 +121,43 @@ void main() async {
   });
 
   await monitoring.start(() => runApp(MyApp(
-    authCubit: authCubit,
-    authRepository: authRepository,
-    subscriptionCubit: subscriptionCubit,
-    onboardingCubit: onboardingCubit,
-    petCreationCubit: petCreationCubit,
-    eventRepository: eventRepository,
-    referentialRepository: referentialRepository,
-    petRepository: petRepository,
-    healthRepository: healthRepository,
-    settingsRepository: settingsRepository,
-  )));
+        authCubit: authCubit,
+        authRepository: authRepository,
+        subscriptionCubit: subscriptionCubit,
+        onboardingCubit: onboardingCubit,
+        petCreationCubit: petCreationCubit,
+        eventRepository: eventRepository,
+        referentialRepository: referentialRepository,
+        petRepository: petRepository,
+        healthRepository: healthRepository,
+        settingsRepository: settingsRepository,
+        purchaseRepository: purchaseRepository,
+      )));
+}
+
+/// Boots RevenueCat when a key is available for the current platform.
+///
+/// A missing key is not fatal, but it must swap the client out: calling the
+/// unconfigured SDK raises a native error no Dart catch can intercept.
+Future<PurchaseRepository> _buildPurchaseRepository() async {
+  final key = Platform.isIOS ? dotenv.env['REVENUECAT_IOS_API_KEY'] : dotenv.env['REVENUECAT_ANDROID_API_KEY'];
+
+  if (key == null || key.isEmpty) {
+    developer.log(
+      'RevenueCat key missing for this platform, purchases are disabled',
+      name: 'purchase',
+    );
+    return PurchaseRepository(DisabledPurchaseClient());
+  }
+
+  final repository = PurchaseRepository(RevenueCatPurchaseClient());
+  try {
+    await repository.configure(key);
+    return repository;
+  } catch (e, st) {
+    developer.log('RevenueCat setup failed, purchases are disabled', name: 'purchase', error: e, stackTrace: st);
+    return PurchaseRepository(DisabledPurchaseClient());
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -124,6 +171,7 @@ class MyApp extends StatelessWidget {
   final PetRepository petRepository;
   final HealthRepository healthRepository;
   final SettingsRepository settingsRepository;
+  final PurchaseRepository purchaseRepository;
   const MyApp({
     super.key,
     required this.authCubit,
@@ -136,6 +184,7 @@ class MyApp extends StatelessWidget {
     required this.petRepository,
     required this.healthRepository,
     required this.settingsRepository,
+    required this.purchaseRepository,
   });
 
   @override
@@ -168,6 +217,7 @@ class MyApp extends StatelessWidget {
           petRepository: petRepository,
           healthRepository: healthRepository,
           settingsRepository: settingsRepository,
+          purchaseRepository: purchaseRepository,
         ),
       ),
     );

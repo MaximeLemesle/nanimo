@@ -29,6 +29,9 @@ import 'package:nanimo/features/pet/presentation/page/create_pet_page.dart';
 import 'package:nanimo/features/settings/data/settings_repository.dart';
 import 'package:nanimo/features/settings/presentation/cubit/settings_cubit.dart';
 import 'package:nanimo/features/settings/presentation/page/settings_page.dart';
+import 'package:nanimo/features/subscription/data/purchase_repository.dart';
+import 'package:nanimo/features/subscription/presentation/cubit/paywall_cubit.dart';
+import 'package:nanimo/features/subscription/presentation/page/paywall_page.dart';
 import 'package:nanimo/features/onboarding/presentation/page/onboarding_page.dart';
 import 'package:nanimo/features/onboarding/presentation/page/splash_page.dart';
 import 'package:nanimo/features/pet/presentation/page/pet_page.dart';
@@ -69,6 +72,7 @@ GoRouter createRouter(
   required PetRepository petRepository,
   required HealthRepository healthRepository,
   required SettingsRepository settingsRepository,
+  required PurchaseRepository purchaseRepository,
 }) {
   /// Flips to true after the splash display duration
   final splashElapsed = ValueNotifier(false);
@@ -183,8 +187,7 @@ GoRouter createRouter(
               ),
               GoRoute(
                 path: 'journal',
-                pageBuilder: (_, state) =>
-                    _fadePage(state, const JournalPage()),
+                pageBuilder: (_, state) => _fadePage(state, const JournalPage()),
               ),
               GoRoute(
                 path: 'pet',
@@ -192,8 +195,7 @@ GoRouter createRouter(
                 routes: [
                   GoRoute(
                     path: 'health-diary',
-                    pageBuilder: (_, state) =>
-                        _fadePage(state, const PetHealthDiaryPage()),
+                    pageBuilder: (_, state) => _fadePage(state, const PetHealthDiaryPage()),
                   ),
                 ],
               ),
@@ -213,6 +215,19 @@ GoRouter createRouter(
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: RouteNames.paywall,
+        pageBuilder: (_, state) => _fadePage(
+          state,
+          BlocProvider(
+            create: (_) => PaywallCubit(
+              purchaseRepository: purchaseRepository,
+              authRepository: authRepository,
+            )..loadOffers(),
+            child: const PaywallPage(),
+          ),
+        ),
       ),
     ],
     errorBuilder: (context, state) => ErrorScreen(error: state.error),
