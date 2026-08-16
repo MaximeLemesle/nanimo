@@ -223,7 +223,8 @@ class EventRepository {
   String _requireUserId() {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
-      throw const RepositoryNetworkException(
+      throw sessionExpired(
+        'requireUserId',
         'Vous devez être connecté pour effectuer cette action.',
       );
     }

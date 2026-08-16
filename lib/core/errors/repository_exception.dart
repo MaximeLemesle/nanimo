@@ -1,6 +1,10 @@
+import 'dart:async';
 import 'dart:developer' as developer;
+import 'dart:io';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'package:nanimo/core/monitoring/error_reporter.dart';
 
 abstract class RepositoryException implements Exception {
   final String message;
@@ -39,7 +43,22 @@ RepositoryException mapRepositoryError(
     stackTrace: stackTrace,
   );
 
+  /// Already typed means an inner layer has reported it. Returning here is what
+  /// keeps one failure from producing two events.
   if (error is RepositoryException) return error;
+
+  errorReporter.addBreadcrumb('$operation a échoué', category: 'repository');
+
+  /// A device that lost the network says nothing about the app, and reporting
+  /// it would drown the quota. Everything else is either a server refusal or a
+  /// cause we have not identified, and both are worth an alert.
+  if (!_isOffline(error)) {
+    errorReporter.captureException(
+      error,
+      stackTrace: stackTrace,
+      hint: operation,
+    );
+  }
 
   if (error is PostgrestException) {
     return RepositoryServerException(_postgrestMessage(error, serverMessage));
@@ -50,6 +69,23 @@ RepositoryException mapRepositoryError(
   }
 
   return RepositoryNetworkException(networkMessage);
+}
+
+bool _isOffline(Object error) =>
+    error is SocketException ||
+    error is TimeoutException ||
+    error is HandshakeException;
+
+/// Raised before any request when the session is gone. Always reported, because
+/// the user is blocked and no server error will ever say so. The returned type
+/// and message are unchanged, so nothing moves for the user.
+RepositoryException sessionExpired(String operation, String message) {
+  errorReporter.captureException(
+    StateError('$operation called without a session'),
+    stackTrace: StackTrace.current,
+    hint: operation,
+  );
+  return RepositoryNetworkException(message);
 }
 
 String _postgrestMessage(PostgrestException error, String? serverMessage) {

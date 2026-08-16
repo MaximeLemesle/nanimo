@@ -9,6 +9,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:nanimo/config/router/app_router.dart';
 import 'package:nanimo/config/theme/app_theme.dart';
+import 'package:nanimo/core/monitoring/error_reporter.dart';
 import 'package:nanimo/core/monitoring/monitoring_factory.dart';
 import 'package:nanimo/core/isar/database/isar_service.dart';
 import 'package:nanimo/core/isar/database/sync_service.dart';
@@ -54,6 +55,10 @@ void main() async {
     appVersion: '${packageInfo.version}+${packageInfo.buildNumber}',
     isReleaseBuild: kReleaseMode,
   );
+
+  /// Lets the repository layer and the router reach the reporter without
+  /// carrying it through every constructor.
+  errorReporter = monitoring;
 
   await Supabase.initialize(url: url, anonKey: anonKey);
   await IsarService.initialize();
