@@ -262,4 +262,43 @@ void main() {
       await expectLater(repository.forget(), completes);
     });
   });
+
+  group('without a RevenueCat key', () {
+    late PurchaseRepository disabled;
+
+    setUp(() => disabled = PurchaseRepository(DisabledPurchaseClient()));
+
+    /// The crash this guards: sign-in used to reach the unconfigured SDK and
+    /// raise a native fatal error, which no Dart catch can intercept.
+    test('lets sign-in and sign-out through untouched', () async {
+      await expectLater(disabled.identify('user-1'), completes);
+      await expectLater(disabled.forget(), completes);
+    });
+
+    test('reports offers as unavailable rather than as a network outage',
+        () async {
+      await expectLater(
+        disabled.getOffers(),
+        throwsA(isA<RepositoryServerException>().having(
+          (e) => e.message,
+          'message',
+          contains('ne sont pas disponibles'),
+        )),
+      );
+    });
+
+    test('refuses a purchase', () async {
+      await expectLater(
+        disabled.purchase('\$rc_monthly'),
+        throwsA(isA<RepositoryServerException>()),
+      );
+    });
+
+    test('refuses a restore', () async {
+      await expectLater(
+        disabled.restore(),
+        throwsA(isA<RepositoryServerException>()),
+      );
+    });
+  });
 }

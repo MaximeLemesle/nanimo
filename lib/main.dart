@@ -74,8 +74,7 @@ void main() async {
   final eventRepository = EventRepository(supabase, isar);
   final settingsRepository = SettingsRepository(supabase, isar);
 
-  final purchaseRepository = PurchaseRepository(RevenueCatPurchaseClient());
-  await _configurePurchases(purchaseRepository);
+  final purchaseRepository = await _buildPurchaseRepository();
 
   final authCubit = AuthCubit(
     repository: authRepository,
@@ -138,10 +137,9 @@ void main() async {
 
 /// Boots RevenueCat when a key is available for the current platform.
 ///
-/// Unlike Supabase, a missing key is not fatal: every free feature keeps
-/// working and only the paywall is unavailable. Throwing here would brick the
-/// whole app over a subscription config, which is the wrong trade.
-Future<void> _configurePurchases(PurchaseRepository repository) async {
+/// A missing key is not fatal, but it must swap the client out: calling the
+/// unconfigured SDK raises a native error no Dart catch can intercept.
+Future<PurchaseRepository> _buildPurchaseRepository() async {
   final key = Platform.isIOS ? dotenv.env['REVENUECAT_IOS_API_KEY'] : dotenv.env['REVENUECAT_ANDROID_API_KEY'];
 
   if (key == null || key.isEmpty) {
@@ -149,13 +147,16 @@ Future<void> _configurePurchases(PurchaseRepository repository) async {
       'RevenueCat key missing for this platform, purchases are disabled',
       name: 'purchase',
     );
-    return;
+    return PurchaseRepository(DisabledPurchaseClient());
   }
 
+  final repository = PurchaseRepository(RevenueCatPurchaseClient());
   try {
     await repository.configure(key);
+    return repository;
   } catch (e, st) {
     developer.log('RevenueCat setup failed, purchases are disabled', name: 'purchase', error: e, stackTrace: st);
+    return PurchaseRepository(DisabledPurchaseClient());
   }
 }
 

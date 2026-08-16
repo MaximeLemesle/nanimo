@@ -12,6 +12,9 @@ class PurchaseCancelledException implements Exception {
   const PurchaseCancelledException();
 }
 
+const String _unavailableMessage =
+    'Les abonnements ne sont pas disponibles sur cette version de l’application.';
+
 /// Returns the store's view of premium, used to drive the UI right after a
 /// purchase. The authoritative flip is server-side, in `revenuecat-webhook`.
 class PurchaseRepository {
@@ -57,6 +60,8 @@ class PurchaseRepository {
     final Offerings offerings;
     try {
       offerings = await _client.getOfferings();
+    } on PurchasesUnavailableException {
+      throw const RepositoryServerException(_unavailableMessage);
     } catch (e, st) {
       throw mapRepositoryError(e, st,
           operation: 'getOffers',
@@ -99,6 +104,8 @@ class PurchaseRepository {
     try {
       final info = await _client.restorePurchases();
       return _isPremiumActive(info);
+    } on PurchasesUnavailableException {
+      throw const RepositoryServerException(_unavailableMessage);
     } on PlatformException catch (e, st) {
       final code = PurchasesErrorHelper.getErrorCode(e);
       developer.log('restore failed with code $code',
@@ -116,6 +123,8 @@ class PurchaseRepository {
     final Offerings offerings;
     try {
       offerings = await _client.getOfferings();
+    } on PurchasesUnavailableException {
+      throw const RepositoryServerException(_unavailableMessage);
     } catch (e, st) {
       throw mapRepositoryError(e, st,
           operation: 'findPackage',
