@@ -78,19 +78,24 @@ void main() {
   });
 
   group('quota getters', () {
-    test('fail-closed to 3 when config is null', () {
-      const state = SubscriptionState.unknown();
-      expect(state.maxImagesPerEvent, 3);
-      expect(state.maxPets, 1);
+    test('fail-closed to 1 pet when config is null', () {
+      expect(const SubscriptionState.unknown().maxPets, 1);
     });
 
-    test('expose the plan quotas when loaded', () {
-      const free = SubscriptionState.loaded(freeConfig);
-      expect(free.maxImagesPerEvent, 1);
-      expect(free.maxPets, 1);
+    test('expose the plan quota when loaded', () {
+      expect(const SubscriptionState.loaded(freeConfig).maxPets, 1);
+      expect(const SubscriptionState.loaded(premiumConfig).maxPets, 10);
+    });
+  });
 
-      const premium = SubscriptionState.loaded(premiumConfig);
-      expect(premium.maxImagesPerEvent, 5);
+  group('isPremium', () {
+    test('is false while no config is loaded', () {
+      expect(const SubscriptionState.unknown().isPremium, isFalse);
+    });
+
+    test('follows the plan name', () {
+      expect(const SubscriptionState.loaded(freeConfig).isPremium, isFalse);
+      expect(const SubscriptionState.loaded(premiumConfig).isPremium, isTrue);
     });
   });
 

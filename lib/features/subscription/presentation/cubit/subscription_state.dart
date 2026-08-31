@@ -28,8 +28,6 @@ class SubscriptionState extends Equatable {
   /// True if the user can add another image to an event
   bool canAddImageToEvent(int currentImageCount) => config != null && currentImageCount < config!.maxImagesPerEvent;
 
-  int get maxImagesPerEvent => config?.maxImagesPerEvent ?? 3;
-
   int get maxPets => config?.maxPets ?? 1;
 
   @override

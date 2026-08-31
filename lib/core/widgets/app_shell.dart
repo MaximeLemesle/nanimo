@@ -13,6 +13,7 @@ import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_bottom_sheet/add_weight_bottom_sheet_widget.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
+import 'package:nanimo/features/subscription/presentation/quota_upsell.dart';
 
 class AppShell extends StatefulWidget {
   final Widget child;
@@ -109,22 +110,12 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     context.push(RouteNames.createEvent);
   }
 
-  String _petQuotaMessage(SubscriptionState subscription) {
-    if (!subscription.isLoaded) {
-      return 'Impossible de vérifier votre abonnement. Vérifiez votre connexion, puis réessayez.';
-    }
-    if (subscription.isPremium) {
-      return 'Limite de ${subscription.maxPets} animaux atteinte.';
-    }
-    return 'Limite d\'animaux atteinte. Passez Premium pour en ajouter un nouveau.';
-  }
-
   void _onAddPet() {
     _closeCreateMenu();
     final subscription = context.read<SubscriptionCubit>().state;
     final petCount = context.read<PetDetailsCubit>().state.pets.length;
     if (!subscription.canCreatePet(petCount)) {
-      _showSnackBar(_petQuotaMessage(subscription));
+      QuotaUpsell.showPetQuota(context, subscription);
       return;
     }
 

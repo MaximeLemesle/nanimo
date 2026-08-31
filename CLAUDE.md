@@ -18,7 +18,7 @@
 - **Journal** : 2 vues (timeline + calendrier), filtres (animal + type)
 - **Pet Page** : Switch multi-animaux, identité, poids, santé, vaccins, CTA carnet
 - **Carnet de santé** : Récapitulatif complet, vaccins, visites véto, graphique poids, export PDF (premium)
-- **Freemium** : Quotas (1 animal free, 1 photo/souvenir)
+- **Freemium** : Quotas (1 animal free, 1 photo/souvenir) + upsell vers le paywall à chaque limite atteinte
 
 ---
 
@@ -290,6 +290,7 @@ Feature `lib/features/settings/`, route `/home/settings` (push depuis la roue cr
 - Cache Isar (`SubscriptionConfigCache`, indexé unique sur `planName`) → offline-first : la dernière config connue est servie même sans réseau. `SyncService` cache **tous** les plans (table référentielle, 2 lignes, policy `referential_read_config`) : plus d'embedded join PostgREST sur la FK, et un upgrade se résout sans round-trip.
 - Helpers sémantiques sur `SubscriptionState` (`canCreatePet`, `canAddImageToEvent`) ; **fail-closed** si la config est absente. Le stockage a été retiré de l'offre (NAN-059) : plus de `canUseStorage`, plus de `max_storage_in_mb` côté app, l'appliquer aurait supposé de connaître le volume consommé côté serveur pour une unité que personne ne compte. L'accès aux icônes premium ne passe plus par la config (cf. §3 : `is_premium` croisé au `subscription_status` de l'user).
 - Upgrade détecté via `AuthRepository.watchCurrentUser()` : un changement de `planName` déclenche un refresh forcé depuis Supabase.
+- **Upsell au point de blocage (NAN-059)** : `QuotaUpsell` (`features/subscription/presentation/quota_upsell.dart`) rend le message de limite **et** l'action « Passer premium » qui `push` `/paywall`, comme le bouton des Paramètres. Deux call sites : `AppShell._onAddPet` (quota animaux) et `EventPhotoPickerWidget._add` (quota photos). Le message porte la valeur du quota du plan courant ; en premium il n'y a pas d'action, et si la config n'a pas pu être chargée le message dégradé « Impossible de vérifier votre abonnement » est servi sans action. Le plafond photos est évalué par `canAddImageToEvent` (`maxImagesForPlan` sonde slot par slot) et non plus par une lecture directe du quota : conséquence assumée, hors ligne au tout premier lancement la photo est refusée d'emblée au lieu d'être autorisée jusqu'à 3.
 
 ---
 
