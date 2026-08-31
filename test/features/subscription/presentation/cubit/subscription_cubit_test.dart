@@ -23,7 +23,6 @@ const _freemiumConfig = SubscriptionConfigModel(
   planName: 'freemium',
   maxImagesPerEvent: 1,
   maxPets: 1,
-  maxStorageMb: 500,
 );
 
 const _premiumConfig = SubscriptionConfigModel(
@@ -31,7 +30,6 @@ const _premiumConfig = SubscriptionConfigModel(
   planName: 'premium',
   maxImagesPerEvent: 5,
   maxPets: 10,
-  maxStorageMb: 5000,
 );
 
 UserModel _user(user_model.SubscriptionStatus status) => UserModel(

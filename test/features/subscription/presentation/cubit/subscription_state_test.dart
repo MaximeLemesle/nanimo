@@ -8,7 +8,6 @@ void main() {
     planName: 'free',
     maxImagesPerEvent: 1,
     maxPets: 1,
-    maxStorageMb: 500,
   );
 
   const premiumConfig = SubscriptionConfigModel(
@@ -16,7 +15,6 @@ void main() {
     planName: 'premium',
     maxImagesPerEvent: 5,
     maxPets: 10,
-    maxStorageMb: 5000,
   );
 
   group('SubscriptionState factories', () {
@@ -93,18 +91,6 @@ void main() {
 
       const premium = SubscriptionState.loaded(premiumConfig);
       expect(premium.maxImagesPerEvent, 5);
-    });
-  });
-
-  group('canUseStorage', () {
-    test('fail-closed when config is null', () {
-      expect(const SubscriptionState.unknown().canUseStorage(0), isFalse);
-    });
-
-    test('respects the limit', () {
-      const state = SubscriptionState.loaded(freeConfig);
-      expect(state.canUseStorage(499), isTrue);
-      expect(state.canUseStorage(500), isFalse);
     });
   });
 

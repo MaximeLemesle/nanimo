@@ -15,7 +15,6 @@ class _FakeSubscriptionCubit extends Cubit<SubscriptionState>
           planName: 'test',
           maxImagesPerEvent: maxImagesPerEvent,
           maxPets: 1,
-          maxStorageMb: 500,
         )));
 
   @override

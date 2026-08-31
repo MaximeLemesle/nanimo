@@ -9,7 +9,6 @@ void main() {
         'plan_name': 'free',
         'max_images_per_event': 1,
         'max_pets': 1,
-        'max_storage_in_mb': 500,
       };
 
       final model = SubscriptionConfigModel.fromJson(json);
@@ -18,7 +17,6 @@ void main() {
       expect(model.planName, 'free');
       expect(model.maxImagesPerEvent, 1);
       expect(model.maxPets, 1);
-      expect(model.maxStorageMb, 500);
     });
 
     test('accepts integer id_subscription_config (SERIAL PK)', () {
@@ -27,7 +25,6 @@ void main() {
         'plan_name': 'premium',
         'max_images_per_event': 5,
         'max_pets': 10,
-        'max_storage_in_mb': 5000,
       };
 
       final model = SubscriptionConfigModel.fromJson(json);
@@ -45,7 +42,6 @@ void main() {
         planName: 'free',
         maxImagesPerEvent: 1,
         maxPets: 1,
-        maxStorageMb: 500,
       );
 
       final roundTripped = SubscriptionConfigModel.fromJson(original.toJson());
@@ -54,7 +50,6 @@ void main() {
       expect(roundTripped.planName, original.planName);
       expect(roundTripped.maxImagesPerEvent, original.maxImagesPerEvent);
       expect(roundTripped.maxPets, original.maxPets);
-      expect(roundTripped.maxStorageMb, original.maxStorageMb);
     });
   });
 }

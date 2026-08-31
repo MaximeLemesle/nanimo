@@ -33,13 +33,8 @@ const SubscriptionConfigCacheSchema = CollectionSchema(
       name: r'maxPets',
       type: IsarType.long,
     ),
-    r'maxStorageMb': PropertySchema(
-      id: 3,
-      name: r'maxStorageMb',
-      type: IsarType.long,
-    ),
     r'planName': PropertySchema(
-      id: 4,
+      id: 3,
       name: r'planName',
       type: IsarType.string,
     )
@@ -92,8 +87,7 @@ void _subscriptionConfigCacheSerialize(
   writer.writeString(offsets[0], object.configId);
   writer.writeLong(offsets[1], object.maxImagesPerEvent);
   writer.writeLong(offsets[2], object.maxPets);
-  writer.writeLong(offsets[3], object.maxStorageMb);
-  writer.writeString(offsets[4], object.planName);
+  writer.writeString(offsets[3], object.planName);
 }
 
 SubscriptionConfigCache _subscriptionConfigCacheDeserialize(
@@ -107,8 +101,7 @@ SubscriptionConfigCache _subscriptionConfigCacheDeserialize(
   object.id = id;
   object.maxImagesPerEvent = reader.readLong(offsets[1]);
   object.maxPets = reader.readLong(offsets[2]);
-  object.maxStorageMb = reader.readLong(offsets[3]);
-  object.planName = reader.readString(offsets[4]);
+  object.planName = reader.readString(offsets[3]);
   return object;
 }
 
@@ -126,8 +119,6 @@ P _subscriptionConfigCacheDeserializeProp<P>(
     case 2:
       return (reader.readLong(offset)) as P;
     case 3:
-      return (reader.readLong(offset)) as P;
-    case 4:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -642,62 +633,6 @@ extension SubscriptionConfigCacheQueryFilter on QueryBuilder<
   }
 
   QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache,
-      QAfterFilterCondition> maxStorageMbEqualTo(int value) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'maxStorageMb',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache,
-      QAfterFilterCondition> maxStorageMbGreaterThan(
-    int value, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'maxStorageMb',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache,
-      QAfterFilterCondition> maxStorageMbLessThan(
-    int value, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'maxStorageMb',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache,
-      QAfterFilterCondition> maxStorageMbBetween(
-    int lower,
-    int upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'maxStorageMb',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
-    });
-  }
-
-  QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache,
       QAfterFilterCondition> planNameEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -887,20 +822,6 @@ extension SubscriptionConfigCacheQuerySortBy
   }
 
   QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache, QAfterSortBy>
-      sortByMaxStorageMb() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'maxStorageMb', Sort.asc);
-    });
-  }
-
-  QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache, QAfterSortBy>
-      sortByMaxStorageMbDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'maxStorageMb', Sort.desc);
-    });
-  }
-
-  QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache, QAfterSortBy>
       sortByPlanName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'planName', Sort.asc);
@@ -974,20 +895,6 @@ extension SubscriptionConfigCacheQuerySortThenBy on QueryBuilder<
   }
 
   QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache, QAfterSortBy>
-      thenByMaxStorageMb() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'maxStorageMb', Sort.asc);
-    });
-  }
-
-  QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache, QAfterSortBy>
-      thenByMaxStorageMbDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'maxStorageMb', Sort.desc);
-    });
-  }
-
-  QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache, QAfterSortBy>
       thenByPlanName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'planName', Sort.asc);
@@ -1026,13 +933,6 @@ extension SubscriptionConfigCacheQueryWhereDistinct on QueryBuilder<
   }
 
   QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache, QDistinct>
-      distinctByMaxStorageMb() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'maxStorageMb');
-    });
-  }
-
-  QueryBuilder<SubscriptionConfigCache, SubscriptionConfigCache, QDistinct>
       distinctByPlanName({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'planName', caseSensitive: caseSensitive);
@@ -1066,13 +966,6 @@ extension SubscriptionConfigCacheQueryProperty on QueryBuilder<
       maxPetsProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'maxPets');
-    });
-  }
-
-  QueryBuilder<SubscriptionConfigCache, int, QQueryOperations>
-      maxStorageMbProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'maxStorageMb');
     });
   }
 

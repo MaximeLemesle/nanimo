@@ -14,7 +14,6 @@ class SubscriptionConfigCache {
   
   late int maxImagesPerEvent;
   late int maxPets;
-  late int maxStorageMb;
 
   SubscriptionConfigCache();
 
@@ -24,8 +23,7 @@ class SubscriptionConfigCache {
       ..configId = json['id_subscription_config'].toString()
       ..planName = json['plan_name'] as String
       ..maxImagesPerEvent = json['max_images_per_event'] as int
-      ..maxPets = json['max_pets'] as int
-      ..maxStorageMb = json['max_storage_in_mb'] as int;
+      ..maxPets = json['max_pets'] as int;
   }
 
   /// Builds a [SubscriptionConfigCache] from a [SubscriptionConfigModel]
@@ -34,8 +32,7 @@ class SubscriptionConfigCache {
       ..configId = model.configId
       ..planName = model.planName
       ..maxImagesPerEvent = model.maxImagesPerEvent
-      ..maxPets = model.maxPets
-      ..maxStorageMb = model.maxStorageMb;
+      ..maxPets = model.maxPets;
   }
 
   /// Converts this cache row into the domain [SubscriptionConfigModel]
@@ -45,7 +42,6 @@ class SubscriptionConfigCache {
       planName: planName,
       maxImagesPerEvent: maxImagesPerEvent,
       maxPets: maxPets,
-      maxStorageMb: maxStorageMb,
     );
   }
 }
