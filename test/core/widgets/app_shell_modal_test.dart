@@ -25,6 +25,7 @@ import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/settings/data/settings_repository.dart';
 import 'package:nanimo/features/subscription/data/purchase_repository.dart';
+import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 
 class _MockReferentialRepository extends Mock implements ReferentialRepository {}
 
@@ -39,6 +40,16 @@ class _MockAuthRepository extends Mock implements AuthRepository {}
 class _MockSettingsRepository extends Mock implements SettingsRepository {}
 
 class _MockPurchaseRepository extends Mock implements PurchaseRepository {}
+
+/// The create menu reads the plan at build time to mark its premium row, so
+/// the shell no longer boots without a SubscriptionCubit above it.
+class _FakeSubscriptionCubit extends Cubit<SubscriptionState>
+    implements SubscriptionCubit {
+  _FakeSubscriptionCubit() : super(const SubscriptionState.unknown());
+
+  @override
+  void noSuchMethod(Invocation invocation) {}
+}
 
 class _FakeAuthCubit extends Cubit<AuthState> implements AuthCubit {
   _FakeAuthCubit() : super(const AuthState.authenticated());
@@ -99,6 +110,7 @@ void main() {
   late PetCreationCubit petCreationCubit;
   late HomeCubit homeCubit;
   late PetDetailsCubit petDetailsCubit;
+  late _FakeSubscriptionCubit subscriptionCubit;
   late GoRouter router;
 
   setUp(() {
@@ -132,6 +144,7 @@ void main() {
   });
 
   tearDown(() async {
+    await subscriptionCubit.close();
     await petCreationCubit.close();
     await homeCubit.close();
     await petDetailsCubit.close();
@@ -163,6 +176,7 @@ void main() {
       healthRepository: healthRepo,
       referentialRepository: referentialRepo,
     );
+    subscriptionCubit = _FakeSubscriptionCubit();
     router = createRouter(
       authCubit,
       authRepository: authRepo,
@@ -182,6 +196,7 @@ void main() {
           BlocProvider<PetCreationCubit>.value(value: petCreationCubit),
           BlocProvider<HomeCubit>.value(value: homeCubit),
           BlocProvider<PetDetailsCubit>.value(value: petDetailsCubit),
+          BlocProvider<SubscriptionCubit>.value(value: subscriptionCubit),
         ],
         child: MaterialApp.router(routerConfig: router),
       ),

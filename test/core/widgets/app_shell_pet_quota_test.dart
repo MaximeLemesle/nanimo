@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nanimo/config/router/route_names.dart';
+import 'package:nanimo/core/widgets/app_icon_widget.dart';
 import 'package:nanimo/core/widgets/app_shell.dart';
 import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
@@ -10,6 +11,8 @@ import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/subscription/data/models/subscription_config_model.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
+
+import '../../helpers/app_icon_finder.dart';
 
 class _FakeSubscriptionCubit extends Cubit<SubscriptionState>
     implements SubscriptionCubit {
@@ -132,9 +135,13 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Future<void> tapAddPet(WidgetTester tester) async {
+  Future<void> openCreateMenu(WidgetTester tester) async {
     await tester.tap(find.byIcon(Icons.add_rounded));
     await tester.pumpAndSettle();
+  }
+
+  Future<void> tapAddPet(WidgetTester tester) async {
+    await openCreateMenu(tester);
     await tester.tap(find.text('Ajouter un animal'));
     await tester.pumpAndSettle();
   }
@@ -161,12 +168,56 @@ void main() {
       petCount: 1,
     );
 
-    await tapAddPet(tester);
+    await openCreateMenu(tester);
+    expect(findAppIcon(AppIcons.crown), findsOneWidget);
+
+    await tester.tap(find.text('Ajouter un animal'));
+    await tester.pumpAndSettle();
 
     expect(find.text('paywall-stub'), findsOneWidget);
     expect(find.byType(SnackBar), findsNothing);
     expect(find.text('create-pet-stub'), findsNothing);
     expect(onboarding.resetCount, 0);
+  });
+
+  /// NAN-059: the crown announces what only a premium plan lifts, so it is
+  /// hidden from anyone who cannot act on it.
+  testWidgets('under the free quota the pet row carries no crown',
+      (tester) async {
+    await pumpShell(
+      tester,
+      subscriptionState: _plan('freemium', 1),
+      petCount: 0,
+    );
+
+    await openCreateMenu(tester);
+
+    expect(findAppIcon(AppIcons.crown), findsNothing);
+  });
+
+  testWidgets('at the premium quota the pet row carries no crown',
+      (tester) async {
+    await pumpShell(
+      tester,
+      subscriptionState: _plan('premium', 10),
+      petCount: 10,
+    );
+
+    await openCreateMenu(tester);
+
+    expect(findAppIcon(AppIcons.crown), findsNothing);
+  });
+
+  testWidgets('an unloaded plan shows no crown', (tester) async {
+    await pumpShell(
+      tester,
+      subscriptionState: const SubscriptionState.unknown(),
+      petCount: 0,
+    );
+
+    await openCreateMenu(tester);
+
+    expect(findAppIcon(AppIcons.crown), findsNothing);
   });
 
   testWidgets('at the premium quota the message uses it and no paywall opens',

@@ -8,6 +8,26 @@ import 'package:nanimo/core/widgets/bottom_bar_widget/bottom_bar_widget.dart';
 import '../../helpers/app_icon_finder.dart';
 
 void main() {
+  Future<void> pumpMenu(
+    WidgetTester tester, {
+    bool isAddPetPremiumLocked = false,
+    VoidCallback? onAddPet,
+  }) {
+    return tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: BottomBarMenuWidget(
+            isOpen: true,
+            isAddPetPremiumLocked: isAddPetPremiumLocked,
+            onAddWeight: () {},
+            onAddEvent: () {},
+            onAddPet: onAddPet ?? () {},
+          ),
+        ),
+      ),
+    );
+  }
+
   group('BottomBarWidget', () {
     Future<void> pumpBar(
       WidgetTester tester, {
@@ -66,6 +86,18 @@ void main() {
   });
 
   group('AppCreateMenuWidget', () {
+    Color labelColor(WidgetTester tester, String label) =>
+        tester.widget<Text>(find.text(label)).style!.color!;
+
+    Color tileColor(WidgetTester tester, String icon) {
+      final container = tester.widget<Container>(
+        find
+            .ancestor(of: findAppIcon(icon), matching: find.byType(Container))
+            .first,
+      );
+      return (container.decoration! as ShapeDecoration).color!;
+    }
+
     testWidgets('shows the 3 actions and reports taps', (tester) async {
       var weight = false, event = false, pet = false;
       await tester.pumpWidget(
@@ -111,6 +143,62 @@ void main() {
         warnIfMissed: false,
       );
       expect(tapped, isFalse);
+    });
+
+    testWidgets('unlocked, the pet row carries no crown and stays bright',
+        (tester) async {
+      await pumpMenu(tester);
+
+      expect(findAppIcon(AppIcons.crown), findsNothing);
+      expect(labelColor(tester, 'Ajouter un animal'), AppColors.textInvert);
+      expect(tileColor(tester, AppIcons.petPawSolid2), AppColors.backgroundSurface);
+    });
+
+    testWidgets('locked, the pet row carries a crown and reads as disabled',
+        (tester) async {
+      await pumpMenu(tester, isAddPetPremiumLocked: true);
+
+      expect(findAppIcon(AppIcons.crown), findsOneWidget);
+      expect(
+        tester.widget<AppIconWidget>(findAppIcon(AppIcons.crown)).color,
+        AppColors.tertiary300,
+      );
+      expect(labelColor(tester, 'Ajouter un animal'), AppColors.neutral300);
+      expect(tileColor(tester, AppIcons.petPawSolid2), AppColors.neutral700);
+      expect(
+        tester.widget<AppIconWidget>(findAppIcon(AppIcons.petPawSolid2)).color,
+        AppColors.neutral300,
+      );
+    });
+
+    /// NAN-059: the locked row is the conversion path, so it must still fire.
+    testWidgets('locked, tapping the pet row still reports the tap',
+        (tester) async {
+      var pet = false;
+      await pumpMenu(
+        tester,
+        isAddPetPremiumLocked: true,
+        onAddPet: () => pet = true,
+      );
+
+      await tester.tap(find.text('Ajouter un animal'));
+      expect(pet, isTrue);
+    });
+
+    testWidgets('locked, the two other rows keep their appearance',
+        (tester) async {
+      await pumpMenu(tester, isAddPetPremiumLocked: true);
+
+      for (final label in ['Ajouter un nouveau poids', 'Ajouter un évènement']) {
+        expect(labelColor(tester, label), AppColors.textInvert);
+      }
+      for (final icon in [AppIcons.addSquare, AppIcons.addCalendar]) {
+        expect(tileColor(tester, icon), AppColors.backgroundSurface);
+        expect(
+          tester.widget<AppIconWidget>(findAppIcon(icon)).color,
+          AppColors.textPrimary,
+        );
+      }
     });
   });
 }

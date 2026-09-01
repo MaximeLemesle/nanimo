@@ -150,6 +150,25 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       );
   }
 
+  /// Only a free user whose plan is known and already full gets the marker:
+  /// a premium user has nothing to buy, an unknown plan tells us nothing.
+  bool _isAddPetPremiumLocked(SubscriptionState subscription, int petCount) =>
+      QuotaUpsell.offersUpgrade(subscription) && !subscription.canCreatePet(petCount);
+
+  Widget _buildCreateMenu() {
+    return BlocBuilder<SubscriptionCubit, SubscriptionState>(
+      builder: (context, subscription) => BlocBuilder<PetDetailsCubit, PetDetailsState>(
+        builder: (context, petDetails) => BottomBarMenuWidget(
+          isOpen: _isCreateMenuOpen,
+          isAddPetPremiumLocked: _isAddPetPremiumLocked(subscription, petDetails.pets.length),
+          onAddWeight: _onAddWeight,
+          onAddEvent: _onAddEvent,
+          onAddPet: _onAddPet,
+        ),
+      ),
+    );
+  }
+
   Widget _buildScaffold(BuildContext context, int index) {
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -168,12 +187,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
             ),
           Align(
             alignment: Alignment.bottomCenter,
-            child: BottomBarMenuWidget(
-              isOpen: _isCreateMenuOpen,
-              onAddWeight: _onAddWeight,
-              onAddEvent: _onAddEvent,
-              onAddPet: _onAddPet,
-            ),
+            child: _buildCreateMenu(),
           ),
         ],
       ),
