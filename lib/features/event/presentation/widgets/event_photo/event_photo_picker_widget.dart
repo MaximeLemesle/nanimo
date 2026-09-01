@@ -89,7 +89,8 @@ class EventPhotoPickerWidget extends StatelessWidget {
       return;
     }
 
-    final picked = await AddImageBottomSheetWidget.show(context);
+    final picked =
+        await AddImageBottomSheetWidget.show(context, subscription: subscription);
     if (picked == null || picked.isEmpty || !context.mounted) return;
 
     onChanged([
