@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
-import 'package:nanimo/core/widgets/label_widget.dart';
 import 'package:nanimo/features/settings/presentation/widgets/settings_footer_widget.dart';
 import 'package:nanimo/features/settings/presentation/widgets/settings_notification_section_widget.dart';
+import 'package:nanimo/features/settings/presentation/widgets/settings_subscription_section_widget.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
-import 'package:nanimo/core/utils/date_formatter.dart';
-import 'package:nanimo/features/auth/data/models/user_model.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nanimo/features/settings/presentation/cubit/settings_cubit.dart';
 import 'package:nanimo/features/settings/presentation/widgets/settings_edit_name_bottom_sheet_widget.dart';
@@ -22,12 +18,19 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<SettingsCubit, SettingsState>(
-      listenWhen: (previous, current) => previous.errorMessage != current.errorMessage && current.errorMessage != null,
+      listenWhen: (previous, current) =>
+          (previous.errorMessage != current.errorMessage && current.errorMessage != null) ||
+          (previous.restoreResult != current.restoreResult && current.restoreResult != null),
       listener: (context, state) {
+        final message = state.errorMessage ?? state.restoreResult?.message;
+        if (message == null) return;
+
         ScaffoldMessenger.of(context)
           ..clearSnackBars()
-          ..showSnackBar(SnackBar(content: Text(state.errorMessage!)));
-        context.read<SettingsCubit>().clearError();
+          ..showSnackBar(SnackBar(content: Text(message)));
+        context.read<SettingsCubit>()
+          ..clearError()
+          ..clearRestoreResult();
       },
       builder: (context, state) {
         return Scaffold(
@@ -69,32 +72,7 @@ class SettingsPage extends StatelessWidget {
                       value: state.user?.mail ?? '—',
                     ),
                     const SizedBox(height: AppSpacing.xl),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                      child: Text('Abonnement', style: AppTextStyles.title03),
-                    ),
-                    SettingsTileWidget(
-                      title: 'Formule',
-                      value: state.user?.subscriptionStatus != SubscriptionStatus.premium
-                          ? 'Gratuite'
-                          : state.user?.subscriptionExpiresAt == null
-                              ? 'Active'
-                              : 'Jusqu\'au ${DateFormatter.date(state.user!.subscriptionExpiresAt!)}',
-                      trailing: LabelWidget(
-                        label: state.user?.subscriptionStatus == SubscriptionStatus.premium ? 'Premium' : 'Freemium',
-                        backgroundColor: state.user?.subscriptionStatus == SubscriptionStatus.premium
-                            ? AppColors.tertiary100
-                            : AppColors.backgroundStroke,
-                      ),
-                    ),
-                    if (state.user?.subscriptionStatus != SubscriptionStatus.premium) ...[
-                      const SizedBox(height: AppSpacing.md),
-                      ButtonWidget(
-                        label: 'Passer premium',
-                        fullWidth: true,
-                        onPressed: () => context.push(RouteNames.paywall),
-                      ),
-                    ],
+                    SettingsSubscriptionSectionWidget(state: state),
                     const SizedBox(height: AppSpacing.xl),
                     SettingsNotificationSectionWidget(prefs: state.prefs),
                     const SizedBox(height: AppSpacing.xl),

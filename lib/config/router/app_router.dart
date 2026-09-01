@@ -31,6 +31,7 @@ import 'package:nanimo/features/settings/data/settings_repository.dart';
 import 'package:nanimo/features/settings/presentation/cubit/settings_cubit.dart';
 import 'package:nanimo/features/settings/presentation/page/settings_page.dart';
 import 'package:nanimo/features/subscription/data/purchase_repository.dart';
+import 'package:nanimo/features/subscription/data/subscription_restorer.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/paywall_cubit.dart';
 import 'package:nanimo/features/subscription/presentation/page/paywall_page.dart';
 import 'package:nanimo/features/onboarding/presentation/page/onboarding_page.dart';
@@ -211,6 +212,10 @@ GoRouter createRouter(
                     create: (_) => SettingsCubit(
                       authRepository: authRepository,
                       settingsRepository: settingsRepository,
+                      subscriptionRestorer: SubscriptionRestorer(
+                        purchaseRepository: purchaseRepository,
+                        authRepository: authRepository,
+                      ),
                     )..load(),
                     child: const SettingsPage(),
                   ),
