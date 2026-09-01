@@ -121,7 +121,8 @@ void main() {
       (tester) async {
     ImagePickerPlatform.instance = _FakeImagePicker(['/tmp/a.jpg']);
 
-    final images = await pumpPicker(tester, initial: const []);
+    final images =
+        await pumpPicker(tester, initial: const [], planName: 'premium');
 
     await tester.tap(find.byType(PolaroidCollageWidget));
     await tester.pumpAndSettle();
@@ -206,6 +207,22 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(removed, [stored]);
+  });
+
+  /// NAN-059: the plan reaches the picker sheet, which locks the multi pick.
+  testWidgets('locks multi pick in the sheet on the free plan', (tester) async {
+    ImagePickerPlatform.instance = _FakeImagePicker(['/tmp/a.jpg']);
+
+    await pumpPicker(tester, initial: const [], maxImagesPerEvent: 1);
+
+    await tester.tap(find.byType(PolaroidCollageWidget));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.lock_outline), findsOneWidget);
+
+    await tester.tap(find.text('Sélectionner plusieurs photos'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('paywall-stub'), findsOneWidget);
   });
 
   /// Walks the add flow to its refusal: the quota is settled on the add tile,
@@ -300,6 +317,7 @@ void main() {
       tester,
       initial: [LocalCollageImage(XFile('/tmp/a.jpg'))],
       maxImagesPerEvent: 3,
+      planName: 'premium',
     );
 
     await tester.tap(find.byType(PolaroidCollageWidget));
