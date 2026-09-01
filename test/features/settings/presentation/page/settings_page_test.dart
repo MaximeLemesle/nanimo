@@ -9,6 +9,7 @@ import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nanimo/features/settings/data/models/notification_prefs_model.dart';
 import 'package:nanimo/features/settings/presentation/cubit/settings_cubit.dart';
 import 'package:nanimo/features/settings/presentation/page/settings_page.dart';
+import 'package:nanimo/features/settings/presentation/widgets/settings_notification_section_widget.dart';
 
 class _MockSettingsCubit extends Mock implements SettingsCubit {}
 
@@ -114,16 +115,20 @@ void main() {
     expect(find.text('Jusqu\'au 31/12/2026'), findsOneWidget);
   });
 
-  testWidgets('toggling a switch saves the matching pref', (tester) async {
+  testWidgets('notification switches stay off and announce the V2 wiring', (tester) async {
     await pumpPage(tester);
+
+    final beforeTap = tester.widgetList<CupertinoSwitch>(find.byType(CupertinoSwitch));
+    expect(beforeTap.every((s) => s.value == false), isTrue);
 
     /// Second switch is the vaccine reminders one
     await tester.tap(find.byType(CupertinoSwitch).at(1));
     await tester.pump();
 
-    verify(() => settingsCubit.updateNotificationPrefs(
-          const NotificationPrefsModel(vaccineReminders: false),
-        )).called(1);
+    expect(find.text(SettingsNotificationSectionWidget.comingSoonMessage), findsOneWidget);
+    final afterTap = tester.widgetList<CupertinoSwitch>(find.byType(CupertinoSwitch));
+    expect(afterTap.every((s) => s.value == false), isTrue);
+    verifyNever(() => settingsCubit.updateNotificationPrefs(any()));
   });
 
   testWidgets('logout button calls AuthCubit.logout', (tester) async {
