@@ -208,14 +208,12 @@ void main() {
     expect(removed, [stored]);
   });
 
-  /// Walks the add flow to its refusal, which is where the quota message and
-  /// its upsell surface.
+  /// Walks the add flow to its refusal: the quota is settled on the add tile,
+  /// before the picker sheet gets a chance to open.
   Future<void> addPastTheQuota(WidgetTester tester) async {
     await tester.tap(find.byType(PolaroidCollageWidget));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('event-image-grid-add-tile')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Sélectionner plusieurs photos'));
     await tester.pumpAndSettle();
   }
 
@@ -232,11 +230,11 @@ void main() {
     await addPastTheQuota(tester);
 
     expect(pathsOf(images), ['/tmp/a.jpg']);
-    expect(find.textContaining('limité à 1 photo'), findsOneWidget);
+    expect(find.text('Que voulez-vous faire ?'), findsNothing);
   });
 
-  /// NAN-059: the free user hits the cap and the paywall is one tap away.
-  testWidgets('offers the paywall when the free photo quota blocks',
+  /// NAN-059: the free user hits the cap and lands on the paywall itself.
+  testWidgets('opens the paywall when the free photo quota blocks',
       (tester) async {
     ImagePickerPlatform.instance = _FakeImagePicker(['/tmp/b.jpg']);
 
@@ -247,15 +245,12 @@ void main() {
     );
 
     await addPastTheQuota(tester);
-    expect(find.widgetWithText(SnackBarAction, 'Passer premium'), findsOneWidget);
-
-    await tester.tap(find.text('Passer premium'));
-    await tester.pumpAndSettle();
 
     expect(find.text('paywall-stub'), findsOneWidget);
+    expect(find.byType(SnackBar), findsNothing);
   });
 
-  testWidgets('a premium user gets the premium cap and no upsell',
+  testWidgets('a premium user gets the premium cap and no paywall',
       (tester) async {
     ImagePickerPlatform.instance = _FakeImagePicker(['/tmp/f.jpg']);
 
@@ -275,7 +270,7 @@ void main() {
     await addPastTheQuota(tester);
 
     expect(find.textContaining('Limite de 5 photos'), findsOneWidget);
-    expect(find.text('Passer premium'), findsNothing);
+    expect(find.text('paywall-stub'), findsNothing);
   });
 
   testWidgets('keeps the degraded message when the plan is unknown',
@@ -294,7 +289,7 @@ void main() {
       find.textContaining('Impossible de vérifier votre abonnement'),
       findsOneWidget,
     );
-    expect(find.text('Passer premium'), findsNothing);
+    expect(find.text('paywall-stub'), findsNothing);
   });
 
   testWidgets('adds only what the remaining quota allows', (tester) async {
