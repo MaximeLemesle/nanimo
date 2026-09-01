@@ -1,6 +1,5 @@
 import 'dart:developer' as developer;
 
-import 'package:flutter/services.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import 'package:nanimo/core/errors/repository_exception.dart';
@@ -88,14 +87,14 @@ class PurchaseRepository {
     try {
       final info = await _client.purchasePackage(package);
       return _isPremiumActive(info);
-    } on PlatformException catch (e, st) {
-      final code = PurchasesErrorHelper.getErrorCode(e);
-      if (code == PurchasesErrorCode.purchaseCancelledError) {
-        throw const PurchaseCancelledException();
-      }
-      developer.log('purchase failed with code $code',
-          name: 'purchase', error: e, stackTrace: st);
-      throw RepositoryServerException(_messageFor(code));
+    } catch (e, st) {
+      if (isPurchaseCancelled(e)) throw const PurchaseCancelledException();
+      throw mapRepositoryError(e, st,
+          operation: 'purchase',
+          networkMessage:
+              'Une connexion internet est requise pour finaliser l’achat.',
+          serverMessage:
+              'L’achat n’a pas pu aboutir. Aucun montant n’a été débité.');
     }
   }
 
@@ -106,16 +105,12 @@ class PurchaseRepository {
       return _isPremiumActive(info);
     } on PurchasesUnavailableException {
       throw const RepositoryServerException(_unavailableMessage);
-    } on PlatformException catch (e, st) {
-      final code = PurchasesErrorHelper.getErrorCode(e);
-      developer.log('restore failed with code $code',
-          name: 'purchase', error: e, stackTrace: st);
-      throw RepositoryServerException(_messageFor(code));
     } catch (e, st) {
       throw mapRepositoryError(e, st,
           operation: 'restore',
           networkMessage:
-              'Une connexion internet est requise pour restaurer vos achats.');
+              'Une connexion internet est requise pour restaurer vos achats.',
+          serverMessage: 'La restauration n’a pas pu aboutir.');
     }
   }
 
@@ -181,23 +176,6 @@ class PurchaseRepository {
         return count * 365;
       case PeriodUnit.unknown:
         return 0;
-    }
-  }
-
-  String _messageFor(PurchasesErrorCode code) {
-    switch (code) {
-      case PurchasesErrorCode.purchaseNotAllowedError:
-        return 'Les achats sont désactivés sur cet appareil.';
-      case PurchasesErrorCode.paymentPendingError:
-        return 'Votre paiement est en attente de validation. Votre abonnement s’activera dès qu’il sera confirmé.';
-      case PurchasesErrorCode.productAlreadyPurchasedError:
-        return 'Vous possédez déjà cet abonnement. Utilisez « Restaurer mes achats ».';
-      case PurchasesErrorCode.networkError:
-        return 'Une connexion internet est requise pour finaliser l’achat.';
-      case PurchasesErrorCode.storeProblemError:
-        return 'Le store est indisponible pour le moment. Réessayez dans un instant.';
-      default:
-        return 'L’achat n’a pas pu aboutir. Aucun montant n’a été débité.';
     }
   }
 }
