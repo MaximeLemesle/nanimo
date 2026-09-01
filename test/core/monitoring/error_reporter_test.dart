@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/core/monitoring/error_reporter.dart';
 import 'package:nanimo/core/monitoring/monitoring_service.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class _RecordingMonitoringService implements MonitoringService {
@@ -134,6 +136,39 @@ void main() {
       );
 
       expect(reporter.exceptions, hasLength(1));
+    });
+
+    /// The point of NAN-069: Sentry must receive the store failure itself, not
+    /// the network wording the user was shown.
+    test('reports a store failure with its real nature', () {
+      final error = PlatformException(
+        code: '${PurchasesErrorCode.storeProblemError.index}',
+        message: 'STORE_PROBLEM',
+      );
+
+      mapRepositoryError(
+        error,
+        StackTrace.current,
+        operation: 'purchase',
+        networkMessage: 'hors-ligne',
+      );
+
+      expect(reporter.exceptions, [same(error)]);
+      expect(reporter.hints, ['purchase']);
+    });
+
+    test('stays silent when the user cancels a purchase', () {
+      mapRepositoryError(
+        PlatformException(
+          code: '${PurchasesErrorCode.purchaseCancelledError.index}',
+          message: 'PURCHASE_CANCELLED',
+        ),
+        StackTrace.current,
+        operation: 'purchase',
+        networkMessage: 'hors-ligne',
+      );
+
+      expect(reporter.exceptions, isEmpty);
     });
 
     test('leaves a breadcrumb naming the failed operation', () {
