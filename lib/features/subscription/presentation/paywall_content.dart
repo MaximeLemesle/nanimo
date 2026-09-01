@@ -13,18 +13,18 @@ class PaywallBenefit {
 }
 
 const String paywallTitle = 'Nanimo Premium';
-const String paywallTagline = 'Profite de Nanimo à 100% !';
+const String paywallTagline = 'Toute la mémoire de ton animal';
 
 const List<PaywallBenefit> paywallBenefits = [
   PaywallBenefit(
-    icon: Icons.pets_rounded,
-    subtitle: 'Agrandis ta famille',
-    title: 'jusqu’à 10 animaux',
+    icon: Icons.photo_library_rounded,
+    subtitle: '5 photos par souvenir',
+    title: 'aucun instant ne t’échappe',
   ),
   PaywallBenefit(
-    icon: Icons.photo_library_rounded,
-    subtitle: 'Créer des souvenirs',
-    title: 'avec 5 photos',
+    icon: Icons.pets_rounded,
+    subtitle: 'Ta famille peut grandir',
+    title: '10 animaux, un seul journal',
   ),
 ];
 
