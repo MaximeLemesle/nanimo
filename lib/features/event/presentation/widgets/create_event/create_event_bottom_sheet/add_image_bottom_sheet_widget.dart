@@ -1,18 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
+import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
+import 'package:nanimo/features/subscription/presentation/quota_upsell.dart';
+
+const String multipleImagesLabel = 'Sélectionner plusieurs photos';
 
 class AddImageBottomSheetWidget extends StatelessWidget {
-  const AddImageBottomSheetWidget({super.key});
+  /// Read, never mutated: only the plan decides whether the multi pick is
+  /// offered, and the sheet is short-lived enough to take a snapshot.
+  final SubscriptionState subscription;
 
-  static Future<List<XFile>?> show(BuildContext context) {
+  const AddImageBottomSheetWidget({super.key, required this.subscription});
+
+  static Future<List<XFile>?> show(
+    BuildContext context, {
+    required SubscriptionState subscription,
+  }) {
     return BottomSheetWidget.show<List<XFile>>(
       context,
-      const AddImageBottomSheetWidget(),
+      AddImageBottomSheetWidget(subscription: subscription),
     );
   }
 
@@ -28,6 +41,31 @@ class AddImageBottomSheetWidget extends StatelessWidget {
     final images = await picker.pickMultiImage();
     if (!context.mounted) return;
     Navigator.of(context).pop(images);
+  }
+
+  /// One photo per souvenir on the free plan makes a multi pick pointless, so
+  /// the row is locked rather than hidden. The sheet closes first: the paywall
+  /// and the fallback message both belong above it, not behind it.
+  Future<void> _onMultipleTap(BuildContext context) async {
+    if (subscription.isPremium) {
+      await _pickMultiple(context);
+      return;
+    }
+
+    final router = GoRouter.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final offersUpgrade = QuotaUpsell.offersUpgrade(subscription);
+    Navigator.of(context).pop();
+
+    if (offersUpgrade) {
+      router.push(RouteNames.paywall);
+      return;
+    }
+    messenger
+      ..clearSnackBars()
+      ..showSnackBar(
+        const SnackBar(content: Text(subscriptionUnavailableMessage)),
+      );
   }
 
   @override
@@ -47,8 +85,9 @@ class AddImageBottomSheetWidget extends StatelessWidget {
         ),
         _ActionRow(
           icon: Icons.collections_outlined,
-          label: 'Sélectionner plusieurs photos',
-          onTap: () => _pickMultiple(context),
+          label: multipleImagesLabel,
+          enabled: subscription.isPremium,
+          onTap: () => _onMultipleTap(context),
         ),
       ],
     );
@@ -60,14 +99,20 @@ class _ActionRow extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
 
+  /// A disabled row stays tappable: the tap is what opens the paywall.
+  final bool enabled;
+
   const _ActionRow({
     required this.icon,
     required this.label,
     required this.onTap,
+    this.enabled = true,
   });
 
   @override
   Widget build(BuildContext context) {
+    final foreground = enabled ? AppColors.primary : AppColors.textSecondary;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: InkWell(
@@ -86,15 +131,37 @@ class _ActionRow extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: AppColors.primary50,
+                  color: enabled
+                      ? AppColors.primary50
+                      : AppColors.backgroundStroke,
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
-                child: Icon(icon, color: AppColors.primary, size: 22),
+                child: Icon(icon, color: foreground, size: 22),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
-                child: Text(label, style: AppTextStyles.text),
+                child: Text(
+                  label,
+                  style: enabled
+                      ? AppTextStyles.text
+                      : AppTextStyles.text
+                          .copyWith(color: AppColors.textSecondary),
+                ),
               ),
+              if (!enabled) ...[
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  'Premium',
+                  style: AppTextStyles.textSmallBold
+                      .copyWith(color: AppColors.primary),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                const Icon(
+                  Icons.lock_outline,
+                  color: AppColors.primary,
+                  size: 16,
+                ),
+              ],
             ],
           ),
         ),

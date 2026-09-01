@@ -33,10 +33,10 @@ class _MockPetRepository extends Mock implements PetRepository {}
 
 class _FakeSubscriptionCubit extends Cubit<SubscriptionState>
     implements SubscriptionCubit {
-  _FakeSubscriptionCubit(int maxImagesPerEvent)
+  _FakeSubscriptionCubit(int maxImagesPerEvent, String planName)
       : super(SubscriptionState.loaded(SubscriptionConfigModel(
           configId: 'cfg',
-          planName: 'test',
+          planName: planName,
           maxImagesPerEvent: maxImagesPerEvent,
           maxPets: 1,
         )));
@@ -133,6 +133,7 @@ void main() {
   Future<EventCreationCubit> pumpPage(
     WidgetTester tester, {
     int maxImagesPerEvent = 5,
+    String planName = 'freemium',
     DateTime? initialEntryDate,
   }) async {
     await tester.binding.setSurfaceSize(const Size(1080, 2400));
@@ -140,7 +141,8 @@ void main() {
 
     final cubit = buildCubit()..load();
     addTearDown(cubit.close);
-    final subscriptionCubit = _FakeSubscriptionCubit(maxImagesPerEvent);
+    final subscriptionCubit =
+        _FakeSubscriptionCubit(maxImagesPerEvent, planName);
     addTearDown(subscriptionCubit.close);
 
     final router = GoRouter(
@@ -334,13 +336,16 @@ void main() {
       when(() => eventRepo.addImage(any())).thenAnswer((_) async {});
     });
 
-    testWidgets('a free plan (max 1) keeps only one of several picked photos',
+    /// NAN-059: the multi pick is locked on the free plan, so a free souvenir
+    /// gets its single photo one at a time.
+    testWidgets('a free plan (max 1) uploads the one photo it picked',
         (tester) async {
       await pumpPage(tester, maxImagesPerEvent: 1);
 
       await tester.tap(find.byType(PolaroidCollageWidget));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Sélectionner plusieurs photos'));
+      expect(find.byIcon(Icons.lock_outline), findsOneWidget);
+      await tester.tap(find.text('Sélectionner une photo'));
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byType(TextField).first, 'Balade');
@@ -348,13 +353,12 @@ void main() {
       await tester.tap(find.text('Enregistrer'));
       await tester.pumpAndSettle();
 
-      // Three photos offered, but the free plan uploads only one.
       verify(() => eventRepo.uploadEventImage(any(), any())).called(1);
     });
 
     testWidgets('a premium plan (max 5) keeps every picked photo',
         (tester) async {
-      await pumpPage(tester, maxImagesPerEvent: 5);
+      await pumpPage(tester, maxImagesPerEvent: 5, planName: 'premium');
 
       await tester.tap(find.byType(PolaroidCollageWidget));
       await tester.pumpAndSettle();
