@@ -152,8 +152,8 @@ void main() {
     expect(find.text('create-pet-stub'), findsOneWidget);
   });
 
-  /// NAN-059: the wall now has a door.
-  testWidgets('at the free quota the message states it and offers the paywall',
+  /// NAN-059: the free quota is the paywall's door, with no snack bar in between.
+  testWidgets('at the free quota the paywall opens straight away',
       (tester) async {
     await pumpShell(
       tester,
@@ -163,17 +163,13 @@ void main() {
 
     await tapAddPet(tester);
 
-    expect(find.textContaining('limité à 1 animal'), findsOneWidget);
-    expect(find.widgetWithText(SnackBarAction, 'Passer premium'), findsOneWidget);
-    expect(find.text('create-pet-stub'), findsNothing);
-
-    await tester.tap(find.text('Passer premium'));
-    await tester.pumpAndSettle();
-
     expect(find.text('paywall-stub'), findsOneWidget);
+    expect(find.byType(SnackBar), findsNothing);
+    expect(find.text('create-pet-stub'), findsNothing);
+    expect(onboarding.resetCount, 0);
   });
 
-  testWidgets('at the premium quota the message uses it and offers no upsell',
+  testWidgets('at the premium quota the message uses it and no paywall opens',
       (tester) async {
     await pumpShell(
       tester,
@@ -184,7 +180,7 @@ void main() {
     await tapAddPet(tester);
 
     expect(find.textContaining('Limite de 10 animaux'), findsOneWidget);
-    expect(find.text('Passer premium'), findsNothing);
+    expect(find.text('paywall-stub'), findsNothing);
   });
 
   testWidgets('an unloaded plan keeps the degraded message', (tester) async {
@@ -200,6 +196,6 @@ void main() {
       find.textContaining('Impossible de vérifier votre abonnement'),
       findsOneWidget,
     );
-    expect(find.text('Passer premium'), findsNothing);
+    expect(find.text('paywall-stub'), findsNothing);
   });
 }

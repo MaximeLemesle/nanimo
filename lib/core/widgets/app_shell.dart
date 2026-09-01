@@ -115,7 +115,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     final subscription = context.read<SubscriptionCubit>().state;
     final petCount = context.read<PetDetailsCubit>().state.pets.length;
     if (!subscription.canCreatePet(petCount)) {
-      QuotaUpsell.showPetQuota(context, subscription);
+      QuotaUpsell.petQuotaReached(context, subscription);
       return;
     }
 

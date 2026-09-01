@@ -78,18 +78,22 @@ class EventPhotoPickerWidget extends StatelessWidget {
     }
   }
 
+  /// The quota is settled before the picker opens: a blocked free user goes to
+  /// the paywall rather than choosing photos the app would then throw away.
   Future<void> _add(BuildContext context) async {
     final subscription = context.read<SubscriptionCubit>().state;
     final maxImages = maxImagesForPlan(subscription);
-
-    final picked = await AddImageBottomSheetWidget.show(context);
-    if (picked == null || picked.isEmpty || !context.mounted) return;
-
     final remaining = maxImages - images.length;
     if (remaining <= 0) {
-      QuotaUpsell.showEventImageQuota(context, subscription, maxImages);
+      QuotaUpsell.eventImageQuotaReached(context, subscription, maxImages);
       return;
     }
+
+    final picked = await AddImageBottomSheetWidget.show(
+      context,
+      subscription: subscription,
+    );
+    if (picked == null || picked.isEmpty || !context.mounted) return;
 
     onChanged([
       ...images,

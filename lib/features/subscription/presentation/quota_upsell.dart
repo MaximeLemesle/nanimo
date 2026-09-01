@@ -8,14 +8,14 @@ import 'package:nanimo/features/subscription/presentation/cubit/subscription_cub
 const String subscriptionUnavailableMessage =
     'Impossible de vérifier votre abonnement. Vérifiez votre connexion, puis réessayez.';
 
-const String upgradeActionLabel = 'Passer premium';
-
-/// Tells the user which plan limit blocked the gesture, and opens the paywall
-/// from that same spot when going premium is what lifts it.
+/// Single passage point for a plan limit that blocks a gesture: a free user is
+/// taken straight to the paywall, anyone else is only told what capped them.
 class QuotaUpsell {
   const QuotaUpsell._();
 
-  static bool _offersUpgrade(SubscriptionState subscription) =>
+  /// True only when going premium is what lifts the block, which is also the
+  /// only case where pushing the paywall makes sense.
+  static bool offersUpgrade(SubscriptionState subscription) =>
       subscription.isLoaded && !subscription.isPremium;
 
   static String petMessage(SubscriptionState subscription) {
@@ -23,9 +23,7 @@ class QuotaUpsell {
 
     final max = subscription.maxPets;
     final pets = max > 1 ? 'animaux' : 'animal';
-    if (subscription.isPremium) return 'Limite de $max $pets atteinte.';
-    return 'Ton plan gratuit est limité à $max $pets. '
-        'Passe premium pour agrandir ta famille.';
+    return 'Limite de $max $pets atteinte.';
   }
 
   static String eventImageMessage(
@@ -35,54 +33,41 @@ class QuotaUpsell {
     if (!subscription.isLoaded) return subscriptionUnavailableMessage;
 
     final photos = maxImages > 1 ? 'photos' : 'photo';
-    if (subscription.isPremium) {
-      return 'Limite de $maxImages $photos par souvenir atteinte.';
-    }
-    return 'Ton plan gratuit est limité à $maxImages $photos par souvenir. '
-        'Passe premium pour en ajouter plus.';
+    return 'Limite de $maxImages $photos par souvenir atteinte.';
   }
 
-  static void showPetQuota(
+  static void petQuotaReached(
     BuildContext context,
     SubscriptionState subscription,
   ) =>
-      show(
-        context,
-        message: petMessage(subscription),
-        withUpgrade: _offersUpgrade(subscription),
-      );
+      _block(context, subscription, petMessage(subscription));
 
-  static void showEventImageQuota(
+  static void eventImageQuotaReached(
     BuildContext context,
     SubscriptionState subscription,
     int maxImages,
   ) =>
-      show(
-        context,
-        message: eventImageMessage(subscription, maxImages),
-        withUpgrade: _offersUpgrade(subscription),
-      );
+      _block(context, subscription, eventImageMessage(subscription, maxImages));
 
-  /// The router is resolved now, not in the callback: the snack bar outlives
-  /// the widget that raised it, and `/paywall` sits on the root navigator.
-  static void show(
-    BuildContext context, {
-    required String message,
-    required bool withUpgrade,
-  }) {
-    final router = GoRouter.of(context);
+  static void _block(
+    BuildContext context,
+    SubscriptionState subscription,
+    String message,
+  ) {
+    if (offersUpgrade(subscription)) {
+      _openPaywall(context);
+      return;
+    }
+    _showMessage(context, message);
+  }
+
+  /// `/paywall` sits on the root navigator, above whatever raised the block.
+  static void _openPaywall(BuildContext context) =>
+      GoRouter.of(context).push(RouteNames.paywall);
+
+  static void _showMessage(BuildContext context, String message) {
     ScaffoldMessenger.of(context)
       ..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(message),
-          action: withUpgrade
-              ? SnackBarAction(
-                  label: upgradeActionLabel,
-                  onPressed: () => router.push(RouteNames.paywall),
-                )
-              : null,
-        ),
-      );
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 }

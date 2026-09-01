@@ -18,14 +18,24 @@ void main() {
     maxPets: 10,
   ));
 
+  group('offersUpgrade', () {
+    test('only a loaded free plan can be lifted by going premium', () {
+      expect(QuotaUpsell.offersUpgrade(freePlan), isTrue);
+      expect(QuotaUpsell.offersUpgrade(premiumPlan), isFalse);
+      expect(
+        QuotaUpsell.offersUpgrade(const SubscriptionState.unknown()),
+        isFalse,
+      );
+    });
+  });
+
   group('petMessage', () {
-    test('names the free limit and points at premium', () {
-      expect(QuotaUpsell.petMessage(freePlan), contains('limité à 1 animal'));
-      expect(QuotaUpsell.petMessage(freePlan), contains('Passe premium'));
+    test('uses the premium quota', () {
+      expect(QuotaUpsell.petMessage(premiumPlan), 'Limite de 10 animaux atteinte.');
     });
 
-    test('uses the premium quota and drops the upsell', () {
-      expect(QuotaUpsell.petMessage(premiumPlan), 'Limite de 10 animaux atteinte.');
+    test('singularises the quota', () {
+      expect(QuotaUpsell.petMessage(freePlan), 'Limite de 1 animal atteinte.');
     });
 
     test('falls back to the degraded message when nothing is loaded', () {
@@ -37,16 +47,17 @@ void main() {
   });
 
   group('eventImageMessage', () {
-    test('names the free limit and points at premium', () {
-      final message = QuotaUpsell.eventImageMessage(freePlan, 1);
-      expect(message, contains('limité à 1 photo par souvenir'));
-      expect(message, contains('Passe premium'));
-    });
-
-    test('uses the premium quota and drops the upsell', () {
+    test('uses the premium quota', () {
       expect(
         QuotaUpsell.eventImageMessage(premiumPlan, 5),
         'Limite de 5 photos par souvenir atteinte.',
+      );
+    });
+
+    test('singularises the quota', () {
+      expect(
+        QuotaUpsell.eventImageMessage(freePlan, 1),
+        'Limite de 1 photo par souvenir atteinte.',
       );
     });
 
