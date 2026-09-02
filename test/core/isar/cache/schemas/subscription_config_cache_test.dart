@@ -10,7 +10,6 @@ void main() {
         'plan_name': 'free',
         'max_images_per_event': 1,
         'max_pets': 1,
-        'max_storage_in_mb': 500,
       };
 
       final cache = SubscriptionConfigCache.fromJson(json);
@@ -19,7 +18,6 @@ void main() {
       expect(cache.planName, 'free');
       expect(cache.maxImagesPerEvent, 1);
       expect(cache.maxPets, 1);
-      expect(cache.maxStorageMb, 500);
     });
 
     test('accepts integer id_subscription_config (SERIAL PK)', () {
@@ -28,7 +26,6 @@ void main() {
         'plan_name': 'premium',
         'max_images_per_event': 5,
         'max_pets': 10,
-        'max_storage_in_mb': 5000,
       };
 
       final cache = SubscriptionConfigCache.fromJson(json);
@@ -44,7 +41,6 @@ void main() {
         planName: 'premium',
         maxImagesPerEvent: 5,
         maxPets: 10,
-        maxStorageMb: 5000,
       );
 
       final back = SubscriptionConfigCache.fromModel(model).toModel();
@@ -53,7 +49,6 @@ void main() {
       expect(back.planName, model.planName);
       expect(back.maxImagesPerEvent, model.maxImagesPerEvent);
       expect(back.maxPets, model.maxPets);
-      expect(back.maxStorageMb, model.maxStorageMb);
     });
   });
 }

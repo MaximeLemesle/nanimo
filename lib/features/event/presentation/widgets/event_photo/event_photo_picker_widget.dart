@@ -5,6 +5,7 @@ import 'package:nanimo/features/event/presentation/widgets/create_event/create_e
 import 'package:nanimo/features/event/presentation/widgets/create_event/polaroid_collage_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/event_photo/event_image_bottom_sheet_widget.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
+import 'package:nanimo/features/subscription/presentation/quota_upsell.dart';
 
 /// Photo picking for a souvenir: the polaroid collage, the grid and per-photo
 /// action sheets, and the plan quota gating how many photos fit. Shared by the
@@ -32,23 +33,16 @@ class EventPhotoPickerWidget extends StatelessWidget {
     this.onRemoteImageRemoved,
   });
 
-  /// Photos allowed for this event: the plan quota, capped by the collage max.
-  static int maxImagesFor(BuildContext context) {
-    final quota = context.read<SubscriptionCubit>().state.maxImagesPerEvent;
-    return quota < PolaroidCollageWidget.maxImages
-        ? quota
-        : PolaroidCollageWidget.maxImages;
-  }
-
-  static String _quotaMessage(SubscriptionState subscription, int maxImages) {
-    if (!subscription.isLoaded) {
-      return 'Impossible de vérifier votre abonnement. Vérifiez votre connexion, puis réessayez.';
+  /// Photos allowed for this event: the plan quota, probed one slot at a time
+  /// through [SubscriptionState.canAddImageToEvent] so the helper stays the
+  /// single authority, capped by what the collage can lay out.
+  static int maxImagesForPlan(SubscriptionState subscription) {
+    var max = 0;
+    while (max < PolaroidCollageWidget.maxImages &&
+        subscription.canAddImageToEvent(max)) {
+      max++;
     }
-    if (!subscription.isPremium) {
-      return 'Le plan gratuit est limité à $maxImages photo${maxImages > 1 ? 's' : ''} par souvenir. '
-          'Passez au premium pour en ajouter plus.';
-    }
-    return 'Vous pouvez ajouter $maxImages photos maximum.';
+    return max;
   }
 
   @override
@@ -84,23 +78,20 @@ class EventPhotoPickerWidget extends StatelessWidget {
     }
   }
 
+  /// The quota is settled before the picker opens: a blocked free user goes to
+  /// the paywall rather than choosing photos the app would then throw away.
   Future<void> _add(BuildContext context) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final maxImages = maxImagesFor(context);
     final subscription = context.read<SubscriptionCubit>().state;
-
-    final picked = await AddImageBottomSheetWidget.show(context);
-    if (picked == null || picked.isEmpty || !context.mounted) return;
-
+    final maxImages = maxImagesForPlan(subscription);
     final remaining = maxImages - images.length;
     if (remaining <= 0) {
-      messenger
-        ..clearSnackBars()
-        ..showSnackBar(
-          SnackBar(content: Text(_quotaMessage(subscription, maxImages))),
-        );
+      QuotaUpsell.eventImageQuotaReached(context, subscription, maxImages);
       return;
     }
+
+    final picked =
+        await AddImageBottomSheetWidget.show(context, subscription: subscription);
+    if (picked == null || picked.isEmpty || !context.mounted) return;
 
     onChanged([
       ...images,

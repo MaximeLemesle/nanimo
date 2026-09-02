@@ -105,14 +105,12 @@ void main() {
               'plan_name': 'freemium',
               'max_images_per_event': 1,
               'max_pets': 1,
-              'max_storage_in_mb': 500,
             },
             {
               'id_subscription_config': 'cfg-premium',
               'plan_name': 'premium',
               'max_images_per_event': 5,
               'max_pets': 10,
-              'max_storage_in_mb': 5000,
             },
           ]);
       stubSelect(supabase, 'pets', resolver: () => [

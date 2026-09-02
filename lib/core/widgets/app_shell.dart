@@ -13,6 +13,7 @@ import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_bottom_sheet/add_weight_bottom_sheet_widget.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
+import 'package:nanimo/features/subscription/presentation/quota_upsell.dart';
 
 class AppShell extends StatefulWidget {
   final Widget child;
@@ -109,22 +110,12 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     context.push(RouteNames.createEvent);
   }
 
-  String _petQuotaMessage(SubscriptionState subscription) {
-    if (!subscription.isLoaded) {
-      return 'Impossible de vérifier votre abonnement. Vérifiez votre connexion, puis réessayez.';
-    }
-    if (subscription.isPremium) {
-      return 'Limite de ${subscription.maxPets} animaux atteinte.';
-    }
-    return 'Limite d\'animaux atteinte. Passez Premium pour en ajouter un nouveau.';
-  }
-
   void _onAddPet() {
     _closeCreateMenu();
     final subscription = context.read<SubscriptionCubit>().state;
     final petCount = context.read<PetDetailsCubit>().state.pets.length;
     if (!subscription.canCreatePet(petCount)) {
-      _showSnackBar(_petQuotaMessage(subscription));
+      QuotaUpsell.petQuotaReached(context, subscription);
       return;
     }
 
@@ -159,6 +150,25 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       );
   }
 
+  /// Only a free user whose plan is known and already full gets the marker:
+  /// a premium user has nothing to buy, an unknown plan tells us nothing.
+  bool _isAddPetPremiumLocked(SubscriptionState subscription, int petCount) =>
+      QuotaUpsell.offersUpgrade(subscription) && !subscription.canCreatePet(petCount);
+
+  Widget _buildCreateMenu() {
+    return BlocBuilder<SubscriptionCubit, SubscriptionState>(
+      builder: (context, subscription) => BlocBuilder<PetDetailsCubit, PetDetailsState>(
+        builder: (context, petDetails) => BottomBarMenuWidget(
+          isOpen: _isCreateMenuOpen,
+          isAddPetPremiumLocked: _isAddPetPremiumLocked(subscription, petDetails.pets.length),
+          onAddWeight: _onAddWeight,
+          onAddEvent: _onAddEvent,
+          onAddPet: _onAddPet,
+        ),
+      ),
+    );
+  }
+
   Widget _buildScaffold(BuildContext context, int index) {
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -177,12 +187,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
             ),
           Align(
             alignment: Alignment.bottomCenter,
-            child: BottomBarMenuWidget(
-              isOpen: _isCreateMenuOpen,
-              onAddWeight: _onAddWeight,
-              onAddEvent: _onAddEvent,
-              onAddPet: _onAddPet,
-            ),
+            child: _buildCreateMenu(),
           ),
         ],
       ),

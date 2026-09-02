@@ -1,22 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
+import 'package:nanimo/config/router/route_names.dart';
+import 'package:nanimo/core/widgets/app_icon_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/polaroid_collage_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/event_photo/event_photo_picker_widget.dart';
 import 'package:nanimo/features/subscription/data/models/subscription_config_model.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 
-class _FakeSubscriptionCubit extends Cubit<SubscriptionState>
-    implements SubscriptionCubit {
-  _FakeSubscriptionCubit(int maxImagesPerEvent)
+import '../../../../helpers/app_icon_finder.dart';
+
+class _FakeSubscriptionCubit extends Cubit<SubscriptionState> implements SubscriptionCubit {
+  _FakeSubscriptionCubit(int maxImagesPerEvent, {String planName = 'freemium'})
       : super(SubscriptionState.loaded(SubscriptionConfigModel(
           configId: 'cfg',
-          planName: 'test',
+          planName: planName,
           maxImagesPerEvent: maxImagesPerEvent,
           maxPets: 1,
-          maxStorageMb: 500,
         )));
+
+  _FakeSubscriptionCubit.unloaded() : super(const SubscriptionState.unknown());
 
   @override
   void noSuchMethod(Invocation invocation) {}
@@ -54,6 +59,8 @@ void main() {
     WidgetTester tester, {
     required List<CollageImage> initial,
     int maxImagesPerEvent = 5,
+    String planName = 'freemium',
+    bool subscriptionLoaded = true,
     void Function(RemoteCollageImage)? onRemoteImageRemoved,
     Future<String> Function(String assetPath)? urlResolver,
   }) async {
@@ -61,14 +68,17 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final images = List.of(initial);
-    final subscription = _FakeSubscriptionCubit(maxImagesPerEvent);
+    final subscription =
+        subscriptionLoaded ? _FakeSubscriptionCubit(maxImagesPerEvent, planName: planName) : _FakeSubscriptionCubit.unloaded();
     addTearDown(subscription.close);
 
-    await tester.pumpWidget(
-      BlocProvider<SubscriptionCubit>.value(
-        value: subscription,
-        child: MaterialApp(
-          home: Scaffold(
+    /// Behind a router: the quota snack bar carries a shortcut to /paywall.
+    final router = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, __) => Scaffold(
             body: StatefulBuilder(
               builder: (context, setState) => EventPhotoPickerWidget(
                 images: images,
@@ -83,6 +93,18 @@ void main() {
             ),
           ),
         ),
+        GoRoute(
+          path: RouteNames.paywall,
+          builder: (_, __) => const Scaffold(body: Text('paywall-stub')),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      BlocProvider<SubscriptionCubit>.value(
+        value: subscription,
+        child: MaterialApp.router(routerConfig: router),
       ),
     );
     await tester.pumpAndSettle();
@@ -96,11 +118,10 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('goes straight to the picker while no photo is held',
-      (tester) async {
+  testWidgets('goes straight to the picker while no photo is held', (tester) async {
     ImagePickerPlatform.instance = _FakeImagePicker(['/tmp/a.jpg']);
 
-    final images = await pumpPicker(tester, initial: const []);
+    final images = await pumpPicker(tester, initial: const [], planName: 'premium');
 
     await tester.tap(find.byType(PolaroidCollageWidget));
     await tester.pumpAndSettle();
@@ -135,8 +156,7 @@ void main() {
     expect(pathsOf(images), ['/tmp/a.jpg', '/tmp/new.jpg', '/tmp/c.jpg']);
   });
 
-  testWidgets('replacing keeps the photo count, so the quota still holds',
-      (tester) async {
+  testWidgets('replacing keeps the photo count, so the quota still holds', (tester) async {
     ImagePickerPlatform.instance = _FakeImagePicker(['/tmp/new.jpg']);
 
     final images = await pumpPicker(
@@ -187,9 +207,33 @@ void main() {
     expect(removed, [stored]);
   });
 
+  /// NAN-059: the plan reaches the picker sheet, which locks the multi pick.
+  testWidgets('locks multi pick in the sheet on the free plan', (tester) async {
+    ImagePickerPlatform.instance = _FakeImagePicker(['/tmp/a.jpg']);
+
+    await pumpPicker(tester, initial: const [], maxImagesPerEvent: 1);
+
+    await tester.tap(find.byType(PolaroidCollageWidget));
+    await tester.pumpAndSettle();
+    expect(findAppIcon(AppIcons.crown), findsOneWidget);
+
+    await tester.tap(find.text('Sélectionner plusieurs photos'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('paywall-stub'), findsOneWidget);
+  });
+
+  /// Walks the add flow to its refusal: the quota is settled on the add tile,
+  /// before the picker sheet gets a chance to open.
+  Future<void> addPastTheQuota(WidgetTester tester) async {
+    await tester.tap(find.byType(PolaroidCollageWidget));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('event-image-grid-add-tile')));
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('refuses to add past the plan quota', (tester) async {
-    ImagePickerPlatform.instance =
-        _FakeImagePicker(['/tmp/b.jpg', '/tmp/c.jpg']);
+    ImagePickerPlatform.instance = _FakeImagePicker(['/tmp/b.jpg', '/tmp/c.jpg']);
 
     final images = await pumpPicker(
       tester,
@@ -197,25 +241,76 @@ void main() {
       maxImagesPerEvent: 1,
     );
 
-    await tester.tap(find.byType(PolaroidCollageWidget));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('event-image-grid-add-tile')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Sélectionner plusieurs photos'));
-    await tester.pumpAndSettle();
+    await addPastTheQuota(tester);
 
     expect(pathsOf(images), ['/tmp/a.jpg']);
-    expect(find.textContaining('limité à 1 photo'), findsOneWidget);
+    expect(find.text('Que voulez-vous faire ?'), findsNothing);
+  });
+
+  /// NAN-059: the free user hits the cap and lands on the paywall itself.
+  testWidgets('opens the paywall when the free photo quota blocks', (tester) async {
+    ImagePickerPlatform.instance = _FakeImagePicker(['/tmp/b.jpg']);
+
+    await pumpPicker(
+      tester,
+      initial: [LocalCollageImage(XFile('/tmp/a.jpg'))],
+      maxImagesPerEvent: 1,
+    );
+
+    await addPastTheQuota(tester);
+
+    expect(find.text('paywall-stub'), findsOneWidget);
+    expect(find.byType(SnackBar), findsNothing);
+  });
+
+  testWidgets('a premium user gets the premium cap and no paywall', (tester) async {
+    ImagePickerPlatform.instance = _FakeImagePicker(['/tmp/f.jpg']);
+
+    await pumpPicker(
+      tester,
+      initial: [
+        LocalCollageImage(XFile('/tmp/a.jpg')),
+        LocalCollageImage(XFile('/tmp/b.jpg')),
+        LocalCollageImage(XFile('/tmp/c.jpg')),
+        LocalCollageImage(XFile('/tmp/d.jpg')),
+        LocalCollageImage(XFile('/tmp/e.jpg')),
+      ],
+      maxImagesPerEvent: 5,
+      planName: 'premium',
+    );
+
+    await addPastTheQuota(tester);
+
+    expect(find.textContaining('Limite de 5 photos'), findsOneWidget);
+    expect(find.text('paywall-stub'), findsNothing);
+  });
+
+  testWidgets('keeps the degraded message when the plan is unknown', (tester) async {
+    ImagePickerPlatform.instance = _FakeImagePicker(['/tmp/b.jpg']);
+
+    await pumpPicker(
+      tester,
+      initial: [LocalCollageImage(XFile('/tmp/a.jpg'))],
+      subscriptionLoaded: false,
+    );
+
+    await addPastTheQuota(tester);
+
+    expect(
+      find.textContaining('Impossible de vérifier votre abonnement'),
+      findsOneWidget,
+    );
+    expect(find.text('paywall-stub'), findsNothing);
   });
 
   testWidgets('adds only what the remaining quota allows', (tester) async {
-    ImagePickerPlatform.instance =
-        _FakeImagePicker(['/tmp/b.jpg', '/tmp/c.jpg', '/tmp/d.jpg']);
+    ImagePickerPlatform.instance = _FakeImagePicker(['/tmp/b.jpg', '/tmp/c.jpg', '/tmp/d.jpg']);
 
     final images = await pumpPicker(
       tester,
       initial: [LocalCollageImage(XFile('/tmp/a.jpg'))],
       maxImagesPerEvent: 3,
+      planName: 'premium',
     );
 
     await tester.tap(find.byType(PolaroidCollageWidget));

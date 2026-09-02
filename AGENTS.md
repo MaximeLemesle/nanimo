@@ -18,7 +18,7 @@
 - **Journal** : 2 vues (timeline + calendrier), filtres (animal + type)
 - **Pet Page** : Switch multi-animaux, identité, poids, santé, vaccins, CTA carnet
 - **Carnet de santé** : Récapitulatif complet, vaccins, visites véto, graphique poids, export PDF (premium)
-- **Freemium** : Quotas (1 animaux free, 1 photo/souvenir, 500 Mo storage)
+- **Freemium** : Quotas (1 animal free, 1 photo/souvenir)
 
 ---
 
@@ -88,7 +88,7 @@ lib/
 | `weight_logs`           | id_health_diary_weight_log (UUID PK), weight (DECIMAL), logged_at (TIMESTAMPTZ), pet_id FK                                                   | Graphique 6 mois                 |
 | `vet_visits`            | id_vet_visit (UUID PK), title, visited_at (DATE), vet_name, clinic_name, pet_id FK (CASCADE)                                                 | Timeline visites véto (carnet)   |
 | `notifications`         | id_notification (UUID PK), type (enum), title, description, sending_at (TIMESTAMPTZ), id_pet FK                                              | Push Firebase FCM                |
-| `subscription_config`   | id_subscription_config (SERIAL PK), plan_name, max_images_per_event, max_pets, max_storage_mb, can_access_premium_icons                      | Quotas freemium                  |
+| `subscription_config`   | id_subscription_config (SERIAL PK), plan_name, max_images_per_event, max_pets                      | Quotas freemium                  |
 
 ### ENUMs
 
@@ -255,7 +255,6 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 | --------------- | ------ | ------- |
 | Animaux         | 1 max  | 10 max  |
 | Photos/souvenir | 1      | 5       |
-| Stockage        | 500 Mo | 5000    |
 | Icônes premium  | Non    | Oui     |
 | Export PDF      | Non    | Oui     |
 
@@ -265,7 +264,7 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 
 - `SubscriptionCubit` global (au root, à côté de `AuthCubit`) charge la config de l'user au login, en parallèle de `_syncUser` / `_syncPets` dans `SyncService.syncCritical`.
 - Cache Isar (`SubscriptionConfigCache`) → offline-first : la dernière config connue est servie même sans réseau.
-- Helpers sémantiques sur `SubscriptionState` (`canCreatePet`, `canAddImageToEvent`, `canAccessPremiumIcons`, `canUseStorage`) ; **fail-closed** si la config est absente.
+- Helpers sémantiques sur `SubscriptionState` (`canCreatePet`, `canAddImageToEvent`) ; **fail-closed** si la config est absente.
 - Upgrade détecté via `AuthRepository.watchCurrentUser()` : un changement de `subscriptionConfigId` déclenche un refresh forcé depuis Supabase.
 
 ---

@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:nanimo/core/widgets/app_icon_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/date_field_widget.dart';
 import 'package:nanimo/core/widgets/time_field_widget.dart';
@@ -24,6 +25,8 @@ import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/subscription/data/models/subscription_config_model.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 
+import '../../../../helpers/app_icon_finder.dart';
+
 class _MockEventRepository extends Mock implements EventRepository {}
 
 class _MockReferentialRepository extends Mock
@@ -33,13 +36,12 @@ class _MockPetRepository extends Mock implements PetRepository {}
 
 class _FakeSubscriptionCubit extends Cubit<SubscriptionState>
     implements SubscriptionCubit {
-  _FakeSubscriptionCubit(int maxImagesPerEvent)
+  _FakeSubscriptionCubit(int maxImagesPerEvent, String planName)
       : super(SubscriptionState.loaded(SubscriptionConfigModel(
           configId: 'cfg',
-          planName: 'test',
+          planName: planName,
           maxImagesPerEvent: maxImagesPerEvent,
           maxPets: 1,
-          maxStorageMb: 500,
         )));
 
   @override
@@ -134,6 +136,7 @@ void main() {
   Future<EventCreationCubit> pumpPage(
     WidgetTester tester, {
     int maxImagesPerEvent = 5,
+    String planName = 'freemium',
     DateTime? initialEntryDate,
   }) async {
     await tester.binding.setSurfaceSize(const Size(1080, 2400));
@@ -141,7 +144,8 @@ void main() {
 
     final cubit = buildCubit()..load();
     addTearDown(cubit.close);
-    final subscriptionCubit = _FakeSubscriptionCubit(maxImagesPerEvent);
+    final subscriptionCubit =
+        _FakeSubscriptionCubit(maxImagesPerEvent, planName);
     addTearDown(subscriptionCubit.close);
 
     final router = GoRouter(
@@ -335,13 +339,15 @@ void main() {
       when(() => eventRepo.addImage(any())).thenAnswer((_) async {});
     });
 
-    testWidgets('a free plan (max 1) keeps only one of several picked photos',
+    testWidgets('a free plan (max 1) uploads the one photo it picked',
         (tester) async {
       await pumpPage(tester, maxImagesPerEvent: 1);
 
       await tester.tap(find.byType(PolaroidCollageWidget));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Sélectionner plusieurs photos'));
+      expect(findAppIcon(AppIcons.crown), findsOneWidget);
+      
+      await tester.tap(find.text('Sélectionner une photo'));
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byType(TextField).first, 'Balade');
@@ -349,13 +355,12 @@ void main() {
       await tester.tap(find.text('Enregistrer'));
       await tester.pumpAndSettle();
 
-      // Three photos offered, but the free plan uploads only one.
       verify(() => eventRepo.uploadEventImage(any(), any())).called(1);
     });
 
     testWidgets('a premium plan (max 5) keeps every picked photo',
         (tester) async {
-      await pumpPage(tester, maxImagesPerEvent: 5);
+      await pumpPage(tester, maxImagesPerEvent: 5, planName: 'premium');
 
       await tester.tap(find.byType(PolaroidCollageWidget));
       await tester.pumpAndSettle();

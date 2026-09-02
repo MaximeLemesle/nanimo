@@ -18,7 +18,7 @@
 - **Journal** : 2 vues (timeline + calendrier), filtres (animal + type)
 - **Pet Page** : Switch multi-animaux, identité, poids, santé, vaccins, CTA carnet
 - **Carnet de santé** : Récapitulatif complet, vaccins, visites véto, graphique poids, export PDF (premium)
-- **Freemium** : Quotas (1 animaux free, 1 photo/souvenir, 500 Mo storage)
+- **Freemium** : Quotas (1 animal free, 1 photo/souvenir) + upsell vers le paywall à chaque limite atteinte
 
 ---
 
@@ -85,7 +85,7 @@ lib/
 | `health_diary_weight_log` | id_health_diary_weight_log (UUID PK), weight (DECIMAL), logged_at (TIMESTAMPTZ), pet_id FK                                                 | Graphique 6 mois                 |
 | `vet_visits`            | id_vet_visit (UUID PK), title, visited_at (DATE), vet_name, clinic_name, pet_id FK (CASCADE)                                                 | Timeline visites véto (carnet)   |
 | `notifications`         | id_notification (UUID PK), type (enum), title, description, sending_at (TIMESTAMPTZ), id_pet FK                                              | Push Firebase FCM _(table prête, feature V2)_ |
-| `subscription_config`   | id_subscription_config (UUID PK), plan_name (UNIQUE: freemium/premium), max_images_per_event, max_pets, max_storage_in_mb                    | Quotas freemium. Résolu en joignant `plan_name` sur `users.subscription_status` (cf. §7). Icônes premium = `is_premium` (event_type/pet_icons) croisé au `subscription_status` de l'user, pas une colonne de config |
+| `subscription_config`   | id_subscription_config (UUID PK), plan_name (UNIQUE: freemium/premium), max_images_per_event, max_pets                    | Quotas freemium. Résolu en joignant `plan_name` sur `users.subscription_status` (cf. §7). Icônes premium = `is_premium` (event_type/pet_icons) croisé au `subscription_status` de l'user, pas une colonne de config |
 
 ### ENUMs
 
@@ -279,7 +279,6 @@ Feature `lib/features/settings/`, route `/home/settings` (push depuis la roue cr
 | --------------- | ------ | ------- |
 | Animaux         | 1 max  | 10 max  |
 | Photos/souvenir | 1      | 5       |
-| Stockage        | 500 Mo | 5000    |
 | Icônes premium  | Non    | Oui     |
 | Export PDF      | Non    | Oui     |
 
@@ -289,8 +288,11 @@ Feature `lib/features/settings/`, route `/home/settings` (push depuis la roue cr
 
 - `SubscriptionCubit` global (au root, à côté de `AuthCubit`) charge la config de l'user au login, en parallèle de `_syncUser` / `_syncPets` dans `SyncService.syncCritical`.
 - Cache Isar (`SubscriptionConfigCache`, indexé unique sur `planName`) → offline-first : la dernière config connue est servie même sans réseau. `SyncService` cache **tous** les plans (table référentielle, 2 lignes, policy `referential_read_config`) : plus d'embedded join PostgREST sur la FK, et un upgrade se résout sans round-trip.
-- Helpers sémantiques sur `SubscriptionState` (`canCreatePet`, `canAddImageToEvent`, `canUseStorage`) ; **fail-closed** si la config est absente. L'accès aux icônes premium ne passe plus par la config (cf. §3 : `is_premium` croisé au `subscription_status` de l'user).
+- Helpers sémantiques sur `SubscriptionState` (`canCreatePet`, `canAddImageToEvent`) ; **fail-closed** si la config est absente. Le stockage a été retiré de l'offre (NAN-059) : plus de `canUseStorage`, plus de `max_storage_in_mb` côté app, l'appliquer aurait supposé de connaître le volume consommé côté serveur pour une unité que personne ne compte. L'accès aux icônes premium ne passe plus par la config (cf. §3 : `is_premium` croisé au `subscription_status` de l'user).
 - Upgrade détecté via `AuthRepository.watchCurrentUser()` : un changement de `planName` déclenche un refresh forcé depuis Supabase.
+- **Upsell au point de blocage (NAN-059)** : `QuotaUpsell` (`features/subscription/presentation/quota_upsell.dart`) est le point de passage unique quand une limite de plan bloque un geste. **En gratuit il pousse `/paywall` directement**, sans snack bar intermédiaire ; en premium il affiche le message de limite du plan courant, sans action ; et si la config n'a pas pu être chargée (hors ligne au premier lancement) il sert le message dégradé « Impossible de vérifier votre abonnement », toujours sans paywall — on n'ouvre pas de paywall à quelqu'un dont on ne connaît pas le plan. Deux call sites : `AppShell._onAddPet` (quota animaux) et `EventPhotoPickerWidget._add` (quota photos). Ce dernier tranche le quota **avant** d'ouvrir la sheet de choix, pour ne pas faire sélectionner des photos que l'app jetterait ensuite.
+- **Sélection multiple verrouillée en gratuit (NAN-059)** : `AddImageBottomSheetWidget` reçoit le `SubscriptionState` en paramètre (motif des sheets voisines, cf. `AddWeightBottomSheetWidget`). La ligne « Sélectionner plusieurs photos » n'est active qu'en premium ; sinon elle est grisée avec un badge « Premium » et un cadenas, reste tappable, ferme la sheet et pousse `/paywall`. À une photo par souvenir en gratuit, un `pickMultiImage()` ferait choisir cinq photos pour en garder une. Plan inconnu : ligne verrouillée aussi, mais message dégradé au lieu du paywall.
+- Le plafond photos est évalué par `canAddImageToEvent` (`maxImagesForPlan` sonde slot par slot) et non plus par une lecture directe du quota : conséquence assumée, hors ligne au tout premier lancement la photo est refusée d'emblée au lieu d'être autorisée jusqu'à 3.
 
 ---
 
