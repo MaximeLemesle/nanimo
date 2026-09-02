@@ -71,7 +71,10 @@ RepositoryException mapRepositoryError(
   }
 
   if (error is PlatformException) {
-    return RepositoryServerException(_platformMessage(error, serverMessage));
+    final message = _platformMessage(error, serverMessage);
+    return _isOffline(error)
+        ? RepositoryNetworkException(message)
+        : RepositoryServerException(message);
   }
 
   return RepositoryNetworkException(networkMessage);
@@ -94,7 +97,15 @@ bool isPurchaseCancelled(Object error) =>
 bool _isOffline(Object error) =>
     error is SocketException ||
     error is TimeoutException ||
-    error is HandshakeException;
+    error is HandshakeException ||
+    _offlinePurchasesCodes.contains(purchasesErrorCode(error));
+
+/// RevenueCat surfaces a dead connection as a [PlatformException], which no
+/// [SocketException] check would ever catch.
+const Set<PurchasesErrorCode> _offlinePurchasesCodes = {
+  PurchasesErrorCode.networkError,
+  PurchasesErrorCode.offlineConnectionError,
+};
 
 /// Raised before any request when the session is gone. Always reported, because
 /// the user is blocked and no server error will ever say so. The returned type

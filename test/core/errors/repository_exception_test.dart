@@ -194,6 +194,23 @@ void main() {
       expect(isPurchaseCancelled(Exception('socket closed')), isFalse);
     });
 
+    test('a store outage is typed as a network failure', () {
+      for (final code in [
+        PurchasesErrorCode.networkError,
+        PurchasesErrorCode.offlineConnectionError,
+      ]) {
+        final mapped = mapRepositoryError(
+          _purchasesException(code),
+          StackTrace.current,
+          operation: 'purchase',
+          networkMessage: 'hors-ligne',
+        );
+
+        expect(mapped, isA<RepositoryNetworkException>());
+        expect(mapped.message, isNot('hors-ligne'));
+      }
+    });
+
     test('a non-RevenueCat PlatformException keeps the server message', () {
       final mapped = mapRepositoryError(
         PlatformException(code: 'photo_access_denied'),

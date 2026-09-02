@@ -171,6 +171,22 @@ void main() {
       expect(reporter.exceptions, isEmpty);
     });
 
+    test('stays silent when the store itself has no connection', () {
+      for (final code in [
+        PurchasesErrorCode.networkError,
+        PurchasesErrorCode.offlineConnectionError,
+      ]) {
+        mapRepositoryError(
+          PlatformException(code: '${code.index}', message: code.name),
+          StackTrace.current,
+          operation: 'purchase',
+          networkMessage: 'hors-ligne',
+        );
+      }
+
+      expect(reporter.exceptions, isEmpty);
+    });
+
     test('leaves a breadcrumb naming the failed operation', () {
       mapRepositoryError(
         const PostgrestException(message: 'RLS violation'),
