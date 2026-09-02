@@ -62,6 +62,10 @@ CustomerInfo _customerInfo({required bool premium}) {
   return info;
 }
 
+/// RevenueCat sends its error code as the stringified enum index.
+PlatformException _purchasesException(PurchasesErrorCode code) =>
+    PlatformException(code: '${code.index}', message: code.name);
+
 /// A free trial as the stores report it: a zero-priced introductory phase.
 IntroductoryPrice _trial(int units, PeriodUnit unit) =>
     IntroductoryPrice(0, '0,00 €', 'P${units}D', 1, unit, units);
@@ -104,6 +108,23 @@ void main() {
           [PaywallPeriod.monthly, PaywallPeriod.annual]);
       expect(offers.first.priceLabel, '4,99 €');
       expect(offers.first.packageId, '\$rc_monthly');
+    });
+
+    /// The rejection risk of NAN-069: a misconfigured key used to read as an
+    /// internet outage, with a Retry button that could never succeed.
+    test('a configuration error is not surfaced as a network outage', () async {
+      when(() => client.getOfferings()).thenThrow(
+        _purchasesException(PurchasesErrorCode.configurationError),
+      );
+
+      await expectLater(
+        repository.getOffers(),
+        throwsA(isA<RepositoryServerException>().having(
+          (e) => e.message.toLowerCase(),
+          'message',
+          isNot(contains('connexion internet')),
+        )),
+      );
     });
 
     test('reads the trial length from the store, in days', () async {
@@ -232,6 +253,21 @@ void main() {
   });
 
   group('restore', () {
+    test('a store failure keeps its own message', () async {
+      when(() => client.restorePurchases()).thenThrow(
+        _purchasesException(PurchasesErrorCode.storeProblemError),
+      );
+
+      await expectLater(
+        repository.restore(),
+        throwsA(isA<RepositoryServerException>().having(
+          (e) => e.message,
+          'message',
+          'Le store est indisponible pour le moment. Réessayez dans un instant.',
+        )),
+      );
+    });
+
     test('returns true when the store restores an active entitlement',
         () async {
       when(() => client.restorePurchases())

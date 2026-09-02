@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:developer' as developer;
 import 'dart:io';
 
+import 'package:flutter/services.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:nanimo/core/monitoring/error_reporter.dart';
@@ -49,10 +51,10 @@ RepositoryException mapRepositoryError(
 
   errorReporter.addBreadcrumb('$operation a échoué', category: 'repository');
 
-  /// A device that lost the network says nothing about the app, and reporting
-  /// it would drown the quota. Everything else is either a server refusal or a
-  /// cause we have not identified, and both are worth an alert.
-  if (!_isOffline(error)) {
+  /// A device that lost the network says nothing about the app, and a user
+  /// closing the store sheet is not a failure at all. Everything else is worth
+  /// an alert, and is reported raw so its real cause survives the mapping.
+  if (!_isOffline(error) && !isPurchaseCancelled(error)) {
     errorReporter.captureException(
       error,
       stackTrace: stackTrace,
@@ -68,13 +70,42 @@ RepositoryException mapRepositoryError(
     return RepositoryServerException(_storageMessage(error, serverMessage));
   }
 
+  if (error is PlatformException) {
+    final message = _platformMessage(error, serverMessage);
+    return _isOffline(error)
+        ? RepositoryNetworkException(message)
+        : RepositoryServerException(message);
+  }
+
   return RepositoryNetworkException(networkMessage);
 }
+
+/// RevenueCat reports store failures as a [PlatformException] whose code is the
+/// stringified index of a [PurchasesErrorCode]. Other plugins use their own
+/// string codes, which have no meaning here.
+PurchasesErrorCode? purchasesErrorCode(Object error) {
+  if (error is! PlatformException) return null;
+  if (int.tryParse(error.code) == null) return null;
+  return PurchasesErrorHelper.getErrorCode(error);
+}
+
+/// The user closed the store sheet. Callers turn this into their own outcome
+/// rather than showing an error, and it is never reported.
+bool isPurchaseCancelled(Object error) =>
+    purchasesErrorCode(error) == PurchasesErrorCode.purchaseCancelledError;
 
 bool _isOffline(Object error) =>
     error is SocketException ||
     error is TimeoutException ||
-    error is HandshakeException;
+    error is HandshakeException ||
+    _offlinePurchasesCodes.contains(purchasesErrorCode(error));
+
+/// RevenueCat surfaces a dead connection as a [PlatformException], which no
+/// [SocketException] check would ever catch.
+const Set<PurchasesErrorCode> _offlinePurchasesCodes = {
+  PurchasesErrorCode.networkError,
+  PurchasesErrorCode.offlineConnectionError,
+};
 
 /// Raised before any request when the session is gone. Always reported, because
 /// the user is blocked and no server error will ever say so. The returned type
@@ -121,4 +152,31 @@ String _storageMessage(StorageException error, String? serverMessage) {
       return 'Votre session a expiré. Reconnectez-vous.';
   }
   return serverMessage ?? _defaultServerMessage;
+}
+
+String _platformMessage(PlatformException error, String? serverMessage) {
+  switch (purchasesErrorCode(error)) {
+    case PurchasesErrorCode.purchaseCancelledError:
+      return 'Achat annulé.';
+    case PurchasesErrorCode.purchaseNotAllowedError:
+    case PurchasesErrorCode.insufficientPermissionsError:
+      return 'Les achats sont désactivés sur cet appareil.';
+    case PurchasesErrorCode.paymentPendingError:
+      return 'Votre paiement est en attente de validation. Votre abonnement s’activera dès qu’il sera confirmé.';
+    case PurchasesErrorCode.productAlreadyPurchasedError:
+      return 'Vous possédez déjà cet abonnement. Utilisez « Restaurer mes achats ».';
+    case PurchasesErrorCode.productNotAvailableForPurchaseError:
+      return 'Cette formule n’est plus proposée par le store.';
+    case PurchasesErrorCode.configurationError:
+    case PurchasesErrorCode.invalidCredentialsError:
+    case PurchasesErrorCode.invalidAppleSubscriptionKeyError:
+      return 'Les abonnements sont momentanément indisponibles. Réessayez plus tard.';
+    case PurchasesErrorCode.networkError:
+    case PurchasesErrorCode.offlineConnectionError:
+      return 'Le store est injoignable. Vérifiez votre connexion et réessayez.';
+    case PurchasesErrorCode.storeProblemError:
+      return 'Le store est indisponible pour le moment. Réessayez dans un instant.';
+    default:
+      return serverMessage ?? _defaultServerMessage;
+  }
 }
