@@ -8,8 +8,6 @@ import 'package:nanimo/core/widgets/app_icon_widget.dart';
 class BottomBarMenuWidget extends StatelessWidget {
   final bool isOpen;
 
-  /// Marks "Ajouter un animal" as premium-only. Computed by the caller: this
-  /// widget never reads the subscription itself.
   final bool isAddPetPremiumLocked;
   final VoidCallback onAddWeight;
   final VoidCallback onAddEvent;
@@ -98,10 +96,8 @@ class _MenuActionRowWidget extends StatelessWidget {
     this.isPremiumLocked = false,
   });
 
-  /// Dimmed but still legible on the dark panel: plain opacity would sink the
-  /// row into the background instead of reading as a deliberate lock.
-  static const _lockedForeground = AppColors.neutral300;
-  static const _lockedTile = AppColors.neutral700;
+  static const _lockedForeground = AppColors.textSecondary;
+  static const _lockedTile = AppColors.neutral50;
 
   @override
   Widget build(BuildContext context) {
@@ -111,30 +107,34 @@ class _MenuActionRowWidget extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(
-              label,
-              style: AppTextStyles.textBold.copyWith(
-                color: isPremiumLocked ? _lockedForeground : AppColors.textInvert,
-              ),
+            child: Row(
+              children: [
+                Text(
+                  label,
+                  style: AppTextStyles.textBold.copyWith(
+                    color: isPremiumLocked ? _lockedForeground : AppColors.textInvert,
+                  ),
+                ),
+                if (isPremiumLocked) ...[
+                  const SizedBox(width: AppSpacing.sm),
+                  Semantics(
+                    label: 'Réservé au premium',
+                    child: AppIconWidget(
+                      AppIcons.crown,
+                      color: AppColors.tertiary,
+                      size: 18,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
-          if (isPremiumLocked) ...[
-            const SizedBox(width: AppSpacing.sm),
-            Semantics(
-              label: 'Réservé au premium',
-              child: AppIconWidget(
-                AppIcons.crown,
-                color: AppColors.tertiary300,
-                size: 18,
-              ),
-            ),
-          ],
           const SizedBox(width: AppSpacing.md),
           Container(
             width: 48,
             height: 48,
             decoration: ShapeDecoration(
-              color: isPremiumLocked ? _lockedTile : AppColors.backgroundSurface,
+              color: isPremiumLocked ? _lockedForeground : AppColors.backgroundSurface,
               shape: ContinuousRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md * 2),
               ),
@@ -143,7 +143,7 @@ class _MenuActionRowWidget extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               child: AppIconWidget(
                 icon,
-                color: isPremiumLocked ? _lockedForeground : AppColors.textPrimary,
+                color: isPremiumLocked ? _lockedTile : AppColors.textPrimary,
                 size: 20,
               ),
             ),

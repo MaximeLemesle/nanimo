@@ -163,11 +163,11 @@ void main() {
         tester.widget<AppIconWidget>(findAppIcon(AppIcons.crown)).color,
         AppColors.tertiary300,
       );
-      expect(labelColor(tester, 'Ajouter un animal'), AppColors.neutral300);
-      expect(tileColor(tester, AppIcons.petPawSolid2), AppColors.neutral700);
+      expect(labelColor(tester, 'Ajouter un animal'), AppColors.textSecondary);
+      expect(tileColor(tester, AppIcons.petPawSolid2), AppColors.textSecondary);
       expect(
         tester.widget<AppIconWidget>(findAppIcon(AppIcons.petPawSolid2)).color,
-        AppColors.neutral300,
+        AppColors.neutral50,
       );
     });
 

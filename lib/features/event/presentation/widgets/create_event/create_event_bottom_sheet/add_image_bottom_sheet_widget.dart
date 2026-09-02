@@ -6,6 +6,7 @@ import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
+import 'package:nanimo/core/widgets/app_icon_widget.dart';
 import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:nanimo/features/subscription/presentation/quota_upsell.dart';
@@ -13,8 +14,6 @@ import 'package:nanimo/features/subscription/presentation/quota_upsell.dart';
 const String multipleImagesLabel = 'Sélectionner plusieurs photos';
 
 class AddImageBottomSheetWidget extends StatelessWidget {
-  /// Read, never mutated: only the plan decides whether the multi pick is
-  /// offered, and the sheet is short-lived enough to take a snapshot.
   final SubscriptionState subscription;
 
   const AddImageBottomSheetWidget({super.key, required this.subscription});
@@ -98,8 +97,6 @@ class _ActionRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-
-  /// A disabled row stays tappable: the tap is what opens the paywall.
   final bool enabled;
 
   const _ActionRow({
@@ -111,7 +108,7 @@ class _ActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = enabled ? AppColors.primary : AppColors.textSecondary;
+    final foreground = AppColors.textSecondary;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -131,9 +128,7 @@ class _ActionRow extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: enabled
-                      ? AppColors.primary50
-                      : AppColors.backgroundStroke,
+                  color: enabled ? AppColors.primary50 : AppColors.backgroundStroke,
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Icon(icon, color: foreground, size: 22),
@@ -142,24 +137,18 @@ class _ActionRow extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  style: enabled
-                      ? AppTextStyles.text
-                      : AppTextStyles.text
-                          .copyWith(color: AppColors.textSecondary),
+                  style: enabled ? AppTextStyles.text : AppTextStyles.text.copyWith(color: AppColors.textSecondary),
                 ),
               ),
               if (!enabled) ...[
                 const SizedBox(width: AppSpacing.sm),
-                Text(
-                  'Premium',
-                  style: AppTextStyles.textSmallBold
-                      .copyWith(color: AppColors.primary),
-                ),
-                const SizedBox(width: AppSpacing.xs),
-                const Icon(
-                  Icons.lock_outline,
-                  color: AppColors.primary,
-                  size: 16,
+                Semantics(
+                  label: 'Réservé au premium',
+                  child: AppIconWidget(
+                    AppIcons.crown,
+                    color: AppColors.tertiary,
+                    size: 18,
+                  ),
                 ),
               ],
             ],

@@ -4,13 +4,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:nanimo/config/router/route_names.dart';
+import 'package:nanimo/core/widgets/app_icon_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/polaroid_collage_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/event_photo/event_photo_picker_widget.dart';
 import 'package:nanimo/features/subscription/data/models/subscription_config_model.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 
-class _FakeSubscriptionCubit extends Cubit<SubscriptionState>
-    implements SubscriptionCubit {
+import '../../../../helpers/app_icon_finder.dart';
+
+class _FakeSubscriptionCubit extends Cubit<SubscriptionState> implements SubscriptionCubit {
   _FakeSubscriptionCubit(int maxImagesPerEvent, {String planName = 'freemium'})
       : super(SubscriptionState.loaded(SubscriptionConfigModel(
           configId: 'cfg',
@@ -66,9 +68,8 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final images = List.of(initial);
-    final subscription = subscriptionLoaded
-        ? _FakeSubscriptionCubit(maxImagesPerEvent, planName: planName)
-        : _FakeSubscriptionCubit.unloaded();
+    final subscription =
+        subscriptionLoaded ? _FakeSubscriptionCubit(maxImagesPerEvent, planName: planName) : _FakeSubscriptionCubit.unloaded();
     addTearDown(subscription.close);
 
     /// Behind a router: the quota snack bar carries a shortcut to /paywall.
@@ -117,12 +118,10 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('goes straight to the picker while no photo is held',
-      (tester) async {
+  testWidgets('goes straight to the picker while no photo is held', (tester) async {
     ImagePickerPlatform.instance = _FakeImagePicker(['/tmp/a.jpg']);
 
-    final images =
-        await pumpPicker(tester, initial: const [], planName: 'premium');
+    final images = await pumpPicker(tester, initial: const [], planName: 'premium');
 
     await tester.tap(find.byType(PolaroidCollageWidget));
     await tester.pumpAndSettle();
@@ -157,8 +156,7 @@ void main() {
     expect(pathsOf(images), ['/tmp/a.jpg', '/tmp/new.jpg', '/tmp/c.jpg']);
   });
 
-  testWidgets('replacing keeps the photo count, so the quota still holds',
-      (tester) async {
+  testWidgets('replacing keeps the photo count, so the quota still holds', (tester) async {
     ImagePickerPlatform.instance = _FakeImagePicker(['/tmp/new.jpg']);
 
     final images = await pumpPicker(
@@ -217,7 +215,7 @@ void main() {
 
     await tester.tap(find.byType(PolaroidCollageWidget));
     await tester.pumpAndSettle();
-    expect(find.byIcon(Icons.lock_outline), findsOneWidget);
+    expect(findAppIcon(AppIcons.crown), findsOneWidget);
 
     await tester.tap(find.text('Sélectionner plusieurs photos'));
     await tester.pumpAndSettle();
@@ -235,8 +233,7 @@ void main() {
   }
 
   testWidgets('refuses to add past the plan quota', (tester) async {
-    ImagePickerPlatform.instance =
-        _FakeImagePicker(['/tmp/b.jpg', '/tmp/c.jpg']);
+    ImagePickerPlatform.instance = _FakeImagePicker(['/tmp/b.jpg', '/tmp/c.jpg']);
 
     final images = await pumpPicker(
       tester,
@@ -251,8 +248,7 @@ void main() {
   });
 
   /// NAN-059: the free user hits the cap and lands on the paywall itself.
-  testWidgets('opens the paywall when the free photo quota blocks',
-      (tester) async {
+  testWidgets('opens the paywall when the free photo quota blocks', (tester) async {
     ImagePickerPlatform.instance = _FakeImagePicker(['/tmp/b.jpg']);
 
     await pumpPicker(
@@ -267,8 +263,7 @@ void main() {
     expect(find.byType(SnackBar), findsNothing);
   });
 
-  testWidgets('a premium user gets the premium cap and no paywall',
-      (tester) async {
+  testWidgets('a premium user gets the premium cap and no paywall', (tester) async {
     ImagePickerPlatform.instance = _FakeImagePicker(['/tmp/f.jpg']);
 
     await pumpPicker(
@@ -290,8 +285,7 @@ void main() {
     expect(find.text('paywall-stub'), findsNothing);
   });
 
-  testWidgets('keeps the degraded message when the plan is unknown',
-      (tester) async {
+  testWidgets('keeps the degraded message when the plan is unknown', (tester) async {
     ImagePickerPlatform.instance = _FakeImagePicker(['/tmp/b.jpg']);
 
     await pumpPicker(
@@ -310,8 +304,7 @@ void main() {
   });
 
   testWidgets('adds only what the remaining quota allows', (tester) async {
-    ImagePickerPlatform.instance =
-        _FakeImagePicker(['/tmp/b.jpg', '/tmp/c.jpg', '/tmp/d.jpg']);
+    ImagePickerPlatform.instance = _FakeImagePicker(['/tmp/b.jpg', '/tmp/c.jpg', '/tmp/d.jpg']);
 
     final images = await pumpPicker(
       tester,

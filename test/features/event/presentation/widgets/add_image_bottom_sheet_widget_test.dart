@@ -4,10 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
+import 'package:nanimo/core/widgets/app_icon_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/create_event_bottom_sheet/add_image_bottom_sheet_widget.dart';
 import 'package:nanimo/features/subscription/data/models/subscription_config_model.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:nanimo/features/subscription/presentation/quota_upsell.dart';
+
+import '../../../../helpers/app_icon_finder.dart';
 
 /// Hands back a fixed set of files, whatever the source.
 class _FakeImagePicker extends ImagePickerPlatform {
@@ -28,8 +31,7 @@ class _FakeImagePicker extends ImagePickerPlatform {
       _paths.isEmpty ? null : XFile(_paths.first);
 }
 
-SubscriptionState _plan(String planName) =>
-    SubscriptionState.loaded(SubscriptionConfigModel(
+SubscriptionState _plan(String planName) => SubscriptionState.loaded(SubscriptionConfigModel(
       configId: 'cfg',
       planName: planName,
       maxImagesPerEvent: planName == 'premium' ? 5 : 1,
@@ -80,8 +82,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Color labelColorOf(WidgetTester tester, String label) =>
-      tester.widget<Text>(find.text(label)).style!.color!;
+  Color labelColorOf(WidgetTester tester, String label) => tester.widget<Text>(find.text(label)).style!.color!;
 
   testWidgets('renders the three photo sources', (tester) async {
     await pumpSheet(tester, _plan('premium'));
@@ -96,8 +97,7 @@ void main() {
   });
 
   testWidgets('premium leaves the multi pick active', (tester) async {
-    ImagePickerPlatform.instance =
-        _FakeImagePicker(['/tmp/a.jpg', '/tmp/b.jpg']);
+    ImagePickerPlatform.instance = _FakeImagePicker(['/tmp/a.jpg', '/tmp/b.jpg']);
 
     await pumpSheet(tester, _plan('premium'));
 
@@ -110,12 +110,9 @@ void main() {
     expect([for (final file in result!) file.path], ['/tmp/a.jpg', '/tmp/b.jpg']);
   });
 
-  testWidgets('the free plan shows the multi pick as deliberately locked',
-      (tester) async {
+  testWidgets('the free plan shows the multi pick as deliberately locked', (tester) async {
     await pumpSheet(tester, _plan('freemium'));
-
-    expect(find.byIcon(Icons.lock_outline), findsOneWidget);
-    expect(find.text('Premium'), findsOneWidget);
+    expect(findAppIcon(AppIcons.crown), findsOneWidget);
     expect(
       labelColorOf(tester, multipleImagesLabel),
       AppColors.textSecondary,
@@ -126,8 +123,7 @@ void main() {
     );
   });
 
-  testWidgets('tapping the locked row closes the sheet and opens the paywall',
-      (tester) async {
+  testWidgets('tapping the locked row closes the sheet and opens the paywall', (tester) async {
     await pumpSheet(tester, _plan('freemium'));
 
     await tester.tap(find.text(multipleImagesLabel));
@@ -150,11 +146,10 @@ void main() {
     expect(find.text('paywall-stub'), findsNothing);
   });
 
-  testWidgets('an unknown plan locks the row without opening the paywall',
-      (tester) async {
+  testWidgets('an unknown plan locks the row without opening the paywall', (tester) async {
     await pumpSheet(tester, const SubscriptionState.unknown());
 
-    expect(find.byIcon(Icons.lock_outline), findsOneWidget);
+    expect(findAppIcon(AppIcons.crown), findsOneWidget);
 
     await tester.tap(find.text(multipleImagesLabel));
     await tester.pumpAndSettle();

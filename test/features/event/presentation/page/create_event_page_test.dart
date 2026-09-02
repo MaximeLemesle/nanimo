@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:nanimo/core/widgets/app_icon_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/date_field_widget.dart';
 import 'package:nanimo/core/widgets/time_field_widget.dart';
@@ -23,6 +24,8 @@ import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/subscription/data/models/subscription_config_model.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
+
+import '../../../../helpers/app_icon_finder.dart';
 
 class _MockEventRepository extends Mock implements EventRepository {}
 
@@ -336,15 +339,14 @@ void main() {
       when(() => eventRepo.addImage(any())).thenAnswer((_) async {});
     });
 
-    /// NAN-059: the multi pick is locked on the free plan, so a free souvenir
-    /// gets its single photo one at a time.
     testWidgets('a free plan (max 1) uploads the one photo it picked',
         (tester) async {
       await pumpPage(tester, maxImagesPerEvent: 1);
 
       await tester.tap(find.byType(PolaroidCollageWidget));
       await tester.pumpAndSettle();
-      expect(find.byIcon(Icons.lock_outline), findsOneWidget);
+      expect(findAppIcon(AppIcons.crown), findsOneWidget);
+      
       await tester.tap(find.text('Sélectionner une photo'));
       await tester.pumpAndSettle();
 
