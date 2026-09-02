@@ -28,12 +28,7 @@ class SubscriptionState extends Equatable {
   /// True if the user can add another image to an event
   bool canAddImageToEvent(int currentImageCount) => config != null && currentImageCount < config!.maxImagesPerEvent;
 
-  int get maxImagesPerEvent => config?.maxImagesPerEvent ?? 3;
-
   int get maxPets => config?.maxPets ?? 1;
-
-  /// True if storage usage (in MB) is below the plan limit
-  bool canUseStorage(int currentMb) => config != null && currentMb < config!.maxStorageMb;
 
   @override
   List<Object?> get props => [status, config, errorMessage];

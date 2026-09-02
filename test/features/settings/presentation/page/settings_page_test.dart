@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,6 +12,7 @@ import 'package:nanimo/features/settings/data/models/notification_prefs_model.da
 import 'package:nanimo/features/settings/presentation/cubit/settings_cubit.dart';
 import 'package:nanimo/features/settings/presentation/page/settings_page.dart';
 import 'package:nanimo/features/settings/presentation/widgets/settings_notification_section_widget.dart';
+import 'package:nanimo/features/subscription/data/subscription_restorer.dart';
 
 class _MockSettingsCubit extends Mock implements SettingsCubit {}
 
@@ -30,6 +33,7 @@ const _loadedState = SettingsState(
 void main() {
   late _MockSettingsCubit settingsCubit;
   late _MockAuthCubit authCubit;
+  late StreamController<SettingsState> settingsStates;
 
   setUpAll(() {
     TestWidgetsFlutterBinding.ensureInitialized();
@@ -46,15 +50,21 @@ void main() {
   setUp(() {
     settingsCubit = _MockSettingsCubit();
     authCubit = _MockAuthCubit();
+    settingsStates = StreamController<SettingsState>.broadcast();
 
     when(() => settingsCubit.state).thenReturn(_loadedState);
-    when(() => settingsCubit.stream).thenAnswer((_) => const Stream<SettingsState>.empty());
+    when(() => settingsCubit.stream).thenAnswer((_) => settingsStates.stream);
+    when(() => settingsCubit.restorePurchases()).thenAnswer((_) async {});
+    when(() => settingsCubit.clearError()).thenReturn(null);
+    when(() => settingsCubit.clearRestoreResult()).thenReturn(null);
     when(() => settingsCubit.updateNotificationPrefs(any())).thenAnswer((_) async {});
     when(() => settingsCubit.deleteAccount()).thenAnswer((_) async {});
     when(() => authCubit.state).thenReturn(const AuthState.authenticated());
     when(() => authCubit.stream).thenAnswer((_) => const Stream<AuthState>.empty());
     when(() => authCubit.logout()).thenAnswer((_) async {});
   });
+
+  tearDown(() => settingsStates.close());
 
   Future<void> pumpPage(WidgetTester tester) async {
     /// Tall surface so the lazy ListView builds every section
@@ -163,6 +173,41 @@ void main() {
     await tester.pumpAndSettle();
 
     verify(() => settingsCubit.deleteAccount()).called(1);
+  });
+
+  testWidgets('the restore tile is offered whatever the plan', (tester) async {
+    await pumpPage(tester);
+
+    expect(find.text('Restaurer mes achats'), findsOneWidget);
+    expect(find.text('Gérer mon abonnement'), findsNothing);
+
+    await tester.tap(find.text('Restaurer mes achats'));
+    await tester.pump();
+
+    verify(() => settingsCubit.restorePurchases()).called(1);
+  });
+
+  testWidgets('a restore outcome is reported in a snackbar', (tester) async {
+    await pumpPage(tester);
+
+    const restored = SettingsState(
+      status: SettingsStatus.loaded,
+      user: _user,
+      restoreResult: RestoreResult(
+        RestoreOutcome.nothingFound,
+        SubscriptionRestorer.nothingFoundMessage,
+      ),
+    );
+    when(() => settingsCubit.state).thenReturn(restored);
+    settingsStates.add(restored);
+    await tester.pump();
+    await tester.pump();
+
+    expect(
+      find.text(SubscriptionRestorer.nothingFoundMessage),
+      findsOneWidget,
+    );
+    verify(() => settingsCubit.clearRestoreResult()).called(1);
   });
 
   testWidgets('tapping the name tile opens the edit bottom sheet', (tester) async {

@@ -18,7 +18,6 @@ void main() {
     planName: 'freemium',
     maxImagesPerEvent: 1,
     maxPets: 1,
-    maxStorageMb: 500,
   );
 
   setUpAll(registerSupabaseFallbacks);
@@ -65,7 +64,6 @@ void main() {
 
       final result = await repo.getConfigByPlanName('freemium');
       expect(result, isNotNull);
-      expect(result!.maxStorageMb, 500);
     });
 
     test('does not leak another plan config', () async {
@@ -83,7 +81,6 @@ void main() {
                 'plan_name': 'premium',
                 'max_images_per_event': 5,
                 'max_pets': 10,
-                'max_storage_in_mb': 5000,
               });
 
       final result = await repo.fetchConfigByPlanName('premium');

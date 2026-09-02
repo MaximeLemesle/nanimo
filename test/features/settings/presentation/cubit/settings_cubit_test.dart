@@ -8,10 +8,13 @@ import 'package:nanimo/features/auth/data/models/user_model.dart';
 import 'package:nanimo/features/settings/data/models/notification_prefs_model.dart';
 import 'package:nanimo/features/settings/data/settings_repository.dart';
 import 'package:nanimo/features/settings/presentation/cubit/settings_cubit.dart';
+import 'package:nanimo/features/subscription/data/subscription_restorer.dart';
 
 class _MockAuthRepository extends Mock implements AuthRepository {}
 
 class _MockSettingsRepository extends Mock implements SettingsRepository {}
+
+class _MockSubscriptionRestorer extends Mock implements SubscriptionRestorer {}
 
 const _user = UserModel(
   userId: 'user-1',
@@ -23,12 +26,14 @@ const _user = UserModel(
 void main() {
   late _MockAuthRepository authRepository;
   late _MockSettingsRepository settingsRepository;
+  late _MockSubscriptionRestorer subscriptionRestorer;
   late StreamController<UserModel?> userEvents;
   late StreamController<NotificationPrefsModel> prefsEvents;
 
   setUp(() {
     authRepository = _MockAuthRepository();
     settingsRepository = _MockSettingsRepository();
+    subscriptionRestorer = _MockSubscriptionRestorer();
     userEvents = StreamController<UserModel?>();
     prefsEvents = StreamController<NotificationPrefsModel>();
 
@@ -46,6 +51,7 @@ void main() {
   SettingsCubit createCubit() => SettingsCubit(
         authRepository: authRepository,
         settingsRepository: settingsRepository,
+        subscriptionRestorer: subscriptionRestorer,
       )..load();
 
   test('starts loading then exposes the streamed user and prefs', () async {
@@ -158,6 +164,103 @@ void main() {
         cubit.state.errorMessage,
         'Impossible de supprimer votre compte pour le moment.',
       );
+      await cubit.close();
+    });
+  });
+
+  group('restorePurchases', () {
+    test('exposes the restored outcome and drops the busy flag', () async {
+      when(() => subscriptionRestorer.restore()).thenAnswer(
+        (_) async => const RestoreResult(
+          RestoreOutcome.restored,
+          SubscriptionRestorer.restoredMessage,
+        ),
+      );
+      final cubit = createCubit();
+
+      await cubit.restorePurchases();
+
+      expect(cubit.state.isRestoring, isFalse);
+      expect(cubit.state.restoreResult?.outcome, RestoreOutcome.restored);
+      expect(
+        cubit.state.restoreResult?.message,
+        SubscriptionRestorer.restoredMessage,
+      );
+      await cubit.close();
+    });
+
+    test('exposes the nothing found outcome as a normal answer', () async {
+      when(() => subscriptionRestorer.restore()).thenAnswer(
+        (_) async => const RestoreResult(
+          RestoreOutcome.nothingFound,
+          SubscriptionRestorer.nothingFoundMessage,
+        ),
+      );
+      final cubit = createCubit();
+
+      await cubit.restorePurchases();
+
+      expect(cubit.state.restoreResult?.outcome, RestoreOutcome.nothingFound);
+      expect(cubit.state.errorMessage, isNull);
+      await cubit.close();
+    });
+
+    test('exposes the failure outcome with its message', () async {
+      when(() => subscriptionRestorer.restore()).thenAnswer(
+        (_) async => const RestoreResult(RestoreOutcome.failed, 'Store injoignable.'),
+      );
+      final cubit = createCubit();
+
+      await cubit.restorePurchases();
+
+      expect(cubit.state.restoreResult?.outcome, RestoreOutcome.failed);
+      expect(cubit.state.restoreResult?.message, 'Store injoignable.');
+      await cubit.close();
+    });
+
+    test('raises the busy flag while the store call is in flight', () async {
+      when(() => subscriptionRestorer.restore()).thenAnswer((_) async {
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+        return const RestoreResult(RestoreOutcome.restored, 'ok');
+      });
+      final cubit = createCubit();
+
+      final pending = cubit.restorePurchases();
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+      expect(cubit.state.isRestoring, isTrue);
+
+      await pending;
+      expect(cubit.state.isRestoring, isFalse);
+      await cubit.close();
+    });
+
+    test('ignores a second tap while a restore is running', () async {
+      when(() => subscriptionRestorer.restore()).thenAnswer((_) async {
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+        return const RestoreResult(RestoreOutcome.restored, 'ok');
+      });
+      final cubit = createCubit();
+
+      final first = cubit.restorePurchases();
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+      await cubit.restorePurchases();
+      await first;
+
+      verify(() => subscriptionRestorer.restore()).called(1);
+      await cubit.close();
+    });
+
+    test('clearRestoreResult empties the last outcome', () async {
+      when(() => subscriptionRestorer.restore()).thenAnswer(
+        (_) async => const RestoreResult(RestoreOutcome.failed, 'Store injoignable.'),
+      );
+      final cubit = createCubit();
+      await cubit.restorePurchases();
+      expect(cubit.state.restoreResult, isNotNull);
+
+      cubit.clearRestoreResult();
+
+      expect(cubit.state.restoreResult, isNull);
       await cubit.close();
     });
   });

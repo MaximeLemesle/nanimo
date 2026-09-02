@@ -5,19 +5,15 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:nanimo/features/auth/data/auth_repository.dart';
-import 'package:nanimo/features/auth/data/models/user_model.dart';
 import 'package:nanimo/features/subscription/data/models/paywall_offer_model.dart';
 import 'package:nanimo/features/subscription/data/purchase_repository.dart';
+import 'package:nanimo/features/subscription/data/subscription_restorer.dart';
 
 part 'paywall_state.dart';
 
 class PaywallCubit extends Cubit<PaywallState> {
   final PurchaseRepository _purchaseRepository;
-  final AuthRepository _authRepository;
-
-  /// After this, unlock anyway: the store already confirmed the purchase.
-  final Duration _confirmationTimeout;
-  final Duration _pollInterval;
+  final SubscriptionRestorer _restorer;
 
   PaywallCubit({
     required PurchaseRepository purchaseRepository,
@@ -25,9 +21,12 @@ class PaywallCubit extends Cubit<PaywallState> {
     Duration confirmationTimeout = const Duration(seconds: 12),
     Duration pollInterval = const Duration(seconds: 2),
   })  : _purchaseRepository = purchaseRepository,
-        _authRepository = authRepository,
-        _confirmationTimeout = confirmationTimeout,
-        _pollInterval = pollInterval,
+        _restorer = SubscriptionRestorer(
+          purchaseRepository: purchaseRepository,
+          authRepository: authRepository,
+          confirmationTimeout: confirmationTimeout,
+          pollInterval: pollInterval,
+        ),
         super(const PaywallState.initial());
 
   Future<void> loadOffers() async {
@@ -65,7 +64,7 @@ class PaywallCubit extends Cubit<PaywallState> {
         ));
         return;
       }
-      await _awaitServerConfirmation();
+      await _restorer.awaitPremiumConfirmation();
       emit(state.copyWith(status: PaywallStatus.purchased, clearError: true));
     } on PurchaseCancelledException {
       emit(state.copyWith(status: PaywallStatus.loaded, clearError: true));
@@ -82,44 +81,16 @@ class PaywallCubit extends Cubit<PaywallState> {
     if (state.isBusy) return;
     emit(state.copyWith(status: PaywallStatus.restoring, clearError: true));
 
-    try {
-      final active = await _purchaseRepository.restore();
-      if (!active) {
-        emit(state.copyWith(
-          status: PaywallStatus.loaded,
-          errorMessage: 'Aucun abonnement à restaurer sur ce compte.',
-        ));
-        return;
-      }
-      await _awaitServerConfirmation();
+    final result = await _restorer.restore();
+    if (result.isRestored) {
       emit(state.copyWith(status: PaywallStatus.restored, clearError: true));
-    } catch (e, st) {
-      developer.log('restore failed', name: 'paywall', error: e, stackTrace: st);
-      emit(state.copyWith(
-        status: PaywallStatus.loaded,
-        errorMessage: e.toString(),
-      ));
-    }
-  }
-
-  /// Each refresh write-throughs the Isar cache, which is what switches the
-  /// rest of the app to premium quotas.
-  Future<void> _awaitServerConfirmation() async {
-    final deadline = DateTime.now().add(_confirmationTimeout);
-
-    while (DateTime.now().isBefore(deadline)) {
-      try {
-        final user = await _authRepository.refreshCurrentUser();
-        if (user?.subscriptionStatus == SubscriptionStatus.premium) return;
-      } catch (e, st) {
-        developer.log('status refresh failed, retrying',
-            name: 'paywall', error: e, stackTrace: st);
-      }
-      await Future<void>.delayed(_pollInterval);
+      return;
     }
 
-    developer.log('premium not confirmed server-side before timeout',
-        name: 'paywall');
+    emit(state.copyWith(
+      status: PaywallStatus.loaded,
+      errorMessage: result.message,
+    ));
   }
 
   /// Annual is the better deal, when offered.

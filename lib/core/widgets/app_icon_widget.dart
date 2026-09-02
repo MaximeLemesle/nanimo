@@ -24,6 +24,7 @@ class AppIcons {
   static const petPawSolid2 = 'pet-paw-solid-2';
   static const addCalendar = 'add-calendar';
   static const addSquare = 'add-square';
+  static const crown = 'crown';
 }
 
 /// Renders a Streamline SVG from `assets/icons/ui/`.
