@@ -70,11 +70,11 @@ void main() {
     expect(find.text(paywallTitle), findsOneWidget);
     expect(find.text(paywallTagline), findsOneWidget);
     expect(
-      find.textContaining('5 photos par souvenir aucun instant ne t’échappe', findRichText: true),
+      find.textContaining('Ne rate aucun instant avec 5 photos', findRichText: true),
       findsOneWidget,
     );
     expect(
-      find.textContaining('Ta famille peut grandir 10 animaux, un seul journal', findRichText: true),
+      find.textContaining('Agrandis ta famille jusqu’à 10 animaux', findRichText: true),
       findsOneWidget,
     );
     expect(find.text('Mensuel'), findsOneWidget);
@@ -90,14 +90,11 @@ void main() {
 
     await pumpPaywall(tester);
 
-    expect(paywallBenefits.first.icon, Icons.photo_library_rounded);
-    expect(paywallBenefits.last.icon, Icons.pets_rounded);
-
     final photos = tester.getTopLeft(
-      find.textContaining('5 photos par souvenir', findRichText: true),
+      find.textContaining('Ne rate aucun instant', findRichText: true),
     );
     final pets = tester.getTopLeft(
-      find.textContaining('Ta famille peut grandir', findRichText: true),
+      find.textContaining('Agrandis ta famille', findRichText: true),
     );
     expect(photos.dy, lessThan(pets.dy));
   });

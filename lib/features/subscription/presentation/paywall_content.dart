@@ -1,30 +1,24 @@
-import 'package:flutter/material.dart';
-
 class PaywallBenefit {
-  final IconData icon;
   final String subtitle;
   final String title;
 
   const PaywallBenefit({
-    required this.icon,
     required this.subtitle,
     required this.title,
   });
 }
 
 const String paywallTitle = 'Nanimo Premium';
-const String paywallTagline = 'Toute la mémoire de ton animal';
+const String paywallTagline = 'Toute la place que mérite ta famille';
 
 const List<PaywallBenefit> paywallBenefits = [
   PaywallBenefit(
-    icon: Icons.photo_library_rounded,
-    subtitle: '5 photos par souvenir',
-    title: 'aucun instant ne t’échappe',
+    subtitle: 'Ne rate aucun instant',
+    title: 'avec 5 photos',
   ),
   PaywallBenefit(
-    icon: Icons.pets_rounded,
-    subtitle: 'Ta famille peut grandir',
-    title: '10 animaux, un seul journal',
+    subtitle: 'Agrandis ta famille',
+    title: 'jusqu’à 10 animaux',
   ),
 ];
 
