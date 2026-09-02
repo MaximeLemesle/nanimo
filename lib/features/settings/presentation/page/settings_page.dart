@@ -72,9 +72,9 @@ class SettingsPage extends StatelessWidget {
                       value: state.user?.mail ?? '—',
                     ),
                     const SizedBox(height: AppSpacing.xl),
-                    SettingsSubscriptionSectionWidget(state: state),
-                    const SizedBox(height: AppSpacing.xl),
                     SettingsNotificationSectionWidget(prefs: state.prefs),
+                    const SizedBox(height: AppSpacing.xl),
+                    SettingsSubscriptionSectionWidget(state: state),
                     const SizedBox(height: AppSpacing.xl),
                     ButtonWidget(
                       type: ButtonType.secondary,

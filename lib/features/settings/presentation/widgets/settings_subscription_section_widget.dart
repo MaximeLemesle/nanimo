@@ -15,11 +15,9 @@ import 'package:nanimo/core/widgets/label_widget.dart';
 import 'package:nanimo/features/settings/presentation/cubit/settings_cubit.dart';
 import 'package:nanimo/features/settings/presentation/widgets/settings_tile_widget.dart';
 
-const String appStoreSubscriptionsUrl =
-    'https://apps.apple.com/account/subscriptions';
+const String appStoreSubscriptionsUrl = 'https://apps.apple.com/account/subscriptions';
 
-const String playStoreSubscriptionsUrl =
-    'https://play.google.com/store/account/subscriptions';
+const String playStoreSubscriptionsUrl = 'https://play.google.com/store/account/subscriptions';
 
 class SettingsSubscriptionSectionWidget extends StatelessWidget {
   final SettingsState state;
@@ -47,9 +45,7 @@ class SettingsSubscriptionSectionWidget extends StatelessWidget {
           value: _planValue(),
           trailing: LabelWidget(
             label: state.isPremium ? 'Premium' : 'Freemium',
-            backgroundColor: state.isPremium
-                ? AppColors.tertiary100
-                : AppColors.backgroundStroke,
+            backgroundColor: state.isPremium ? AppColors.tertiary100 : AppColors.backgroundStroke,
           ),
         ),
         if (state.isSubscriptionLoaded && state.isPremium) ...[
@@ -73,26 +69,44 @@ class SettingsSubscriptionSectionWidget extends StatelessWidget {
             onPressed: () => context.push(RouteNames.paywall),
           ),
         ],
-        const SizedBox(height: AppSpacing.md),
-        SettingsTileWidget(
-          title: 'Restaurer mes achats',
-          value: 'Retrouve un abonnement déjà payé',
-          trailing: state.isRestoring
-              ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(
-                  Icons.restore_rounded,
-                  size: 20,
-                  color: AppColors.textSecondary,
-                ),
-          onTap: state.isRestoring
-              ? null
-              : () => context.read<SettingsCubit>().restorePurchases(),
-        ),
+        const SizedBox(height: AppSpacing.sm),
+        _restoreLink(context),
       ],
+    );
+  }
+
+  Widget _restoreLink(BuildContext context) {
+    final enabled = !state.isRestoring;
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: enabled ? () => context.read<SettingsCubit>().restorePurchases() : null,
+        child: Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Restaurer mes achats',
+                style: AppTextStyles.textSmall.copyWith(
+                  color: AppColors.textSecondary,
+                  decoration: TextDecoration.underline,
+                  decorationColor: AppColors.textSecondary,
+                ),
+              ),
+              if (state.isRestoring) ...[
+                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(
+                  height: 14,
+                  width: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -110,15 +124,13 @@ class SettingsSubscriptionSectionWidget extends StatelessWidget {
 
   Future<void> _openStore(BuildContext context) async {
     final uri = _storeUri(context);
-    final open = onOpenStore ??
-        (Uri target) => launchUrl(target, mode: LaunchMode.externalApplication);
+    final open = onOpenStore ?? (Uri target) => launchUrl(target, mode: LaunchMode.externalApplication);
 
     bool opened;
     try {
       opened = await open(uri);
     } catch (e, st) {
-      developer.log('could not open $uri',
-          name: 'settings', error: e, stackTrace: st);
+      developer.log('could not open $uri', name: 'settings', error: e, stackTrace: st);
       opened = false;
     }
 
