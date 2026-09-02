@@ -68,18 +68,35 @@ void main() {
     await pumpPaywall(tester);
 
     expect(find.text(paywallTitle), findsOneWidget);
+    expect(find.text(paywallTagline), findsOneWidget);
     expect(
-      find.textContaining('Agrandis ta famille jusqu’à 10 animaux', findRichText: true),
+      find.textContaining('Ne rate aucun instant avec 5 photos', findRichText: true),
       findsOneWidget,
     );
     expect(
-      find.textContaining('Créer des souvenirs avec 5 photos', findRichText: true),
+      find.textContaining('Agrandis ta famille jusqu’à 10 animaux', findRichText: true),
       findsOneWidget,
     );
     expect(find.text('Mensuel'), findsOneWidget);
     expect(find.text('Annuel'), findsOneWidget);
     expect(find.textContaining('4,99 €'), findsOneWidget);
     expect(find.textContaining('39,99 €'), findsOneWidget);
+  });
+
+  /// A single-pet owner is the common case, so the photo benefit sells first.
+  testWidgets('leads with the photo benefit, not the pet quota', (tester) async {
+    when(() => purchaseRepository.getOffers())
+        .thenAnswer((_) async => [_annual]);
+
+    await pumpPaywall(tester);
+
+    final photos = tester.getTopLeft(
+      find.textContaining('Ne rate aucun instant', findRichText: true),
+    );
+    final pets = tester.getTopLeft(
+      find.textContaining('Agrandis ta famille', findRichText: true),
+    );
+    expect(photos.dy, lessThan(pets.dy));
   });
 
   testWidgets('shows the auto-renewal notice required by the stores',
