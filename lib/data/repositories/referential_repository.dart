@@ -1,6 +1,8 @@
 import 'package:isar/isar.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_type_cache.dart';
+import 'package:nanimo/core/isar/cache/schemas/pet_icon_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_species_cache.dart';
+import 'package:nanimo/data/models/referential/pet_icon_model.dart';
 import 'package:nanimo/data/models/referential/pet_race_model.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
 import 'package:nanimo/features/event/data/models/event_type_model.dart';
@@ -55,6 +57,39 @@ class ReferentialRepository {
     } catch (err) {
       throw Exception('Erreur chargement des races : $err');
     }
+  }
+
+  /// Loading the whole pet icon catalogue. It is small and shared by every
+  /// species, so it is fetched once and filtered in memory.
+  Future<List<PetIconModel>> fetchIcons() async {
+    try {
+      final response = await _supabase.from('pet_icons').select();
+      final icons = (response as List).map((element) => PetIconModel.fromJson(element as Map<String, dynamic>)).toList();
+      await _cacheIcons(icons);
+      return icons;
+    } catch (err) {
+      final cached = await _cachedIcons();
+      if (cached.isNotEmpty) return cached;
+      throw Exception('Erreur chargement des icônes : $err');
+    }
+  }
+
+  Future<void> _cacheIcons(List<PetIconModel> icons) async {
+    final isar = _isar;
+    if (isar == null) return;
+    await isar.writeTxn(() async {
+      await isar.petIconCaches.clear();
+      await isar.petIconCaches.putAll(
+        icons.map(PetIconCache.fromModel).toList(),
+      );
+    });
+  }
+
+  Future<List<PetIconModel>> _cachedIcons() async {
+    final isar = _isar;
+    if (isar == null) return const [];
+    final rows = await isar.petIconCaches.where().findAll();
+    return rows.map((c) => c.toModel()).toList();
   }
 
   /// Loading event types

@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_image_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_type_cache.dart';
+import 'package:nanimo/core/isar/cache/schemas/pet_icon_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_species_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_cache.dart';
@@ -194,6 +195,23 @@ class SyncService {
       });
     } catch (e, st) {
       developer.log('syncReferential failed', name: 'sync', error: e, stackTrace: st);
+    }
+    await _syncPetIcons();
+  }
+
+  /// Kept apart from the rest of the referential: icons are cosmetic, and a
+  /// failure on them must not cost the species and event types the app needs
+  /// to render anything at all.
+  Future<void> _syncPetIcons() async {
+    try {
+      final iconsData = await _supabase.from('pet_icons').select();
+      final icons = (iconsData as List).map((e) => PetIconCache.fromJson(e as Map<String, dynamic>)).toList();
+      await _isar.writeTxn(() async {
+        await _isar.petIconCaches.clear();
+        await _isar.petIconCaches.putAll(icons);
+      });
+    } catch (e, st) {
+      developer.log('syncPetIcons failed', name: 'sync', error: e, stackTrace: st);
     }
   }
 }

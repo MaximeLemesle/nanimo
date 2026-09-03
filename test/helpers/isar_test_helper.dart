@@ -8,6 +8,7 @@ import 'package:nanimo/core/isar/cache/schemas/health_diary_vaccine_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_type_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/notification_prefs_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_cache.dart';
+import 'package:nanimo/core/isar/cache/schemas/pet_icon_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_species_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/subscription_config_cache.dart';
@@ -32,6 +33,7 @@ class IsarTestHarness {
         UserCacheSchema,
         PetCacheSchema,
         PetSpeciesCacheSchema,
+        PetIconCacheSchema,
         EventTypeCacheSchema,
         EventCacheSchema,
         EventImageCacheSchema,

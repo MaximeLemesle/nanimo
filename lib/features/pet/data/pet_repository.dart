@@ -88,6 +88,29 @@ class PetRepository {
     }
   }
 
+  /// Writes only the icon column: the rest of the pet is untouched, so a stale
+  /// in-memory copy cannot overwrite a field edited elsewhere.
+  Future<void> updatePetIcon(String petId, String? petIconId) async {
+    try {
+      await _supabase
+          .from('pets')
+          .update({'pet_icon_id': petIconId}).eq('id_pet', petId);
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'updatePetIcon',
+          networkMessage:
+              'Une connexion internet est requise pour changer l’icône.',
+          serverMessage: 'L’icône n’a pas pu être changée pour le moment.');
+    }
+
+    final cached = await _isar.petCaches.getByPetId(petId);
+    if (cached == null) return;
+    cached.petIconId = petIconId;
+    await _isar.writeTxn(() async {
+      await _isar.petCaches.putByPetId(cached);
+    });
+  }
+
   Future<void> updatePet(PetModel pet) async {
     try {
       await _supabase.from('pets').update(pet.toJson()).eq('id_pet', pet.petId);
