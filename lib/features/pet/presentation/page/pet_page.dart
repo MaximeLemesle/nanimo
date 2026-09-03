@@ -11,13 +11,17 @@ import 'package:nanimo/core/utils/gender_formatter.dart';
 import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
+import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card_widget/pet_card_item_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card_widget/pet_card_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/create_health_diary_bottom_sheet_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_health_info_card_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_health_onboarding_card_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_icon_picker_bottom_sheet_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_park_header_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_weight_card_widget.dart';
+
+const String changePortraitLabel = 'Changer son portrait';
 
 class PetPage extends StatelessWidget {
   const PetPage({super.key});
@@ -60,6 +64,7 @@ class PetPage extends StatelessWidget {
                 pets: state.pets,
                 selectedPetId: state.selectedPetId,
                 iconsKey: state.iconsKey,
+                iconPaths: state.catalogueIconPaths,
                 onSelect: (id) => context.read<PetDetailsCubit>().selectPet(id),
               ),
               Transform.translate(
@@ -90,6 +95,27 @@ class PetPage extends StatelessWidget {
                             style: AppTextStyles.numberBig,
                           ),
                         ],
+                      ),
+
+                      /// Portrait picker
+                      ButtonWidget(
+                        label: changePortraitLabel,
+                        type: ButtonType.secondary,
+                        fullWidth: true,
+                        onPressed: state.iconsKey[pet.petSpeciesId] == null
+                            ? null
+                            : () => PetIconPickerBottomSheetWidget.show(
+                                  context,
+                                  speciesIconKey:
+                                      state.iconsKey[pet.petSpeciesId]!,
+                                  icons: state.iconsForSelectedPet,
+                                  selectedPetIconId: pet.petIconId,
+                                  subscription:
+                                      context.read<SubscriptionCubit>().state,
+                                  onSelected: (iconId) => context
+                                      .read<PetDetailsCubit>()
+                                      .selectPetIcon(iconId),
+                                ),
                       ),
 
                       /// Identity card

@@ -7,6 +7,7 @@ class PetParkHeaderWidget extends StatelessWidget {
   final List<PetModel> pets;
   final String? selectedPetId;
   final Map<String, String> iconsKey;
+  final Map<String, String> iconPaths;
   final ValueChanged<String> onSelect;
 
   const PetParkHeaderWidget({
@@ -14,6 +15,7 @@ class PetParkHeaderWidget extends StatelessWidget {
     required this.pets,
     required this.selectedPetId,
     required this.iconsKey,
+    this.iconPaths = const {},
     required this.onSelect,
   });
 
@@ -86,6 +88,7 @@ class PetParkHeaderWidget extends StatelessWidget {
                   child: PetAvatarWidget(
                     iconKey: iconKey,
                     size: PetAvatarSize.medium,
+                    assetPath: iconPaths[pet.petId],
                   ),
                 ),
         ),

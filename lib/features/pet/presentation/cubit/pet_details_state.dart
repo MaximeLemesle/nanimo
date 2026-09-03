@@ -8,6 +8,7 @@ class PetDetailsState extends Equatable {
   final String? selectedPetId;
   final Map<String, String> iconsKey;
   final Map<String, String> speciesNameById;
+  final List<PetIconModel> icons;
   final String? raceName;
   final HealthDiaryModel? diary;
   final List<HealthDiaryVaccineModel> vaccines;
@@ -23,6 +24,7 @@ class PetDetailsState extends Equatable {
     this.selectedPetId,
     this.iconsKey = const {},
     this.speciesNameById = const {},
+    this.icons = const [],
     this.raceName,
     this.diary,
     this.vaccines = const [],
@@ -39,6 +41,29 @@ class PetDetailsState extends Equatable {
     }
     return null;
   }
+
+  /// Asset displayed for [pet]: its chosen catalogue icon, else the species one.
+  String? iconPathFor(PetModel pet) => PetIconResolver.resolve(
+        petIconId: pet.petIconId,
+        petSpeciesId: pet.petSpeciesId,
+        icons: icons,
+        speciesIconKeys: iconsKey,
+      );
+
+  /// Only pets that picked a catalogue icon appear here. The others are left
+  /// out so the widgets keep falling back to the species asset on their own.
+  Map<String, String> get catalogueIconPaths {
+    final paths = <String, String>{};
+    for (final pet in pets) {
+      final icon = PetIconResolver.findById(icons, pet.petIconId);
+      if (icon != null) paths[pet.petId] = icon.assetPath;
+    }
+    return paths;
+  }
+
+  /// Catalogue offered for the selected pet, never another species'.
+  List<PetIconModel> get iconsForSelectedPet =>
+      PetIconResolver.forSpecies(icons, selectedPet?.petSpeciesId);
 
   /// Check if pet already have a diary
   bool get hasHealthData {
@@ -61,6 +86,7 @@ class PetDetailsState extends Equatable {
     Object? selectedPetId = _sentinel,
     Map<String, String>? iconsKey,
     Map<String, String>? speciesNameById,
+    List<PetIconModel>? icons,
     Object? raceName = _sentinel,
     Object? diary = _sentinel,
     List<HealthDiaryVaccineModel>? vaccines,
@@ -78,6 +104,7 @@ class PetDetailsState extends Equatable {
           : selectedPetId as String?,
       iconsKey: iconsKey ?? this.iconsKey,
       speciesNameById: speciesNameById ?? this.speciesNameById,
+      icons: icons ?? this.icons,
       raceName: raceName == _sentinel ? this.raceName : raceName as String?,
       diary: diary == _sentinel ? this.diary : diary as HealthDiaryModel?,
       vaccines: vaccines ?? this.vaccines,
@@ -98,6 +125,7 @@ class PetDetailsState extends Equatable {
         selectedPetId,
         iconsKey,
         speciesNameById,
+        icons,
         raceName,
         diary,
         vaccines,

@@ -14,11 +14,13 @@ enum PetAvatarSize {
 class PetAvatarWidget extends StatelessWidget {
   final String iconKey;
   final PetAvatarSize size;
+  final String? assetPath;
 
   const PetAvatarWidget({
     super.key,
     required this.iconKey,
     this.size = PetAvatarSize.medium,
+    this.assetPath,
   });
 
   @override
@@ -26,6 +28,7 @@ class PetAvatarWidget extends StatelessWidget {
     return SpeciesIconWidget(
       iconKey: iconKey,
       height: size.dimension,
+      assetPath: assetPath,
     );
   }
 }
