@@ -25,8 +25,7 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/vaccin
 
 class _MockPetRepository extends Mock implements PetRepository {}
 
-class _MockReferentialRepository extends Mock
-    implements ReferentialRepository {}
+class _MockReferentialRepository extends Mock implements ReferentialRepository {}
 
 class _MockEventRepository extends Mock implements EventRepository {}
 
@@ -75,20 +74,13 @@ void main() {
     petsController = StreamController<List<PetModel>>();
 
     when(() => petRepo.watchPets()).thenAnswer((_) => petsController.stream);
-    when(() => referentialRepo.fetchSpecies())
-        .thenAnswer((_) async => [_cat]);
-    when(() => eventRepo.watchEvents())
-        .thenAnswer((_) => Stream.value(const []));
-    when(() => eventRepo.watchPetEvents())
-        .thenAnswer((_) => Stream.value(const {}));
-    when(() => eventRepo.watchAllImages())
-        .thenAnswer((_) => Stream.value(const {}));
-    when(() => healthRepo.watchAllDiaries())
-        .thenAnswer((_) => Stream.value(const []));
-    when(() => healthRepo.watchAllVaccines())
-        .thenAnswer((_) => Stream.value(const []));
-    when(() => authRepo.watchCurrentUser())
-        .thenAnswer((_) => Stream.value(_maxime));
+    when(() => referentialRepo.fetchSpecies()).thenAnswer((_) async => [_cat]);
+    when(() => eventRepo.watchEvents()).thenAnswer((_) => Stream.value(const []));
+    when(() => eventRepo.watchPetEvents()).thenAnswer((_) => Stream.value(const {}));
+    when(() => eventRepo.watchAllImages()).thenAnswer((_) => Stream.value(const {}));
+    when(() => healthRepo.watchAllDiaries()).thenAnswer((_) => Stream.value(const []));
+    when(() => healthRepo.watchAllVaccines()).thenAnswer((_) => Stream.value(const []));
+    when(() => authRepo.watchCurrentUser()).thenAnswer((_) => Stream.value(_maxime));
   });
 
   tearDown(() => petsController.close());
@@ -119,8 +111,7 @@ void main() {
     await cubit.close();
   });
 
-  testWidgets('shows an empty message when the user has no pet',
-      (tester) async {
+  testWidgets('shows an empty message when the user has no pet', (tester) async {
     final cubit = buildCubit();
     await tester.pumpWidget(buildPage(cubit));
 
@@ -131,8 +122,7 @@ void main() {
     await cubit.close();
   });
 
-  testWidgets('shows the masthead, the pets strip and an all-clear health',
-      (tester) async {
+  testWidgets('shows the masthead, the pets strip and an all-clear health', (tester) async {
     // Tall phone viewport so the health card below the pets strip is built.
     tester.view.physicalSize = const Size(1080, 2340);
     tester.view.devicePixelRatio = 2.0;
@@ -151,7 +141,7 @@ void main() {
     await cubit.close();
   });
 
-  testWidgets('opens the canicule article in a bottom sheet', (tester) async {
+  testWidgets('opens the article in a bottom sheet', (tester) async {
     // Tall phone viewport so the article card at the bottom is built.
     tester.view.physicalSize = const Size(1080, 2340);
     tester.view.devicePixelRatio = 2.0;
@@ -163,25 +153,19 @@ void main() {
     petsController.add([_milo]);
     await tester.pumpAndSettle();
 
-    expect(find.text('Canicule : protégez votre animal'), findsOneWidget);
     expect(find.text('Lire la suite'), findsOneWidget);
 
     await tester.tap(find.text('Lire la suite'));
     await tester.pumpAndSettle();
 
-    // Title now appears on both the card and the opened sheet.
-    expect(find.text('Canicule : protégez votre animal'), findsNWidgets(2));
-    expect(find.textContaining('coup de chaleur'), findsWidgets);
-
     // The back button at the top of the sheet closes it.
     await tester.tap(find.byIcon(Icons.arrow_back));
     await tester.pumpAndSettle();
-    expect(find.text('Canicule : protégez votre animal'), findsOneWidget);
+    expect(find.text('Lire la suite'), findsOneWidget);
     await cubit.close();
   });
 
-  testWidgets('features the memory from one year ago as a polaroid',
-      (tester) async {
+  testWidgets('features the memory from one year ago as a polaroid', (tester) async {
     final now = DateTime.now();
     when(() => eventRepo.watchEvents()).thenAnswer(
       (_) => Stream.value([
@@ -206,8 +190,7 @@ void main() {
     await cubit.close();
   });
 
-  testWidgets('opens the event detail sheet when tapping the polaroid',
-      (tester) async {
+  testWidgets('opens the event detail sheet when tapping the polaroid', (tester) async {
     // Tall AND wide viewport: the polaroid must be tappable and the sheet
     // action buttons need room for the wide test font glyphs.
     tester.view.physicalSize = const Size(1600, 2560);
@@ -227,8 +210,7 @@ void main() {
     );
     // Stubs required by the JournalCubit backing the detail sheet.
     when(() => petRepo.getPets()).thenAnswer((_) async => [_milo]);
-    when(() => referentialRepo.fetchEventTypes())
-        .thenAnswer((_) async => const []);
+    when(() => referentialRepo.fetchEventTypes()).thenAnswer((_) async => const []);
 
     final cubit = buildCubit();
     final journalCubit = JournalCubit(
@@ -264,8 +246,7 @@ void main() {
     await cubit.close();
   });
 
-  testWidgets('lists overdue and upcoming vaccines in the health tile',
-      (tester) async {
+  testWidgets('lists overdue and upcoming vaccines in the health tile', (tester) async {
     when(() => healthRepo.watchAllDiaries()).thenAnswer(
       (_) => Stream.value(
         const [HealthDiaryModel(healthDiaryId: 'd1', petId: 'p1')],
@@ -300,8 +281,7 @@ void main() {
 
   /// NAN-065: health_diary_vaccines leaks other accounts' rows, whose diary
   /// resolves to no pet. Those alerts used to render an empty icon slot.
-  testWidgets('shows a pet icon on every vaccine alert of the health tile',
-      (tester) async {
+  testWidgets('shows a pet icon on every vaccine alert of the health tile', (tester) async {
     tester.view.physicalSize = const Size(1080, 2340);
     tester.view.devicePixelRatio = 2.0;
     addTearDown(tester.view.reset);

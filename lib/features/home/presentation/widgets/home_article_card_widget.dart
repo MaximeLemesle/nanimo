@@ -5,25 +5,13 @@ import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/core/widgets/rounded_border_widget.dart';
 
-const String _title = 'Canicule : protégez votre animal';
-const String _excerpt = "Fortes chaleurs en vue. Gamelle d'eau fraîche à volonté, coins d'ombre "
-    'et sorties tôt le matin ou tard le soir : les bons réflexes pour un '
-    'été serein.';
+const String _title = 'La mue d’automne : le grand retour des poils partout';
 const List<String> _paragraphs = [
-  "L'été s'installe et, avec lui, les fortes chaleurs. Nos compagnons ne "
-      'transpirent presque pas : ils régulent leur température en haletant, '
-      'ce qui les rend particulièrement vulnérables aux coups de chaleur.',
-  "Laissez toujours plusieurs gamelles d'eau fraîche à disposition et "
-      'renouvelez-les souvent. À la maison, fermez volets et rideaux aux '
-      "heures chaudes et réservez-lui un coin à l'ombre.",
-  'Décalez les balades tôt le matin ou tard le soir. En pleine journée, le '
-      'bitume peut dépasser 50 °C et brûler les coussinets : posez le dos de '
-      'votre main au sol, si vous ne tenez pas 5 secondes, ne sortez pas.',
-  "Ne laissez jamais un animal seul dans une voiture, même à l'ombre, même "
-      "quelques minutes : l'habitacle devient un four en un rien de temps.",
-  'Halètement excessif, salivation, abattement, gencives très rouges… Au '
-      "moindre signe de coup de chaleur, mouillez votre animal à l'eau "
-      'tempérée et contactez immédiatement un vétérinaire.',
+  "Tu retrouves des poils sur le canapé, tes vêtements… et dans des endroits improbables ? Pas de panique : avec l’arrivée de l’automne, ton animal peut simplement être en pleine mue saisonnière.",
+  "Chez le chien comme chez le chat, le pelage se renouvelle pour se préparer aux températures plus fraîches. Résultat : pendant quelques semaines, ça peut tomber beaucoup plus que d’habitude !",
+  "Le bon réflexe ? Un petit coup de brosse régulier pour retirer les poils morts, éviter les nœuds et limiter l’invasion à la maison. Chez le chat, ça permet aussi qu’il avale moins de poils pendant sa toilette.",
+  "Profites-en pour surveiller sa peau : rougeurs, démangeaisons ou zones sans poils doivent t’alerter.",
+  "Sinon, rassure-toi : quelques poils partout, c’est aussi ça, l’automne avec nos animaux !",
 ];
 
 class HomeArticleCardWidget extends StatelessWidget {
@@ -53,9 +41,9 @@ class HomeArticleCardWidget extends StatelessWidget {
               Text(_title, style: AppTextStyles.title03),
               const SizedBox(height: AppSpacing.sm),
               Text(
-                _excerpt,
+                _paragraphs.first,
                 style: AppTextStyles.textSmall,
-                maxLines: 3,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: AppSpacing.sm),
