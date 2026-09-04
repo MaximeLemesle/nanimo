@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nanimo/core/utils/pet_icon_resolver.dart';
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:nanimo/data/models/referential/pet_icon_model.dart';
+import 'package:nanimo/features/pet/data/models/pet_model.dart';
 
 PetIconModel buildIcon(
   String id, {
@@ -73,6 +75,56 @@ void main() {
       );
 
       expect(path, isNull);
+    });
+  });
+
+  group('portraitsByPet', () {
+    PetModel buildPet(String id, {String? iconId, String speciesId = 'sp-dog'}) {
+      return PetModel(
+        petId: id,
+        petName: id,
+        birthdate: DateTime.utc(2020, 1, 1),
+        gender: Gender.male,
+        createdAt: DateTime.utc(2024, 1, 1),
+        petRaceId: 'race-1',
+        petSpeciesId: speciesId,
+        petIconId: iconId,
+      );
+    }
+
+    test('gives the chosen icon to the pet that picked it, species to others',
+        () {
+      final portraits = PetIconResolver.portraitsByPet(
+        pets: [buildPet('p1', iconId: 'collie'), buildPet('p2')],
+        icons: [buildIcon('collie')],
+        speciesIconKeys: speciesIconKeys,
+      );
+
+      expect(portraits['p1'],
+          const PetPortrait(iconKey: 'dog', assetPath: 'assets/icons/species/collie.png'));
+      expect(portraits['p2'], const PetPortrait.species('dog'));
+    });
+
+    /// A broken species would give a path pointing nowhere, so the pet is
+    /// dropped and the caller falls back to its own placeholder.
+    test('leaves out a pet whose species is unknown', () {
+      final portraits = PetIconResolver.portraitsByPet(
+        pets: [buildPet('p1', speciesId: 'sp-ferret')],
+        icons: const [],
+        speciesIconKeys: speciesIconKeys,
+      );
+
+      expect(portraits, isEmpty);
+    });
+
+    test('falls back when the chosen icon no longer exists', () {
+      final portraits = PetIconResolver.portraitsByPet(
+        pets: [buildPet('p1', iconId: 'removed')],
+        icons: [buildIcon('collie')],
+        speciesIconKeys: speciesIconKeys,
+      );
+
+      expect(portraits['p1'], const PetPortrait.species('dog'));
     });
   });
 

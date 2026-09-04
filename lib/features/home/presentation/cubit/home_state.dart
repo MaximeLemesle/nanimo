@@ -13,6 +13,7 @@ class HomeState extends Equatable {
   final HomeStatus status;
   final List<PetModel> pets;
   final Map<String, String> iconsKey;
+  final List<PetIconModel> icons;
   final String? userName;
   final List<EventModel> events;
   final Map<String, List<String>> petIdsByEvent;
@@ -24,6 +25,7 @@ class HomeState extends Equatable {
     this.status = HomeStatus.loading,
     this.pets = const [],
     this.iconsKey = const {},
+    this.icons = const [],
     this.userName,
     this.events = const [],
     this.petIdsByEvent = const {},
@@ -118,11 +120,19 @@ class HomeState extends Equatable {
     }
     return result;
   }
+  /// What each pet looks like: its chosen catalogue icon, else its species one.
+  Map<String, PetPortrait> get portraits => PetIconResolver.portraitsByPet(
+        pets: pets,
+        icons: icons,
+        speciesIconKeys: iconsKey,
+      );
+
 
   HomeState copyWith({
     HomeStatus? status,
     List<PetModel>? pets,
     Map<String, String>? iconsKey,
+    List<PetIconModel>? icons,
     String? userName,
     List<EventModel>? events,
     Map<String, List<String>>? petIdsByEvent,
@@ -134,6 +144,7 @@ class HomeState extends Equatable {
       status: status ?? this.status,
       pets: pets ?? this.pets,
       iconsKey: iconsKey ?? this.iconsKey,
+      icons: icons ?? this.icons,
       userName: userName ?? this.userName,
       events: events ?? this.events,
       petIdsByEvent: petIdsByEvent ?? this.petIdsByEvent,
@@ -148,6 +159,7 @@ class HomeState extends Equatable {
         status,
         pets,
         iconsKey,
+        icons,
         userName,
         events,
         petIdsByEvent,

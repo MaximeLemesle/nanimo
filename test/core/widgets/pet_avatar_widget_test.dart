@@ -1,3 +1,4 @@
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nanimo/core/widgets/pet_avatar_widget.dart';
@@ -7,8 +8,9 @@ void main() {
     return MaterialApp(
       home: Center(
         child: size == null
-            ? const PetAvatarWidget(iconKey: 'cat')
-            : PetAvatarWidget(iconKey: 'cat', size: size),
+            ? const PetAvatarWidget(portrait: PetPortrait.species('cat'))
+            : PetAvatarWidget(
+                portrait: const PetPortrait.species('cat'), size: size),
       ),
     );
   }

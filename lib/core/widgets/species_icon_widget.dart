@@ -1,28 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:nanimo/core/utils/pet_icon_resolver.dart';
+import 'package:nanimo/core/utils/pet_portrait.dart';
 
 class SpeciesIconWidget extends StatelessWidget {
-  final String iconKey;
+  final PetPortrait portrait;
   final double? width;
   final double? height;
   final BoxFit fit;
-
-  /// Catalogue icon chosen for one pet. Null means the pet never picked one, so
-  /// the generic species asset is used instead.
-  final String? assetPath;
-
   const SpeciesIconWidget({
     super.key,
-    required this.iconKey,
+    required this.portrait,
     this.width,
     this.height,
     this.fit = BoxFit.contain,
-    this.assetPath,
   });
 
-  /// Decode size in physical pixels for a logical [dimension]. Source files are
-  /// 512px squares, so an avatar drawn at 40pt would otherwise hold a full
-  /// 512x512 bitmap in memory, eighteen times the pixels it puts on screen.
   int? _decodeSize(BuildContext context, double? dimension) {
     if (dimension == null || !dimension.isFinite || dimension <= 0) return null;
     return (dimension * MediaQuery.devicePixelRatioOf(context)).round();
@@ -30,14 +22,12 @@ class SpeciesIconWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final speciesAsset = PetIconResolver.speciesAsset(iconKey);
+    final speciesAsset = PetIconResolver.speciesAsset(portrait.iconKey);
+    final assetPath = portrait.assetPath;
 
     /// Increase rabbit asset height. Catalogue icons are framed alike, so the
     /// correction only applies to the generic asset it was measured on.
-    final resolvedHeight =
-        assetPath == null && height != null && iconKey == 'rabbit'
-            ? height! * 1.2
-            : height;
+    final resolvedHeight = assetPath == null && height != null && portrait.iconKey == 'rabbit' ? height! * 1.2 : height;
 
     /// Only one axis is constrained: giving both would distort a source whose
     /// aspect ratio is not exactly the box it is drawn in.

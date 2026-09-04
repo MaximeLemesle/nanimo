@@ -1,3 +1,4 @@
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
@@ -23,7 +24,9 @@ void main() {
 
           /// Empty map: avatars fall back to a plain sized box, which keeps the
           /// test off the SVG asset bundle while preserving the layout width.
-          iconsKey: const {},
+          portraits: {
+            for (final pet in pets) pet.petId: const PetPortrait.species('cat'),
+          },
           onSelect: onSelect ?? (_) {},
         ),
       ),

@@ -52,14 +52,11 @@ class PetDetailsState extends Equatable {
 
   /// Only pets that picked a catalogue icon appear here. The others are left
   /// out so the widgets keep falling back to the species asset on their own.
-  Map<String, String> get catalogueIconPaths {
-    final paths = <String, String>{};
-    for (final pet in pets) {
-      final icon = PetIconResolver.findById(icons, pet.petIconId);
-      if (icon != null) paths[pet.petId] = icon.assetPath;
-    }
-    return paths;
-  }
+  Map<String, PetPortrait> get portraits => PetIconResolver.portraitsByPet(
+        pets: pets,
+        icons: icons,
+        speciesIconKeys: iconsKey,
+      );
 
   /// Catalogue offered for the selected pet, never another species'.
   List<PetIconModel> get iconsForSelectedPet =>

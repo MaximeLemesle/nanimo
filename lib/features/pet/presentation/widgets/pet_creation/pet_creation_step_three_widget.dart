@@ -1,3 +1,4 @@
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_confetti/flutter_confetti.dart';
@@ -88,7 +89,7 @@ class _StepThreeWidgetState extends State<PetCreationStepThreeWidget> {
                   if (iconKey != null)
                     Center(
                       child: PetAvatarWidget(
-                        iconKey: iconKey,
+                        portrait: PetPortrait.species(iconKey),
                         size: PetAvatarSize.large,
                       ),
                     ),

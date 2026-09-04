@@ -1,4 +1,6 @@
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:nanimo/data/models/referential/pet_icon_model.dart';
+import 'package:nanimo/features/pet/data/models/pet_model.dart';
 
 /// Resolves which image represents a pet: its chosen catalogue icon when it has
 /// one, the generic species icon otherwise. A pet created before the catalogue
@@ -25,6 +27,25 @@ class PetIconResolver {
 
     final iconKey = petSpeciesId == null ? null : speciesIconKeys[petSpeciesId];
     return iconKey == null ? null : speciesAsset(iconKey);
+  }
+
+  /// Portrait of every pet in [pets], keyed by pet id. Pets whose species is
+  /// unknown are left out rather than given a broken asset.
+  static Map<String, PetPortrait> portraitsByPet({
+    required List<PetModel> pets,
+    required List<PetIconModel> icons,
+    required Map<String, String> speciesIconKeys,
+  }) {
+    final portraits = <String, PetPortrait>{};
+    for (final pet in pets) {
+      final iconKey = speciesIconKeys[pet.petSpeciesId];
+      if (iconKey == null) continue;
+      portraits[pet.petId] = PetPortrait(
+        iconKey: iconKey,
+        assetPath: findById(icons, pet.petIconId)?.assetPath,
+      );
+    }
+    return portraits;
   }
 
   static PetIconModel? findById(List<PetIconModel> icons, String? petIconId) {

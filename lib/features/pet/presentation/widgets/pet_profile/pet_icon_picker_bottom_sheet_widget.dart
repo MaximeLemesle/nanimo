@@ -1,3 +1,4 @@
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nanimo/config/router/route_names.dart';
@@ -171,8 +172,10 @@ class _PetIconTile extends StatelessWidget {
                 ),
               ),
               child: SpeciesIconWidget(
-                iconKey: speciesIconKey,
-                assetPath: assetPath,
+                portrait: PetPortrait(
+                  iconKey: speciesIconKey,
+                  assetPath: assetPath,
+                ),
               ),
             ),
           ),

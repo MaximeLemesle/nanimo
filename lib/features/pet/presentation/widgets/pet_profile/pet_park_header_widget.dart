@@ -1,3 +1,4 @@
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:flutter/material.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/core/widgets/pet_avatar_widget.dart';
@@ -6,16 +7,14 @@ import 'package:nanimo/features/pet/data/models/pet_model.dart';
 class PetParkHeaderWidget extends StatelessWidget {
   final List<PetModel> pets;
   final String? selectedPetId;
-  final Map<String, String> iconsKey;
-  final Map<String, String> iconPaths;
+  final Map<String, PetPortrait> portraits;
   final ValueChanged<String> onSelect;
 
   const PetParkHeaderWidget({
     super.key,
     required this.pets,
     required this.selectedPetId,
-    required this.iconsKey,
-    this.iconPaths = const {},
+    required this.portraits,
     required this.onSelect,
   });
 
@@ -63,7 +62,7 @@ class PetParkHeaderWidget extends StatelessWidget {
   }
 
   Widget _buildAvatar(PetModel pet) {
-    final iconKey = iconsKey[pet.petSpeciesId];
+    final portrait = portraits[pet.petId];
     final isSelected = pet.petId == selectedPetId;
 
     return Padding(
@@ -73,7 +72,7 @@ class PetParkHeaderWidget extends StatelessWidget {
         child: AnimatedScale(
           scale: isSelected ? 1.0 : 0.60,
           duration: const Duration(milliseconds: 200),
-          child: iconKey == null
+          child: portrait == null
               ? const SizedBox(width: 80, height: 80)
               : ColorFiltered(
                   colorFilter: isSelected
@@ -86,9 +85,8 @@ class PetParkHeaderWidget extends StatelessWidget {
                           BlendMode.srcATop,
                         ),
                   child: PetAvatarWidget(
-                    iconKey: iconKey,
+                    portrait: portrait,
                     size: PetAvatarSize.medium,
-                    assetPath: iconPaths[pet.petId],
                   ),
                 ),
         ),

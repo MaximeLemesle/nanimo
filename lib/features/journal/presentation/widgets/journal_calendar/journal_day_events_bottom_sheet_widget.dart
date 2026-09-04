@@ -1,3 +1,4 @@
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
@@ -54,7 +55,7 @@ class JournalDayEventsBottomSheetWidget extends StatelessWidget {
               for (final event in events) ...[
                 _DayEventRow(
                   event: event,
-                  iconKeys: _iconKeysFor(state, event.eventId),
+                  portraits: state.portraitsForEvent(event.eventId),
                   onTap: () => Navigator.of(context).pop(event),
                 ),
                 if (event != events.last) const SizedBox(height: AppSpacing.sm),
@@ -65,28 +66,16 @@ class JournalDayEventsBottomSheetWidget extends StatelessWidget {
     );
   }
 
-  List<String> _iconKeysFor(JournalState state, String eventId) {
-    final petIds = state.petIdsByEvent[eventId] ?? const [];
-    return [
-      for (final petId in petIds)
-        if (state.pets
-                .where((pet) => pet.petId == petId)
-                .map((pet) => state.iconsKey[pet.petSpeciesId])
-                .firstOrNull
-            case final String iconKey)
-          iconKey,
-    ];
-  }
 }
 
 class _DayEventRow extends StatelessWidget {
   final EventModel event;
-  final List<String> iconKeys;
+  final List<PetPortrait> portraits;
   final VoidCallback onTap;
 
   const _DayEventRow({
     required this.event,
-    required this.iconKeys,
+    required this.portraits,
     required this.onTap,
   });
 
@@ -111,8 +100,8 @@ class _DayEventRow extends StatelessWidget {
           ),
           child: Row(
             children: [
-              if (iconKeys.isNotEmpty) ...[
-                _PetIcons(iconKeys: iconKeys),
+              if (portraits.isNotEmpty) ...[
+                _PetIcons(portraits: portraits),
                 const SizedBox(width: AppSpacing.md),
               ],
               Expanded(
@@ -146,18 +135,18 @@ class _DayEventRow extends StatelessWidget {
 }
 
 class _PetIcons extends StatelessWidget {
-  final List<String> iconKeys;
+  final List<PetPortrait> portraits;
 
-  const _PetIcons({required this.iconKeys});
+  const _PetIcons({required this.portraits});
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 34 + ((iconKeys.length - 1) * 18),
+      width: 34 + ((portraits.length - 1) * 18),
       height: 34,
       child: Stack(
         children: [
-          for (var i = 0; i < iconKeys.length; i++)
+          for (var i = 0; i < portraits.length; i++)
             Positioned(
               left: i * 18,
               child: Container(
@@ -168,7 +157,7 @@ class _PetIcons extends StatelessWidget {
                   color: AppColors.background,
                   shape: BoxShape.circle,
                 ),
-                child: SpeciesIconWidget(iconKey: iconKeys[i], height: 28),
+                child: SpeciesIconWidget(portrait: portraits[i], height: 28),
               ),
             ),
         ],

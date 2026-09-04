@@ -11,6 +11,7 @@ class EditEventState extends Equatable {
   final List<PetModel> pets;
   final List<String> selectedPetIds;
   final Map<String, String> iconsKey;
+  final List<PetIconModel> icons;
   final String? error;
 
   const EditEventState({
@@ -22,10 +23,18 @@ class EditEventState extends Equatable {
     this.pets = const [],
     this.selectedPetIds = const [],
     this.iconsKey = const {},
+    this.icons = const [],
     this.error,
   });
 
   bool get isLoaded => event != null && types.isNotEmpty;
+  /// What each pet looks like: its chosen catalogue icon, else its species one.
+  Map<String, PetPortrait> get portraits => PetIconResolver.portraitsByPet(
+        pets: pets,
+        icons: icons,
+        speciesIconKeys: iconsKey,
+      );
+
 
   EditEventState copyWith({
     EditEventStatus? status,
@@ -36,6 +45,7 @@ class EditEventState extends Equatable {
     List<PetModel>? pets,
     List<String>? selectedPetIds,
     Map<String, String>? iconsKey,
+    List<PetIconModel>? icons,
     String? error,
   }) {
     return EditEventState(
@@ -47,6 +57,7 @@ class EditEventState extends Equatable {
       pets: pets ?? this.pets,
       selectedPetIds: selectedPetIds ?? this.selectedPetIds,
       iconsKey: iconsKey ?? this.iconsKey,
+      icons: icons ?? this.icons,
       error: error ?? this.error,
     );
   }
@@ -61,6 +72,7 @@ class EditEventState extends Equatable {
         pets,
         selectedPetIds,
         iconsKey,
+        icons,
         error,
       ];
 }

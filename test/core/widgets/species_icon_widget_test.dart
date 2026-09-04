@@ -1,3 +1,4 @@
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nanimo/core/widgets/species_icon_widget.dart';
@@ -7,8 +8,7 @@ void main() {
     return MaterialApp(
       home: Center(
         child: SpeciesIconWidget(
-          iconKey: iconKey,
-          assetPath: assetPath,
+          portrait: PetPortrait(iconKey: iconKey, assetPath: assetPath),
           height: height,
         ),
       ),

@@ -24,15 +24,6 @@ class JournalTimelineWidget extends StatelessWidget {
 
     final cubit = context.read<JournalCubit>();
 
-    List<String> iconKeysFor(String eventId) {
-      final petIds = state.petIdsByEvent[eventId] ?? const [];
-      return [
-        for (final petId in petIds)
-          if (state.pets.where((pet) => pet.petId == petId).map((pet) => state.iconsKey[pet.petSpeciesId]).firstOrNull
-              case final String iconKey)
-            iconKey,
-      ];
-    }
 
     return RefreshIndicator(
       onRefresh: () => context.read<AuthCubit>().resync(),
@@ -47,7 +38,7 @@ class JournalTimelineWidget extends StatelessWidget {
           return JournalTimelineEventCardWidget(
             event: event,
             imagePaths: state.imagePathsByEvent[event.eventId] ?? const [],
-            iconKeys: iconKeysFor(event.eventId),
+            portraits: state.portraitsForEvent(event.eventId),
             urlResolver: cubit.imageUrl,
             imageFirst: index.isEven,
             onTap: () => JournalEventDetailBottomSheetWidget.show(

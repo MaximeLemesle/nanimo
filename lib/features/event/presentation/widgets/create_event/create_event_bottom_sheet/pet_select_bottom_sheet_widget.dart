@@ -1,3 +1,4 @@
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:flutter/material.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_radius.dart';
@@ -11,27 +12,27 @@ import 'package:nanimo/features/pet/data/models/pet_model.dart';
 class PetSelectBottomSheetWidget extends StatefulWidget {
   final List<PetModel> pets;
   final List<String> selectedPetIds;
-  final Map<String, String> iconsKey;
+  final Map<String, PetPortrait> portraits;
 
   const PetSelectBottomSheetWidget({
     super.key,
     required this.pets,
     required this.selectedPetIds,
-    required this.iconsKey,
+    required this.portraits,
   });
 
   static Future<List<String>?> show(
     BuildContext context, {
     required List<PetModel> pets,
     required List<String> selectedPetIds,
-    required Map<String, String> iconsKey,
+    required Map<String, PetPortrait> portraits,
   }) {
     return BottomSheetWidget.show<List<String>>(
       context,
       PetSelectBottomSheetWidget(
         pets: pets,
         selectedPetIds: selectedPetIds,
-        iconsKey: iconsKey,
+        portraits: portraits,
       ),
     );
   }
@@ -128,10 +129,10 @@ class _PetSelectBottomSheetWidgetState
   }
 
   Widget _petIcon(PetModel pet) {
-    final iconKey = widget.iconsKey[pet.petSpeciesId];
-    if (iconKey == null) {
+    final portrait = widget.portraits[pet.petId];
+    if (portrait == null) {
       return const Icon(Icons.pets, color: AppColors.primary, size: 40);
     }
-    return PetAvatarWidget(iconKey: iconKey, size: PetAvatarSize.small);
+    return PetAvatarWidget(portrait: portrait, size: PetAvatarSize.small);
   }
 }

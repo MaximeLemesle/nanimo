@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:nanimo/core/widgets/species_icon_widget.dart';
 
 enum PetAvatarSize {
@@ -12,23 +13,20 @@ enum PetAvatarSize {
 }
 
 class PetAvatarWidget extends StatelessWidget {
-  final String iconKey;
+  final PetPortrait portrait;
   final PetAvatarSize size;
-  final String? assetPath;
 
   const PetAvatarWidget({
     super.key,
-    required this.iconKey,
+    required this.portrait,
     this.size = PetAvatarSize.medium,
-    this.assetPath,
   });
 
   @override
   Widget build(BuildContext context) {
     return SpeciesIconWidget(
-      iconKey: iconKey,
+      portrait: portrait,
       height: size.dimension,
-      assetPath: assetPath,
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/create_event_bottom_sheet/pet_select_bottom_sheet_widget.dart';
@@ -46,7 +47,10 @@ void main() {
         context,
         pets: [_milo, _rex],
         selectedPetIds: const [],
-        iconsKey: const {'s-cat': 'cat'},
+        portraits: const {
+          'pet-milo': PetPortrait.species('cat'),
+          'pet-rex': PetPortrait.species('dog'),
+        },
       );
     }));
 
@@ -82,7 +86,10 @@ void main() {
         context,
         pets: [_milo],
         selectedPetIds: const ['pet-milo'],
-        iconsKey: const {'s-cat': 'cat'},
+        portraits: const {
+          'pet-milo': PetPortrait.species('cat'),
+          'pet-rex': PetPortrait.species('dog'),
+        },
       );
     }));
 
@@ -105,7 +112,7 @@ void main() {
         context,
         pets: const [],
         selectedPetIds: const [],
-        iconsKey: const {},
+        portraits: const {},
       );
     }));
 

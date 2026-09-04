@@ -1,3 +1,4 @@
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nanimo/core/widgets/species_icon_widget.dart';
@@ -25,7 +26,7 @@ void main() {
         JournalTimelineEventCardWidget(
           event: event,
           imagePaths: const [],
-          iconKeys: const ['cat'],
+          portraits: const [PetPortrait.species('cat')],
           urlResolver: resolver,
           imageFirst: true,
         ),
@@ -43,7 +44,10 @@ void main() {
         JournalTimelineEventCardWidget(
           event: event,
           imagePaths: const [],
-          iconKeys: const ['cat', 'dog'],
+          portraits: const [
+            PetPortrait.species('cat'),
+            PetPortrait.species('dog'),
+          ],
           urlResolver: resolver,
           imageFirst: false,
         ),
