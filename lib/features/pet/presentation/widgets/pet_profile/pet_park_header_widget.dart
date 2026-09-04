@@ -4,7 +4,7 @@ import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/core/widgets/pet_avatar_widget.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 
-class PetParkHeaderWidget extends StatelessWidget {
+class PetParkHeaderWidget extends StatefulWidget {
   final List<PetModel> pets;
   final String? selectedPetId;
   final Map<String, PetPortrait> portraits;
@@ -17,6 +17,46 @@ class PetParkHeaderWidget extends StatelessWidget {
     required this.portraits,
     required this.onSelect,
   });
+
+  @override
+  State<PetParkHeaderWidget> createState() => _PetParkHeaderWidgetState();
+}
+
+class _PetParkHeaderWidgetState extends State<PetParkHeaderWidget> {
+  final Map<String, GlobalKey> _avatarKeys = {};
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _centerSelected(duration: Duration.zero),
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant PetParkHeaderWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedPetId != widget.selectedPetId) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _centerSelected());
+    }
+  }
+
+  /// Slides the selected avatar to the middle of the park: the pet the page is
+  /// about should be the one under the eye, wherever it sits in the list.
+  void _centerSelected({
+    Duration duration = const Duration(milliseconds: 300),
+  }) {
+    final petId = widget.selectedPetId;
+    if (!mounted || petId == null) return;
+    final target = _avatarKeys[petId]?.currentContext;
+    if (target == null) return;
+    Scrollable.ensureVisible(
+      target,
+      alignment: 0.5,
+      duration: duration,
+      curve: Curves.easeOutCubic,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,16 +79,16 @@ class PetParkHeaderWidget extends StatelessWidget {
               builder: (context, constraints) {
                 return SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minWidth: constraints.maxWidth - AppSpacing.sm * 2,
-                    ),
-                    child: Row(
-                      children: [
-                        for (final pet in pets) _buildAvatar(pet),
-                      ],
-                    ),
+
+                  /// Half a viewport of slack on each side, so the first and
+                  /// the last avatar can reach the middle like any other.
+                  padding: EdgeInsets.symmetric(
+                    horizontal: constraints.maxWidth / 2,
+                  ),
+                  child: Row(
+                    children: [
+                      for (final pet in widget.pets) _buildAvatar(pet),
+                    ],
                   ),
                 );
               },
@@ -60,11 +100,12 @@ class PetParkHeaderWidget extends StatelessWidget {
   }
 
   Widget _buildAvatar(PetModel pet) {
-    final portrait = portraits[pet.petId];
-    final isSelected = pet.petId == selectedPetId;
+    final portrait = widget.portraits[pet.petId];
+    final isSelected = pet.petId == widget.selectedPetId;
 
     return GestureDetector(
-      onTap: () => onSelect(pet.petId),
+      key: _avatarKeys.putIfAbsent(pet.petId, GlobalKey.new),
+      onTap: () => widget.onSelect(pet.petId),
       child: AnimatedScale(
         scale: isSelected ? 1.0 : 0.60,
         duration: const Duration(milliseconds: 200),
