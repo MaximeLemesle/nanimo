@@ -9,6 +9,7 @@ void main() {
     'asset_path': 'assets/icons/species/cat-persan.png',
     'is_premium': true,
     'pet_species_id': 'sp-cat',
+    'pet_race_id': 'race-persan',
   };
 
   const model = PetIconModel(
@@ -17,6 +18,7 @@ void main() {
     assetPath: 'assets/icons/species/cat-persan.png',
     isPremium: true,
     petSpeciesId: 'sp-cat',
+    petRaceId: 'race-persan',
   );
 
   test('fromJson maps a Supabase row', () {
@@ -27,6 +29,7 @@ void main() {
     expect(cache.assetPath, 'assets/icons/species/cat-persan.png');
     expect(cache.isPremium, isTrue);
     expect(cache.petSpeciesId, 'sp-cat');
+    expect(cache.petRaceId, 'race-persan');
   });
 
   test('fromJson defaults is_premium to false when absent', () {

@@ -42,25 +42,15 @@ class PetDetailsState extends Equatable {
     return null;
   }
 
-  /// Asset displayed for [pet]: its chosen catalogue icon, else the species one.
-  String? iconPathFor(PetModel pet) => PetIconResolver.resolve(
-        petIconId: pet.petIconId,
-        petSpeciesId: pet.petSpeciesId,
-        icons: icons,
-        speciesIconKeys: iconsKey,
-      );
 
-  /// Only pets that picked a catalogue icon appear here. The others are left
-  /// out so the widgets keep falling back to the species asset on their own.
+  /// What each pet looks like: its breed icon when one exists, else its
+  /// species one.
   Map<String, PetPortrait> get portraits => PetIconResolver.portraitsByPet(
         pets: pets,
         icons: icons,
         speciesIconKeys: iconsKey,
       );
 
-  /// Catalogue offered for the selected pet, never another species'.
-  List<PetIconModel> get iconsForSelectedPet =>
-      PetIconResolver.forSpecies(icons, selectedPet?.petSpeciesId);
 
   /// Check if pet already have a diary
   bool get hasHealthData {

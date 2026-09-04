@@ -341,17 +341,6 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     } catch (_) {}
   }
 
-  /// Pass null to go back to the generic species icon.
-  Future<void> selectPetIcon(String? petIconId) async {
-    final petId = state.selectedPetId;
-    if (petId == null) return;
-    try {
-      await _petRepository.updatePetIcon(petId, petIconId);
-    } catch (err) {
-      if (isClosed) return;
-      emit(state.copyWith(error: err.toString()));
-    }
-  }
 
   Future<void> _loadRaceName(String petId) async {
     PetModel? pet;

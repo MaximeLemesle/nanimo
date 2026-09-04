@@ -17,6 +17,9 @@ class PetIconCache {
   @Index()
   String? petSpeciesId;
 
+  @Index()
+  String? petRaceId;
+
   PetIconCache();
 
   /// Maps a Supabase [json] row to a [PetIconCache] instance
@@ -26,7 +29,8 @@ class PetIconCache {
       ..petIconName = json['pet_icon_name'] as String
       ..assetPath = json['asset_path'] as String
       ..isPremium = json['is_premium'] as bool? ?? false
-      ..petSpeciesId = json['pet_species_id'] as String?;
+      ..petSpeciesId = json['pet_species_id'] as String?
+      ..petRaceId = json['pet_race_id'] as String?;
   }
 
   /// Builds a [PetIconCache] from a [PetIconModel]
@@ -36,7 +40,8 @@ class PetIconCache {
       ..petIconName = model.petIconName
       ..assetPath = model.assetPath
       ..isPremium = model.isPremium
-      ..petSpeciesId = model.petSpeciesId;
+      ..petSpeciesId = model.petSpeciesId
+      ..petRaceId = model.petRaceId;
   }
 
   /// Converts this cache row into the domain [PetIconModel]
@@ -47,6 +52,7 @@ class PetIconCache {
       assetPath: assetPath,
       isPremium: isPremium,
       petSpeciesId: petSpeciesId,
+      petRaceId: petRaceId,
     );
   }
 }

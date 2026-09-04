@@ -8,6 +8,7 @@ void main() {
     'asset_path': 'assets/icons/species/cat-persan.png',
     'is_premium': true,
     'pet_species_id': 'sp-cat',
+    'pet_race_id': 'race-persan',
   };
 
   test('fromJson reads every column', () {
@@ -18,6 +19,7 @@ void main() {
     expect(icon.assetPath, 'assets/icons/species/cat-persan.png');
     expect(icon.isPremium, isTrue);
     expect(icon.petSpeciesId, 'sp-cat');
+    expect(icon.petRaceId, 'race-persan');
   });
 
   /// The column is NOT NULL in Postgres, but a row read from a stale cache or a

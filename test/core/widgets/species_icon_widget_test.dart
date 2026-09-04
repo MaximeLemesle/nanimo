@@ -37,8 +37,6 @@ void main() {
     expect(renderedAsset(tester), 'assets/icons/species/dog.png');
   });
 
-  /// The correction was measured on the generic rabbit asset, so a catalogue
-  /// icon, framed like every other, must not inherit it.
   /// A 512px source drawn at 40pt would otherwise keep 18x the pixels it needs.
   testWidgets('decodes at the drawn size, not the source size', (tester) async {
     tester.view.devicePixelRatio = 3.0;
@@ -58,15 +56,12 @@ void main() {
     expect(tester.widget<Image>(find.byType(Image)).image, isA<AssetImage>());
   });
 
-  testWidgets('stretches the generic rabbit asset only', (tester) async {
-    await tester.pumpWidget(build(iconKey: 'rabbit', height: 100));
-    expect(tester.getSize(find.byType(Image)).height, 120);
-
-    await tester.pumpWidget(build(
-      iconKey: 'rabbit',
-      assetPath: 'assets/icons/species/dog.png',
-      height: 100,
-    ));
-    expect(tester.getSize(find.byType(Image)).height, 100);
+  /// The old rabbit-only height correction is gone: every catalogue icon is
+  /// framed alike, so the species key must not change the drawn height.
+  testWidgets('draws every icon at the height it was given', (tester) async {
+    for (final iconKey in ['rabbit-nain', 'cat-europeen']) {
+      await tester.pumpWidget(build(iconKey: iconKey, height: 100));
+      expect(tester.getSize(find.byType(Image)).height, 100);
+    }
   });
 }

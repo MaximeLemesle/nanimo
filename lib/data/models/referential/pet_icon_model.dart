@@ -4,6 +4,7 @@ class PetIconModel {
   final String assetPath;
   final bool isPremium;
   final String? petSpeciesId;
+  final String? petRaceId;
 
   const PetIconModel({
     required this.petIconId,
@@ -11,6 +12,7 @@ class PetIconModel {
     required this.assetPath,
     required this.isPremium,
     required this.petSpeciesId,
+    required this.petRaceId,
   });
 
   factory PetIconModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class PetIconModel {
       assetPath: json['asset_path'] as String,
       isPremium: json['is_premium'] as bool? ?? false,
       petSpeciesId: json['pet_species_id'] as String?,
+      petRaceId: json['pet_race_id'] as String?,
     );
   }
 
@@ -29,5 +32,6 @@ class PetIconModel {
         'asset_path': assetPath,
         'is_premium': isPremium,
         'pet_species_id': petSpeciesId,
+        'pet_race_id': petRaceId,
       };
 }

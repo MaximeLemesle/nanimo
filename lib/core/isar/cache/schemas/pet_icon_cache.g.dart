@@ -37,8 +37,13 @@ const PetIconCacheSchema = CollectionSchema(
       name: r'petIconName',
       type: IsarType.string,
     ),
-    r'petSpeciesId': PropertySchema(
+    r'petRaceId': PropertySchema(
       id: 4,
+      name: r'petRaceId',
+      type: IsarType.string,
+    ),
+    r'petSpeciesId': PropertySchema(
+      id: 5,
       name: r'petSpeciesId',
       type: IsarType.string,
     )
@@ -74,6 +79,19 @@ const PetIconCacheSchema = CollectionSchema(
           caseSensitive: true,
         )
       ],
+    ),
+    r'petRaceId': IndexSchema(
+      id: 7746922278487465235,
+      name: r'petRaceId',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'petRaceId',
+          type: IndexType.hash,
+          caseSensitive: true,
+        )
+      ],
     )
   },
   links: {},
@@ -94,6 +112,12 @@ int _petIconCacheEstimateSize(
   bytesCount += 3 + object.petIconId.length * 3;
   bytesCount += 3 + object.petIconName.length * 3;
   {
+    final value = object.petRaceId;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
     final value = object.petSpeciesId;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
@@ -112,7 +136,8 @@ void _petIconCacheSerialize(
   writer.writeBool(offsets[1], object.isPremium);
   writer.writeString(offsets[2], object.petIconId);
   writer.writeString(offsets[3], object.petIconName);
-  writer.writeString(offsets[4], object.petSpeciesId);
+  writer.writeString(offsets[4], object.petRaceId);
+  writer.writeString(offsets[5], object.petSpeciesId);
 }
 
 PetIconCache _petIconCacheDeserialize(
@@ -127,7 +152,8 @@ PetIconCache _petIconCacheDeserialize(
   object.isPremium = reader.readBool(offsets[1]);
   object.petIconId = reader.readString(offsets[2]);
   object.petIconName = reader.readString(offsets[3]);
-  object.petSpeciesId = reader.readStringOrNull(offsets[4]);
+  object.petRaceId = reader.readStringOrNull(offsets[4]);
+  object.petSpeciesId = reader.readStringOrNull(offsets[5]);
   return object;
 }
 
@@ -147,6 +173,8 @@ P _petIconCacheDeserializeProp<P>(
     case 3:
       return (reader.readString(offset)) as P;
     case 4:
+      return (reader.readStringOrNull(offset)) as P;
+    case 5:
       return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -405,6 +433,73 @@ extension PetIconCacheQueryWhere
               indexName: r'petSpeciesId',
               lower: [],
               upper: [petSpeciesId],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<PetIconCache, PetIconCache, QAfterWhereClause>
+      petRaceIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'petRaceId',
+        value: [null],
+      ));
+    });
+  }
+
+  QueryBuilder<PetIconCache, PetIconCache, QAfterWhereClause>
+      petRaceIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'petRaceId',
+        lower: [null],
+        includeLower: false,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<PetIconCache, PetIconCache, QAfterWhereClause> petRaceIdEqualTo(
+      String? petRaceId) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'petRaceId',
+        value: [petRaceId],
+      ));
+    });
+  }
+
+  QueryBuilder<PetIconCache, PetIconCache, QAfterWhereClause>
+      petRaceIdNotEqualTo(String? petRaceId) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'petRaceId',
+              lower: [],
+              upper: [petRaceId],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'petRaceId',
+              lower: [petRaceId],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'petRaceId',
+              lower: [petRaceId],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'petRaceId',
+              lower: [],
+              upper: [petRaceId],
               includeUpper: false,
             ));
       }
@@ -886,6 +981,160 @@ extension PetIconCacheQueryFilter
   }
 
   QueryBuilder<PetIconCache, PetIconCache, QAfterFilterCondition>
+      petRaceIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'petRaceId',
+      ));
+    });
+  }
+
+  QueryBuilder<PetIconCache, PetIconCache, QAfterFilterCondition>
+      petRaceIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'petRaceId',
+      ));
+    });
+  }
+
+  QueryBuilder<PetIconCache, PetIconCache, QAfterFilterCondition>
+      petRaceIdEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'petRaceId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PetIconCache, PetIconCache, QAfterFilterCondition>
+      petRaceIdGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'petRaceId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PetIconCache, PetIconCache, QAfterFilterCondition>
+      petRaceIdLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'petRaceId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PetIconCache, PetIconCache, QAfterFilterCondition>
+      petRaceIdBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'petRaceId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PetIconCache, PetIconCache, QAfterFilterCondition>
+      petRaceIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'petRaceId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PetIconCache, PetIconCache, QAfterFilterCondition>
+      petRaceIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'petRaceId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PetIconCache, PetIconCache, QAfterFilterCondition>
+      petRaceIdContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'petRaceId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PetIconCache, PetIconCache, QAfterFilterCondition>
+      petRaceIdMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'petRaceId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PetIconCache, PetIconCache, QAfterFilterCondition>
+      petRaceIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'petRaceId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PetIconCache, PetIconCache, QAfterFilterCondition>
+      petRaceIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'petRaceId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PetIconCache, PetIconCache, QAfterFilterCondition>
       petSpeciesIdIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -1097,6 +1346,18 @@ extension PetIconCacheQuerySortBy
     });
   }
 
+  QueryBuilder<PetIconCache, PetIconCache, QAfterSortBy> sortByPetRaceId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'petRaceId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PetIconCache, PetIconCache, QAfterSortBy> sortByPetRaceIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'petRaceId', Sort.desc);
+    });
+  }
+
   QueryBuilder<PetIconCache, PetIconCache, QAfterSortBy> sortByPetSpeciesId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'petSpeciesId', Sort.asc);
@@ -1174,6 +1435,18 @@ extension PetIconCacheQuerySortThenBy
     });
   }
 
+  QueryBuilder<PetIconCache, PetIconCache, QAfterSortBy> thenByPetRaceId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'petRaceId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PetIconCache, PetIconCache, QAfterSortBy> thenByPetRaceIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'petRaceId', Sort.desc);
+    });
+  }
+
   QueryBuilder<PetIconCache, PetIconCache, QAfterSortBy> thenByPetSpeciesId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'petSpeciesId', Sort.asc);
@@ -1217,6 +1490,13 @@ extension PetIconCacheQueryWhereDistinct
     });
   }
 
+  QueryBuilder<PetIconCache, PetIconCache, QDistinct> distinctByPetRaceId(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'petRaceId', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<PetIconCache, PetIconCache, QDistinct> distinctByPetSpeciesId(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1254,6 +1534,12 @@ extension PetIconCacheQueryProperty
   QueryBuilder<PetIconCache, String, QQueryOperations> petIconNameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'petIconName');
+    });
+  }
+
+  QueryBuilder<PetIconCache, String?, QQueryOperations> petRaceIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'petRaceId');
     });
   }
 

@@ -25,10 +25,6 @@ class SpeciesIconWidget extends StatelessWidget {
     final speciesAsset = PetIconResolver.speciesAsset(portrait.iconKey);
     final assetPath = portrait.assetPath;
 
-    /// Increase rabbit asset height. Catalogue icons are framed alike, so the
-    /// correction only applies to the generic asset it was measured on.
-    final resolvedHeight = assetPath == null && height != null && portrait.iconKey == 'rabbit' ? height! * 1.2 : height;
-
     /// Only one axis is constrained: giving both would distort a source whose
     /// aspect ratio is not exactly the box it is drawn in.
     final cacheWidth = _decodeSize(context, width);
@@ -37,7 +33,7 @@ class SpeciesIconWidget extends StatelessWidget {
     return Image.asset(
       assetPath ?? speciesAsset,
       width: width,
-      height: resolvedHeight,
+      height: height,
       fit: fit,
       cacheWidth: cacheWidth,
       cacheHeight: cacheHeight,

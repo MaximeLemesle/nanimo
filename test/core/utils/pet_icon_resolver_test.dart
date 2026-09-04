@@ -8,6 +8,7 @@ PetIconModel buildIcon(
   String id, {
   String name = 'Icône',
   String? speciesId = 'sp-dog',
+  String? raceId = 'race-collie',
   bool isPremium = false,
 }) {
   return PetIconModel(
@@ -16,93 +17,116 @@ PetIconModel buildIcon(
     assetPath: 'assets/icons/species/$id.png',
     isPremium: isPremium,
     petSpeciesId: speciesId,
+    petRaceId: raceId,
+  );
+}
+
+PetModel buildPet(
+  String id, {
+  String? raceId = 'race-collie',
+  String speciesId = 'sp-dog',
+}) {
+  return PetModel(
+    petId: id,
+    petName: id,
+    birthdate: DateTime.utc(2020, 1, 1),
+    gender: Gender.male,
+    createdAt: DateTime.utc(2024, 1, 1),
+    petRaceId: raceId ?? '',
+    petSpeciesId: speciesId,
   );
 }
 
 void main() {
-  const speciesIconKeys = {'sp-dog': 'dog', 'sp-cat': 'cat'};
+  const speciesIconKeys = {
+    'sp-dog': 'dog-jack_russell_terrier',
+    'sp-cat': 'cat-europeen',
+  };
 
   group('speciesAsset', () {
     test('builds the shipped path from the species icon key', () {
-      expect(PetIconResolver.speciesAsset('dog'),
-          'assets/icons/species/dog.png');
+      expect(
+        PetIconResolver.speciesAsset('cat-europeen'),
+        'assets/icons/species/cat-europeen.png',
+      );
     });
   });
 
-  group('resolve', () {
-    test('returns the chosen icon asset when the pet has one', () {
-      final icons = [buildIcon('border-collie')];
+  group('findByRace', () {
+    test('finds the icon drawn for that breed', () {
+      final icons = [
+        buildIcon('collie', raceId: 'race-collie'),
+        buildIcon('chihuahua', raceId: 'race-chihuahua'),
+      ];
 
-      final path = PetIconResolver.resolve(
-        petIconId: 'border-collie',
-        petSpeciesId: 'sp-dog',
-        icons: icons,
-        speciesIconKeys: speciesIconKeys,
-      );
-
-      expect(path, 'assets/icons/species/border-collie.png');
+      expect(PetIconResolver.findByRace(icons, 'race-chihuahua')?.petIconId,
+          'chihuahua');
     });
 
-    test('falls back to the species asset when the pet picked nothing', () {
-      final path = PetIconResolver.resolve(
-        petIconId: null,
-        petSpeciesId: 'sp-dog',
-        icons: [buildIcon('border-collie')],
-        speciesIconKeys: speciesIconKeys,
-      );
-
-      expect(path, 'assets/icons/species/dog.png');
+    test('returns null for a breed nobody drew', () {
+      expect(PetIconResolver.findByRace([buildIcon('collie')], 'race-labrador'),
+          isNull);
     });
 
-    /// A pet pointing at a deleted catalogue row must not lose its avatar.
-    test('falls back to the species asset when the icon no longer exists', () {
-      final path = PetIconResolver.resolve(
-        petIconId: 'removed',
-        petSpeciesId: 'sp-dog',
-        icons: [buildIcon('border-collie')],
-        speciesIconKeys: speciesIconKeys,
-      );
+    /// A pet created without a breed carries an empty string, not null.
+    test('returns null for a missing or empty breed', () {
+      final icons = [buildIcon('collie')];
 
-      expect(path, 'assets/icons/species/dog.png');
-    });
-
-    test('returns null when the species itself is unknown', () {
-      final path = PetIconResolver.resolve(
-        petIconId: null,
-        petSpeciesId: 'sp-ferret',
-        icons: const [],
-        speciesIconKeys: speciesIconKeys,
-      );
-
-      expect(path, isNull);
+      expect(PetIconResolver.findByRace(icons, null), isNull);
+      expect(PetIconResolver.findByRace(icons, ''), isNull);
     });
   });
 
   group('portraitsByPet', () {
-    PetModel buildPet(String id, {String? iconId, String speciesId = 'sp-dog'}) {
-      return PetModel(
-        petId: id,
-        petName: id,
-        birthdate: DateTime.utc(2020, 1, 1),
-        gender: Gender.male,
-        createdAt: DateTime.utc(2024, 1, 1),
-        petRaceId: 'race-1',
-        petSpeciesId: speciesId,
-        petIconId: iconId,
-      );
-    }
-
-    test('gives the chosen icon to the pet that picked it, species to others',
-        () {
+    test('gives each pet the icon of its own breed', () {
       final portraits = PetIconResolver.portraitsByPet(
-        pets: [buildPet('p1', iconId: 'collie'), buildPet('p2')],
+        pets: [
+          buildPet('p1', raceId: 'race-collie'),
+          buildPet('p2', raceId: 'race-chihuahua'),
+        ],
+        icons: [
+          buildIcon('collie', raceId: 'race-collie'),
+          buildIcon('chihuahua', raceId: 'race-chihuahua'),
+        ],
+        speciesIconKeys: speciesIconKeys,
+      );
+
+      expect(
+        portraits['p1'],
+        const PetPortrait(
+          iconKey: 'dog-jack_russell_terrier',
+          assetPath: 'assets/icons/species/collie.png',
+        ),
+      );
+      expect(
+        portraits['p2'],
+        const PetPortrait(
+          iconKey: 'dog-jack_russell_terrier',
+          assetPath: 'assets/icons/species/chihuahua.png',
+        ),
+      );
+    });
+
+    test('falls back to the species icon for a breed nobody drew', () {
+      final portraits = PetIconResolver.portraitsByPet(
+        pets: [buildPet('p1', raceId: 'race-labrador')],
         icons: [buildIcon('collie')],
         speciesIconKeys: speciesIconKeys,
       );
 
       expect(portraits['p1'],
-          const PetPortrait(iconKey: 'dog', assetPath: 'assets/icons/species/collie.png'));
-      expect(portraits['p2'], const PetPortrait.species('dog'));
+          const PetPortrait.species('dog-jack_russell_terrier'));
+    });
+
+    test('falls back for a pet with no breed at all', () {
+      final portraits = PetIconResolver.portraitsByPet(
+        pets: [buildPet('p1', raceId: null)],
+        icons: [buildIcon('collie')],
+        speciesIconKeys: speciesIconKeys,
+      );
+
+      expect(portraits['p1'],
+          const PetPortrait.species('dog-jack_russell_terrier'));
     });
 
     /// A broken species would give a path pointing nowhere, so the pet is
@@ -115,45 +139,6 @@ void main() {
       );
 
       expect(portraits, isEmpty);
-    });
-
-    test('falls back when the chosen icon no longer exists', () {
-      final portraits = PetIconResolver.portraitsByPet(
-        pets: [buildPet('p1', iconId: 'removed')],
-        icons: [buildIcon('collie')],
-        speciesIconKeys: speciesIconKeys,
-      );
-
-      expect(portraits['p1'], const PetPortrait.species('dog'));
-    });
-  });
-
-  group('forSpecies', () {
-    test('keeps only the icons of the requested species', () {
-      final icons = [
-        buildIcon('collie', speciesId: 'sp-dog'),
-        buildIcon('persan', speciesId: 'sp-cat'),
-        buildIcon('siamois', speciesId: 'sp-cat'),
-      ];
-
-      final result = PetIconResolver.forSpecies(icons, 'sp-cat');
-
-      expect(result.map((i) => i.petIconId), ['persan', 'siamois']);
-    });
-
-    test('sorts free icons before premium ones', () {
-      final icons = [
-        buildIcon('a-premium', name: 'A', isPremium: true),
-        buildIcon('z-free', name: 'Z'),
-      ];
-
-      final result = PetIconResolver.forSpecies(icons, 'sp-dog');
-
-      expect(result.map((i) => i.petIconId), ['z-free', 'a-premium']);
-    });
-
-    test('returns nothing when the species is unknown', () {
-      expect(PetIconResolver.forSpecies([buildIcon('collie')], null), isEmpty);
     });
   });
 }
