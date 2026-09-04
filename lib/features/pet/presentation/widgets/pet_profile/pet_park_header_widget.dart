@@ -23,6 +23,12 @@ class PetParkHeaderWidget extends StatefulWidget {
 }
 
 class _PetParkHeaderWidgetState extends State<PetParkHeaderWidget> {
+  /// Fixed rather than measured: the catalogue icons are 512x460, so a 140pt
+  /// avatar is 156pt wide, and an Image reports no width at all until it is
+  /// decoded. A slot left to the image lands the strip off centre on the
+  /// first frame, then shifts once the pictures arrive.
+  static const double _avatarWidth = 156;
+
   final Map<String, GlobalKey> _avatarKeys = {};
 
   @override
@@ -80,10 +86,10 @@ class _PetParkHeaderWidgetState extends State<PetParkHeaderWidget> {
                 return SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
 
-                  /// Half a viewport of slack on each side, so the first and
-                  /// the last avatar can reach the middle like any other.
+                  /// Slack of half a viewport minus half an avatar, so the
+                  /// first and the last one come to rest dead centre.
                   padding: EdgeInsets.symmetric(
-                    horizontal: constraints.maxWidth / 2,
+                    horizontal: (constraints.maxWidth - _avatarWidth) / 2,
                   ),
                   child: Row(
                     children: [
@@ -110,7 +116,10 @@ class _PetParkHeaderWidgetState extends State<PetParkHeaderWidget> {
         scale: isSelected ? 1.0 : 0.60,
         duration: const Duration(milliseconds: 200),
         child: portrait == null
-            ? const SizedBox(width: 80, height: 80)
+            ? SizedBox(
+                width: _avatarWidth,
+                height: PetAvatarSize.large.dimension,
+              )
             : ColorFiltered(
                 colorFilter: isSelected
                     ? const ColorFilter.mode(
@@ -121,9 +130,12 @@ class _PetParkHeaderWidgetState extends State<PetParkHeaderWidget> {
                         Colors.black.withValues(alpha: 0.3),
                         BlendMode.srcATop,
                       ),
-                child: PetAvatarWidget(
-                  portrait: portrait,
-                  size: PetAvatarSize.large,
+                child: SizedBox(
+                  width: _avatarWidth,
+                  child: PetAvatarWidget(
+                    portrait: portrait,
+                    size: PetAvatarSize.large,
+                  ),
                 ),
               ),
       ),
