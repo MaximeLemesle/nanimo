@@ -39,14 +39,12 @@ class PetParkHeaderWidget extends StatelessWidget {
               builder: (context, constraints) {
                 return SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
                       minWidth: constraints.maxWidth - AppSpacing.sm * 2,
                     ),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         for (final pet in pets) _buildAvatar(pet),
                       ],
@@ -65,31 +63,28 @@ class PetParkHeaderWidget extends StatelessWidget {
     final portrait = portraits[pet.petId];
     final isSelected = pet.petId == selectedPetId;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-      child: GestureDetector(
-        onTap: () => onSelect(pet.petId),
-        child: AnimatedScale(
-          scale: isSelected ? 1.0 : 0.60,
-          duration: const Duration(milliseconds: 200),
-          child: portrait == null
-              ? const SizedBox(width: 80, height: 80)
-              : ColorFiltered(
-                  colorFilter: isSelected
-                      ? const ColorFilter.mode(
-                          Colors.transparent,
-                          BlendMode.multiply,
-                        )
-                      : ColorFilter.mode(
-                          Colors.black.withValues(alpha: 0.3),
-                          BlendMode.srcATop,
-                        ),
-                  child: PetAvatarWidget(
-                    portrait: portrait,
-                    size: PetAvatarSize.medium,
-                  ),
+    return GestureDetector(
+      onTap: () => onSelect(pet.petId),
+      child: AnimatedScale(
+        scale: isSelected ? 1.0 : 0.60,
+        duration: const Duration(milliseconds: 200),
+        child: portrait == null
+            ? const SizedBox(width: 80, height: 80)
+            : ColorFiltered(
+                colorFilter: isSelected
+                    ? const ColorFilter.mode(
+                        Colors.transparent,
+                        BlendMode.multiply,
+                      )
+                    : ColorFilter.mode(
+                        Colors.black.withValues(alpha: 0.3),
+                        BlendMode.srcATop,
+                      ),
+                child: PetAvatarWidget(
+                  portrait: portrait,
+                  size: PetAvatarSize.large,
                 ),
-        ),
+              ),
       ),
     );
   }
