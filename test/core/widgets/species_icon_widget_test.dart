@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nanimo/core/widgets/species_icon_widget.dart';
 
 void main() {
-  Widget build({String iconKey = 'cat', String? assetPath, double? height}) {
+  Widget build({String iconKey = 'cat-europeen', String? assetPath, double? height}) {
     return MaterialApp(
       home: Center(
         child: SpeciesIconWidget(
@@ -25,16 +25,16 @@ void main() {
       (tester) async {
     await tester.pumpWidget(build());
 
-    expect(renderedAsset(tester), 'assets/icons/species/cat.png');
+    expect(renderedAsset(tester), 'assets/icons/species/cat-europeen.png');
   });
 
   testWidgets('renders the chosen catalogue icon when given one',
       (tester) async {
     await tester.pumpWidget(
-      build(assetPath: 'assets/icons/species/dog.png'),
+      build(assetPath: 'assets/icons/species/dog-border_collie.png'),
     );
 
-    expect(renderedAsset(tester), 'assets/icons/species/dog.png');
+    expect(renderedAsset(tester), 'assets/icons/species/dog-border_collie.png');
   });
 
   /// A 512px source drawn at 40pt would otherwise keep 18x the pixels it needs.

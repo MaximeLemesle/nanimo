@@ -10,6 +10,8 @@ import 'package:nanimo/core/widgets/bottom_bar_widget/bottom_bar_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/text_field_widget.dart';
 import 'package:nanimo/config/router/route_names.dart';
+import 'package:nanimo/core/widgets/pet_avatar_widget.dart';
+import 'package:nanimo/data/models/referential/pet_icon_model.dart';
 import 'package:nanimo/data/models/referential/pet_race_model.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
@@ -112,6 +114,15 @@ const _europeen = PetRaceModel(
   petSpeciesId: 's-chat',
 );
 
+const _europeenIcon = PetIconModel(
+  petIconId: 'i-europeen',
+  petIconName: 'Européen',
+  assetPath: 'assets/icons/species/cat-europeen.png',
+  isPremium: false,
+  petSpeciesId: 's-chat',
+  petRaceId: 'r-europeen',
+);
+
 const _berger = PetRaceModel(
   petRaceId: 'r-berger',
   raceName: 'Berger',
@@ -184,6 +195,7 @@ void main() {
     when(() => healthRepo.getVetVisitsForPet(any())).thenAnswer((_) => Stream.value(const <VetVisitModel>[]));
 
     when(() => referentialRepo.fetchSpecies()).thenAnswer((_) async => [_chat, _chien]);
+    when(() => referentialRepo.fetchIcons()).thenAnswer((_) async => [_europeenIcon]);
     when(() => referentialRepo.fetchRacesBySpecies(_chat.petSpeciesId)).thenAnswer((_) async => [_europeen]);
     when(() => referentialRepo.fetchRacesBySpecies(_chien.petSpeciesId)).thenAnswer((_) async => [_berger]);
     // Replay the latest pets to any late subscriber (cubits scoped to the
@@ -307,9 +319,21 @@ void main() {
     await tester.tap(find.text('Continuer'));
     await tester.pumpAndSettle();
 
-    // Step 3: success screen with the pet name.
+    // Step 3: success screen with the pet name, and the icon of the breed
+    // picked on step 2 rather than the generic species one.
     expect(find.text('Félicitations !'), findsOneWidget);
     expect(find.text('Milo'), findsOneWidget);
+    final avatar = tester.widget<Image>(find.descendant(
+      of: find.byType(PetAvatarWidget),
+      matching: find.byType(Image),
+    ));
+    final provider = avatar.image;
+    expect(
+      ((provider is ResizeImage ? provider.imageProvider : provider)
+              as AssetImage)
+          .assetName,
+      _europeenIcon.assetPath,
+    );
 
     await tester.tap(find.text('Créer mon compte'));
     await tester.pumpAndSettle();
