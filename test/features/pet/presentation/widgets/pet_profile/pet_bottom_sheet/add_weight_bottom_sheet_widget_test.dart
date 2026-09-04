@@ -25,8 +25,8 @@ void main() {
         body: AddWeightBottomSheetWidget(
           pets: pets,
           portraits: const {
-            'p1': PetPortrait.species('cat'),
-            'p2': PetPortrait.species('cat'),
+            'p1': PetPortrait.species('cat-europeen'),
+            'p2': PetPortrait.species('cat-europeen'),
           },
           initialPetId: initialPetId,
           onSubmit: (weight, loggedAt, {petId}) {

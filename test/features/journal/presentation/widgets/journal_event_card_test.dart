@@ -26,7 +26,7 @@ void main() {
         JournalTimelineEventCardWidget(
           event: event,
           imagePaths: const [],
-          portraits: const [PetPortrait.species('cat')],
+          portraits: const [PetPortrait.species('cat-europeen')],
           urlResolver: resolver,
           imageFirst: true,
         ),
@@ -45,8 +45,8 @@ void main() {
           event: event,
           imagePaths: const [],
           portraits: const [
-            PetPortrait.species('cat'),
-            PetPortrait.species('dog'),
+            PetPortrait.species('cat-europeen'),
+            PetPortrait.species('dog-border_collie'),
           ],
           urlResolver: resolver,
           imageFirst: false,

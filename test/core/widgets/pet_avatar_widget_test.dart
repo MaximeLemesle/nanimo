@@ -8,9 +8,9 @@ void main() {
     return MaterialApp(
       home: Center(
         child: size == null
-            ? const PetAvatarWidget(portrait: PetPortrait.species('cat'))
+            ? const PetAvatarWidget(portrait: PetPortrait.species('cat-europeen'))
             : PetAvatarWidget(
-                portrait: const PetPortrait.species('cat'), size: size),
+                portrait: const PetPortrait.species('cat-europeen'), size: size),
       ),
     );
   }
@@ -23,7 +23,7 @@ void main() {
     final provider = tester.widget<Image>(find.byType(Image)).image;
     expect(
       ((provider as ResizeImage).imageProvider as AssetImage).assetName,
-      'assets/icons/species/cat.png',
+      'assets/icons/species/cat-europeen.png',
     );
   });
 

@@ -35,7 +35,7 @@ const _catSpecies = PetSpeciesModel(
   petSpeciesId: 's',
   speciesName: 'Chat',
   weightUnit: WeightUnit.kg,
-  iconKey: 'cat',
+  iconKey: 'cat-europeen',
 );
 
 final _milo = PetModel(
@@ -91,7 +91,7 @@ void main() {
       expect(cubit.state.selectedTypeId, _souvenir.eventTypeId);
       expect(cubit.state.pets, [_milo]);
       expect(cubit.state.selectedPetIds, [_milo.petId]);
-      expect(cubit.state.iconsKey, {'s': 'cat'});
+      expect(cubit.state.iconsKey, {'s': 'cat-europeen'});
       expect(cubit.state.status, EventCreationStatus.initial);
     });
 

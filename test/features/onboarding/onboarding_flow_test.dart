@@ -98,14 +98,14 @@ const _chat = PetSpeciesModel(
   petSpeciesId: 's-chat',
   speciesName: 'Chat',
   weightUnit: WeightUnit.kg,
-  iconKey: 'cat',
+  iconKey: 'cat-europeen',
 );
 
 const _chien = PetSpeciesModel(
   petSpeciesId: 's-chien',
   speciesName: 'Chien',
   weightUnit: WeightUnit.kg,
-  iconKey: 'dog',
+  iconKey: 'dog-border_collie',
 );
 
 const _europeen = PetRaceModel(

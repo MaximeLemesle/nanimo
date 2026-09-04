@@ -40,7 +40,7 @@ void main() {
         home: Scaffold(
           body: HomeHealthCardWidget(
             alerts: [alert],
-            portraits: const {'pet-1': PetPortrait.species('cat')},
+            portraits: const {'pet-1': PetPortrait.species('cat-europeen')},
           ),
         ),
       ),

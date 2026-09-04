@@ -28,7 +28,7 @@ void main() {
             pets: pets,
             portraits: {
               for (final pet in pets)
-                pet.petId: const PetPortrait.species('cat'),
+                pet.petId: const PetPortrait.species('cat-europeen'),
             },
             onPetTap: onPetTap,
           ),

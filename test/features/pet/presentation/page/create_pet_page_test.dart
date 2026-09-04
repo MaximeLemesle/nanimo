@@ -22,7 +22,7 @@ const _species = PetSpeciesModel(
   petSpeciesId: 's1',
   speciesName: 'Chat',
   weightUnit: WeightUnit.kg,
-  iconKey: 'cat',
+  iconKey: 'cat-europeen',
 );
 
 const _races = [

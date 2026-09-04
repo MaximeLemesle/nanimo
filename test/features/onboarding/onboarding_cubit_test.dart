@@ -15,7 +15,7 @@ const _species = PetSpeciesModel(
   petSpeciesId: 's1',
   speciesName: 'Chat',
   weightUnit: WeightUnit.kg,
-  iconKey: 'cat',
+  iconKey: 'cat-europeen',
 );
 
 const _races = [
@@ -67,7 +67,7 @@ void main() {
       expect(
         cubit.state.portrait,
         const PetPortrait(
-          iconKey: 'cat',
+          iconKey: 'cat-europeen',
           assetPath: 'assets/icons/species/cat-bengal.png',
         ),
       );
@@ -78,7 +78,7 @@ void main() {
       await cubit.fetchSpecies();
       await cubit.selectSpecies('s1');
 
-      expect(cubit.state.portrait, const PetPortrait.species('cat'));
+      expect(cubit.state.portrait, const PetPortrait.species('cat-europeen'));
     });
 
     test('is null while no species is picked', () async {
@@ -95,7 +95,7 @@ void main() {
       await cubit.fetchSpecies();
       await seedCompleteDraft(cubit);
 
-      expect(cubit.state.portrait, const PetPortrait.species('cat'));
+      expect(cubit.state.portrait, const PetPortrait.species('cat-europeen'));
     });
   });
 

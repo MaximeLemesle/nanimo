@@ -80,7 +80,7 @@ const _chat = PetSpeciesModel(
   petSpeciesId: 's-chat',
   speciesName: 'Chat',
   weightUnit: WeightUnit.kg,
-  iconKey: 'cat',
+  iconKey: 'cat-europeen',
 );
 
 const _europeen = PetRaceModel(

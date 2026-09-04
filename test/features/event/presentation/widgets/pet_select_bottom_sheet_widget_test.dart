@@ -48,8 +48,8 @@ void main() {
         pets: [_milo, _rex],
         selectedPetIds: const [],
         portraits: const {
-          'pet-milo': PetPortrait.species('cat'),
-          'pet-rex': PetPortrait.species('dog'),
+          'pet-milo': PetPortrait.species('cat-europeen'),
+          'pet-rex': PetPortrait.species('dog-border_collie'),
         },
       );
     }));
@@ -87,8 +87,8 @@ void main() {
         pets: [_milo],
         selectedPetIds: const ['pet-milo'],
         portraits: const {
-          'pet-milo': PetPortrait.species('cat'),
-          'pet-rex': PetPortrait.species('dog'),
+          'pet-milo': PetPortrait.species('cat-europeen'),
+          'pet-rex': PetPortrait.species('dog-border_collie'),
         },
       );
     }));

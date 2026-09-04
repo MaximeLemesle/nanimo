@@ -16,9 +16,9 @@ PetModel _pet(String id, String name) => PetModel(
 
 final _pets = [_pet('p1', 'Maki'), _pet('p2', 'Nala'), _pet('p3', 'Pixel')];
 const _portraits = {
-  'p1': PetPortrait.species('cat'),
-  'p2': PetPortrait.species('cat'),
-  'p3': PetPortrait.species('cat'),
+  'p1': PetPortrait.species('cat-europeen'),
+  'p2': PetPortrait.species('cat-europeen'),
+  'p3': PetPortrait.species('cat-europeen'),
 };
 
 Widget _host(Widget child) => MaterialApp(home: Scaffold(body: child));
