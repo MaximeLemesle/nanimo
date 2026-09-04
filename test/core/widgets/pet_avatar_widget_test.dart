@@ -16,9 +16,11 @@ void main() {
   testWidgets('renders the avatar from the species icon key', (tester) async {
     await tester.pumpWidget(buildAvatar(size: PetAvatarSize.large));
 
-    final image = tester.widget<Image>(find.byType(Image));
+    /// The avatar is decoded at its drawn size, so the asset sits behind a
+    /// ResizeImage rather than being the provider itself.
+    final provider = tester.widget<Image>(find.byType(Image)).image;
     expect(
-      (image.image as AssetImage).assetName,
+      ((provider as ResizeImage).imageProvider as AssetImage).assetName,
       'assets/icons/species/cat.png',
     );
   });
