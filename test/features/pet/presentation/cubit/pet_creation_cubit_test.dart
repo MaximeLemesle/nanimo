@@ -56,17 +56,35 @@ void main() {
         uuid: uuid,
       );
 
-  void prepareDraft(PetCreationCubit cubit) {
+  void prepareDraft(PetCreationCubit cubit, {String? petIconId = 'i1'}) {
     cubit.prepare(
       petName: 'Milo',
       petSpeciesId: 's1',
       petRaceId: 'r1',
       gender: Gender.female,
       birthdate: DateTime.utc(2022, 6, 15),
+      petIconId: petIconId,
     );
   }
 
   group('prepare', () {
+    /// Written at creation so the row carries its own portrait, instead of it
+    /// being re-derived from the breed on every read.
+    test('stamps the resolved icon on the pending pet', () {
+      final cubit = createCubit();
+      prepareDraft(cubit);
+
+      expect(cubit.state.pendingPet!.petIconId, 'i1');
+      expect(cubit.state.pendingPet!.toJson()['pet_icon_id'], 'i1');
+    });
+
+    test('leaves the icon empty when none was resolved', () {
+      final cubit = createCubit();
+      prepareDraft(cubit, petIconId: null);
+
+      expect(cubit.state.pendingPet!.petIconId, isNull);
+    });
+
     test('captures the draft as a pending pet built with a fresh uuid', () {
       final cubit = createCubit();
       prepareDraft(cubit);

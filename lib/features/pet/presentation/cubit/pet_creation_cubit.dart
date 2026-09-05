@@ -38,6 +38,7 @@ class PetCreationCubit extends Cubit<PetCreationState> {
     required String petRaceId,
     required Gender gender,
     required DateTime birthdate,
+    String? petIconId,
   }) {
     final pet = PetModel(
       petId: _uuid.v4(),
@@ -47,6 +48,7 @@ class PetCreationCubit extends Cubit<PetCreationState> {
       createdAt: DateTime.now().toUtc(),
       petRaceId: petRaceId,
       petSpeciesId: petSpeciesId,
+      petIconId: petIconId,
     );
     emit(PetCreationState(pendingPet: pet));
 

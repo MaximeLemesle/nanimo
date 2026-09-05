@@ -91,11 +91,17 @@ class OnboardingState extends Equatable {
   PetPortrait? get portrait {
     final iconKey = _speciesIconKey;
     if (iconKey == null) return null;
-    return PetPortrait(
-      iconKey: iconKey,
-      assetPath: PetIconResolver.findByRace(icons, petRaceId)?.assetPath,
-    );
+    return PetPortrait(iconKey: iconKey, assetPath: _icon?.assetPath);
   }
+
+  /// Catalogue icon stamped on the pet when it is created.
+  String? get petIconId => _icon?.petIconId;
+
+  PetIconModel? get _icon => PetIconResolver.defaultIcon(
+        icons: icons,
+        petRaceId: petRaceId,
+        speciesIconKey: _speciesIconKey,
+      );
 
   String? get _speciesIconKey {
     for (final item in species) {

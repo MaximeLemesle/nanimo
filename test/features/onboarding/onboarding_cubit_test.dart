@@ -81,6 +81,25 @@ void main() {
       expect(cubit.state.portrait, const PetPortrait.species('cat-europeen'));
     });
 
+    test('stamps the id of the icon it resolved', () async {
+      final cubit = createCubit();
+      await cubit.fetchSpecies();
+      await seedCompleteDraft(cubit);
+
+      expect(cubit.state.petIconId, 'i1');
+    });
+
+    /// No catalogue means no id to stamp, and a pet created offline must not
+    /// point at a row that does not exist.
+    test('stamps nothing when the catalogue failed to load', () async {
+      when(() => referentialRepo.fetchIcons()).thenThrow(Exception('boom'));
+      final cubit = createCubit();
+      await cubit.fetchSpecies();
+      await seedCompleteDraft(cubit);
+
+      expect(cubit.state.petIconId, isNull);
+    });
+
     test('is null while no species is picked', () async {
       final cubit = createCubit();
       await cubit.fetchSpecies();

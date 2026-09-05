@@ -25,6 +25,7 @@ PetModel buildPet(
   String id, {
   String? raceId = 'race-collie',
   String speciesId = 'sp-dog',
+  String? iconId,
 }) {
   return PetModel(
     petId: id,
@@ -34,6 +35,7 @@ PetModel buildPet(
     createdAt: DateTime.utc(2024, 1, 1),
     petRaceId: raceId ?? '',
     petSpeciesId: speciesId,
+    petIconId: iconId,
   );
 }
 
@@ -77,6 +79,70 @@ void main() {
     });
   });
 
+  group('findById', () {
+    test('finds the icon stamped on the pet', () {
+      final icons = [buildIcon('collie'), buildIcon('chihuahua')];
+
+      expect(PetIconResolver.findById(icons, 'chihuahua')?.petIconId,
+          'chihuahua');
+    });
+
+    test('returns null for a missing, empty or withdrawn id', () {
+      final icons = [buildIcon('collie')];
+
+      expect(PetIconResolver.findById(icons, null), isNull);
+      expect(PetIconResolver.findById(icons, ''), isNull);
+      expect(PetIconResolver.findById(icons, 'chihuahua'), isNull);
+    });
+  });
+
+  group('defaultIcon', () {
+    test('stamps the icon drawn for the breed', () {
+      final icons = [
+        buildIcon('collie', raceId: 'race-collie'),
+        buildIcon('jack', raceId: 'race-jack'),
+      ];
+
+      expect(
+        PetIconResolver.defaultIcon(
+          icons: icons,
+          petRaceId: 'race-jack',
+          speciesIconKey: 'dog-jack_russell_terrier',
+        )?.petIconId,
+        'jack',
+      );
+    });
+
+    /// The species fallback is itself a catalogue row, so a pet with no drawn
+    /// breed still gets a real icon id rather than nothing.
+    test('falls back to the catalogue row the species points at', () {
+      final icons = [
+        buildIcon('collie', raceId: 'race-collie'),
+        buildIcon('dog-jack_russell_terrier', raceId: 'race-jack'),
+      ];
+
+      expect(
+        PetIconResolver.defaultIcon(
+          icons: icons,
+          petRaceId: 'race-labrador',
+          speciesIconKey: 'dog-jack_russell_terrier',
+        )?.petIconId,
+        'dog-jack_russell_terrier',
+      );
+    });
+
+    test('gives nothing when the catalogue is empty', () {
+      expect(
+        PetIconResolver.defaultIcon(
+          icons: const [],
+          petRaceId: 'race-collie',
+          speciesIconKey: 'dog-jack_russell_terrier',
+        ),
+        isNull,
+      );
+    });
+  });
+
   group('portraitsByPet', () {
     test('gives each pet the icon of its own breed', () {
       final portraits = PetIconResolver.portraitsByPet(
@@ -103,6 +169,45 @@ void main() {
         const PetPortrait(
           iconKey: 'dog-jack_russell_terrier',
           assetPath: 'assets/icons/species/chihuahua.png',
+        ),
+      );
+    });
+
+    /// A pet keeps the icon it was created with, even once its breed is drawn
+    /// differently, so a portrait never changes behind the owner's back.
+    test('prefers the icon stamped on the pet over the one of its breed', () {
+      final portraits = PetIconResolver.portraitsByPet(
+        pets: [buildPet('p1', raceId: 'race-collie', iconId: 'chihuahua')],
+        icons: [
+          buildIcon('collie', raceId: 'race-collie'),
+          buildIcon('chihuahua', raceId: 'race-chihuahua'),
+        ],
+        speciesIconKeys: speciesIconKeys,
+      );
+
+      expect(
+        portraits['p1'],
+        const PetPortrait(
+          iconKey: 'dog-jack_russell_terrier',
+          assetPath: 'assets/icons/species/chihuahua.png',
+        ),
+      );
+    });
+
+    /// Pets created before the column was filled carry nothing, and the breed
+    /// still has to answer for them.
+    test('falls back to the breed when the pet carries no icon', () {
+      final portraits = PetIconResolver.portraitsByPet(
+        pets: [buildPet('p1', raceId: 'race-collie', iconId: null)],
+        icons: [buildIcon('collie', raceId: 'race-collie')],
+        speciesIconKeys: speciesIconKeys,
+      );
+
+      expect(
+        portraits['p1'],
+        const PetPortrait(
+          iconKey: 'dog-jack_russell_terrier',
+          assetPath: 'assets/icons/species/collie.png',
         ),
       );
     });

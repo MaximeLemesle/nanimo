@@ -65,6 +65,7 @@ class _CreatePetPageState extends State<CreatePetPage> {
           petRaceId: state.petRaceId!,
           gender: state.gender!,
           birthdate: state.birthdate!,
+          petIconId: state.petIconId,
         );
     if (_isInApp(context)) {
       context.read<OnboardingCubit>().reset();
