@@ -5,7 +5,8 @@ import 'package:nanimo/core/widgets/species_icon_widget.dart';
 enum PetAvatarSize {
   small(40),
   medium(80),
-  large(140);
+  large(140),
+  xlarge(200);
 
   const PetAvatarSize(this.dimension);
 

@@ -88,7 +88,7 @@ class _StepThreeWidgetState extends State<PetCreationStepThreeWidget> {
                     Center(
                       child: PetAvatarWidget(
                         portrait: portrait,
-                        size: PetAvatarSize.large,
+                        size: PetAvatarSize.xlarge,
                       ),
                     ),
                   const SizedBox(height: AppSpacing.xl),
