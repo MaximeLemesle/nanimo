@@ -13,6 +13,7 @@ class JournalState extends Equatable {
   final Map<String, List<String>> petIdsByEvent;
   final Map<String, List<String>> imagePathsByEvent;
   final Map<String, String> iconsKey;
+  final List<PetIconModel> icons;
   final Set<String> selectedPetIds;
   final Set<String> selectedTypeIds;
   final DateTime? selectedCalendarDay;
@@ -27,6 +28,7 @@ class JournalState extends Equatable {
     this.petIdsByEvent = const {},
     this.imagePathsByEvent = const {},
     this.iconsKey = const {},
+    this.icons = const [],
     this.selectedPetIds = const {},
     this.selectedTypeIds = const {},
     this.selectedCalendarDay,
@@ -101,6 +103,22 @@ class JournalState extends Equatable {
     final local = value.toLocal();
     return DateTime(local.year, local.month, local.day);
   }
+  /// Portraits of the pets attached to [eventId], in the order they are linked.
+  List<PetPortrait> portraitsForEvent(String eventId) {
+    final byPet = portraits;
+    return [
+      for (final petId in petIdsByEvent[eventId] ?? const <String>[])
+        if (byPet[petId] case final PetPortrait portrait) portrait,
+    ];
+  }
+
+  /// What each pet looks like: its chosen catalogue icon, else its species one.
+  Map<String, PetPortrait> get portraits => PetIconResolver.portraitsByPet(
+        pets: pets,
+        icons: icons,
+        speciesIconKeys: iconsKey,
+      );
+
 
   JournalState copyWith({
     JournalStatus? status,
@@ -111,6 +129,7 @@ class JournalState extends Equatable {
     Map<String, List<String>>? petIdsByEvent,
     Map<String, List<String>>? imagePathsByEvent,
     Map<String, String>? iconsKey,
+    List<PetIconModel>? icons,
     Set<String>? selectedPetIds,
     Set<String>? selectedTypeIds,
     DateTime? selectedCalendarDay,
@@ -126,6 +145,7 @@ class JournalState extends Equatable {
       petIdsByEvent: petIdsByEvent ?? this.petIdsByEvent,
       imagePathsByEvent: imagePathsByEvent ?? this.imagePathsByEvent,
       iconsKey: iconsKey ?? this.iconsKey,
+      icons: icons ?? this.icons,
       selectedPetIds: selectedPetIds ?? this.selectedPetIds,
       selectedTypeIds: selectedTypeIds ?? this.selectedTypeIds,
       selectedCalendarDay: clearSelectedCalendarDay
@@ -145,6 +165,7 @@ class JournalState extends Equatable {
         petIdsByEvent,
         imagePathsByEvent,
         iconsKey,
+        icons,
         selectedPetIds,
         selectedTypeIds,
         selectedCalendarDay,

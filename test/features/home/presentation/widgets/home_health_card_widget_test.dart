@@ -1,3 +1,4 @@
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nanimo/core/utils/vaccine_status.dart';
@@ -39,7 +40,7 @@ void main() {
         home: Scaffold(
           body: HomeHealthCardWidget(
             alerts: [alert],
-            iconsKey: const {'species-1': 'cat'},
+            portraits: const {'pet-1': PetPortrait.species('cat-europeen')},
           ),
         ),
       ),

@@ -47,7 +47,7 @@ const _cat = PetSpeciesModel(
   petSpeciesId: 's1',
   speciesName: 'Chat',
   weightUnit: WeightUnit.kg,
-  iconKey: 'cat',
+  iconKey: 'cat-europeen',
 );
 
 const _maxime = UserModel(

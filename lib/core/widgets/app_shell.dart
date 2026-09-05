@@ -98,7 +98,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       context,
       AddWeightBottomSheetWidget(
         pets: petDetails.state.pets,
-        iconsKey: petDetails.state.iconsKey,
+        portraits: petDetails.state.portraits,
         initialPetId: petDetails.state.selectedPetId,
         onSubmit: (weight, loggedAt, {petId}) => petDetails.addWeightLog(weight, loggedAt, petId: petId),
       ),

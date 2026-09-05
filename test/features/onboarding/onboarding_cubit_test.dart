@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:nanimo/core/utils/pet_portrait.dart';
+import 'package:nanimo/data/models/referential/pet_icon_model.dart';
 import 'package:nanimo/data/models/referential/pet_race_model.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
@@ -13,11 +15,22 @@ const _species = PetSpeciesModel(
   petSpeciesId: 's1',
   speciesName: 'Chat',
   weightUnit: WeightUnit.kg,
-  iconKey: 'cat',
+  iconKey: 'cat-europeen',
 );
 
 const _races = [
   PetRaceModel(petRaceId: 'r1', raceName: 'Bengal', petSpeciesId: 's1'),
+];
+
+const _icons = [
+  PetIconModel(
+    petIconId: 'i1',
+    petIconName: 'Bengal',
+    assetPath: 'assets/icons/species/cat-bengal.png',
+    isPremium: false,
+    petSpeciesId: 's1',
+    petRaceId: 'r1',
+  ),
 ];
 
 void main() {
@@ -30,6 +43,7 @@ void main() {
         .thenAnswer((_) async => [_species]);
     when(() => referentialRepo.fetchRacesBySpecies(any()))
         .thenAnswer((_) async => _races);
+    when(() => referentialRepo.fetchIcons()).thenAnswer((_) async => _icons);
   });
 
   OnboardingCubit createCubit() => OnboardingCubit(
@@ -43,6 +57,66 @@ void main() {
     cubit.setGender(Gender.female);
     cubit.setBirthdate(DateTime.utc(2022, 6, 15));
   }
+
+  group('portrait', () {
+    test('gives the icon of the picked breed', () async {
+      final cubit = createCubit();
+      await cubit.fetchSpecies();
+      await seedCompleteDraft(cubit);
+
+      expect(
+        cubit.state.portrait,
+        const PetPortrait(
+          iconKey: 'cat-europeen',
+          assetPath: 'assets/icons/species/cat-bengal.png',
+        ),
+      );
+    });
+
+    test('falls back to the species icon before a breed is picked', () async {
+      final cubit = createCubit();
+      await cubit.fetchSpecies();
+      await cubit.selectSpecies('s1');
+
+      expect(cubit.state.portrait, const PetPortrait.species('cat-europeen'));
+    });
+
+    test('stamps the id of the icon it resolved', () async {
+      final cubit = createCubit();
+      await cubit.fetchSpecies();
+      await seedCompleteDraft(cubit);
+
+      expect(cubit.state.petIconId, 'i1');
+    });
+
+    /// No catalogue means no id to stamp, and a pet created offline must not
+    /// point at a row that does not exist.
+    test('stamps nothing when the catalogue failed to load', () async {
+      when(() => referentialRepo.fetchIcons()).thenThrow(Exception('boom'));
+      final cubit = createCubit();
+      await cubit.fetchSpecies();
+      await seedCompleteDraft(cubit);
+
+      expect(cubit.state.petIconId, isNull);
+    });
+
+    test('is null while no species is picked', () async {
+      final cubit = createCubit();
+      await cubit.fetchSpecies();
+
+      expect(cubit.state.portrait, isNull);
+    });
+
+    /// Icons are cosmetic: losing them must still leave a species avatar.
+    test('keeps the species icon when the catalogue fails to load', () async {
+      when(() => referentialRepo.fetchIcons()).thenThrow(Exception('boom'));
+      final cubit = createCubit();
+      await cubit.fetchSpecies();
+      await seedCompleteDraft(cubit);
+
+      expect(cubit.state.portrait, const PetPortrait.species('cat-europeen'));
+    });
+  });
 
   group('fetchSpecies', () {
     test('emits loading then loaded on success', () async {

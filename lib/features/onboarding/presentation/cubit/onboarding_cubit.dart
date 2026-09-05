@@ -1,6 +1,9 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:nanimo/core/utils/pet_icon_resolver.dart';
+import 'package:nanimo/core/utils/pet_portrait.dart';
+import 'package:nanimo/data/models/referential/pet_icon_model.dart';
 import 'package:nanimo/data/models/referential/pet_race_model.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
@@ -84,6 +87,17 @@ class OnboardingCubit extends Cubit<OnboardingState> {
         speciesError: 'Impossible de charger les espèces.',
       ));
     }
+    await _loadPetIcons();
+  }
+
+  /// Loaded apart from the species: icons are cosmetic, and losing them must
+  /// not cost the species keys every avatar falls back on.
+  Future<void> _loadPetIcons() async {
+    try {
+      final icons = await _referentialRepository.fetchIcons();
+      if (isClosed) return;
+      emit(state.copyWith(icons: icons));
+    } catch (_) {}
   }
 
   Future<void> _fetchRaces(String speciesId) async {

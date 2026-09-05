@@ -1,3 +1,4 @@
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
@@ -86,7 +87,7 @@ class PetSpeciesSelectorWidget extends StatelessWidget {
                           .read<OnboardingCubit>()
                           .selectSpecies(species.petSpeciesId),
                       leading: SpeciesIconWidget(
-                        iconKey: species.iconKey,
+                        portrait: PetPortrait.species(species.iconKey),
                         width: double.infinity,
                       ),
                     );

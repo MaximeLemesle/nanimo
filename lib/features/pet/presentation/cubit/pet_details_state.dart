@@ -8,6 +8,7 @@ class PetDetailsState extends Equatable {
   final String? selectedPetId;
   final Map<String, String> iconsKey;
   final Map<String, String> speciesNameById;
+  final List<PetIconModel> icons;
   final String? raceName;
   final HealthDiaryModel? diary;
   final List<HealthDiaryVaccineModel> vaccines;
@@ -23,6 +24,7 @@ class PetDetailsState extends Equatable {
     this.selectedPetId,
     this.iconsKey = const {},
     this.speciesNameById = const {},
+    this.icons = const [],
     this.raceName,
     this.diary,
     this.vaccines = const [],
@@ -39,6 +41,16 @@ class PetDetailsState extends Equatable {
     }
     return null;
   }
+
+
+  /// What each pet looks like: its breed icon when one exists, else its
+  /// species one.
+  Map<String, PetPortrait> get portraits => PetIconResolver.portraitsByPet(
+        pets: pets,
+        icons: icons,
+        speciesIconKeys: iconsKey,
+      );
+
 
   /// Check if pet already have a diary
   bool get hasHealthData {
@@ -61,6 +73,7 @@ class PetDetailsState extends Equatable {
     Object? selectedPetId = _sentinel,
     Map<String, String>? iconsKey,
     Map<String, String>? speciesNameById,
+    List<PetIconModel>? icons,
     Object? raceName = _sentinel,
     Object? diary = _sentinel,
     List<HealthDiaryVaccineModel>? vaccines,
@@ -78,6 +91,7 @@ class PetDetailsState extends Equatable {
           : selectedPetId as String?,
       iconsKey: iconsKey ?? this.iconsKey,
       speciesNameById: speciesNameById ?? this.speciesNameById,
+      icons: icons ?? this.icons,
       raceName: raceName == _sentinel ? this.raceName : raceName as String?,
       diary: diary == _sentinel ? this.diary : diary as HealthDiaryModel?,
       vaccines: vaccines ?? this.vaccines,
@@ -98,6 +112,7 @@ class PetDetailsState extends Equatable {
         selectedPetId,
         iconsKey,
         speciesNameById,
+        icons,
         raceName,
         diary,
         vaccines,

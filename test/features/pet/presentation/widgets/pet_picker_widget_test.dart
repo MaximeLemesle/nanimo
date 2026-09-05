@@ -1,3 +1,4 @@
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
@@ -14,7 +15,11 @@ PetModel _pet(String id, String name) => PetModel(
     );
 
 final _pets = [_pet('p1', 'Maki'), _pet('p2', 'Nala'), _pet('p3', 'Pixel')];
-const _iconsKey = {'s1': 'cat'};
+const _portraits = {
+  'p1': PetPortrait.species('cat-europeen'),
+  'p2': PetPortrait.species('cat-europeen'),
+  'p3': PetPortrait.species('cat-europeen'),
+};
 
 Widget _host(Widget child) => MaterialApp(home: Scaffold(body: child));
 
@@ -25,7 +30,7 @@ void main() {
       await tester.pumpWidget(_host(
         PetPickerWidget.single(
           pets: _pets,
-          iconsKey: _iconsKey,
+          portraits: _portraits,
           selectedPetId: 'p1',
           onSelected: (id) => tapped = id,
         ),
@@ -39,7 +44,7 @@ void main() {
       await tester.pumpWidget(_host(
         PetPickerWidget.single(
           pets: _pets,
-          iconsKey: _iconsKey,
+          portraits: _portraits,
           selectedPetId: 'p1',
           onSelected: (_) {},
         ),
@@ -54,7 +59,7 @@ void main() {
       await tester.pumpWidget(_host(
         PetPickerWidget.single(
           pets: _pets,
-          iconsKey: _iconsKey,
+          portraits: _portraits,
           selectedPetId: null,
           onSelected: (_) {},
         ),
@@ -71,7 +76,7 @@ void main() {
       await tester.pumpWidget(_host(
         PetPickerWidget.multi(
           pets: _pets,
-          iconsKey: _iconsKey,
+          portraits: _portraits,
           selectedPetIds: const {'p1', 'p2'},
           onToggled: taps.add,
         ),
@@ -88,7 +93,7 @@ void main() {
       await tester.pumpWidget(_host(
         PetPickerWidget.multi(
           pets: _pets,
-          iconsKey: _iconsKey,
+          portraits: _portraits,
           selectedPetIds: const {'p1', 'p2'},
           onToggled: (_) {},
         ),
@@ -104,7 +109,7 @@ void main() {
     await tester.pumpWidget(_host(
       PetPickerWidget.single(
         pets: _pets,
-        iconsKey: const {},
+        portraits: const {},
         selectedPetId: 'p1',
         onSelected: (_) {},
       ),

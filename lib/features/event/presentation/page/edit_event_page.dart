@@ -217,9 +217,9 @@ class _EditEventPageState extends State<EditEventPage> {
                       semanticLabel: petLabel,
                       stickers: [
                         for (final pet in selectedPets)
-                          if (state.iconsKey[pet.petSpeciesId] != null)
+                          if (state.portraits[pet.petId] != null)
                             SpeciesIconWidget(
-                              iconKey: state.iconsKey[pet.petSpeciesId]!,
+                              portrait: state.portraits[pet.petId]!,
                               height: StickerSelectorWidget.stickerHeight,
                             ),
                       ],
@@ -229,7 +229,7 @@ class _EditEventPageState extends State<EditEventPage> {
                           context,
                           pets: state.pets,
                           selectedPetIds: state.selectedPetIds,
-                          iconsKey: state.iconsKey,
+                          portraits: state.portraits,
                         );
                         if (selected == null || !mounted) return;
                         setState(() {

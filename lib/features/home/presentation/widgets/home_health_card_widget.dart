@@ -1,3 +1,4 @@
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:flutter/material.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
@@ -10,13 +11,13 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/vaccin
 
 class HomeHealthCardWidget extends StatelessWidget {
   final List<VaccineAlert> alerts;
-  final Map<String, String> iconsKey;
+  final Map<String, PetPortrait> portraits;
   final void Function(String petId)? onAlertTap;
 
   const HomeHealthCardWidget({
     super.key,
     required this.alerts,
-    required this.iconsKey,
+    required this.portraits,
     this.onAlertTap,
   });
 
@@ -59,7 +60,7 @@ class HomeHealthCardWidget extends StatelessWidget {
                   if (i > 0) const SizedBox(height: AppSpacing.sm),
                   _AlertRow(
                     alert: alerts[i],
-                    iconKey: iconsKey[alerts[i].pet?.petSpeciesId],
+                    portrait: portraits[alerts[i].pet?.petId],
                     onTap: onAlertTap,
                   ),
                   if (i < alerts.length - 1)
@@ -75,10 +76,10 @@ class HomeHealthCardWidget extends StatelessWidget {
 
 class _AlertRow extends StatelessWidget {
   final VaccineAlert alert;
-  final String? iconKey;
+  final PetPortrait? portrait;
   final void Function(String petId)? onTap;
 
-  const _AlertRow({required this.alert, this.iconKey, this.onTap});
+  const _AlertRow({required this.alert, this.portrait, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -90,10 +91,10 @@ class _AlertRow extends StatelessWidget {
         children: [
           SizedBox.square(
             dimension: PetAvatarSize.small.dimension,
-            child: iconKey == null
+            child: portrait == null
                 ? null
                 : PetAvatarWidget(
-                    iconKey: iconKey!,
+                    portrait: portrait!,
                     size: PetAvatarSize.small,
                   ),
           ),

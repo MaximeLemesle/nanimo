@@ -18,21 +18,21 @@ class PaywallMemoriesWidget extends StatelessWidget {
         alignment: Alignment.center,
         children: [
           _polaroid(
-            asset: 'assets/icons/species/rabbit.png',
+            asset: 'assets/icons/species/rabbit-nain.png',
             tint: AppColors.backgroundTertiary,
             angle: -0.17,
             offset: const Offset(-74, 10),
             scale: 0.86,
           ),
           _polaroid(
-            asset: 'assets/icons/species/cat.png',
+            asset: 'assets/icons/species/cat-europeen.png',
             tint: AppColors.backgroundSecondary,
             angle: 0.16,
             offset: const Offset(74, 10),
             scale: 0.86,
           ),
           _polaroid(
-            asset: 'assets/icons/species/dog.png',
+            asset: 'assets/icons/species/dog-jack_russell_terrier.png',
             tint: AppColors.backgroundPrimary,
             angle: -0.03,
             offset: const Offset(0, -8),

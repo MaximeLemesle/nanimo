@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nanimo/core/utils/pet_icon_resolver.dart';
+import 'package:nanimo/core/utils/pet_portrait.dart';
+import 'package:nanimo/data/models/referential/pet_icon_model.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/health/data/health_repository.dart';
 import 'package:nanimo/features/health/data/models/health_diary_model.dart';
@@ -36,6 +39,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
         super(const PetDetailsState()) {
     _petsSub = _petRepository.watchPets().listen(_onPetsChanged);
     _loadSpecies();
+    _loadIcons();
   }
 
   void _onPetsChanged(List<PetModel> pets) {
@@ -328,6 +332,15 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
       ));
     } catch (_) {}
   }
+
+  Future<void> _loadIcons() async {
+    try {
+      final icons = await _referentialRepository.fetchIcons();
+      if (isClosed) return;
+      emit(state.copyWith(icons: icons));
+    } catch (_) {}
+  }
+
 
   Future<void> _loadRaceName(String petId) async {
     PetModel? pet;

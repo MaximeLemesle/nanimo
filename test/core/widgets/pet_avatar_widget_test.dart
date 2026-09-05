@@ -1,3 +1,4 @@
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nanimo/core/widgets/pet_avatar_widget.dart';
@@ -7,8 +8,9 @@ void main() {
     return MaterialApp(
       home: Center(
         child: size == null
-            ? const PetAvatarWidget(iconKey: 'cat')
-            : PetAvatarWidget(iconKey: 'cat', size: size),
+            ? const PetAvatarWidget(portrait: PetPortrait.species('cat-europeen'))
+            : PetAvatarWidget(
+                portrait: const PetPortrait.species('cat-europeen'), size: size),
       ),
     );
   }
@@ -16,10 +18,12 @@ void main() {
   testWidgets('renders the avatar from the species icon key', (tester) async {
     await tester.pumpWidget(buildAvatar(size: PetAvatarSize.large));
 
-    final image = tester.widget<Image>(find.byType(Image));
+    /// The avatar is decoded at its drawn size, so the asset sits behind a
+    /// ResizeImage rather than being the provider itself.
+    final provider = tester.widget<Image>(find.byType(Image)).image;
     expect(
-      (image.image as AssetImage).assetName,
-      'assets/icons/species/cat.png',
+      ((provider as ResizeImage).imageProvider as AssetImage).assetName,
+      'assets/icons/species/cat-europeen.png',
     );
   });
 

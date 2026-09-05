@@ -1,3 +1,4 @@
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:flutter/material.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
@@ -7,13 +8,13 @@ import 'package:nanimo/features/pet/data/models/pet_model.dart';
 
 class HomePetListWidget extends StatelessWidget {
   final List<PetModel> pets;
-  final Map<String, String> iconsKey;
+  final Map<String, PetPortrait> portraits;
   final void Function(String petId)? onPetTap;
 
   const HomePetListWidget({
     super.key,
     required this.pets,
-    required this.iconsKey,
+    required this.portraits,
     this.onPetTap,
   });
 
@@ -28,8 +29,8 @@ class HomePetListWidget extends StatelessWidget {
         width: _avatar,
         child: Column(
           children: [
-            if (iconsKey[pet.petSpeciesId] != null)
-              PetAvatarWidget(iconKey: iconsKey[pet.petSpeciesId]!)
+            if (portraits[pet.petId] != null)
+              PetAvatarWidget(portrait: portraits[pet.petId]!)
             else
               SizedBox(
                 width: _avatar,

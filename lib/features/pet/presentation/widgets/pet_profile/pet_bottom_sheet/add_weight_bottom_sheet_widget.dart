@@ -1,3 +1,4 @@
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
@@ -18,14 +19,14 @@ typedef WeightSubmit = void Function(
 class AddWeightBottomSheetWidget extends StatefulWidget {
   final WeightSubmit onSubmit;
   final List<PetModel> pets;
-  final Map<String, String> iconsKey;
+  final Map<String, PetPortrait> portraits;
   final String? initialPetId;
 
   const AddWeightBottomSheetWidget({
     super.key,
     required this.onSubmit,
     this.pets = const [],
-    this.iconsKey = const {},
+    this.portraits = const {},
     this.initialPetId,
   });
 
@@ -78,7 +79,7 @@ class _AddWeightBottomSheetWidgetState extends State<AddWeightBottomSheetWidget>
         if (_showPetPicker) ...[
           PetPickerWidget.single(
             pets: widget.pets,
-            iconsKey: widget.iconsKey,
+            portraits: widget.portraits,
             selectedPetId: _petId,
             onSelected: (id) => setState(() => _petId = id),
           ),

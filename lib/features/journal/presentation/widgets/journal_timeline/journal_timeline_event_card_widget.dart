@@ -1,3 +1,4 @@
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -12,7 +13,7 @@ import 'package:nanimo/features/journal/presentation/widgets/journal_timeline/ev
 class JournalTimelineEventCardWidget extends StatelessWidget {
   final EventModel event;
   final List<String> imagePaths;
-  final List<String> iconKeys;
+  final List<PetPortrait> portraits;
   final Future<String> Function(String assetPath) urlResolver;
 
   final bool imageFirst;
@@ -22,7 +23,7 @@ class JournalTimelineEventCardWidget extends StatelessWidget {
     super.key,
     required this.event,
     required this.imagePaths,
-    required this.iconKeys,
+    required this.portraits,
     required this.urlResolver,
     required this.imageFirst,
     this.onTap,
@@ -49,9 +50,9 @@ class JournalTimelineEventCardWidget extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ],
-            if (iconKeys.isNotEmpty) ...[
+            if (portraits.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.md),
-              _PetList(iconKeys: iconKeys),
+              _PetList(portraits: portraits),
             ],
           ],
         ),
@@ -96,9 +97,9 @@ class JournalTimelineEventCardWidget extends StatelessWidget {
 }
 
 class _PetList extends StatelessWidget {
-  final List<String> iconKeys;
+  final List<PetPortrait> portraits;
 
-  const _PetList({required this.iconKeys});
+  const _PetList({required this.portraits});
 
   static const double _size = 50;
 
@@ -108,7 +109,7 @@ class _PetList extends StatelessWidget {
       height: _size,
       child: Stack(
         children: [
-          for (var i = 0; i < iconKeys.length; i++)
+          for (var i = 0; i < portraits.length; i++)
             Positioned(
               left: i * (_size * 0.7),
               child: SizedBox(
@@ -127,12 +128,12 @@ class _PetList extends StatelessWidget {
                               BlendMode.srcATop,
                             ),
                             child: SpeciesIconWidget(
-                                iconKey: iconKeys[i], height: _size),
+                                portrait: portraits[i], height: _size),
                           ),
                         ),
                       ),
                     ),
-                    SpeciesIconWidget(iconKey: iconKeys[i], height: _size),
+                    SpeciesIconWidget(portrait: portraits[i], height: _size),
                   ],
                 ),
               ),

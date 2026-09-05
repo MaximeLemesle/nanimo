@@ -47,7 +47,7 @@ class JournalFilterBottomSheetWidget extends StatelessWidget {
           children: [
             PetPickerWidget.multi(
               pets: state.pets,
-              iconsKey: state.iconsKey,
+              portraits: state.portraits,
               selectedPetIds: state.selectedPetIds,
               onToggled: cubit.togglePetFilter,
             ),

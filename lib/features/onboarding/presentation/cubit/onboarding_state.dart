@@ -18,6 +18,7 @@ class OnboardingState extends Equatable {
   final ReferentialStatus racesStatus;
   final List<PetRaceModel> races;
   final String? racesError;
+  final List<PetIconModel> icons;
 
   const OnboardingState({
     this.currentStep = 1,
@@ -32,6 +33,7 @@ class OnboardingState extends Equatable {
     this.racesStatus = ReferentialStatus.idle,
     this.races = const [],
     this.racesError,
+    this.icons = const [],
   });
 
   OnboardingState copyWith({
@@ -47,6 +49,7 @@ class OnboardingState extends Equatable {
     ReferentialStatus? racesStatus,
     List<PetRaceModel>? races,
     String? racesError,
+    List<PetIconModel>? icons,
     bool clearRaceId = false,
     bool clearSpeciesError = false,
     bool clearRacesError = false,
@@ -65,6 +68,7 @@ class OnboardingState extends Equatable {
       racesStatus: racesStatus ?? this.racesStatus,
       races: races ?? this.races,
       racesError: clearRacesError ? null : (racesError ?? this.racesError),
+      icons: icons ?? this.icons,
     );
   }
 
@@ -81,6 +85,31 @@ class OnboardingState extends Equatable {
   /// Step 3 → Signup
   bool get canFinish => canGoToStep2 && canGoToStep3;
 
+  /// What the pet being created looks like: the icon drawn for its breed when
+  /// the catalogue has one, its species icon otherwise. Null until a species
+  /// is picked and its referential is loaded.
+  PetPortrait? get portrait {
+    final iconKey = _speciesIconKey;
+    if (iconKey == null) return null;
+    return PetPortrait(iconKey: iconKey, assetPath: _icon?.assetPath);
+  }
+
+  /// Catalogue icon stamped on the pet when it is created.
+  String? get petIconId => _icon?.petIconId;
+
+  PetIconModel? get _icon => PetIconResolver.defaultIcon(
+        icons: icons,
+        petRaceId: petRaceId,
+        speciesIconKey: _speciesIconKey,
+      );
+
+  String? get _speciesIconKey {
+    for (final item in species) {
+      if (item.petSpeciesId == petSpeciesId) return item.iconKey;
+    }
+    return null;
+  }
+
   @override
   List<Object?> get props => [
         currentStep,
@@ -95,5 +124,6 @@ class OnboardingState extends Equatable {
         racesStatus,
         races,
         racesError,
+        icons,
       ];
 }

@@ -1,3 +1,6 @@
+import 'package:nanimo/core/utils/pet_icon_resolver.dart';
+import 'package:nanimo/core/utils/pet_portrait.dart';
+import 'package:nanimo/data/models/referential/pet_icon_model.dart';
 import 'dart:async';
 
 import 'package:equatable/equatable.dart';
@@ -66,6 +69,17 @@ class JournalCubit extends Cubit<JournalState> {
         error: 'Impossible de charger le journal.',
       ));
     }
+    await _loadPetIcons();
+  }
+
+  /// Loaded apart from the species: icons are cosmetic, and losing them must
+  /// not cost the species keys every avatar falls back on.
+  Future<void> _loadPetIcons() async {
+    try {
+      final icons = await _referentialRepository.fetchIcons();
+      if (isClosed) return;
+      emit(state.copyWith(icons: icons));
+    } catch (_) {}
   }
 
   void togglePetFilter(String petId) {

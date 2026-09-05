@@ -69,7 +69,7 @@ class HomePage extends StatelessWidget {
                 /// List of the user's pets
                 HomePetListWidget(
                   pets: state.pets,
-                  iconsKey: state.iconsKey,
+                  portraits: state.portraits,
                   onPetTap: (petId) {
                     context.read<PetDetailsCubit>().selectPet(petId);
                     context.push(RouteNames.pet);
@@ -80,7 +80,7 @@ class HomePage extends StatelessWidget {
                 /// List of vaccine alerts for the user's pets
                 HomeHealthCardWidget(
                   alerts: state.vaccineAlerts(now: now),
-                  iconsKey: state.iconsKey,
+                  portraits: state.portraits,
                   onAlertTap: (petId) {
                     context.read<PetDetailsCubit>().selectPet(petId);
                     context.push(RouteNames.healthDiary);

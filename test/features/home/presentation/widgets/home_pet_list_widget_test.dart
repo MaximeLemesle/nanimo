@@ -1,3 +1,4 @@
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nanimo/features/home/presentation/widgets/home_pet_list_widget.dart';
@@ -25,7 +26,10 @@ void main() {
           alignment: Alignment.topLeft,
           child: HomePetListWidget(
             pets: pets,
-            iconsKey: const {},
+            portraits: {
+              for (final pet in pets)
+                pet.petId: const PetPortrait.species('cat-europeen'),
+            },
             onPetTap: onPetTap,
           ),
         ),

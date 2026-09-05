@@ -55,13 +55,13 @@ const _species = [
     petSpeciesId: 's1',
     speciesName: 'Chat',
     weightUnit: WeightUnit.kg,
-    iconKey: 'cat',
+    iconKey: 'cat-europeen',
   ),
   PetSpeciesModel(
     petSpeciesId: 's2',
     speciesName: 'Chien',
     weightUnit: WeightUnit.kg,
-    iconKey: 'dog',
+    iconKey: 'dog-border_collie',
   ),
 ];
 
@@ -125,7 +125,7 @@ void main() {
     expect(cubit.state.types, [_walkType, _hugType]);
     expect(cubit.state.petIdsByEvent['e1'], ['p1']);
     expect(cubit.state.imagePathsByEvent['e1'], ['path/a.jpg']);
-    expect(cubit.state.iconsKey['s1'], 'cat');
+    expect(cubit.state.iconsKey['s1'], 'cat-europeen');
     expect(cubit.state.filteredEvents, [_eventWalk, _eventHug]);
 
     await cubit.close();

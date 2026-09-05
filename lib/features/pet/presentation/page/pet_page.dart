@@ -59,7 +59,7 @@ class PetPage extends StatelessWidget {
               PetParkHeaderWidget(
                 pets: state.pets,
                 selectedPetId: state.selectedPetId,
-                iconsKey: state.iconsKey,
+                portraits: state.portraits,
                 onSelect: (id) => context.read<PetDetailsCubit>().selectPet(id),
               ),
               Transform.translate(

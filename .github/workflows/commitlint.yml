@@ -16,7 +16,10 @@ jobs:
       - name: Fetch base branch
         env:
           BASE_REF: ${{ github.base_ref }}
-        run: git fetch origin "$BASE_REF":"refs/remotes/origin/$BASE_REF"
+        # Forced refspec: checkout already fetched the base, so a base
+        # branch that was rebased or force-pushed makes a plain fetch
+        # fail as non-fast-forward.
+        run: git fetch origin "+$BASE_REF:refs/remotes/origin/$BASE_REF"
 
       - name: Lint each commit in the PR
         env:

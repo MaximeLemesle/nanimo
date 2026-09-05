@@ -1,3 +1,4 @@
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:flutter/material.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_radius.dart';
@@ -7,14 +8,14 @@ import 'package:nanimo/features/pet/data/models/pet_model.dart';
 
 class PetPickerWidget extends StatelessWidget {
   final List<PetModel> pets;
-  final Map<String, String> iconsKey;
+  final Map<String, PetPortrait> portraits;
   final Set<String> selectedPetIds;
   final ValueChanged<String> onPetTap;
 
   const PetPickerWidget._({
     super.key,
     required this.pets,
-    required this.iconsKey,
+    required this.portraits,
     required this.selectedPetIds,
     required this.onPetTap,
   });
@@ -22,14 +23,14 @@ class PetPickerWidget extends StatelessWidget {
   factory PetPickerWidget.single({
     Key? key,
     required List<PetModel> pets,
-    required Map<String, String> iconsKey,
+    required Map<String, PetPortrait> portraits,
     required String? selectedPetId,
     required ValueChanged<String> onSelected,
   }) {
     return PetPickerWidget._(
       key: key,
       pets: pets,
-      iconsKey: iconsKey,
+      portraits: portraits,
       selectedPetIds: selectedPetId == null ? const {} : {selectedPetId},
       onPetTap: onSelected,
     );
@@ -38,14 +39,14 @@ class PetPickerWidget extends StatelessWidget {
   factory PetPickerWidget.multi({
     Key? key,
     required List<PetModel> pets,
-    required Map<String, String> iconsKey,
+    required Map<String, PetPortrait> portraits,
     required Set<String> selectedPetIds,
     required ValueChanged<String> onToggled,
   }) {
     return PetPickerWidget._(
       key: key,
       pets: pets,
-      iconsKey: iconsKey,
+      portraits: portraits,
       selectedPetIds: selectedPetIds,
       onPetTap: onToggled,
     );
@@ -60,7 +61,7 @@ class PetPickerWidget extends StatelessWidget {
         for (final pet in pets)
           _PetChoiceWidget(
             key: ValueKey(pet.petId),
-            iconKey: iconsKey[pet.petSpeciesId],
+            portrait: portraits[pet.petId],
             isSelected: selectedPetIds.contains(pet.petId),
             onTap: () => onPetTap(pet.petId),
           ),
@@ -70,13 +71,13 @@ class PetPickerWidget extends StatelessWidget {
 }
 
 class _PetChoiceWidget extends StatelessWidget {
-  final String? iconKey;
+  final PetPortrait? portrait;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _PetChoiceWidget({
     super.key,
-    required this.iconKey,
+    required this.portrait,
     required this.isSelected,
     required this.onTap,
   });
@@ -100,9 +101,9 @@ class _PetChoiceWidget extends StatelessWidget {
             width: 2,
           ),
         ),
-        child: iconKey == null
+        child: portrait == null
             ? const SizedBox.shrink()
-            : PetAvatarWidget(iconKey: iconKey!, size: PetAvatarSize.small),
+            : PetAvatarWidget(portrait: portrait!, size: PetAvatarSize.small),
       ),
     );
   }

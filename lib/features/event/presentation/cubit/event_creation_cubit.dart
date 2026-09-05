@@ -1,3 +1,6 @@
+import 'package:nanimo/core/utils/pet_icon_resolver.dart';
+import 'package:nanimo/core/utils/pet_portrait.dart';
+import 'package:nanimo/data/models/referential/pet_icon_model.dart';
 import 'dart:io';
 
 import 'package:equatable/equatable.dart';
@@ -59,6 +62,7 @@ class EventCreationCubit extends Cubit<EventCreationState> {
           for (final species in species) species.petSpeciesId: species.iconKey,
         },
       ));
+      await _loadPetIcons();
     } catch (_) {
       if (isClosed) return;
       emit(state.copyWith(
@@ -157,5 +161,15 @@ class EventCreationCubit extends Cubit<EventCreationState> {
         error: 'Une erreur est survenue lors de la création de l\'événement.',
       ));
     }
+  }
+
+  /// Loaded apart from the species: icons are cosmetic, and losing them must
+  /// not cost the species keys every avatar falls back on.
+  Future<void> _loadPetIcons() async {
+    try {
+      final icons = await _referentialRepository.fetchIcons();
+      if (isClosed) return;
+      emit(state.copyWith(icons: icons));
+    } catch (_) {}
   }
 }

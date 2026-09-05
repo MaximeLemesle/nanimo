@@ -1,3 +1,4 @@
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_confetti/flutter_confetti.dart';
@@ -61,11 +62,9 @@ class _StepThreeWidgetState extends State<PetCreationStepThreeWidget> {
     final petName = context.select<OnboardingCubit, String>(
       (cubit) => cubit.state.petName.trim(),
     );
-    final iconKey = context.select<OnboardingCubit, String?>((cubit) {
-      final matches = cubit.state.species
-          .where((species) => species.petSpeciesId == cubit.state.petSpeciesId);
-      return matches.isEmpty ? null : matches.first.iconKey;
-    });
+    final portrait = context.select<OnboardingCubit, PetPortrait?>(
+      (cubit) => cubit.state.portrait,
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -85,11 +84,11 @@ class _StepThreeWidgetState extends State<PetCreationStepThreeWidget> {
                     style: Theme.of(context).textTheme.displaySmall,
                   ),
                   const Spacer(),
-                  if (iconKey != null)
+                  if (portrait != null)
                     Center(
                       child: PetAvatarWidget(
-                        iconKey: iconKey,
-                        size: PetAvatarSize.large,
+                        portrait: portrait,
+                        size: PetAvatarSize.xlarge,
                       ),
                     ),
                   const SizedBox(height: AppSpacing.xl),

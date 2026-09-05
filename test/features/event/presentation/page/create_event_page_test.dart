@@ -83,7 +83,7 @@ const _catSpecies = PetSpeciesModel(
   petSpeciesId: 's-cat',
   speciesName: 'Chat',
   weightUnit: WeightUnit.kg,
-  iconKey: 'cat',
+  iconKey: 'cat-europeen',
 );
 
 final _milo = PetModel(

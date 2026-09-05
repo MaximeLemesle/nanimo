@@ -13,6 +13,37 @@ PetModel _pet(String id) => PetModel(
       petSpeciesId: 's1',
     );
 
+/// Mirrors the page: the tap reports upward and comes back as a new selection.
+class _Harness extends StatefulWidget {
+  final List<PetModel> pets;
+
+  const _Harness({required this.pets});
+
+  @override
+  State<_Harness> createState() => _HarnessState();
+}
+
+class _HarnessState extends State<_Harness> {
+  late String _selectedPetId = widget.pets.first.petId;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        body: PetParkHeaderWidget(
+          pets: widget.pets,
+          selectedPetId: _selectedPetId,
+
+          /// Empty map: avatars fall back to a plain sized box, which keeps the
+          /// test off the asset bundle while preserving the layout width.
+          portraits: const {},
+          onSelect: (id) => setState(() => _selectedPetId = id),
+        ),
+      ),
+    );
+  }
+}
+
 void main() {
   Widget build(List<PetModel> pets, {void Function(String)? onSelect}) {
     return MaterialApp(
@@ -22,8 +53,8 @@ void main() {
           selectedPetId: pets.isEmpty ? null : pets.first.petId,
 
           /// Empty map: avatars fall back to a plain sized box, which keeps the
-          /// test off the SVG asset bundle while preserving the layout width.
-          iconsKey: const {},
+          /// test off the asset bundle while preserving the layout width.
+          portraits: const {},
           onSelect: onSelect ?? (_) {},
         ),
       ),
@@ -36,6 +67,81 @@ void main() {
     await tester.pumpWidget(widget);
     await tester.pumpAndSettle();
   }
+
+  Iterable<GestureDetector> avatars(WidgetTester tester) {
+    return tester.widgetList<GestureDetector>(find.descendant(
+      of: find.byType(Row),
+      matching: find.byType(GestureDetector),
+    ));
+  }
+
+  Rect avatarRect(WidgetTester tester, int index) {
+    return tester.getRect(find
+        .descendant(
+          of: find.byType(Row),
+          matching: find.byType(GestureDetector),
+        )
+        .at(index));
+  }
+
+  group('centring the selection', () {
+    testWidgets('opens on the selected pet already in the middle',
+        (tester) async {
+      await pumpAt(
+        tester,
+        _Harness(pets: [for (var i = 0; i < 6; i++) _pet('$i')]),
+        const Size(390, 800),
+      );
+
+      expect(avatarRect(tester, 0).center.dx, closeTo(195, 0.5));
+    });
+
+    /// The first pet must land centred on the padding alone, without the strip
+    /// having to scroll: an avatar has no width until its picture is decoded,
+    /// and a strip that resizes afterwards never comes back to the middle.
+    testWidgets('centres the first pet without scrolling', (tester) async {
+      await pumpAt(
+        tester,
+        _Harness(pets: [for (var i = 0; i < 6; i++) _pet('$i')]),
+        const Size(390, 800),
+      );
+
+      final scrollable = tester.widget<Scrollable>(find.byType(Scrollable));
+      expect(scrollable.controller?.offset ?? 0, 0);
+      expect(avatarRect(tester, 0).center.dx, closeTo(195, 0.5));
+    });
+
+    testWidgets('slides the newly selected pet to the middle', (tester) async {
+      await pumpAt(
+        tester,
+        _Harness(pets: [for (var i = 0; i < 6; i++) _pet('$i')]),
+        const Size(390, 800),
+      );
+
+      /// Invoked rather than tapped: the fallback box paints nothing and so
+      /// fails hit testing.
+      avatars(tester).last.onTap!();
+      await tester.pumpAndSettle();
+
+      expect(avatarRect(tester, 5).center.dx, closeTo(195, 0.5));
+    });
+
+    /// The strip is shorter than the screen here, so only the added slack
+    /// lets the last avatar travel that far.
+    testWidgets('centres a pet even when the whole list fits on screen',
+        (tester) async {
+      await pumpAt(
+        tester,
+        _Harness(pets: [_pet('a'), _pet('b')]),
+        const Size(390, 800),
+      );
+
+      avatars(tester).last.onTap!();
+      await tester.pumpAndSettle();
+
+      expect(avatarRect(tester, 1).center.dx, closeTo(195, 0.5));
+    });
+  });
 
   testWidgets('scrolls horizontally', (tester) async {
     await pumpAt(tester, build([_pet('a'), _pet('b')]), const Size(390, 800));

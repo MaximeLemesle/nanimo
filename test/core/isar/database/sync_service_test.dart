@@ -7,6 +7,7 @@ import 'package:nanimo/core/isar/cache/schemas/health_diary_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_vaccine_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_event_cache.dart';
+import 'package:nanimo/core/isar/cache/schemas/pet_icon_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_species_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/subscription_config_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/user_cache.dart';
@@ -224,6 +225,15 @@ void main() {
               'icon_key': 'cat',
             },
           ]);
+      stubSelect(supabase, 'pet_icons', resolver: () => [
+            {
+              'id_pet_icon': 'i1',
+              'pet_icon_name': 'Persan',
+              'asset_path': 'assets/icons/species/cat-persan.png',
+              'is_premium': false,
+              'pet_species_id': 's1',
+            },
+          ]);
       stubSelect(supabase, 'event_type', resolver: () => [
             {
               'id_event_type': 't1',
@@ -251,6 +261,7 @@ void main() {
       expect(await harness.isar.vetVisitCaches.count(), 1);
       expect(await harness.isar.petSpeciesCaches.count(), 1);
       expect(await harness.isar.eventTypeCaches.count(), 1);
+      expect(await harness.isar.petIconCaches.count(), 1);
     });
 
     test('swallows fetch failures and leaves the caches untouched', () async {
@@ -261,6 +272,37 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 200));
 
       expect(await harness.isar.eventCaches.count(), 1);
+    });
+
+    /// Icons are cosmetic: losing them must not cost the species and event
+    /// types, without which no screen can render.
+    test('a failing pet_icons fetch still caches the rest of the referential',
+        () async {
+      stubSelect(supabase, 'pet_species', resolver: () => [
+            {
+              'id_pet_species': 's1',
+              'species_name': 'Chat',
+              'weight_unit': 'kg',
+              'icon_key': 'cat',
+            },
+          ]);
+      stubSelect(supabase, 'event_type', resolver: () => [
+            {
+              'id_event_type': 't1',
+              'name': 'Balade',
+              'code': 'balade',
+              'is_premium': false,
+            },
+          ]);
+      stubSelect(supabase, 'pet_icons',
+          resolver: () => throw Exception('no policy'));
+
+      syncService.syncSecondary();
+      await _waitFor(() => harness.isar.petSpeciesCaches.count());
+
+      expect(await harness.isar.petSpeciesCaches.count(), 1);
+      expect(await harness.isar.eventTypeCaches.count(), 1);
+      expect(await harness.isar.petIconCaches.count(), 0);
     });
   });
 }

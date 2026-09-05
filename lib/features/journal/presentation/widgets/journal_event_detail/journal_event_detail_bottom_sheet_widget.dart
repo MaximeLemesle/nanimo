@@ -131,8 +131,8 @@ class _JournalEventDetailBottomSheetWidgetState extends State<JournalEventDetail
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (state.iconsKey[pet.petSpeciesId] != null) ...[
-                              SpeciesIconWidget(iconKey: state.iconsKey[pet.petSpeciesId]!, height: 28),
+                            if (state.portraits[pet.petId] != null) ...[
+                              SpeciesIconWidget(portrait: state.portraits[pet.petId]!, height: 28),
                               const SizedBox(width: AppSpacing.sm),
                             ],
                             Text(pet.petName, style: AppTextStyles.textBold),

@@ -1,3 +1,4 @@
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
@@ -23,7 +24,10 @@ void main() {
       home: Scaffold(
         body: AddWeightBottomSheetWidget(
           pets: pets,
-          iconsKey: const {'s1': 'cat'},
+          portraits: const {
+            'p1': PetPortrait.species('cat-europeen'),
+            'p2': PetPortrait.species('cat-europeen'),
+          },
           initialPetId: initialPetId,
           onSubmit: (weight, loggedAt, {petId}) {
             submittedWeight = weight;
