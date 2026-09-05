@@ -39,4 +39,4 @@ const _publicRoutes = {
   RouteNames.login,
   RouteNames.signup,
 };
-const _protectedRoutes = {RouteNames.home};
+const _protectedRoutes = {RouteNames.home, RouteNames.editPet};

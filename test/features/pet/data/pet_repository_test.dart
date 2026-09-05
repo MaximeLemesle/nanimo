@@ -186,9 +186,35 @@ void main() {
     late MockSupabaseClient supabase;
     late PetRepository petRepo;
 
-    setUp(() {
+    void buildAuthenticatedRepo() {
       supabase = MockSupabaseClient();
+      final auth = MockGoTrueClient();
+      final user = MockUser();
+      when(() => supabase.auth).thenReturn(auth);
+      when(() => auth.currentUser).thenReturn(user);
+      when(() => user.id).thenReturn('user-1');
+      petRepo = PetRepository(
+        supabase,
+        harness.isar,
+        writeRetryBackoff: Duration.zero,
+      );
+    }
+
+    setUp(buildAuthenticatedRepo);
+
+    test('throws when no user is authenticated', () async {
+      supabase = MockSupabaseClient();
+      final auth = MockGoTrueClient();
+      when(() => supabase.auth).thenReturn(auth);
+      when(() => auth.currentUser).thenReturn(null);
       petRepo = PetRepository(supabase, harness.isar);
+      await seed(buildPet('p1', 'Ancien'));
+
+      await expectLater(
+        petRepo.updatePet(buildPet('p1', 'Nouveau')),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+      expect((await petRepo.getPetById('p1'))!.petName, 'Ancien');
     });
 
     test('updates Supabase then refreshes the cache', () async {
@@ -214,23 +240,55 @@ void main() {
     late MockSupabaseClient supabase;
     late PetRepository petRepo;
 
-    setUp(() {
+    void buildAuthenticatedRepo() {
       supabase = MockSupabaseClient();
+      final auth = MockGoTrueClient();
+      final user = MockUser();
+      when(() => supabase.auth).thenReturn(auth);
+      when(() => auth.currentUser).thenReturn(user);
+      when(() => user.id).thenReturn('user-1');
+      petRepo = PetRepository(
+        supabase,
+        harness.isar,
+        writeRetryBackoff: Duration.zero,
+      );
+    }
+
+    setUp(buildAuthenticatedRepo);
+
+    test('throws when no user is authenticated', () async {
+      supabase = MockSupabaseClient();
+      final auth = MockGoTrueClient();
+      when(() => supabase.auth).thenReturn(auth);
+      when(() => auth.currentUser).thenReturn(null);
       petRepo = PetRepository(supabase, harness.isar);
+      await seed(buildPet('p1', 'Milo'));
+
+      await expectLater(
+        petRepo.deletePet('p1'),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+      expect(await petRepo.getPetById('p1'), isNotNull);
     });
 
-    test('deletes from Supabase and removes it from the cache', () async {
+    /// A plain delete would leave the souvenirs behind: nothing cascades from
+    /// pets to events, only the link between them does.
+    test('goes through the delete_pet RPC and clears the cache', () async {
       await seed(buildPet('p1', 'Milo'));
-      stubDelete(supabase, 'pets', resolver: () => null);
+      when(() => supabase.rpc('delete_pet', params: {'p_pet_id': 'p1'}))
+          .thenAnswer((_) => FakePostgrestChain(() => null) as dynamic);
 
       await petRepo.deletePet('p1');
 
+      verify(() => supabase.rpc('delete_pet', params: {'p_pet_id': 'p1'}))
+          .called(1);
       expect(await petRepo.getPetById('p1'), isNull);
     });
 
-    test('throws and keeps the cache when Supabase fails', () async {
+    test('throws and keeps the cache when the RPC fails', () async {
       await seed(buildPet('p1', 'Milo'));
-      stubDelete(supabase, 'pets', resolver: () => throw Exception('offline'));
+      when(() => supabase.rpc('delete_pet', params: {'p_pet_id': 'p1'}))
+          .thenThrow(Exception('offline'));
 
       await expectLater(
         petRepo.deletePet('p1'),

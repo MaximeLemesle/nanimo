@@ -24,6 +24,7 @@ import 'package:nanimo/features/event/presentation/page/edit_event_page.dart';
 import 'package:nanimo/features/journal/presentation/cubit/journal_cubit.dart';
 import 'package:nanimo/features/journal/presentation/page/journal_page.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
+import 'package:nanimo/features/pet/presentation/cubit/edit_pet_cubit.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/home/presentation/page/home_page.dart';
 import 'package:nanimo/features/pet/presentation/page/create_pet_page.dart';
@@ -36,6 +37,7 @@ import 'package:nanimo/features/subscription/presentation/cubit/paywall_cubit.da
 import 'package:nanimo/features/subscription/presentation/page/paywall_page.dart';
 import 'package:nanimo/features/onboarding/presentation/page/onboarding_page.dart';
 import 'package:nanimo/features/onboarding/presentation/page/splash_page.dart';
+import 'package:nanimo/features/pet/presentation/page/edit_pet_page.dart';
 import 'package:nanimo/features/pet/presentation/page/pet_page.dart';
 import 'package:nanimo/features/pet/presentation/page/pet_health_diary_page.dart';
 
@@ -224,6 +226,22 @@ GoRouter createRouter(
             ],
           ),
         ],
+      ),
+      /// Outside the ShellRoute so the bottom bar leaves the form alone, the
+      /// same reason the paywall lives at the root.
+      GoRoute(
+        path: '${RouteNames.editPet}/:petId',
+        pageBuilder: (_, state) => _fadePage(
+          state,
+          BlocProvider(
+            create: (_) => EditPetCubit(
+              petRepository: petRepository,
+              referentialRepository: referentialRepository,
+              eventRepository: eventRepository,
+            )..load(state.pathParameters['petId']!),
+            child: const EditPetPage(),
+          ),
+        ),
       ),
       GoRoute(
         path: RouteNames.paywall,

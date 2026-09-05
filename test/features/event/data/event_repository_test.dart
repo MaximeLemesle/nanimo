@@ -300,6 +300,61 @@ void main() {
     });
   });
 
+  group('countEventsForPet', () {
+    test('returns zero when the pet has no souvenir', () async {
+      expect(await repo.countEventsForPet('p1'), 0);
+    });
+
+    test('counts only the souvenirs linked to that pet', () async {
+      stubInsert(supabase, 'events', resolver: () {});
+      stubInsert(supabase, 'pets_events', resolver: () {});
+      await repo.createEvent(buildEvent('e1'), petIds: ['p1', 'p2']);
+      await repo.createEvent(buildEvent('e2'), petIds: ['p1']);
+      await repo.createEvent(buildEvent('e3'), petIds: ['p2']);
+
+      expect(await repo.countEventsForPet('p1'), 2);
+      expect(await repo.countEventsForPet('p2'), 2);
+    });
+  });
+
+  group('purgeLocalEventsForPet', () {
+    /// Mirrors what `delete_pet` does server-side. Without it the Journal
+    /// keeps showing souvenirs the server no longer has.
+    test('drops the souvenirs the pet was the last owner of', () async {
+      stubInsert(supabase, 'events', resolver: () {});
+      stubInsert(supabase, 'pets_events', resolver: () {});
+      await repo.createEvent(buildEvent('e1'), petIds: ['p1']);
+      await seedImage(buildImage('img-1', eventId: 'e1'));
+
+      await repo.purgeLocalEventsForPet('p1');
+
+      expect(await repo.getEventById('e1'), isNull);
+      expect(await repo.watchImagesForEvent('e1').first, isEmpty);
+      expect(await repo.countEventsForPet('p1'), 0);
+    });
+
+    test('keeps a souvenir still linked to another pet', () async {
+      stubInsert(supabase, 'events', resolver: () {});
+      stubInsert(supabase, 'pets_events', resolver: () {});
+      await repo.createEvent(buildEvent('e1'), petIds: ['p1', 'p2']);
+
+      await repo.purgeLocalEventsForPet('p1');
+
+      expect(await repo.getEventById('e1'), isNotNull);
+      expect(await repo.getPetIdsForEvent('e1'), ['p2']);
+    });
+
+    test('does nothing when the pet has no souvenir', () async {
+      stubInsert(supabase, 'events', resolver: () {});
+      stubInsert(supabase, 'pets_events', resolver: () {});
+      await repo.createEvent(buildEvent('e1'), petIds: ['p2']);
+
+      await repo.purgeLocalEventsForPet('p1');
+
+      expect(await repo.getEventById('e1'), isNotNull);
+    });
+  });
+
   group('getPetIdsForEvent', () {
     test('returns an empty list when no link exists', () async {
       expect(await repo.getPetIdsForEvent('e1'), isEmpty);

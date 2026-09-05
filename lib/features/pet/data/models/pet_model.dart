@@ -34,14 +34,21 @@ class PetModel {
     );
   }
 
-  PetModel copyWith({String? petIconId}) {
+
+  PetModel copyWith({
+    String? petName,
+    DateTime? birthdate,
+    Gender? gender,
+    String? petRaceId,
+    String? petIconId,
+  }) {
     return PetModel(
       petId: petId,
-      petName: petName,
-      birthdate: birthdate,
-      gender: gender,
+      petName: petName ?? this.petName,
+      birthdate: birthdate ?? this.birthdate,
+      gender: gender ?? this.gender,
       createdAt: createdAt,
-      petRaceId: petRaceId,
+      petRaceId: petRaceId ?? this.petRaceId,
       petSpeciesId: petSpeciesId,
       petIconId: petIconId ?? this.petIconId,
     );

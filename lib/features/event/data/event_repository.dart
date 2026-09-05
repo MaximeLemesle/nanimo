@@ -85,6 +85,37 @@ class EventRepository {
     });
   }
 
+  /// How many souvenirs are linked to [petId]
+  Future<int> countEventsForPet(String petId) {
+    return _isar.petEventCaches.filter().petIdEqualTo(petId).count();
+  }
+
+  /// Mirrors locally what `delete_pet` did on the server: drops the pet's
+  /// links, and the souvenirs those links were the last owner of
+  Future<void> purgeLocalEventsForPet(String petId) async {
+    final links =
+        await _isar.petEventCaches.filter().petIdEqualTo(petId).findAll();
+    final eventIds = links.map((link) => link.eventId).toList();
+
+    await _isar.writeTxn(() async {
+      await _isar.petEventCaches.filter().petIdEqualTo(petId).deleteAll();
+
+      for (final eventId in eventIds) {
+        final stillLinked = await _isar.petEventCaches
+            .filter()
+            .eventIdEqualTo(eventId)
+            .count();
+        if (stillLinked > 0) continue;
+
+        await _isar.eventCaches.deleteByEventId(eventId);
+        await _isar.eventImageCaches
+            .filter()
+            .eventIdEqualTo(eventId)
+            .deleteAll();
+      }
+    });
+  }
+
   Stream<Map<String, List<String>>> watchPetEvents() {
     return _isar.petEventCaches.where().watch(fireImmediately: true).map((rows) {
       final map = <String, List<String>>{};

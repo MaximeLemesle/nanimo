@@ -45,13 +45,18 @@ class PetRepository {
       );
     }
 
-    await _writeWithRetry(() async {
-      await _insertIgnoringDuplicate('pets', pet.toJson());
-      await _insertIgnoringDuplicate('users_pets', {
-        'user_id': userId,
-        'pet_id': pet.petId,
-      });
-    });
+    await _writeWithRetry(
+      () async {
+        await _insertIgnoringDuplicate('pets', pet.toJson());
+        await _insertIgnoringDuplicate('users_pets', {
+          'user_id': userId,
+          'pet_id': pet.petId,
+        });
+      },
+      operation: 'createPet',
+      networkMessage: 'Une connexion internet est requise pour créer un animal.',
+      serverMessage: 'Impossible de créer l’animal pour le moment.',
+    );
 
     await _isar.writeTxn(() async {
       await _isar.petCaches.putByPetId(PetCache.fromModel(pet));
@@ -70,7 +75,12 @@ class PetRepository {
     }
   }
 
-  Future<void> _writeWithRetry(Future<void> Function() write) async {
+  Future<void> _writeWithRetry(
+    Future<void> Function() write, {
+    required String operation,
+    required String networkMessage,
+    required String serverMessage,
+  }) async {
     for (var attempt = 1;; attempt++) {
       try {
         await write();
@@ -78,10 +88,9 @@ class PetRepository {
       } catch (e, st) {
         if (attempt >= _writeRetryAttempts) {
           throw mapRepositoryError(e, st,
-              operation: 'createPet',
-              networkMessage:
-                  'Une connexion internet est requise pour créer un animal.',
-              serverMessage: 'Impossible de créer l’animal pour le moment.');
+              operation: operation,
+              networkMessage: networkMessage,
+              serverMessage: serverMessage);
         }
         await Future<void>.delayed(_writeRetryBackoff * attempt);
       }
@@ -89,31 +98,51 @@ class PetRepository {
   }
 
   Future<void> updatePet(PetModel pet) async {
-    try {
-      await _supabase.from('pets').update(pet.toJson()).eq('id_pet', pet.petId);
-    } catch (e, st) {
-      throw mapRepositoryError(e, st,
-          operation: 'updatePet',
-          networkMessage:
-              'Une connexion internet est requise pour mettre à jour un animal.',
-          serverMessage: 'Impossible de mettre à jour l’animal pour le moment.');
+    if (_supabase.auth.currentUser == null) {
+      throw sessionExpired(
+        'updatePet',
+        'Vous devez être connecté pour modifier un animal.',
+      );
     }
+
+    await _writeWithRetry(
+      () async {
+        await _supabase
+            .from('pets')
+            .update(pet.toJson())
+            .eq('id_pet', pet.petId);
+      },
+      operation: 'updatePet',
+      networkMessage:
+          'Une connexion internet est requise pour mettre à jour un animal.',
+      serverMessage: 'Impossible de mettre à jour l’animal pour le moment.',
+    );
 
     await _isar.writeTxn(() async {
       await _isar.petCaches.putByPetId(PetCache.fromModel(pet));
     });
   }
 
+  /// Deletion goes through the `delete_pet` RPC, not a plain delete: the
+  /// souvenirs that only concerned this pet have no cascade to carry them off,
+  /// their link to the pet does.
   Future<void> deletePet(String petId) async {
-    try {
-      await _supabase.from('pets').delete().eq('id_pet', petId);
-    } catch (e, st) {
-      throw mapRepositoryError(e, st,
-          operation: 'deletePet',
-          networkMessage:
-              'Une connexion internet est requise pour supprimer un animal.',
-          serverMessage: 'Impossible de supprimer l’animal pour le moment.');
+    if (_supabase.auth.currentUser == null) {
+      throw sessionExpired(
+        'deletePet',
+        'Vous devez être connecté pour supprimer un animal.',
+      );
     }
+
+    await _writeWithRetry(
+      () async {
+        await _supabase.rpc('delete_pet', params: {'p_pet_id': petId});
+      },
+      operation: 'deletePet',
+      networkMessage:
+          'Une connexion internet est requise pour supprimer un animal.',
+      serverMessage: 'Impossible de supprimer l’animal pour le moment.',
+    );
 
     await _isar.writeTxn(() async {
       await _isar.petCaches.deleteByPetId(petId);
