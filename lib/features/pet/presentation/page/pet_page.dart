@@ -25,8 +25,7 @@ class PetPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<PetDetailsCubit, PetDetailsState>(
-      listenWhen: (previous, current) =>
-          previous.error != current.error && current.error != null,
+      listenWhen: (previous, current) => previous.error != current.error && current.error != null,
       listener: (context, state) {
         ScaffoldMessenger.of(context)
           ..clearSnackBars()
@@ -89,6 +88,16 @@ class PetPage extends StatelessWidget {
                             DateFormatter.age(pet.birthdate),
                             style: AppTextStyles.numberBig,
                           ),
+                          const SizedBox(width: AppSpacing.sm),
+                          IconButton(
+                            onPressed: () => context.push(
+                              '${RouteNames.editPet}/${pet.petId}',
+                            ),
+                            icon: const Icon(Icons.edit_outlined),
+                            color: AppColors.textSecondary,
+                            tooltip: 'Modifier ${pet.petName}',
+                            visualDensity: VisualDensity.compact,
+                          ),
                         ],
                       ),
 
@@ -98,8 +107,7 @@ class PetPage extends StatelessWidget {
                         items: [
                           PetCardItemWidget(
                             label: 'Espèce',
-                            value:
-                                state.speciesNameById[pet.petSpeciesId] ?? '—',
+                            value: state.speciesNameById[pet.petSpeciesId] ?? '—',
                           ),
                           PetCardItemWidget(
                             label: 'Race',
@@ -111,9 +119,7 @@ class PetPage extends StatelessWidget {
                           ),
                           PetCardItemWidget(
                             label: 'Poids',
-                            value: state.latestWeight == null
-                                ? '—'
-                                : '${state.latestWeight?.toStringAsFixed(1).replaceAll('.', ',')} kg',
+                            value: state.latestWeight == null ? '—' : '${state.latestWeight?.toStringAsFixed(1).replaceAll('.', ',')} kg',
                           ),
                         ],
                       ),
@@ -139,9 +145,7 @@ class PetPage extends StatelessWidget {
                                   required List<VaccineEntry> vaccines,
                                   required List<VetVisitEntry> vetVisits,
                                 }) {
-                                  context
-                                      .read<PetDetailsCubit>()
-                                      .createHealthDiary(
+                                  context.read<PetDetailsCubit>().createHealthDiary(
                                         birthWeight: birthWeight,
                                         birthWeightDate: birthWeightDate,
                                         isSterilized: isSterilized,
@@ -161,19 +165,17 @@ class PetPage extends StatelessWidget {
                         /// Weight tracker card
                         PetWeightCardWidget(
                           logs: state.weightLogs,
-                          onWeightSubmitted: (weight, loggedAt, {petId}) =>
-                              context.read<PetDetailsCubit>().addWeightLog(
-                                    weight,
-                                    loggedAt,
-                                    petId: petId,
-                                  ),
+                          onWeightSubmitted: (weight, loggedAt, {petId}) => context.read<PetDetailsCubit>().addWeightLog(
+                                weight,
+                                loggedAt,
+                                petId: petId,
+                              ),
                         ),
 
                         /// Health info card
                         PetHealthInfoCardWidget(
                           diary: state.diary,
-                          onFillPressed: () =>
-                              context.push(RouteNames.healthDiary),
+                          onFillPressed: () => context.push(RouteNames.healthDiary),
                         ),
 
                         /// Vaccines card
@@ -184,16 +186,14 @@ class PetPage extends StatelessWidget {
                           items: state.vaccines.isEmpty
                               ? [
                                   PetCardItemWidget(
-                                    label:
-                                        'Aucun vaccin enregistré pour le moment',
+                                    label: 'Aucun vaccin enregistré pour le moment',
                                     value: '—',
                                   )
                                 ]
                               : state.vaccines
                                   .map(
                                     (vaccine) => PetCardItemWidget(
-                                      label:
-                                          'Prochain rappel : ${DateFormatter.date(vaccine.nextDate)}',
+                                      label: 'Prochain rappel : ${DateFormatter.date(vaccine.nextDate)}',
                                       value: vaccine.vaccineName,
                                     ),
                                   )

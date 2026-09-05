@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nanimo/data/models/referential/pet_race_model.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
@@ -125,6 +126,45 @@ void main() {
     expect(find.text('Voir le carnet de santé'), findsOneWidget);
 
     await cubit.close();
+  });
+
+  testWidgets('the edit button routes to the pet edit page', (tester) async {
+    final cubit = PetDetailsCubit(
+      petRepository: petRepo,
+      healthRepository: healthRepo,
+      referentialRepository: refRepo,
+    );
+    addTearDown(cubit.close);
+
+    String? pushedPath;
+    final router = GoRouter(
+      initialLocation: '/home/pet',
+      routes: [
+        GoRoute(
+          path: '/home/pet',
+          builder: (_, __) => BlocProvider<PetDetailsCubit>.value(
+            value: cubit,
+            child: const PetPage(),
+          ),
+        ),
+        GoRoute(
+          path: '/pet/edit/:petId',
+          builder: (_, state) {
+            pushedPath = state.uri.path;
+            return const Scaffold(body: SizedBox.shrink());
+          },
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Modifier Yummy'));
+    await tester.pumpAndSettle();
+
+    expect(pushedPath, '/pet/edit/p1');
   });
 
   testWidgets('opens the update weight modal when tapping the action',
