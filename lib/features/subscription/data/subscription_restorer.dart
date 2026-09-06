@@ -36,15 +36,16 @@ class SubscriptionRestorer {
   final PurchaseRepository _purchaseRepository;
   final AuthRepository _authRepository;
 
-  /// After this, unlock anyway: the store already confirmed the purchase.
+  /// The webhook round trip is Apple to RevenueCat to the Edge Function. Past
+  /// this, stop waiting and say so: the caller decides what to show.
   final Duration _confirmationTimeout;
   final Duration _pollInterval;
 
   const SubscriptionRestorer({
     required PurchaseRepository purchaseRepository,
     required AuthRepository authRepository,
-    Duration confirmationTimeout = const Duration(seconds: 12),
-    Duration pollInterval = const Duration(seconds: 2),
+    Duration confirmationTimeout = const Duration(seconds: 25),
+    Duration pollInterval = const Duration(seconds: 1),
   })  : _purchaseRepository = purchaseRepository,
         _authRepository = authRepository,
         _confirmationTimeout = confirmationTimeout,
@@ -76,13 +77,21 @@ class SubscriptionRestorer {
 
   /// Each refresh write-throughs the Isar cache, which is what switches the
   /// rest of the app to premium quotas.
-  Future<void> awaitPremiumConfirmation() async {
+  ///
+  /// Returns true once the server owns the entitlement. **False is not a
+  /// failed purchase**: the money is taken and the store holds the
+  /// entitlement, only `users.subscription_status` has not caught up. The
+  /// distinction matters because the quota triggers in
+  /// `0004_freemium_quota_triggers.sql` read that column, so a caller that
+  /// treats false as success sends the user into a `pet quota reached`
+  /// exception moments after paying.
+  Future<bool> awaitPremiumConfirmation() async {
     final deadline = DateTime.now().add(_confirmationTimeout);
 
     while (DateTime.now().isBefore(deadline)) {
       try {
         final user = await _authRepository.refreshCurrentUser();
-        if (user?.subscriptionStatus == SubscriptionStatus.premium) return;
+        if (user?.subscriptionStatus == SubscriptionStatus.premium) return true;
       } catch (e, st) {
         developer.log('status refresh failed, retrying',
             name: 'subscription', error: e, stackTrace: st);
@@ -92,5 +101,6 @@ class SubscriptionRestorer {
 
     developer.log('premium not confirmed server-side before timeout',
         name: 'subscription');
+    return false;
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
+import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
@@ -8,6 +10,7 @@ import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/features/subscription/data/models/paywall_offer_model.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/paywall_cubit.dart';
 import 'package:nanimo/features/subscription/presentation/paywall_content.dart';
+import 'package:nanimo/features/subscription/presentation/widgets/paywall_confirming_widget.dart';
 import 'package:nanimo/features/subscription/presentation/widgets/paywall_legal_links_widget.dart';
 import 'package:nanimo/features/subscription/presentation/widgets/paywall_memories_widget.dart';
 import 'package:nanimo/features/subscription/presentation/widgets/paywall_offer_card_widget.dart';
@@ -29,18 +32,38 @@ class PaywallPage extends StatelessWidget {
           context.read<PaywallCubit>().clearError();
         }
 
-        if (state.isUnlocked) {
-          final message = state.status == PaywallStatus.restored ? 'Ton abonnement a été restauré.' : 'Bienvenue dans Nanimo Premium.';
+        /// Restoring is not buying: no celebration, just say it and step aside.
+        if (state.isRestored) {
           ScaffoldMessenger.of(context)
             ..clearSnackBars()
-            ..showSnackBar(SnackBar(content: Text(message)));
+            ..showSnackBar(
+              const SnackBar(content: Text('Ton abonnement a été restauré.')),
+            );
           Navigator.of(context).maybePop();
+        }
+
+        /// Replaces the paywall instead of stacking on it, so the back gesture
+        /// from the welcome page never lands back on the offers.
+        if (state.isPurchaseComplete) {
+          ScaffoldMessenger.of(context).clearSnackBars();
+          GoRouter.of(context).pushReplacement(
+            '${RouteNames.premiumWelcome}?confirmed=${state.isPremiumConfirmed}',
+          );
         }
       },
       builder: (context, state) {
-        return Scaffold(
-          backgroundColor: AppColors.background,
-          body: SafeArea(child: _body(context, state)),
+        return PopScope(
+          /// The purchase is already paid for and in flight. Letting the user
+          /// leave here would strand them between the store and the server.
+          canPop: !state.isConfirming,
+          child: Scaffold(
+            backgroundColor: AppColors.background,
+            body: SafeArea(
+              child: state.isConfirming
+                  ? const PaywallConfirmingWidget()
+                  : _body(context, state),
+            ),
+          ),
         );
       },
     );

@@ -35,6 +35,7 @@ import 'package:nanimo/features/subscription/data/purchase_repository.dart';
 import 'package:nanimo/features/subscription/data/subscription_restorer.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/paywall_cubit.dart';
 import 'package:nanimo/features/subscription/presentation/page/paywall_page.dart';
+import 'package:nanimo/features/subscription/presentation/page/premium_welcome_page.dart';
 import 'package:nanimo/features/onboarding/presentation/page/onboarding_page.dart';
 import 'package:nanimo/features/onboarding/presentation/page/splash_page.dart';
 import 'package:nanimo/features/pet/presentation/page/edit_pet_page.dart';
@@ -253,6 +254,22 @@ GoRouter createRouter(
               authRepository: authRepository,
             )..loadOffers(),
             child: const PaywallPage(),
+          ),
+        ),
+      ),
+
+      /// Reached by `pushReplacement` from the paywall, so it takes the
+      /// paywall's slot rather than sitting on top of it. `confirmed` carries
+      /// whether the server owns the entitlement yet, which decides whether the
+      /// page may offer an action that consumes a premium quota.
+      GoRoute(
+        path: RouteNames.premiumWelcome,
+        pageBuilder: (context, state) => _fadePage(
+          state,
+          PremiumWelcomePage(
+            isConfirmed: state.uri.queryParameters['confirmed'] == 'true',
+            onPrimary: () => context.pushReplacement(RouteNames.createPet),
+            onSecondary: () => context.go(RouteNames.home),
           ),
         ),
       ),

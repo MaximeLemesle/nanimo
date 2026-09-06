@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
+import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
 import 'package:nanimo/features/auth/data/models/user_model.dart';
@@ -10,6 +12,8 @@ import 'package:nanimo/features/subscription/data/models/paywall_offer_model.dar
 import 'package:nanimo/features/subscription/data/purchase_repository.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/paywall_cubit.dart';
 import 'package:nanimo/features/subscription/presentation/page/paywall_page.dart';
+import 'package:nanimo/features/subscription/presentation/page/premium_welcome_page.dart';
+import 'package:nanimo/features/subscription/presentation/widgets/paywall_confirming_widget.dart';
 import 'package:nanimo/features/subscription/presentation/paywall_content.dart';
 
 class _MockPurchaseRepository extends Mock implements PurchaseRepository {}
@@ -38,26 +42,52 @@ void main() {
     authRepository = _MockAuthRepository();
   });
 
+  /// A real router, because the page now leaves by `pushReplacement` instead
+  /// of a bare `maybePop`, and `GoRouter.of` throws without one.
   Future<void> pumpPaywall(WidgetTester tester,
-      {Future<bool> Function(Uri)? onOpenLegalLink}) async {
+      {Future<bool> Function(Uri)? onOpenLegalLink,
+      Duration confirmationTimeout = const Duration(milliseconds: 30)}) async {
     tester.view.physicalSize = const Size(1000, 2400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: BlocProvider(
-          create: (_) => PaywallCubit(
-            purchaseRepository: purchaseRepository,
-            authRepository: authRepository,
-            confirmationTimeout: const Duration(milliseconds: 30),
-            pollInterval: const Duration(milliseconds: 10),
-          )..loadOffers(),
-          child: PaywallPage(onOpenLegalLink: onOpenLegalLink),
+    final router = GoRouter(
+      initialLocation: RouteNames.paywall,
+      routes: [
+        GoRoute(
+          path: RouteNames.paywall,
+          builder: (_, __) => BlocProvider(
+            create: (_) => PaywallCubit(
+              purchaseRepository: purchaseRepository,
+              authRepository: authRepository,
+              confirmationTimeout: confirmationTimeout,
+              pollInterval: const Duration(milliseconds: 10),
+            )..loadOffers(),
+            child: PaywallPage(onOpenLegalLink: onOpenLegalLink),
+          ),
         ),
-      ),
+        GoRoute(
+          path: RouteNames.premiumWelcome,
+          builder: (_, state) => PremiumWelcomePage(
+            isConfirmed: state.uri.queryParameters['confirmed'] == 'true',
+            onPrimary: () {},
+            onSecondary: () {},
+          ),
+        ),
+      ],
     );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
     await tester.pumpAndSettle();
+  }
+
+  /// The welcome page fires confetti, whose animation never settles inside a
+  /// widget test. Bounded pumps instead of `pumpAndSettle`.
+  Future<void> pumpPast(WidgetTester tester) async {
+    for (var i = 0; i < 40; i++) {
+      await tester.pump(const Duration(milliseconds: 25));
+    }
   }
 
   testWidgets('lists the benefits and both plans with their store prices',
@@ -194,9 +224,94 @@ void main() {
     await tester.tap(find.text('Mensuel'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Essayer 7 jours gratuitement'));
-    await tester.pumpAndSettle();
+    await pumpPast(tester);
 
     verify(() => purchaseRepository.purchase('\$rc_monthly')).called(1);
+  });
+
+  testWidgets('holds a waiting screen while the server confirms',
+      (tester) async {
+    when(() => purchaseRepository.getOffers())
+        .thenAnswer((_) async => [_annual]);
+    when(() => purchaseRepository.purchase(any())).thenAnswer((_) async => true);
+
+    /// Never flips, so the page stays in the confirming phase for the whole
+    /// timeout and the waiting screen is observable.
+    when(() => authRepository.refreshCurrentUser()).thenAnswer(
+      (_) async => const UserModel(
+        userId: 'u1',
+        userName: 'Maxime',
+        mail: 'maxime@example.com',
+        subscriptionStatus: SubscriptionStatus.freemium,
+      ),
+    );
+
+    await pumpPaywall(tester);
+    await tester.tap(find.text('Passer premium'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byType(PaywallConfirmingWidget), findsOneWidget);
+    expect(find.text(premiumConfirmingTitle), findsOneWidget);
+    expect(find.text('Passer premium'), findsNothing);
+
+    await pumpPast(tester);
+  });
+
+  testWidgets('a confirmed purchase lands on the welcome page',
+      (tester) async {
+    when(() => purchaseRepository.getOffers())
+        .thenAnswer((_) async => [_annual]);
+    when(() => purchaseRepository.purchase(any())).thenAnswer((_) async => true);
+    when(() => authRepository.refreshCurrentUser()).thenAnswer(
+      (_) async => const UserModel(
+        userId: 'u1',
+        userName: 'Maxime',
+        mail: 'maxime@example.com',
+        subscriptionStatus: SubscriptionStatus.premium,
+      ),
+    );
+
+    await pumpPaywall(tester);
+    await tester.tap(find.text('Passer premium'));
+    await pumpPast(tester);
+
+    expect(find.byType(PremiumWelcomePage), findsOneWidget);
+    expect(find.text(premiumWelcomeTitle), findsOneWidget);
+    expect(find.text(premiumWelcomeCta), findsOneWidget);
+
+    /// The paywall is replaced, not covered.
+    expect(find.byType(PaywallPage), findsNothing);
+  });
+
+  /// The whole point of NAN-081: paid, unconfirmed, and the page must not
+  /// offer an action the quota triggers would refuse.
+  testWidgets('an unconfirmed purchase thanks without offering premium actions',
+      (tester) async {
+    when(() => purchaseRepository.getOffers())
+        .thenAnswer((_) async => [_annual]);
+    when(() => purchaseRepository.purchase(any())).thenAnswer((_) async => true);
+    when(() => authRepository.refreshCurrentUser()).thenAnswer(
+      (_) async => const UserModel(
+        userId: 'u1',
+        userName: 'Maxime',
+        mail: 'maxime@example.com',
+        subscriptionStatus: SubscriptionStatus.freemium,
+      ),
+    );
+
+    /// Zero, deliberately. `SubscriptionRestorer` bounds its loop with
+    /// `DateTime.now()`, which the test clock does not fake, so a non-zero
+    /// timeout here would spin against real wall time and make the test flaky.
+    /// Zero exits the loop on the first check, which is the branch under test.
+    await pumpPaywall(tester, confirmationTimeout: Duration.zero);
+    await tester.tap(find.text('Passer premium'));
+    await pumpPast(tester);
+
+    expect(find.byType(PremiumWelcomePage), findsOneWidget);
+    expect(find.text(premiumPendingTitle), findsOneWidget);
+    expect(find.text(premiumWelcomeCta), findsNothing);
+    expect(find.text(premiumPendingCta), findsOneWidget);
   });
 
   testWidgets('offers a retry when the offers cannot be loaded',

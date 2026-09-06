@@ -4,9 +4,24 @@ enum PaywallStatus {
   initial,
   loading,
   loaded,
+
+  /// The store sheet is up. Apple or Google owns the screen, not us.
   purchasing,
+
+  /// The store said yes and we are waiting for the webhook to reach Supabase.
+  /// This is the phase that used to look frozen.
+  confirming,
+
   restoring,
+
+  /// Paid, and `users.subscription_status` says premium. Quotas will hold.
   purchased,
+
+  /// Paid, but the server has not caught up. Not an error, and never to be
+  /// shown as one: the money is taken. Premium actions stay out of reach until
+  /// the flip lands, because the quota triggers would refuse them anyway.
+  purchasedPendingSync,
+
   restored,
   error,
 }
@@ -45,15 +60,35 @@ class PaywallState extends Equatable {
 
   /// True while a store call is in flight. Guards against double taps.
   bool get isBusy =>
-      status == PaywallStatus.purchasing || status == PaywallStatus.restoring;
+      status == PaywallStatus.purchasing ||
+      status == PaywallStatus.confirming ||
+      status == PaywallStatus.restoring;
 
   bool get isPurchasing => status == PaywallStatus.purchasing;
 
+  /// Drives the full-screen wait. Split from [isPurchasing] because the store
+  /// sheet already covers the app during that one, so there is nothing to show.
+  bool get isConfirming => status == PaywallStatus.confirming;
+
   bool get isRestoring => status == PaywallStatus.restoring;
 
+  /// A purchase went through at the store, confirmed server-side or not. Both
+  /// cases earn the welcome page; only one of them earns the premium call to
+  /// action on it.
+  bool get isPurchaseComplete =>
+      status == PaywallStatus.purchased ||
+      status == PaywallStatus.purchasedPendingSync;
+
+  /// The server owns the entitlement. The only state where premium actions are
+  /// safe to offer.
+  bool get isPremiumConfirmed => status == PaywallStatus.purchased;
+
+  /// Restoring is not buying. It keeps the snack bar and the plain dismissal,
+  /// no celebration.
+  bool get isRestored => status == PaywallStatus.restored;
+
   /// True when premium was just unlocked, by purchase or by restore.
-  bool get isUnlocked =>
-      status == PaywallStatus.purchased || status == PaywallStatus.restored;
+  bool get isUnlocked => isPurchaseComplete || isRestored;
 
   PaywallOfferModel? get selectedOffer {
     for (final offer in offers) {
