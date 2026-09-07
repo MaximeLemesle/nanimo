@@ -26,6 +26,7 @@ import 'package:nanimo/features/settings/data/settings_repository.dart';
 import 'package:nanimo/features/subscription/data/purchase_client.dart';
 import 'package:nanimo/features/subscription/data/purchase_repository.dart';
 import 'package:nanimo/features/subscription/data/subscription_repository.dart';
+import 'package:nanimo/features/subscription/data/subscription_reconciler.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -100,6 +101,12 @@ void main() async {
     await purchaseRepository.identify(authRepository.currentUserId!);
   }
 
+  /// Catches purchases whose webhook never landed, on every resume and launch.
+  final subscriptionReconciler = SubscriptionReconciler(
+    purchaseRepository: purchaseRepository,
+    authRepository: authRepository,
+  );
+
   final subscriptionCubit = SubscriptionCubit(
     authCubit: authCubit,
     authRepository: authRepository,
@@ -137,6 +144,7 @@ void main() async {
         healthRepository: healthRepository,
         settingsRepository: settingsRepository,
         purchaseRepository: purchaseRepository,
+        subscriptionReconciler: subscriptionReconciler,
       )));
 }
 
@@ -165,7 +173,7 @@ Future<PurchaseRepository> _buildPurchaseRepository() async {
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   final AuthCubit authCubit;
   final AuthRepository authRepository;
   final SubscriptionCubit subscriptionCubit;
@@ -177,6 +185,7 @@ class MyApp extends StatelessWidget {
   final HealthRepository healthRepository;
   final SettingsRepository settingsRepository;
   final PurchaseRepository purchaseRepository;
+  final SubscriptionReconciler subscriptionReconciler;
   const MyApp({
     super.key,
     required this.authCubit,
@@ -190,16 +199,43 @@ class MyApp extends StatelessWidget {
     required this.healthRepository,
     required this.settingsRepository,
     required this.purchaseRepository,
+    required this.subscriptionReconciler,
   });
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  AppLifecycleListener? _lifecycleListener;
+
+  @override
+  void initState() {
+    super.initState();
+
+    /// The paywall lives outside the shell, so this has to sit at app level
+    /// rather than in `AppShell`. A purchase confirmed late, or on another
+    /// device, lands here.
+    _lifecycleListener = AppLifecycleListener(
+      onResume: widget.subscriptionReconciler.reconcile,
+    );
+    widget.subscriptionReconciler.reconcile();
+  }
+
+  @override
+  void dispose() {
+    _lifecycleListener?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider.value(value: authCubit),
-        BlocProvider.value(value: onboardingCubit),
-        BlocProvider.value(value: subscriptionCubit),
-        BlocProvider.value(value: petCreationCubit),
+        BlocProvider.value(value: widget.authCubit),
+        BlocProvider.value(value: widget.onboardingCubit),
+        BlocProvider.value(value: widget.subscriptionCubit),
+        BlocProvider.value(value: widget.petCreationCubit),
       ],
       child: MaterialApp.router(
         title: 'Nanimo',
@@ -215,14 +251,14 @@ class MyApp extends StatelessWidget {
           child: child ?? const SizedBox.shrink(),
         ),
         routerConfig: createRouter(
-          authCubit,
-          authRepository: authRepository,
-          eventRepository: eventRepository,
-          referentialRepository: referentialRepository,
-          petRepository: petRepository,
-          healthRepository: healthRepository,
-          settingsRepository: settingsRepository,
-          purchaseRepository: purchaseRepository,
+          widget.authCubit,
+          authRepository: widget.authRepository,
+          eventRepository: widget.eventRepository,
+          referentialRepository: widget.referentialRepository,
+          petRepository: widget.petRepository,
+          healthRepository: widget.healthRepository,
+          settingsRepository: widget.settingsRepository,
+          purchaseRepository: widget.purchaseRepository,
         ),
       ),
     );

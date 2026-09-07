@@ -151,8 +151,31 @@ void main() {
       expect(cubit.state.isUnlocked, isFalse);
     });
 
-    /// The store charged the user but the webhook never landed.
-    test('unlocks after the timeout even if the server never confirms',
+    /// The store charged the user but the webhook never landed. This must not
+    /// come out as a plain `purchased`: the quota triggers read
+    /// `users.subscription_status`, so the app would promise premium and then
+    /// let PostgreSQL refuse the very next premium action.
+    test('separates a paid purchase the server has not confirmed', () async {
+      when(() => purchaseRepository.getOffers())
+          .thenAnswer((_) async => [_annual]);
+      when(() => purchaseRepository.purchase(any()))
+          .thenAnswer((_) async => true);
+      when(() => authRepository.refreshCurrentUser())
+          .thenAnswer((_) async => _user(SubscriptionStatus.freemium));
+
+      final cubit = buildCubit();
+      await cubit.loadOffers();
+      await cubit.purchase();
+
+      expect(cubit.state.status, PaywallStatus.purchasedPendingSync);
+      expect(cubit.state.isPremiumConfirmed, isFalse);
+      verify(() => authRepository.refreshCurrentUser()).called(greaterThan(1));
+    });
+
+    /// Both outcomes reach the welcome page. Never an error state: the money is
+    /// taken either way, and telling the user otherwise invites a double
+    /// purchase or a support ticket.
+    test('a pending confirmation still counts as a completed purchase',
         () async {
       when(() => purchaseRepository.getOffers())
           .thenAnswer((_) async => [_annual]);
@@ -165,8 +188,8 @@ void main() {
       await cubit.loadOffers();
       await cubit.purchase();
 
-      expect(cubit.state.status, PaywallStatus.purchased);
-      verify(() => authRepository.refreshCurrentUser()).called(greaterThan(1));
+      expect(cubit.state.isPurchaseComplete, isTrue);
+      expect(cubit.state.errorMessage, isNull);
     });
 
     test('a refresh that throws does not abort the confirmation', () async {
@@ -181,7 +204,53 @@ void main() {
       await cubit.loadOffers();
       await cubit.purchase();
 
+      expect(cubit.state.status, PaywallStatus.purchasedPendingSync);
+    });
+
+    test('confirms premium when the server flips in time', () async {
+      when(() => purchaseRepository.getOffers())
+          .thenAnswer((_) async => [_annual]);
+      when(() => purchaseRepository.purchase(any()))
+          .thenAnswer((_) async => true);
+      when(() => authRepository.refreshCurrentUser())
+          .thenAnswer((_) async => _user(SubscriptionStatus.premium));
+
+      final cubit = buildCubit();
+      await cubit.loadOffers();
+      await cubit.purchase();
+
       expect(cubit.state.status, PaywallStatus.purchased);
+      expect(cubit.state.isPremiumConfirmed, isTrue);
+    });
+
+    /// The phase the waiting screen hangs off. Without it the paywall cannot
+    /// tell "the store sheet is up" from "we are waiting on our own server".
+    test('passes through confirming between the store and the server',
+        () async {
+      when(() => purchaseRepository.getOffers())
+          .thenAnswer((_) async => [_annual]);
+      when(() => purchaseRepository.purchase(any()))
+          .thenAnswer((_) async => true);
+      when(() => authRepository.refreshCurrentUser())
+          .thenAnswer((_) async => _user(SubscriptionStatus.premium));
+
+      final cubit = buildCubit();
+      await cubit.loadOffers();
+
+      final seen = <PaywallStatus>[];
+      final sub = cubit.stream.listen((state) => seen.add(state.status));
+      await cubit.purchase();
+
+      /// Cubit emissions land asynchronously: without this the last one is
+      /// still in flight when the subscription is torn down.
+      await Future<void>.delayed(Duration.zero);
+      await sub.cancel();
+
+      expect(seen, containsAllInOrder([
+        PaywallStatus.purchasing,
+        PaywallStatus.confirming,
+        PaywallStatus.purchased,
+      ]));
     });
 
     test('ignores a second tap while the store sheet is open', () async {

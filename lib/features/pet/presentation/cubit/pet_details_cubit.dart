@@ -190,8 +190,6 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     }
   }
 
-  /// Unlike [updateDiary], writes authoritatively: its `??` fallbacks make a
-  /// value impossible to clear.
   Future<void> updateHealthInfo({
     required bool isSterilized,
     required bool isChipped,
@@ -313,9 +311,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     _weightSub?.cancel();
     _vetVisitsSub?.cancel();
 
-    /// Species-specific data belongs to the pet it was fetched for. Keeping the
-    /// previous pet's list while the new fetch is in flight offers e.g. cat
-    /// vaccines for a rabbit — and they get saved to the rabbit's diary.
+    /// Species-specific data belongs to the pet it was fetched for
     emit(state.copyWith(recommendedVaccines: const []));
 
     _diarySub =

@@ -9,7 +9,6 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card_wi
 
 class PetHealthInfoCardWidget extends StatelessWidget {
   final HealthDiaryModel? diary;
-
   final List<VetVisitModel> vetVisits;
   final VoidCallback? onFillPressed;
   final VoidCallback? onEditPressed;
@@ -22,8 +21,7 @@ class PetHealthInfoCardWidget extends StatelessWidget {
     this.onEditPressed,
   });
 
-  /// `last_vet_appointment` is only written by the diary form, so later visits
-  /// never reached it. The fallback keeps dates typed without a recorded visit.
+  /// The most recent visit on record, falling back to the diary column
   DateTime? get _lastVetAppointment {
     DateTime? latest;
     for (final visit in vetVisits) {

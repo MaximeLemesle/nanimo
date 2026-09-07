@@ -65,7 +65,6 @@ class _EditHealthInfoBottomSheetWidgetState
     widget.onSubmit(
       isSterilized: _isSterilized,
       isChipped: _isChipped,
-
       chipNumber: _isChipped && chipNumber.isNotEmpty ? chipNumber : null,
       lastDeworming: _isDewormed ? (_lastDeworming ?? DateTime.now()) : null,
     );

@@ -13,8 +13,6 @@ class PetCardWidget extends StatelessWidget {
   final ButtonWidget? button;
   final bool isColumn;
   final Color? borderColor;
-
-  /// Control pinned to the top right, level with [label].
   final Widget? action;
 
   const PetCardWidget({
