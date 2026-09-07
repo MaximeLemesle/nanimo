@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:nanimo/config/theme/app_colors.dart';
 
-/// The control that puts a diary section into selection mode, and takes it out.
-///
-/// Shared so the diary sections cannot drift apart in icon size or placement.
+/// Arms a diary section for selection, and disarms it.
 class PetDiaryEditButtonWidget extends StatelessWidget {
   final bool isSelecting;
   final VoidCallback onPressed;

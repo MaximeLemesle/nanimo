@@ -15,13 +15,7 @@ typedef EditHealthInfoSubmit = void Function({
   DateTime? lastDeworming,
 });
 
-/// Edits the three facts shown on the health card: sterilisation, chip, and
-/// last deworming.
-///
-/// Deliberately not the creation sheet with a flag. That one also collects the
-/// birth weight, the vaccine checklist and the vet visits, none of which belong
-/// to this card. Reusing [HealthDiarySectionWidget] keeps the two sheets
-/// looking alike where it matters without dragging in what does not.
+/// Edits the three facts shown on the health card: sterilisation, chip, deworming.
 class EditHealthInfoBottomSheetWidget extends StatefulWidget {
   final HealthDiaryModel diary;
   final EditHealthInfoSubmit onSubmit;
@@ -54,8 +48,7 @@ class _EditHealthInfoBottomSheetWidgetState
     _isSterilized = diary.isSterilized ?? false;
     _isChipped = diary.isChipped ?? false;
 
-    /// A recorded date is the only evidence the pet was ever dewormed, so it
-    /// drives the toggle rather than a column of its own.
+    /// No dewormed flag in the model: the date is the only evidence.
     _lastDeworming = diary.lastDeworming;
     _isDewormed = diary.lastDeworming != null;
   }
@@ -73,8 +66,6 @@ class _EditHealthInfoBottomSheetWidgetState
       isSterilized: _isSterilized,
       isChipped: _isChipped,
 
-      /// Turning the toggle off clears the number instead of leaving an orphan
-      /// value behind a "Non".
       chipNumber: _isChipped && chipNumber.isNotEmpty ? chipNumber : null,
       lastDeworming: _isDewormed ? (_lastDeworming ?? DateTime.now()) : null,
     );

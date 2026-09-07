@@ -24,14 +24,13 @@ class PetVaccineDiaryCardWidget extends StatefulWidget {
 }
 
 class _PetVaccineDiaryCardWidgetState extends State<PetVaccineDiaryCardWidget> {
-  /// The pencil arms the section, then a tap picks the vaccine to edit.
   bool _isSelecting = false;
 
   @override
   void didUpdateWidget(PetVaccineDiaryCardWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    /// An emptied list would leave the mode armed with nothing to pick.
+    /// Nothing left to pick.
     if (widget.vaccines.isEmpty && _isSelecting) _isSelecting = false;
   }
 
@@ -57,7 +56,6 @@ class _PetVaccineDiaryCardWidgetState extends State<PetVaccineDiaryCardWidget> {
                     ? 'Dernier rappel le ${DateFormatter.date(vaccine.lastDate)}'
                     : 'Prochain rappel le ${DateFormatter.date(vaccine.nextDate)}',
 
-                /// The badge stays put; the chevron only joins it while picking.
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [

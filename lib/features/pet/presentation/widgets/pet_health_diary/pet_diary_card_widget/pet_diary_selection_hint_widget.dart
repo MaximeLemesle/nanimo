@@ -4,10 +4,7 @@ import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 
-/// Says what to do while a diary section waits for a pick.
-///
-/// Without it the pencil turns rows tappable with no visible change, and the
-/// mode is impossible to notice or to leave.
+/// Without it, arming a section changes nothing on screen and cannot be noticed.
 class PetDiarySelectionHintWidget extends StatelessWidget {
   final String label;
 

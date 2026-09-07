@@ -10,8 +10,6 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card_wi
 class PetHealthInfoCardWidget extends StatelessWidget {
   final HealthDiaryModel? diary;
 
-  /// Recorded vet visits, used to derive the last appointment rather than
-  /// trusting the diary column. See [_lastVetAppointment].
   final List<VetVisitModel> vetVisits;
   final VoidCallback? onFillPressed;
   final VoidCallback? onEditPressed;
@@ -24,16 +22,8 @@ class PetHealthInfoCardWidget extends StatelessWidget {
     this.onEditPressed,
   });
 
-  /// The most recent visit on record, falling back to the diary column.
-  ///
-  /// `health_diary.last_vet_appointment` is only ever written when the user
-  /// fills the diary form. Visits added afterwards land in `vet_visits`, which
-  /// nothing connects back to that column, so the card used to show the first
-  /// day's value forever. Deriving it here keeps a single source of truth and
-  /// survives an edited or deleted visit for free.
-  ///
-  /// The fallback matters: users who typed a date without ever recording a
-  /// visit would otherwise lose it.
+  /// `last_vet_appointment` is only written by the diary form, so later visits
+  /// never reached it. The fallback keeps dates typed without a recorded visit.
   DateTime? get _lastVetAppointment {
     DateTime? latest;
     for (final visit in vetVisits) {
@@ -56,7 +46,6 @@ class PetHealthInfoCardWidget extends StatelessWidget {
     switch (hasInfo) {
       case false:
 
-        /// Return a card to invite the user to complete the health diary
         return Column(
           children: [
             PetCardWidget(
@@ -82,13 +71,11 @@ class PetHealthInfoCardWidget extends StatelessWidget {
 
       case true:
 
-        /// Return card with pet information
         return PetCardWidget(
           label: 'Informations de santé',
           backgroundColor: AppColors.backgroundTertiary,
 
-          /// Only once the diary exists. Before that the "Remplir le carnet"
-          /// button is the way in, and two entry points would compete.
+          /// Hidden before the diary exists: "Remplir le carnet" is the way in.
           action: onEditPressed == null
               ? null
               : IconButton(

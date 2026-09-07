@@ -23,14 +23,13 @@ class PetVetVisitDiaryCardWidget extends StatefulWidget {
 }
 
 class _PetVetVisitDiaryCardWidgetState extends State<PetVetVisitDiaryCardWidget> {
-  /// The pencil arms the section, then a tap picks the visit to edit.
   bool _isSelecting = false;
 
   @override
   void didUpdateWidget(PetVetVisitDiaryCardWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    /// An emptied list would leave the mode armed with nothing to pick.
+    /// Nothing left to pick.
     if (widget.visits.isEmpty && _isSelecting) _isSelecting = false;
   }
 
@@ -92,7 +91,6 @@ class _PetVetVisitDiaryCardWidgetState extends State<PetVetVisitDiaryCardWidget>
     );
   }
 
-  /// Reuses the creation sheet with its `initial`, so both paths share validation and wording.
   void _editVisit(BuildContext context, VetVisitModel visit) {
     final cubit = context.read<PetDetailsCubit>();
     setState(() => _isSelecting = false);

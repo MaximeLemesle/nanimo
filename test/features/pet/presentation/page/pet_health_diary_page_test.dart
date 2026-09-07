@@ -221,10 +221,7 @@ void main() {
     await cubit.close();
   });
 
-  /// NAN-085. The pencil sits opposite the section title and arms the list;
-  /// a second tap picks the entry. The vaccine row used to be editable by
-  /// tapping anywhere on it, which announced nothing and fired on a mistimed
-  /// scroll. The vet visit was not editable at all.
+  /// NAN-085. The pencil arms the section, a second tap picks the entry.
   group('editing an entry', () {
     testWidgets('puts one pencil beside each section title', (tester) async {
       await tester.binding.setSurfaceSize(const Size(800, 2000));
