@@ -9,7 +9,6 @@ enum PaywallStatus {
   purchasing,
 
   /// The store said yes and we are waiting for the webhook to reach Supabase.
-  /// This is the phase that used to look frozen.
   confirming,
 
   restoring,
@@ -18,8 +17,7 @@ enum PaywallStatus {
   purchased,
 
   /// Paid, but the server has not caught up. Not an error, and never to be
-  /// shown as one: the money is taken. Premium actions stay out of reach until
-  /// the flip lands, because the quota triggers would refuse them anyway.
+  /// shown as one: the money is taken.
   purchasedPendingSync,
 
   restored,
@@ -52,31 +50,19 @@ class PaywallState extends Equatable {
           selectedPackageId: selectedPackageId,
         );
 
-  const PaywallState.error(String message)
-      : this._(status: PaywallStatus.error, errorMessage: message);
+  const PaywallState.error(String message) : this._(status: PaywallStatus.error, errorMessage: message);
 
   /// True once the offers are on screen, whatever operation is running on top.
   bool get isLoaded => offers.isNotEmpty && status != PaywallStatus.error;
 
   /// True while a store call is in flight. Guards against double taps.
-  bool get isBusy =>
-      status == PaywallStatus.purchasing ||
-      status == PaywallStatus.confirming ||
-      status == PaywallStatus.restoring;
+  bool get isBusy => status == PaywallStatus.purchasing || status == PaywallStatus.confirming || status == PaywallStatus.restoring;
 
   bool get isPurchasing => status == PaywallStatus.purchasing;
 
   bool get isConfirming => status == PaywallStatus.confirming;
 
   /// Drives the full-screen wait, from the moment the store sheet opens.
-  ///
-  /// It covers [PaywallStatus.purchasing] too, and that is deliberate. Between
-  /// the user confirming in the Apple sheet and our own [confirming] phase,
-  /// RevenueCat verifies the receipt over the network, which takes seconds in
-  /// sandbox. Waiting for [confirming] to paint left that window showing a
-  /// frozen paywall. Behind the sheet the screen is not visible anyway, so
-  /// painting early costs nothing and the wait is already up when the sheet
-  /// closes. A cancelled purchase falls straight back to [loaded].
   bool get isCompletingPurchase => isPurchasing || isConfirming;
 
   bool get isRestoring => status == PaywallStatus.restoring;
@@ -84,9 +70,7 @@ class PaywallState extends Equatable {
   /// A purchase went through at the store, confirmed server-side or not. Both
   /// cases earn the welcome page; only one of them earns the premium call to
   /// action on it.
-  bool get isPurchaseComplete =>
-      status == PaywallStatus.purchased ||
-      status == PaywallStatus.purchasedPendingSync;
+  bool get isPurchaseComplete => status == PaywallStatus.purchased || status == PaywallStatus.purchasedPendingSync;
 
   /// The server owns the entitlement. The only state where premium actions are
   /// safe to offer.

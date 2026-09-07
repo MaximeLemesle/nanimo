@@ -8,12 +8,7 @@ import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/features/subscription/presentation/paywall_content.dart';
 import 'package:nanimo/features/subscription/presentation/widgets/paywall_memories_widget.dart';
 
-/// Lands here right after a purchase, replacing the paywall rather than
-/// stacking on it: going back must never return to the offers.
-///
-/// One screen for both outcomes, confirmed server-side or not. The notice at
-/// the bottom carries the case where `users.subscription_status` has not
-/// flipped yet, since a relaunch is what the user can actually do about it.
+/// Lands here right after a purchase
 class PremiumWelcomePage extends StatefulWidget {
   final VoidCallback onPrimary;
   final VoidCallback onSecondary;
@@ -101,8 +96,7 @@ class _PremiumWelcomePageState extends State<PremiumWelcomePage> {
                       Text(
                         premiumWelcomeSubtitle,
                         textAlign: TextAlign.center,
-                        style: AppTextStyles.text
-                            .copyWith(color: AppColors.textSecondary),
+                        style: AppTextStyles.text.copyWith(color: AppColors.textSecondary),
                       ),
                       const SizedBox(height: AppSpacing.xl),
                       _benefits(),
@@ -116,8 +110,7 @@ class _PremiumWelcomePageState extends State<PremiumWelcomePage> {
                         onPressed: widget.onSecondary,
                         child: Text(
                           premiumWelcomeSecondaryCta,
-                          style: AppTextStyles.textSmall
-                              .copyWith(color: AppColors.textSecondary),
+                          style: AppTextStyles.textSmall.copyWith(color: AppColors.textSecondary),
                         ),
                       ),
                       Text(
@@ -160,8 +153,7 @@ class _PremiumWelcomePageState extends State<PremiumWelcomePage> {
                     child: Text.rich(
                       TextSpan(
                         text: '${benefit.subtitle} ',
-                        style: AppTextStyles.text
-                            .copyWith(color: AppColors.textSecondary),
+                        style: AppTextStyles.text.copyWith(color: AppColors.textSecondary),
                         children: [
                           TextSpan(
                             text: benefit.title,

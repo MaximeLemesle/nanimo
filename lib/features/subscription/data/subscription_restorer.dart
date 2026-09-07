@@ -27,11 +27,9 @@ class RestoreResult extends Equatable {
 class SubscriptionRestorer {
   static const String restoredMessage = 'Ton abonnement a été restauré.';
 
-  static const String nothingFoundMessage =
-      'Aucun abonnement à restaurer sur ce compte.';
+  static const String nothingFoundMessage = 'Aucun abonnement à restaurer sur ce compte.';
 
-  static const String failureMessage =
-      'La restauration a échoué. Réessaye dans un instant.';
+  static const String failureMessage = 'La restauration a échoué. Réessaye dans un instant.';
 
   final PurchaseRepository _purchaseRepository;
   final AuthRepository _authRepository;
@@ -66,8 +64,7 @@ class SubscriptionRestorer {
       await awaitPremiumConfirmation();
       return const RestoreResult(RestoreOutcome.restored, restoredMessage);
     } catch (e, st) {
-      developer.log('restore failed',
-          name: 'subscription', error: e, stackTrace: st);
+      developer.log('restore failed', name: 'subscription', error: e, stackTrace: st);
       return RestoreResult(
         RestoreOutcome.failed,
         e is RepositoryException ? e.message : failureMessage,
@@ -75,16 +72,7 @@ class SubscriptionRestorer {
     }
   }
 
-  /// Each refresh write-throughs the Isar cache, which is what switches the
-  /// rest of the app to premium quotas.
-  ///
-  /// Returns true once the server owns the entitlement. **False is not a
-  /// failed purchase**: the money is taken and the store holds the
-  /// entitlement, only `users.subscription_status` has not caught up. The
-  /// distinction matters because the quota triggers in
-  /// `0004_freemium_quota_triggers.sql` read that column, so a caller that
-  /// treats false as success sends the user into a `pet quota reached`
-  /// exception moments after paying.
+  /// Each refresh write-throughs the Isar cache, which is what switches the rest of the app to premium quotas.
   Future<bool> awaitPremiumConfirmation() async {
     final deadline = DateTime.now().add(_confirmationTimeout);
 
@@ -93,14 +81,12 @@ class SubscriptionRestorer {
         final user = await _authRepository.refreshCurrentUser();
         if (user?.subscriptionStatus == SubscriptionStatus.premium) return true;
       } catch (e, st) {
-        developer.log('status refresh failed, retrying',
-            name: 'subscription', error: e, stackTrace: st);
+        developer.log('status refresh failed, retrying', name: 'subscription', error: e, stackTrace: st);
       }
       await Future<void>.delayed(_pollInterval);
     }
 
-    developer.log('premium not confirmed server-side before timeout',
-        name: 'subscription');
+    developer.log('premium not confirmed server-side before timeout', name: 'subscription');
     return false;
   }
 }

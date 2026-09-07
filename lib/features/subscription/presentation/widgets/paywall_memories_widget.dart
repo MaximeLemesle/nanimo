@@ -6,14 +6,7 @@ import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 
-/// The three polaroids shown above the paywall pitch, the waiting screen and
-/// the welcome page.
-///
-/// [isAnimated] makes them drift, and it is off by default on purpose. A
-/// looping animation never lets `pumpAndSettle` return, so switching it on
-/// everywhere would hang every widget test that mounts the paywall. It earns
-/// its keep on the waiting screen, where the whole point is to prove the app
-/// is still working.
+/// The three polaroids shown above the paywall pitch, the waiting screen and the welcome page.
 class PaywallMemoriesWidget extends StatefulWidget {
   final bool isAnimated;
 
@@ -26,12 +19,8 @@ class PaywallMemoriesWidget extends StatefulWidget {
   State<PaywallMemoriesWidget> createState() => _PaywallMemoriesWidgetState();
 }
 
-class _PaywallMemoriesWidgetState extends State<PaywallMemoriesWidget>
-    with SingleTickerProviderStateMixin {
+class _PaywallMemoriesWidgetState extends State<PaywallMemoriesWidget> with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-
-  /// Slow enough to read as breathing rather than as a loading spinner. The
-  /// spinner is the Lottie logo underneath; this must not compete with it.
   static const _period = Duration(seconds: 3);
 
   /// Out of phase, so the three cards never line up on the same beat.
