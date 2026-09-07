@@ -31,6 +31,7 @@ class PetSummaryDiaryCardWidget extends StatelessWidget {
       children: [
         PetDiaryTableWidget(
           rows: [
+            PetDiaryRow(label: 'Nom', value: pet.petName),
             PetDiaryRow(
               label: 'Espèce',
               value: speciesName,

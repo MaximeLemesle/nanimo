@@ -5,6 +5,7 @@ import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/date_field_widget.dart';
+import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
 
 typedef VetVisitSubmit = void Function({
   required String title,
@@ -16,7 +17,10 @@ typedef VetVisitSubmit = void Function({
 class AddVetVisitBottomSheetWidget extends StatefulWidget {
   final VetVisitSubmit onSubmit;
 
-  const AddVetVisitBottomSheetWidget({super.key, required this.onSubmit});
+  /// Non-null turns the sheet into a pre-filled edit form, like [AddVaccineBottomSheetWidget].
+  final VetVisitModel? initial;
+
+  const AddVetVisitBottomSheetWidget({super.key, required this.onSubmit, this.initial});
 
   @override
   State<AddVetVisitBottomSheetWidget> createState() =>
@@ -25,10 +29,20 @@ class AddVetVisitBottomSheetWidget extends StatefulWidget {
 
 class _AddVetVisitBottomSheetWidgetState
     extends State<AddVetVisitBottomSheetWidget> {
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _vetController = TextEditingController();
-  final TextEditingController _clinicController = TextEditingController();
+  late final TextEditingController _titleController;
+  late final TextEditingController _vetController;
+  late final TextEditingController _clinicController;
   DateTime? _visitedAt;
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initial;
+    _titleController = TextEditingController(text: initial?.title ?? '');
+    _vetController = TextEditingController(text: initial?.vetName ?? '');
+    _clinicController = TextEditingController(text: initial?.clinicName ?? '');
+    _visitedAt = initial?.visitedAt;
+  }
 
   bool get _isValid =>
       _titleController.text.trim().isNotEmpty && _visitedAt != null;
@@ -57,7 +71,7 @@ class _AddVetVisitBottomSheetWidgetState
   @override
   Widget build(BuildContext context) {
     return BottomSheetWidget(
-      title: 'Ajouter une visite',
+      title: widget.initial == null ? 'Ajouter une visite' : 'Modifier la visite',
       action: ButtonWidget(
         label: 'Enregistrer',
         fullWidth: true,

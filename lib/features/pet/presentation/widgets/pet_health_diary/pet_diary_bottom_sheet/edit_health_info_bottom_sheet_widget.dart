@@ -15,7 +15,7 @@ typedef EditHealthInfoSubmit = void Function({
   DateTime? lastDeworming,
 });
 
-/// Edits the health card: sterilisation, chip, and last deworming
+/// Edits the three facts shown on the health card: sterilisation, chip, deworming.
 class EditHealthInfoBottomSheetWidget extends StatefulWidget {
   final HealthDiaryModel diary;
   final EditHealthInfoSubmit onSubmit;
@@ -47,6 +47,8 @@ class _EditHealthInfoBottomSheetWidgetState
     _chipController = TextEditingController(text: diary.chipNumber ?? '');
     _isSterilized = diary.isSterilized ?? false;
     _isChipped = diary.isChipped ?? false;
+
+    /// No dewormed flag in the model: the date is the only evidence.
     _lastDeworming = diary.lastDeworming;
     _isDewormed = diary.lastDeworming != null;
   }

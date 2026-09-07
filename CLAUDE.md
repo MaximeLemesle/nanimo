@@ -368,7 +368,9 @@ Workflow `.github/workflows/ci.yml` découpé en 3 jobs :
 - **Fichiers** : snake_case (auth_cubit.dart, pet_model.dart)
 - **Cubits** : `[feature]_cubit.dart` + `[feature]_state.dart`
 - **Pages** : `[feature]_page.dart`
-- **Commentaires** : **3 lignes maximum, toujours.** Un commentaire ne s'écrit que si l'information est vraiment importante et introuvable dans le code : contrainte externe, workaround, piège. Dans le doute, ne pas commenter. Jamais de paraphrase du code ni de méthode dont le nom suffit. Format : anglais, `///` pour différencier des balises flutter. **La règle vaut pour tous les fichiers, pas seulement le Dart** : YAML de CI, Gradle, scripts shell
+- **Commentaires** : **2 lignes maximum, toujours.** Un commentaire ne s'écrit que si son information est **non déductible du code** : contrainte externe, workaround, piège, décision qu'un lecteur annulerait sans la connaître. Dans le doute, ne pas commenter. Jamais de paraphrase du code, ni de méthode dont le nom suffit, ni de justification d'un choix que le code montre déjà. Format : anglais, `///` pour différencier des balises flutter. **La règle vaut pour tous les fichiers, pas seulement le Dart** : YAML de CI, Gradle, scripts shell
+  - **Le pourquoi long va dans le ticket Notion ou le message de commit, pas dans le fichier.** Ces deux endroits sont faits pour ça, se relisent, et ne polluent pas la lecture du code
+  - Test de sortie avant d'écrire un commentaire : **si je supprime cette phrase, un développeur perd-il une information qu'il ne peut pas retrouver en lisant les vingt lignes en dessous ?** Si non, elle ne s'écrit pas
 - **Erreurs** : Toujours wrap Supabase calls en try/catch
 - **Mounted** : Toujours vérifier `if (!mounted) return;` après await avant setState
 

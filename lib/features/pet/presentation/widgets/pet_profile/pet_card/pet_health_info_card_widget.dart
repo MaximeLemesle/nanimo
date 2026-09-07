@@ -44,7 +44,6 @@ class PetHealthInfoCardWidget extends StatelessWidget {
     switch (hasInfo) {
       case false:
 
-        /// Return a card to invite the user to complete the health diary
         return Column(
           children: [
             PetCardWidget(
@@ -70,13 +69,11 @@ class PetHealthInfoCardWidget extends StatelessWidget {
 
       case true:
 
-        /// Return card with pet information
         return PetCardWidget(
           label: 'Informations de santé',
           backgroundColor: AppColors.backgroundTertiary,
 
-          /// Only once the diary exists. Before that the "Remplir le carnet"
-          /// button is the way in, and two entry points would compete.
+          /// Hidden before the diary exists: "Remplir le carnet" is the way in.
           action: onEditPressed == null
               ? null
               : IconButton(

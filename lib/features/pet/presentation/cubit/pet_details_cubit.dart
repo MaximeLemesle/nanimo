@@ -255,6 +255,15 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     }
   }
 
+  Future<void> updateVetVisit(VetVisitModel visit) async {
+    try {
+      await _healthRepository.updateVetVisit(visit);
+    } catch (err) {
+      if (isClosed) return;
+      emit(state.copyWith(error: err.toString()));
+    }
+  }
+
   Future<void> addVetVisit({
     required String title,
     required DateTime visitedAt,

@@ -98,6 +98,18 @@ void main() {
   setUpAll(() {
     registerFallbackValue(HealthDiaryModel(healthDiaryId: 'f', petId: 'p'));
     registerFallbackValue(
+      HealthDiaryVaccineModel(
+        healthDiaryVaccineId: 'f',
+        vaccineName: 'x',
+        lastDate: DateTime(2026, 1, 1),
+        nextDate: DateTime(2026, 1, 2),
+        recurrence: 0,
+        doseNumber: 1,
+        totalDoseNumber: 1,
+        healthDiaryId: 'd',
+      ),
+    );
+    registerFallbackValue(
       VetVisitModel(
         vetVisitId: 'f',
         title: 'x',
@@ -115,6 +127,8 @@ void main() {
     when(() => petRepo.watchPets()).thenAnswer((_) => Stream.value([_pet]));
     when(() => healthRepo.upsertDiary(any())).thenAnswer((_) async {});
     when(() => healthRepo.addVetVisit(any())).thenAnswer((_) async {});
+    when(() => healthRepo.updateVetVisit(any())).thenAnswer((_) async {});
+    when(() => healthRepo.updateVaccine(any())).thenAnswer((_) async {});
     when(() => healthRepo.watchDiaryForPet(any()))
         .thenAnswer((_) => Stream.value(_diary));
     when(() => healthRepo.getVaccinesForDiary(any()))
@@ -152,6 +166,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Récapitulatif'), findsOneWidget);
+    expect(find.text('Nom'), findsOneWidget);
+    expect(find.text('Yummy'), findsWidgets);
     expect(find.text('Vaccins'), findsOneWidget);
     expect(find.text('Visites vétérinaires'), findsOneWidget);
     expect(find.text('Évolution du poids'), findsOneWidget);
@@ -203,5 +219,153 @@ void main() {
     verify(() => healthRepo.addVetVisit(any())).called(1);
 
     await cubit.close();
+  });
+
+  /// NAN-085. The pencil arms the section, a second tap picks the entry.
+  group('editing an entry', () {
+    testWidgets('puts one pencil beside each section title', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 2000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final cubit = createCubit();
+      await tester.pumpWidget(buildPage(cubit));
+      await tester.pumpAndSettle();
+
+      expect(find.byTooltip('Modifier un vaccin'), findsOneWidget);
+      expect(find.byTooltip('Modifier une visite'), findsOneWidget);
+
+      await cubit.close();
+    });
+
+    /// Nothing to pick, so the control would arm an empty list.
+    testWidgets('hides the pencil while the section is empty', (tester) async {
+      when(() => healthRepo.getVaccinesForDiary(any())).thenAnswer((_) => Stream.value([]));
+
+      await tester.binding.setSurfaceSize(const Size(800, 2000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final cubit = createCubit();
+      await tester.pumpWidget(buildPage(cubit));
+      await tester.pumpAndSettle();
+
+      expect(find.byTooltip('Modifier un vaccin'), findsNothing);
+      expect(find.byTooltip('Modifier une visite'), findsOneWidget);
+
+      await cubit.close();
+    });
+
+    testWidgets('arming the section says what to do and offers a way out', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 2000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final cubit = createCubit();
+      await tester.pumpWidget(buildPage(cubit));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Modifier un vaccin'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Choisis le vaccin à modifier'), findsOneWidget);
+      expect(find.byTooltip('Annuler la modification'), findsOneWidget);
+
+      /// The other section must not be armed by the same gesture.
+      expect(find.text('Choisis la visite à modifier'), findsNothing);
+
+      await tester.tap(find.byTooltip('Annuler la modification'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Choisis le vaccin à modifier'), findsNothing);
+
+      await cubit.close();
+    });
+
+    testWidgets('picking a vaccine opens it pre-filled', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 2000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final cubit = createCubit();
+      await tester.pumpWidget(buildPage(cubit));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Modifier un vaccin'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Typhus félin'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Modifier le vaccin'), findsWidgets);
+
+      await tester.tap(find.text('Enregistrer'));
+      await tester.pumpAndSettle();
+
+      verify(() => healthRepo.updateVaccine(any())).called(1);
+      verifyNever(() => healthRepo.addVaccine(any()));
+
+      await cubit.close();
+    });
+
+    testWidgets('picking a vet visit opens it pre-filled', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 2000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final cubit = createCubit();
+      await tester.pumpWidget(buildPage(cubit));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Modifier une visite'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Bilan annuel'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Modifier la visite'), findsWidgets);
+      expect(find.text('Dr.Martin'), findsWidgets);
+      expect(find.text('Clinique des Pins'), findsWidgets);
+
+      /// Saving an untouched form must update, never create a duplicate.
+      await tester.tap(find.text('Enregistrer'));
+      await tester.pumpAndSettle();
+
+      verify(() => healthRepo.updateVetVisit(any())).called(1);
+      verifyNever(() => healthRepo.addVetVisit(any()));
+
+      await cubit.close();
+    });
+
+    /// The mode is one-shot: it must not stay armed after a pick.
+    testWidgets('leaves selection mode once an entry is picked', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 2000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final cubit = createCubit();
+      await tester.pumpWidget(buildPage(cubit));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Modifier un vaccin'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Typhus félin'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Enregistrer'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Choisis le vaccin à modifier'), findsNothing);
+      expect(find.byTooltip('Modifier un vaccin'), findsOneWidget);
+
+      await cubit.close();
+    });
+
+    testWidgets('a row is inert until the section is armed', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 2000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final cubit = createCubit();
+      await tester.pumpWidget(buildPage(cubit));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Typhus félin'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Enregistrer'), findsNothing);
+
+      await cubit.close();
+    });
   });
 }
