@@ -190,6 +190,32 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     }
   }
 
+  Future<void> updateHealthInfo({
+    required bool isSterilized,
+    required bool isChipped,
+    String? chipNumber,
+    DateTime? lastDeworming,
+  }) async {
+    final petId = state.selectedPetId;
+    if (petId == null) return;
+    try {
+      final current = state.diary;
+      final diary = HealthDiaryModel(
+        healthDiaryId: current?.healthDiaryId ?? const Uuid().v4(),
+        petId: petId,
+        isSterilized: isSterilized,
+        isChipped: isChipped,
+        chipNumber: isChipped ? chipNumber : null,
+        lastDeworming: lastDeworming,
+        lastVetAppointment: current?.lastVetAppointment,
+      );
+      await _healthRepository.upsertDiary(diary);
+    } catch (err) {
+      if (isClosed) return;
+      emit(state.copyWith(error: err.toString()));
+    }
+  }
+
   Future<void> addVaccine({
     required String vaccineName,
     required DateTime lastDate,
@@ -276,9 +302,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     _weightSub?.cancel();
     _vetVisitsSub?.cancel();
 
-    /// Species-specific data belongs to the pet it was fetched for. Keeping the
-    /// previous pet's list while the new fetch is in flight offers e.g. cat
-    /// vaccines for a rabbit — and they get saved to the rabbit's diary.
+    /// Species-specific data belongs to the pet it was fetched for
     emit(state.copyWith(recommendedVaccines: const []));
 
     _diarySub =

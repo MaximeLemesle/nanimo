@@ -13,6 +13,7 @@ class PetCardWidget extends StatelessWidget {
   final ButtonWidget? button;
   final bool isColumn;
   final Color? borderColor;
+  final Widget? action;
 
   const PetCardWidget({
     super.key,
@@ -22,6 +23,7 @@ class PetCardWidget extends StatelessWidget {
     this.button,
     this.isColumn = false,
     this.borderColor,
+    this.action,
   });
 
   @override
@@ -32,10 +34,17 @@ class PetCardWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: AppTextStyles.textSmallBold
-                .copyWith(color: AppColors.textSecondary),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: AppTextStyles.textSmallBold
+                      .copyWith(color: AppColors.textSecondary),
+                ),
+              ),
+              if (action != null) action!,
+            ],
           ),
           const SizedBox(height: AppSpacing.md),
           ..._buildItems(),
