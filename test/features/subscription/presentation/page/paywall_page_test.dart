@@ -228,7 +228,9 @@ void main() {
     verify(() => purchaseRepository.purchase('\$rc_monthly')).called(1);
   });
 
-  testWidgets('holds a waiting screen while the server confirms',
+  /// Covers the RevenueCat verification window too, not just our own poll:
+  /// this is what used to look like a frozen paywall in sandbox.
+  testWidgets('holds a waiting screen from the store sheet to the server',
       (tester) async {
     when(() => purchaseRepository.getOffers())
         .thenAnswer((_) async => [_annual]);
@@ -248,8 +250,11 @@ void main() {
     await pumpPaywall(tester);
     await tester.tap(find.text('Passer premium'));
     await tester.pump();
-    await tester.pump();
 
+    /// Already up on the very first frame, before `purchase()` resolves.
+    expect(find.byType(PaywallConfirmingWidget), findsOneWidget);
+
+    await tester.pump();
     expect(find.byType(PaywallConfirmingWidget), findsOneWidget);
     expect(find.text(premiumConfirmingTitle), findsOneWidget);
     expect(find.text('Passer premium'), findsNothing);

@@ -66,9 +66,18 @@ class PaywallState extends Equatable {
 
   bool get isPurchasing => status == PaywallStatus.purchasing;
 
-  /// Drives the full-screen wait. Split from [isPurchasing] because the store
-  /// sheet already covers the app during that one, so there is nothing to show.
   bool get isConfirming => status == PaywallStatus.confirming;
+
+  /// Drives the full-screen wait, from the moment the store sheet opens.
+  ///
+  /// It covers [PaywallStatus.purchasing] too, and that is deliberate. Between
+  /// the user confirming in the Apple sheet and our own [confirming] phase,
+  /// RevenueCat verifies the receipt over the network, which takes seconds in
+  /// sandbox. Waiting for [confirming] to paint left that window showing a
+  /// frozen paywall. Behind the sheet the screen is not visible anyway, so
+  /// painting early costs nothing and the wait is already up when the sheet
+  /// closes. A cancelled purchase falls straight back to [loaded].
+  bool get isCompletingPurchase => isPurchasing || isConfirming;
 
   bool get isRestoring => status == PaywallStatus.restoring;
 

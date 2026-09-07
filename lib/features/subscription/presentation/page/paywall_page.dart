@@ -53,11 +53,11 @@ class PaywallPage extends StatelessWidget {
         return PopScope(
           /// The purchase is already paid for and in flight. Letting the user
           /// leave here would strand them between the store and the server.
-          canPop: !state.isConfirming,
+          canPop: !state.isCompletingPurchase,
           child: Scaffold(
             backgroundColor: AppColors.background,
             body: SafeArea(
-              child: state.isConfirming
+              child: state.isCompletingPurchase
                   ? const PaywallConfirmingWidget()
                   : _body(context, state),
             ),
