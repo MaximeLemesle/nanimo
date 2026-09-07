@@ -42,6 +42,16 @@ void main() {
     authRepository = _MockAuthRepository();
   });
 
+  /// Bounded pumps everywhere, never `pumpAndSettle`. Two animations on these
+  /// screens loop forever by design, the drifting polaroids of
+  /// `PaywallMemoriesWidget` and the confetti of the welcome page, so no frame
+  /// here is ever a settled one.
+  Future<void> settle(WidgetTester tester) async {
+    for (var i = 0; i < 40; i++) {
+      await tester.pump(const Duration(milliseconds: 25));
+    }
+  }
+
   /// A real router, because the page now leaves by `pushReplacement` instead
   /// of a bare `maybePop`, and `GoRouter.of` throws without one.
   Future<void> pumpPaywall(WidgetTester tester,
@@ -78,16 +88,9 @@ void main() {
     addTearDown(router.dispose);
 
     await tester.pumpWidget(MaterialApp.router(routerConfig: router));
-    await tester.pumpAndSettle();
+    await settle(tester);
   }
 
-  /// The welcome page fires confetti, whose animation never settles inside a
-  /// widget test. Bounded pumps instead of `pumpAndSettle`.
-  Future<void> pumpPast(WidgetTester tester) async {
-    for (var i = 0; i < 40; i++) {
-      await tester.pump(const Duration(milliseconds: 25));
-    }
-  }
 
   testWidgets('lists the benefits and both plans with their store prices',
       (tester) async {
@@ -161,9 +164,9 @@ void main() {
     });
 
     await tester.tap(find.text('Conditions d’utilisation'));
-    await tester.pumpAndSettle();
+    await settle(tester);
     await tester.tap(find.text('Politique de confidentialité'));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(opened, hasLength(2));
     // Must be the publicly reachable notion.site pages: the private
@@ -180,7 +183,7 @@ void main() {
     await pumpPaywall(tester, onOpenLegalLink: (_) async => false);
 
     await tester.tap(find.text('Conditions d’utilisation'));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.textContaining('Impossible d’ouvrir'), findsOneWidget);
   });
@@ -221,9 +224,9 @@ void main() {
 
     // Annual is preselected, so tapping monthly must change the purchase target.
     await tester.tap(find.text('Mensuel'));
-    await tester.pumpAndSettle();
+    await settle(tester);
     await tester.tap(find.text('Essayer 7 jours gratuitement'));
-    await pumpPast(tester);
+    await settle(tester);
 
     verify(() => purchaseRepository.purchase('\$rc_monthly')).called(1);
   });
@@ -259,7 +262,7 @@ void main() {
     expect(find.text(premiumConfirmingTitle), findsOneWidget);
     expect(find.text('Passer premium'), findsNothing);
 
-    await pumpPast(tester);
+    await settle(tester);
   });
 
   testWidgets('a confirmed purchase lands on the welcome page',
@@ -278,7 +281,7 @@ void main() {
 
     await pumpPaywall(tester);
     await tester.tap(find.text('Passer premium'));
-    await pumpPast(tester);
+    await settle(tester);
 
     expect(find.byType(PremiumWelcomePage), findsOneWidget);
     expect(find.text(premiumWelcomeTitle), findsOneWidget);
@@ -311,7 +314,7 @@ void main() {
     /// Zero exits the loop on the first check, which is the branch under test.
     await pumpPaywall(tester, confirmationTimeout: Duration.zero);
     await tester.tap(find.text('Passer premium'));
-    await pumpPast(tester);
+    await settle(tester);
 
     expect(find.byType(PremiumWelcomePage), findsOneWidget);
     expect(find.text(premiumWelcomeTitle), findsOneWidget);
@@ -331,7 +334,7 @@ void main() {
     when(() => purchaseRepository.getOffers())
         .thenAnswer((_) async => [_annual]);
     await tester.tap(find.text('Réessayer'));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('Annuel'), findsOneWidget);
   });
@@ -345,7 +348,7 @@ void main() {
 
     await pumpPaywall(tester);
     await tester.tap(find.text('Passer premium'));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('Le store est indisponible.'), findsOneWidget);
     verifyNever(() => authRepository.refreshCurrentUser());
@@ -359,7 +362,7 @@ void main() {
 
     await pumpPaywall(tester);
     await tester.tap(find.text('Passer premium'));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.byType(SnackBar), findsNothing);
     expect(find.text('Passer premium'), findsOneWidget);
@@ -372,7 +375,7 @@ void main() {
 
     await pumpPaywall(tester);
     await tester.tap(find.text('Restaurer mes achats'));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.textContaining('Aucun abonnement à restaurer'), findsOneWidget);
   });

@@ -102,7 +102,7 @@ class PaywallPage extends StatelessWidget {
                       onPressed: () => Navigator.of(context).maybePop(),
                     ),
                   ),
-                  const PaywallMemoriesWidget(),
+                  const PaywallMemoriesWidget(isAnimated: true),
                   const Spacer(),
                   Text(paywallTitle, style: AppTextStyles.title02),
                   Text(

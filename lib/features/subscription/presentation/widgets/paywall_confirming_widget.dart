@@ -8,10 +8,6 @@ import 'package:nanimo/features/subscription/presentation/paywall_content.dart';
 import 'package:nanimo/features/subscription/presentation/widgets/paywall_memories_widget.dart';
 
 /// Fills the paywall while the purchase is confirmed server-side.
-///
-/// The money is already taken at this point and the wait is a webhook round
-/// trip we do not control, so the only thing that matters here is that the app
-/// visibly keeps working. A greyed-out button reads as a freeze.
 class PaywallConfirmingWidget extends StatelessWidget {
   const PaywallConfirmingWidget({super.key});
 
@@ -37,12 +33,9 @@ class PaywallConfirmingWidget extends StatelessWidget {
             style: AppTextStyles.text.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.md),
-
-          /// Same mark as the splash screen: the wait belongs to Nanimo, not to
-          /// a system spinner that could be any app.
           Lottie.asset(
             'assets/animation/logo_animation.json',
-            height: 96,
+            height: 80,
             repeat: true,
             frameRate: FrameRate(60),
             renderCache: RenderCache.raster,
