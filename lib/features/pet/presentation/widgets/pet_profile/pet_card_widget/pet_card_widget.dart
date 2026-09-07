@@ -13,10 +13,6 @@ class PetCardWidget extends StatelessWidget {
   final ButtonWidget? button;
   final bool isColumn;
   final Color? borderColor;
-
-  /// Optional control pinned to the top right, level with [label]. Kept
-  /// generic rather than an edit-only hook: the slot suits any card-wide
-  /// action, and every card gets the same placement for free.
   final Widget? action;
 
   const PetCardWidget({
