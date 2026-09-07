@@ -114,6 +114,22 @@ class PurchaseRepository {
     }
   }
 
+  /// The store's own view of the entitlement, read from the SDK's local cache.
+  ///
+  /// Survives a relaunch, which is what lets [SubscriptionReconciler] spot a
+  /// user whose purchase never reached `users.subscription_status` without
+  /// persisting anything ourselves. False on any failure: this drives a repair
+  /// attempt, never a denial of service.
+  Future<bool> isPremiumActive() async {
+    try {
+      return _isPremiumActive(await _client.getCustomerInfo());
+    } catch (e, st) {
+      developer.log('customer info read failed',
+          name: 'purchase', error: e, stackTrace: st);
+      return false;
+    }
+  }
+
   Future<Package> _findPackage(String packageId) async {
     final Offerings offerings;
     try {

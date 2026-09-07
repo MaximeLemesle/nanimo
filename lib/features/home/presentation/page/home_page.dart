@@ -38,7 +38,7 @@ class HomePage extends StatelessWidget {
             return ListView(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.lg,
-                AppSpacing.lg,
+                0,
                 AppSpacing.lg,
                 AppSpacing.bottomBarInset,
               ),

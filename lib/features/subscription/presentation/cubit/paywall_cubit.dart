@@ -18,7 +18,7 @@ class PaywallCubit extends Cubit<PaywallState> {
   PaywallCubit({
     required PurchaseRepository purchaseRepository,
     required AuthRepository authRepository,
-    Duration confirmationTimeout = const Duration(seconds: 12),
+    Duration confirmationTimeout = const Duration(seconds: 25),
     Duration pollInterval = const Duration(seconds: 2),
   })  : _purchaseRepository = purchaseRepository,
         _restorer = SubscriptionRestorer(
@@ -59,13 +59,19 @@ class PaywallCubit extends Cubit<PaywallState> {
       if (!active) {
         emit(state.copyWith(
           status: PaywallStatus.loaded,
-          errorMessage:
-              'L’achat n’a pas pu être confirmé. Aucun montant n’a été débité.',
+          errorMessage: 'L’achat n’a pas pu être confirmé. Aucun montant n’a été débité.',
         ));
         return;
       }
-      await _restorer.awaitPremiumConfirmation();
-      emit(state.copyWith(status: PaywallStatus.purchased, clearError: true));
+
+      /// From here the money is taken. Nothing below may emit an error state.
+      emit(state.copyWith(status: PaywallStatus.confirming, clearError: true));
+
+      final confirmed = await _restorer.awaitPremiumConfirmation();
+      emit(state.copyWith(
+        status: confirmed ? PaywallStatus.purchased : PaywallStatus.purchasedPendingSync,
+        clearError: true,
+      ));
     } on PurchaseCancelledException {
       emit(state.copyWith(status: PaywallStatus.loaded, clearError: true));
     } catch (e, st) {
