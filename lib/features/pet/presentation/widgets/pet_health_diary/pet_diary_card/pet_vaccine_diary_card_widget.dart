@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/core/utils/date_formatter.dart';
 import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
@@ -9,40 +10,66 @@ import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/add_vaccine_bottom_sheet_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card_widget/pet_diary_card_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card_widget/pet_diary_edit_button_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card_widget/pet_diary_selection_hint_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card_widget/pet_diary_table_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/vaccine_status_badge_widget.dart';
 
-class PetVaccineDiaryCardWidget extends StatelessWidget {
+class PetVaccineDiaryCardWidget extends StatefulWidget {
   final List<HealthDiaryVaccineModel> vaccines;
 
   const PetVaccineDiaryCardWidget({super.key, required this.vaccines});
 
   @override
+  State<PetVaccineDiaryCardWidget> createState() => _PetVaccineDiaryCardWidgetState();
+}
+
+class _PetVaccineDiaryCardWidgetState extends State<PetVaccineDiaryCardWidget> {
+  /// The pencil arms the section, then a tap picks the vaccine to edit.
+  bool _isSelecting = false;
+
+  @override
+  void didUpdateWidget(PetVaccineDiaryCardWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    /// An emptied list would leave the mode armed with nothing to pick.
+    if (widget.vaccines.isEmpty && _isSelecting) _isSelecting = false;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return PetDiaryCardWidget(
       title: 'Vaccins',
+      action: widget.vaccines.isEmpty
+          ? null
+          : PetDiaryEditButtonWidget(
+              isSelecting: _isSelecting,
+              tooltip: _isSelecting ? 'Annuler la modification' : 'Modifier un vaccin',
+              onPressed: () => setState(() => _isSelecting = !_isSelecting),
+            ),
       children: [
+        if (_isSelecting) const PetDiarySelectionHintWidget(label: 'Choisis le vaccin à modifier'),
         PetDiaryTableWidget(
           rows: [
-            for (final vaccine in vaccines)
+            for (final vaccine in widget.vaccines)
               PetDiaryRow(
-                  label: vaccine.vaccineName,
-                  subtitle: vaccineStatusFor(vaccine.nextDate) ==
-                          VaccineStatus.done
-                      ? 'Dernier rappel le ${DateFormatter.date(vaccine.lastDate)}'
-                      : 'Prochain rappel le ${DateFormatter.date(vaccine.nextDate)}',
-                  /// Badge then pencil, both compact: a long vaccine name is what shrinks, not the controls.
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      VaccineStatusBadgeWidget(nextDate: vaccine.nextDate),
+                label: vaccine.vaccineName,
+                subtitle: vaccineStatusFor(vaccine.nextDate) == VaccineStatus.done
+                    ? 'Dernier rappel le ${DateFormatter.date(vaccine.lastDate)}'
+                    : 'Prochain rappel le ${DateFormatter.date(vaccine.nextDate)}',
+
+                /// The badge stays put; the chevron only joins it while picking.
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    VaccineStatusBadgeWidget(nextDate: vaccine.nextDate),
+                    if (_isSelecting) ...[
                       const SizedBox(width: AppSpacing.xs),
-                      PetDiaryEditButtonWidget(
-                        tooltip: 'Modifier le vaccin',
-                        onPressed: () => _editVaccine(context, vaccine),
-                      ),
+                      const Icon(Icons.chevron_right_rounded, color: AppColors.primary),
                     ],
-                  )),
+                  ],
+                ),
+                onTap: _isSelecting ? () => _editVaccine(context, vaccine) : null,
+              ),
           ],
           emptyLabel: 'Aucun vaccin enregistré pour le moment.',
         ),
@@ -57,11 +84,7 @@ class PetVaccineDiaryCardWidget extends StatelessWidget {
             BottomSheetWidget.show<void>(
               context,
               AddVaccineBottomSheetWidget(
-                onSubmit: ({
-                  required String vaccineName,
-                  required DateTime lastDate,
-                  required DateTime nextDate,
-                }) {
+                onSubmit: ({required String vaccineName, required DateTime lastDate, required DateTime nextDate}) {
                   context.read<PetDetailsCubit>().addVaccine(
                         vaccineName: vaccineName,
                         lastDate: lastDate,
@@ -76,9 +99,9 @@ class PetVaccineDiaryCardWidget extends StatelessWidget {
     );
   }
 
-  /// Was reachable by tapping the whole row, which announced nothing and fired on a mistimed scroll.
   void _editVaccine(BuildContext context, HealthDiaryVaccineModel vaccine) {
     final cubit = context.read<PetDetailsCubit>();
+    setState(() => _isSelecting = false);
     BottomSheetWidget.show<void>(
       context,
       AddVaccineBottomSheetWidget(
