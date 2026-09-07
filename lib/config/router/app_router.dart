@@ -259,15 +259,12 @@ GoRouter createRouter(
       ),
 
       /// Reached by `pushReplacement` from the paywall, so it takes the
-      /// paywall's slot rather than sitting on top of it. `confirmed` carries
-      /// whether the server owns the entitlement yet, which decides whether the
-      /// page may offer an action that consumes a premium quota.
+      /// paywall's slot rather than sitting on top of it.
       GoRoute(
         path: RouteNames.premiumWelcome,
         pageBuilder: (context, state) => _fadePage(
           state,
           PremiumWelcomePage(
-            isConfirmed: state.uri.queryParameters['confirmed'] == 'true',
             onPrimary: () => context.pushReplacement(RouteNames.createPet),
             onSecondary: () => context.go(RouteNames.home),
           ),

@@ -68,8 +68,7 @@ void main() {
         ),
         GoRoute(
           path: RouteNames.premiumWelcome,
-          builder: (_, state) => PremiumWelcomePage(
-            isConfirmed: state.uri.queryParameters['confirmed'] == 'true',
+          builder: (_, __) => PremiumWelcomePage(
             onPrimary: () {},
             onSecondary: () {},
           ),
@@ -279,14 +278,15 @@ void main() {
     expect(find.byType(PremiumWelcomePage), findsOneWidget);
     expect(find.text(premiumWelcomeTitle), findsOneWidget);
     expect(find.text(premiumWelcomeCta), findsOneWidget);
+    expect(find.text(premiumWelcomeNotice), findsOneWidget);
 
     /// The paywall is replaced, not covered.
     expect(find.byType(PaywallPage), findsNothing);
   });
 
-  /// The whole point of NAN-081: paid, unconfirmed, and the page must not
-  /// offer an action the quota triggers would refuse.
-  testWidgets('an unconfirmed purchase thanks without offering premium actions',
+  /// Paid but unconfirmed reaches the same page, never an error state: the
+  /// money is taken either way. The relaunch notice carries the difference.
+  testWidgets('an unconfirmed purchase lands on the same welcome page',
       (tester) async {
     when(() => purchaseRepository.getOffers())
         .thenAnswer((_) async => [_annual]);
@@ -309,9 +309,8 @@ void main() {
     await pumpPast(tester);
 
     expect(find.byType(PremiumWelcomePage), findsOneWidget);
-    expect(find.text(premiumPendingTitle), findsOneWidget);
-    expect(find.text(premiumWelcomeCta), findsNothing);
-    expect(find.text(premiumPendingCta), findsOneWidget);
+    expect(find.text(premiumWelcomeTitle), findsOneWidget);
+    expect(find.text(premiumWelcomeNotice), findsOneWidget);
   });
 
   testWidgets('offers a retry when the offers cannot be loaded',

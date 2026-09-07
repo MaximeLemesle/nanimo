@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
@@ -22,7 +23,7 @@ class PaywallConfirmingWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const PaywallMemoriesWidget(),
+          const PaywallMemoriesWidget(isAnimated: true),
           const SizedBox(height: AppSpacing.xl),
           Text(
             premiumConfirmingTitle,
@@ -35,11 +36,16 @@ class PaywallConfirmingWidget extends StatelessWidget {
             textAlign: TextAlign.center,
             style: AppTextStyles.text.copyWith(color: AppColors.textSecondary),
           ),
-          const SizedBox(height: AppSpacing.xl),
-          const SizedBox(
-            height: 28,
-            width: 28,
-            child: CircularProgressIndicator(strokeWidth: 2.5),
+          const SizedBox(height: AppSpacing.md),
+
+          /// Same mark as the splash screen: the wait belongs to Nanimo, not to
+          /// a system spinner that could be any app.
+          Lottie.asset(
+            'assets/animation/logo_animation.json',
+            height: 96,
+            repeat: true,
+            frameRate: FrameRate(60),
+            renderCache: RenderCache.raster,
           ),
         ],
       ),

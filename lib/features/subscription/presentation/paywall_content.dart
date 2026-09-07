@@ -41,18 +41,13 @@ const String premiumWelcomeTitle = 'Merci !';
 const String premiumWelcomeSubtitle =
     'Tu fais désormais partie de Nanimo Premium. Ta famille a toute la place qu’elle mérite.';
 
-/// The pending variant. It must never read like a failure: the payment went
-/// through, only the server has not caught up.
-const String premiumPendingTitle = 'C’est tout bon !';
-
-const String premiumPendingSubtitle =
-    'Ton paiement est passé. L’activation finit de se propager, elle sera effective d’ici quelques instants.';
-
-const String premiumPendingNotice =
-    'Rien à refaire de ton côté, et aucun montant ne sera débité deux fois. Tes avantages s’ouvriront tout seuls.';
+/// Shown to everyone, discreetly. A purchase whose webhook has not landed yet
+/// leaves the app on freemium quotas, and a relaunch is the one gesture that
+/// fixes it from the user's side. Saying it once here is cheaper than a support
+/// message, and it costs nothing to the user whose purchase went through.
+const String premiumWelcomeNotice =
+    'Si jamais tu n’as pas encore accès aux fonctionnalités premium, ferme et rouvre l’application.';
 
 const String premiumWelcomeCta = 'Ajouter un animal';
 
 const String premiumWelcomeSecondaryCta = 'Revenir à l’accueil';
-
-const String premiumPendingCta = 'Continuer';

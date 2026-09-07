@@ -46,9 +46,7 @@ class PaywallPage extends StatelessWidget {
         /// from the welcome page never lands back on the offers.
         if (state.isPurchaseComplete) {
           ScaffoldMessenger.of(context).clearSnackBars();
-          GoRouter.of(context).pushReplacement(
-            '${RouteNames.premiumWelcome}?confirmed=${state.isPremiumConfirmed}',
-          );
+          GoRouter.of(context).pushReplacement(RouteNames.premiumWelcome);
         }
       },
       builder: (context, state) {

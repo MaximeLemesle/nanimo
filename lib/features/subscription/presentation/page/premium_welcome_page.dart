@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_confetti/flutter_confetti.dart';
 
 import 'package:nanimo/config/theme/app_colors.dart';
-import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
@@ -12,18 +11,15 @@ import 'package:nanimo/features/subscription/presentation/widgets/paywall_memori
 /// Lands here right after a purchase, replacing the paywall rather than
 /// stacking on it: going back must never return to the offers.
 ///
-/// [isConfirmed] says whether `users.subscription_status` has actually flipped.
-/// When it has not, the page keeps the thanks but drops the premium call to
-/// action, because the quota triggers would refuse the action anyway and the
-/// user would meet an error seconds after paying.
+/// One screen for both outcomes, confirmed server-side or not. The notice at
+/// the bottom carries the case where `users.subscription_status` has not
+/// flipped yet, since a relaunch is what the user can actually do about it.
 class PremiumWelcomePage extends StatefulWidget {
-  final bool isConfirmed;
   final VoidCallback onPrimary;
   final VoidCallback onSecondary;
 
   const PremiumWelcomePage({
     super.key,
-    required this.isConfirmed,
     required this.onPrimary,
     required this.onSecondary,
   });
@@ -46,7 +42,6 @@ class _PremiumWelcomePageState extends State<PremiumWelcomePage> {
   @override
   void initState() {
     super.initState();
-    if (!widget.isConfirmed) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _launchConfetti();
@@ -80,8 +75,6 @@ class _PremiumWelcomePageState extends State<PremiumWelcomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final confirmed = widget.isConfirmed;
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -97,42 +90,45 @@ class _PremiumWelcomePageState extends State<PremiumWelcomePage> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const Spacer(),
-                      const PaywallMemoriesWidget(),
+                      const PaywallMemoriesWidget(isAnimated: true),
                       const SizedBox(height: AppSpacing.xl),
                       Text(
-                        confirmed ? premiumWelcomeTitle : premiumPendingTitle,
+                        premiumWelcomeTitle,
                         textAlign: TextAlign.center,
                         style: AppTextStyles.title01,
                       ),
                       const SizedBox(height: AppSpacing.sm),
                       Text(
-                        confirmed
-                            ? premiumWelcomeSubtitle
-                            : premiumPendingSubtitle,
+                        premiumWelcomeSubtitle,
                         textAlign: TextAlign.center,
                         style: AppTextStyles.text
                             .copyWith(color: AppColors.textSecondary),
                       ),
                       const SizedBox(height: AppSpacing.xl),
-                      if (confirmed) _benefits() else _pendingNotice(),
+                      _benefits(),
                       const Spacer(),
                       ButtonWidget(
-                        label: confirmed
-                            ? premiumWelcomeCta
-                            : premiumPendingCta,
+                        label: premiumWelcomeCta,
                         fullWidth: true,
-                        onPressed:
-                            confirmed ? widget.onPrimary : widget.onSecondary,
+                        onPressed: widget.onPrimary,
                       ),
-                      if (confirmed)
-                        TextButton(
-                          onPressed: widget.onSecondary,
-                          child: Text(
-                            premiumWelcomeSecondaryCta,
-                            style: AppTextStyles.textSmall
-                                .copyWith(color: AppColors.textSecondary),
-                          ),
+                      TextButton(
+                        onPressed: widget.onSecondary,
+                        child: Text(
+                          premiumWelcomeSecondaryCta,
+                          style: AppTextStyles.textSmall
+                              .copyWith(color: AppColors.textSecondary),
                         ),
+                      ),
+                      Text(
+                        premiumWelcomeNotice,
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.textSmall.copyWith(
+                          fontSize: 10,
+                          height: 1.35,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -180,21 +176,6 @@ class _PremiumWelcomePageState extends State<PremiumWelcomePage> {
             ),
           )
           .toList(),
-    );
-  }
-
-  Widget _pendingNotice() {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundPrimary,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Text(
-        premiumPendingNotice,
-        textAlign: TextAlign.center,
-        style: AppTextStyles.textSmall,
-      ),
     );
   }
 }
