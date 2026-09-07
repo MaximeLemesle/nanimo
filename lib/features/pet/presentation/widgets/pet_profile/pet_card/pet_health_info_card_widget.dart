@@ -3,22 +3,55 @@ import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/core/utils/date_formatter.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/features/health/data/models/health_diary_model.dart';
+import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card_widget/pet_card_item_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card_widget/pet_card_widget.dart';
 
 class PetHealthInfoCardWidget extends StatelessWidget {
   final HealthDiaryModel? diary;
-  final VoidCallback? onFillPressed;
 
-  const PetHealthInfoCardWidget({super.key, this.diary, this.onFillPressed});
+  /// Recorded vet visits, used to derive the last appointment rather than
+  /// trusting the diary column. See [_lastVetAppointment].
+  final List<VetVisitModel> vetVisits;
+  final VoidCallback? onFillPressed;
+  final VoidCallback? onEditPressed;
+
+  const PetHealthInfoCardWidget({
+    super.key,
+    this.diary,
+    this.vetVisits = const [],
+    this.onFillPressed,
+    this.onEditPressed,
+  });
+
+  /// The most recent visit on record, falling back to the diary column.
+  ///
+  /// `health_diary.last_vet_appointment` is only ever written when the user
+  /// fills the diary form. Visits added afterwards land in `vet_visits`, which
+  /// nothing connects back to that column, so the card used to show the first
+  /// day's value forever. Deriving it here keeps a single source of truth and
+  /// survives an edited or deleted visit for free.
+  ///
+  /// The fallback matters: users who typed a date without ever recording a
+  /// visit would otherwise lose it.
+  DateTime? get _lastVetAppointment {
+    DateTime? latest;
+    for (final visit in vetVisits) {
+      if (latest == null || visit.visitedAt.isAfter(latest)) {
+        latest = visit.visitedAt;
+      }
+    }
+    return latest ?? diary?.lastVetAppointment;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final lastVetAppointment = _lastVetAppointment;
     final hasInfo = diary != null &&
         (diary?.isSterilized != null ||
             diary?.isChipped != null ||
             diary?.lastDeworming != null ||
-            diary?.lastVetAppointment != null);
+            lastVetAppointment != null);
 
     switch (hasInfo) {
       case false:
@@ -53,6 +86,20 @@ class PetHealthInfoCardWidget extends StatelessWidget {
         return PetCardWidget(
           label: 'Informations de santé',
           backgroundColor: AppColors.backgroundTertiary,
+
+          /// Only once the diary exists. Before that the "Remplir le carnet"
+          /// button is the way in, and two entry points would compete.
+          action: onEditPressed == null
+              ? null
+              : IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(Icons.edit_outlined, size: 20),
+                  color: AppColors.textSecondary,
+                  tooltip: 'Modifier les informations de santé',
+                  onPressed: onEditPressed,
+                ),
           items: [
             PetCardItemWidget(
               label: 'Stérilisé',
@@ -76,9 +123,9 @@ class PetHealthInfoCardWidget extends StatelessWidget {
             ),
             PetCardItemWidget(
               label: 'Dernier rendez-vous vétérinaire',
-              value: diary?.lastVetAppointment == null
+              value: lastVetAppointment == null
                   ? '—'
-                  : DateFormatter.date(diary!.lastVetAppointment!),
+                  : DateFormatter.date(lastVetAppointment),
               subValue: 'Pensez à en faire au moins un chaque année',
             ),
           ],

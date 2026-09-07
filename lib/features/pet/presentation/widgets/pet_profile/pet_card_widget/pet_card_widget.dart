@@ -14,6 +14,11 @@ class PetCardWidget extends StatelessWidget {
   final bool isColumn;
   final Color? borderColor;
 
+  /// Optional control pinned to the top right, level with [label]. Kept
+  /// generic rather than an edit-only hook: the slot suits any card-wide
+  /// action, and every card gets the same placement for free.
+  final Widget? action;
+
   const PetCardWidget({
     super.key,
     required this.label,
@@ -22,6 +27,7 @@ class PetCardWidget extends StatelessWidget {
     this.button,
     this.isColumn = false,
     this.borderColor,
+    this.action,
   });
 
   @override
@@ -32,10 +38,17 @@ class PetCardWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: AppTextStyles.textSmallBold
-                .copyWith(color: AppColors.textSecondary),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: AppTextStyles.textSmallBold
+                      .copyWith(color: AppColors.textSecondary),
+                ),
+              ),
+              if (action != null) action!,
+            ],
           ),
           const SizedBox(height: AppSpacing.md),
           ..._buildItems(),

@@ -14,6 +14,8 @@ import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card_widget/pet_card_item_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card_widget/pet_card_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/create_health_diary_bottom_sheet_widget.dart';
+import 'package:nanimo/features/health/data/models/health_diary_model.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/edit_health_info_bottom_sheet_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_health_info_card_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_health_onboarding_card_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_park_header_widget.dart';
@@ -175,7 +177,9 @@ class PetPage extends StatelessWidget {
                         /// Health info card
                         PetHealthInfoCardWidget(
                           diary: state.diary,
+                          vetVisits: state.vetVisits,
                           onFillPressed: () => context.push(RouteNames.healthDiary),
+                          onEditPressed: state.diary == null ? null : () => _editHealthInfo(context, state.diary!),
                         ),
 
                         /// Vaccines card
@@ -214,6 +218,29 @@ class PetPage extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  void _editHealthInfo(BuildContext context, HealthDiaryModel diary) {
+    final cubit = context.read<PetDetailsCubit>();
+    BottomSheetWidget.show<void>(
+      context,
+      EditHealthInfoBottomSheetWidget(
+        diary: diary,
+        onSubmit: ({
+          required bool isSterilized,
+          required bool isChipped,
+          String? chipNumber,
+          DateTime? lastDeworming,
+        }) {
+          cubit.updateHealthInfo(
+            isSterilized: isSterilized,
+            isChipped: isChipped,
+            chipNumber: chipNumber,
+            lastDeworming: lastDeworming,
+          );
+        },
+      ),
     );
   }
 }

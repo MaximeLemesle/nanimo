@@ -190,6 +190,40 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     }
   }
 
+  /// Writes the three facts the health card owns, without the `??` fallbacks
+  /// of [updateDiary].
+  ///
+  /// Those fallbacks make a value impossible to clear: passing null to unset a
+  /// deworming date silently keeps the old one. Here the sheet is the authority
+  /// on what it edits, so unticking a toggle really erases what it carried.
+  /// `lastVetAppointment` is not one of those fields and is carried over
+  /// untouched.
+  Future<void> updateHealthInfo({
+    required bool isSterilized,
+    required bool isChipped,
+    String? chipNumber,
+    DateTime? lastDeworming,
+  }) async {
+    final petId = state.selectedPetId;
+    if (petId == null) return;
+    try {
+      final current = state.diary;
+      final diary = HealthDiaryModel(
+        healthDiaryId: current?.healthDiaryId ?? const Uuid().v4(),
+        petId: petId,
+        isSterilized: isSterilized,
+        isChipped: isChipped,
+        chipNumber: isChipped ? chipNumber : null,
+        lastDeworming: lastDeworming,
+        lastVetAppointment: current?.lastVetAppointment,
+      );
+      await _healthRepository.upsertDiary(diary);
+    } catch (err) {
+      if (isClosed) return;
+      emit(state.copyWith(error: err.toString()));
+    }
+  }
+
   Future<void> addVaccine({
     required String vaccineName,
     required DateTime lastDate,
