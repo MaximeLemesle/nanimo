@@ -8,6 +8,7 @@ import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/add_vet_visit_bottom_sheet_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card_widget/pet_diary_card_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card_widget/pet_diary_edit_button_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card_widget/pet_diary_table_widget.dart';
 
 class PetVetVisitDiaryCardWidget extends StatelessWidget {
@@ -32,6 +33,10 @@ class PetVetVisitDiaryCardWidget extends StatelessWidget {
                   if (visit.clinicName != null && visit.clinicName!.isNotEmpty)
                     visit.clinicName!,
                 ].join(' - '),
+                trailing: PetDiaryEditButtonWidget(
+                  tooltip: 'Modifier la visite',
+                  onPressed: () => _editVisit(context, visit),
+                ),
               ),
           ],
           emptyLabel: 'Aucune visite vétérinaire enregistrée pour le moment.',
@@ -65,6 +70,29 @@ class PetVetVisitDiaryCardWidget extends StatelessWidget {
           },
         ),
       ],
+    );
+  }
+
+  /// Reuses the creation sheet with its `initial`, so both paths share validation and wording.
+  void _editVisit(BuildContext context, VetVisitModel visit) {
+    final cubit = context.read<PetDetailsCubit>();
+    BottomSheetWidget.show<void>(
+      context,
+      AddVetVisitBottomSheetWidget(
+        initial: visit,
+        onSubmit: ({required String title, required DateTime visitedAt, String? vetName, String? clinicName}) {
+          cubit.updateVetVisit(
+            VetVisitModel(
+              vetVisitId: visit.vetVisitId,
+              title: title,
+              visitedAt: visitedAt,
+              vetName: vetName,
+              clinicName: clinicName,
+              petId: visit.petId,
+            ),
+          );
+        },
+      ),
     );
   }
 }

@@ -98,6 +98,18 @@ void main() {
   setUpAll(() {
     registerFallbackValue(HealthDiaryModel(healthDiaryId: 'f', petId: 'p'));
     registerFallbackValue(
+      HealthDiaryVaccineModel(
+        healthDiaryVaccineId: 'f',
+        vaccineName: 'x',
+        lastDate: DateTime(2026, 1, 1),
+        nextDate: DateTime(2026, 1, 2),
+        recurrence: 0,
+        doseNumber: 1,
+        totalDoseNumber: 1,
+        healthDiaryId: 'd',
+      ),
+    );
+    registerFallbackValue(
       VetVisitModel(
         vetVisitId: 'f',
         title: 'x',
@@ -115,6 +127,8 @@ void main() {
     when(() => petRepo.watchPets()).thenAnswer((_) => Stream.value([_pet]));
     when(() => healthRepo.upsertDiary(any())).thenAnswer((_) async {});
     when(() => healthRepo.addVetVisit(any())).thenAnswer((_) async {});
+    when(() => healthRepo.updateVetVisit(any())).thenAnswer((_) async {});
+    when(() => healthRepo.updateVaccine(any())).thenAnswer((_) async {});
     when(() => healthRepo.watchDiaryForPet(any()))
         .thenAnswer((_) => Stream.value(_diary));
     when(() => healthRepo.getVaccinesForDiary(any()))
@@ -203,5 +217,91 @@ void main() {
     verify(() => healthRepo.addVetVisit(any())).called(1);
 
     await cubit.close();
+  });
+
+  /// NAN-085. The vaccine row used to be editable by tapping anywhere on it,
+  /// which announced nothing and fired on a mistimed scroll. The vet visit was
+  /// not editable at all.
+  group('editing an entry', () {
+    testWidgets('puts a pencil on every vaccine and vet visit row',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 2000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final cubit = createCubit();
+      await tester.pumpWidget(buildPage(cubit));
+      await tester.pumpAndSettle();
+
+      /// One vaccine, one visit, one pencil each.
+      expect(find.byIcon(Icons.edit_outlined), findsNWidgets(2));
+
+      await cubit.close();
+    });
+
+    testWidgets('the pencil opens the vaccine pre-filled', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 2000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final cubit = createCubit();
+      await tester.pumpWidget(buildPage(cubit));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Modifier le vaccin'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Modifier le vaccin'), findsWidgets);
+      expect(find.text('Typhus félin'), findsWidgets);
+
+      await tester.tap(find.text('Enregistrer'));
+      await tester.pumpAndSettle();
+
+      verify(() => healthRepo.updateVaccine(any())).called(1);
+      verifyNever(() => healthRepo.addVaccine(any()));
+
+      await cubit.close();
+    });
+
+    testWidgets('the pencil opens the vet visit pre-filled', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 2000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final cubit = createCubit();
+      await tester.pumpWidget(buildPage(cubit));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Modifier la visite'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Modifier la visite'), findsWidgets);
+      expect(find.text('Bilan annuel'), findsWidgets);
+      expect(find.text('Dr.Martin'), findsWidgets);
+      expect(find.text('Clinique des Pins'), findsWidgets);
+
+      /// Saving an untouched form must update, never create a duplicate.
+      await tester.tap(find.text('Enregistrer'));
+      await tester.pumpAndSettle();
+
+      verify(() => healthRepo.updateVetVisit(any())).called(1);
+      verifyNever(() => healthRepo.addVetVisit(any()));
+
+      await cubit.close();
+    });
+
+    testWidgets('tapping the vaccine row no longer opens anything',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 2000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final cubit = createCubit();
+      await tester.pumpWidget(buildPage(cubit));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Typhus félin'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Enregistrer'), findsNothing);
+
+      await cubit.close();
+    });
   });
 }

@@ -8,6 +8,7 @@ import 'package:nanimo/features/health/data/models/health_diary_vaccine_model.da
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/add_vaccine_bottom_sheet_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card_widget/pet_diary_card_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card_widget/pet_diary_edit_button_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card_widget/pet_diary_table_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/vaccine_status_badge_widget.dart';
 
@@ -30,35 +31,18 @@ class PetVaccineDiaryCardWidget extends StatelessWidget {
                           VaccineStatus.done
                       ? 'Dernier rappel le ${DateFormatter.date(vaccine.lastDate)}'
                       : 'Prochain rappel le ${DateFormatter.date(vaccine.nextDate)}',
-                  trailing:
+                  /// Badge then pencil, both compact: a long vaccine name is what shrinks, not the controls.
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                       VaccineStatusBadgeWidget(nextDate: vaccine.nextDate),
-                  onTap: () => {
-                        BottomSheetWidget.show<void>(
-                          context,
-                          AddVaccineBottomSheetWidget(
-                            initial: vaccine,
-                            onSubmit: ({
-                              required String vaccineName,
-                              required DateTime lastDate,
-                              required DateTime nextDate,
-                            }) {
-                              context.read<PetDetailsCubit>().updateVaccine(
-                                    HealthDiaryVaccineModel(
-                                      healthDiaryVaccineId:
-                                          vaccine.healthDiaryVaccineId,
-                                      vaccineName: vaccineName,
-                                      lastDate: lastDate,
-                                      nextDate: nextDate,
-                                      recurrence: vaccine.recurrence,
-                                      doseNumber: vaccine.doseNumber,
-                                      totalDoseNumber: vaccine.totalDoseNumber,
-                                      healthDiaryId: vaccine.healthDiaryId,
-                                    ),
-                                  );
-                            },
-                          ),
-                        ),
-                      }),
+                      const SizedBox(width: AppSpacing.xs),
+                      PetDiaryEditButtonWidget(
+                        tooltip: 'Modifier le vaccin',
+                        onPressed: () => _editVaccine(context, vaccine),
+                      ),
+                    ],
+                  )),
           ],
           emptyLabel: 'Aucun vaccin enregistré pour le moment.',
         ),
@@ -89,6 +73,31 @@ class PetVaccineDiaryCardWidget extends StatelessWidget {
           },
         ),
       ],
+    );
+  }
+
+  /// Was reachable by tapping the whole row, which announced nothing and fired on a mistimed scroll.
+  void _editVaccine(BuildContext context, HealthDiaryVaccineModel vaccine) {
+    final cubit = context.read<PetDetailsCubit>();
+    BottomSheetWidget.show<void>(
+      context,
+      AddVaccineBottomSheetWidget(
+        initial: vaccine,
+        onSubmit: ({required String vaccineName, required DateTime lastDate, required DateTime nextDate}) {
+          cubit.updateVaccine(
+            HealthDiaryVaccineModel(
+              healthDiaryVaccineId: vaccine.healthDiaryVaccineId,
+              vaccineName: vaccineName,
+              lastDate: lastDate,
+              nextDate: nextDate,
+              recurrence: vaccine.recurrence,
+              doseNumber: vaccine.doseNumber,
+              totalDoseNumber: vaccine.totalDoseNumber,
+              healthDiaryId: vaccine.healthDiaryId,
+            ),
+          );
+        },
+      ),
     );
   }
 }
