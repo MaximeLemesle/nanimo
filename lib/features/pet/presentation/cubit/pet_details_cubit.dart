@@ -190,14 +190,6 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     }
   }
 
-  /// Writes the three facts the health card owns, without the `??` fallbacks
-  /// of [updateDiary].
-  ///
-  /// Those fallbacks make a value impossible to clear: passing null to unset a
-  /// deworming date silently keeps the old one. Here the sheet is the authority
-  /// on what it edits, so unticking a toggle really erases what it carried.
-  /// `lastVetAppointment` is not one of those fields and is carried over
-  /// untouched.
   Future<void> updateHealthInfo({
     required bool isSterilized,
     required bool isChipped,
@@ -310,9 +302,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     _weightSub?.cancel();
     _vetVisitsSub?.cancel();
 
-    /// Species-specific data belongs to the pet it was fetched for. Keeping the
-    /// previous pet's list while the new fetch is in flight offers e.g. cat
-    /// vaccines for a rabbit — and they get saved to the rabbit's diary.
+    /// Species-specific data belongs to the pet it was fetched for
     emit(state.copyWith(recommendedVaccines: const []));
 
     _diarySub =
