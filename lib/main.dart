@@ -9,6 +9,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:nanimo/config/router/app_router.dart';
 import 'package:nanimo/config/theme/app_theme.dart';
+import 'package:nanimo/core/analytics/analytics.dart';
+import 'package:nanimo/core/analytics/analytics_factory.dart';
 import 'package:nanimo/core/monitoring/error_reporter.dart';
 import 'package:nanimo/core/monitoring/monitoring_factory.dart';
 import 'package:nanimo/core/isar/database/isar_service.dart';
@@ -60,6 +62,12 @@ void main() async {
   /// Lets the repository layer and the router reach the reporter without
   /// carrying it through every constructor.
   errorReporter = monitoring;
+
+  analytics = await createAnalyticsService(
+    apiKey: dotenv.env['POSTHOG_API_KEY'],
+    host: dotenv.env['POSTHOG_HOST'],
+    isReleaseBuild: kReleaseMode,
+  );
 
   await Supabase.initialize(url: url, anonKey: anonKey);
   await IsarService.initialize();
@@ -127,8 +135,10 @@ void main() async {
     final userId = authRepository.currentUserId;
     if (auth.isAuthenticated && userId != null) {
       monitoring.identifyUser(userId);
+      analytics.identifyUser(userId);
     } else if (auth.isUnauthenticated) {
       monitoring.forgetUser();
+      analytics.forgetUser();
     }
   });
 

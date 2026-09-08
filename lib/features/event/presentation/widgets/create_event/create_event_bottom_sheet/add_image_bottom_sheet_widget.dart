@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:nanimo/config/router/route_names.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
@@ -57,7 +57,7 @@ class AddImageBottomSheetWidget extends StatelessWidget {
     Navigator.of(context).pop();
 
     if (offersUpgrade) {
-      router.push(RouteNames.paywall);
+      QuotaUpsell.openPaywallWith(router, PaywallTrigger.multiSelectPhotos);
       return;
     }
     messenger

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nanimo/config/router/route_names.dart';
+import 'package:nanimo/core/analytics/analytics.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 
 /// Shown when the plan could not be loaded at all: nothing is capped, the user
@@ -40,30 +42,56 @@ class QuotaUpsell {
     BuildContext context,
     SubscriptionState subscription,
   ) =>
-      _block(context, subscription, petMessage(subscription));
+      _block(
+        context,
+        subscription,
+        petMessage(subscription),
+        PaywallTrigger.addPet,
+      );
 
   static void eventImageQuotaReached(
     BuildContext context,
     SubscriptionState subscription,
     int maxImages,
   ) =>
-      _block(context, subscription, eventImageMessage(subscription, maxImages));
+      _block(
+        context,
+        subscription,
+        eventImageMessage(subscription, maxImages),
+        PaywallTrigger.addPhoto,
+      );
 
   static void _block(
     BuildContext context,
     SubscriptionState subscription,
     String message,
+    String trigger,
   ) {
     if (offersUpgrade(subscription)) {
-      _openPaywall(context);
+      openPaywall(context, trigger);
       return;
     }
     _showMessage(context, message);
   }
 
   /// `/paywall` sits on the root navigator, above whatever raised the block.
-  static void _openPaywall(BuildContext context) =>
-      GoRouter.of(context).push(RouteNames.paywall);
+  /// Every entry point goes through here so [trigger] is never lost, which is
+  /// the property that says which limit actually converts.
+  static void openPaywall(BuildContext context, String trigger) {
+    analytics.capture(
+      AnalyticsEvents.paywallOpened,
+      properties: {AnalyticsProperties.trigger: trigger},
+    );
+    GoRouter.of(context).push(RouteNames.paywall);
+  }
+
+  static void openPaywallWith(GoRouter router, String trigger) {
+    analytics.capture(
+      AnalyticsEvents.paywallOpened,
+      properties: {AnalyticsProperties.trigger: trigger},
+    );
+    router.push(RouteNames.paywall);
+  }
 
   static void _showMessage(BuildContext context, String message) {
     ScaffoldMessenger.of(context)

@@ -4,6 +4,8 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
 
+import 'package:nanimo/core/analytics/analytics.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
 import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
@@ -80,21 +82,31 @@ class PetCreationCubit extends Cubit<PetCreationState> {
     ));
     try {
       await _petRepository.createPet(pet);
+      analytics.capture(AnalyticsEvents.petCreated);
       emit(state.copyWith(
         status: PetCreationStatus.success,
         clearPendingPet: true,
       ));
     } on RepositoryException catch (e) {
+      _trackCreationFailed(e is RepositoryNetworkException ? 'network' : 'server');
       emit(state.copyWith(
         status: PetCreationStatus.error,
         error: e.message,
       ));
     } catch (e) {
+      _trackCreationFailed('unknown');
       emit(state.copyWith(
         status: PetCreationStatus.error,
         error: 'Impossible de créer votre animal.',
       ));
     }
+  }
+
+  void _trackCreationFailed(String reason) {
+    analytics.capture(
+      AnalyticsEvents.petCreationFailed,
+      properties: {AnalyticsProperties.reason: reason},
+    );
   }
 
   Future<void> retry() async {

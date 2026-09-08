@@ -2,10 +2,10 @@ import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:nanimo/config/router/route_names.dart';
+import 'package:nanimo/features/subscription/presentation/quota_upsell.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
@@ -66,7 +66,7 @@ class SettingsSubscriptionSectionWidget extends StatelessWidget {
           ButtonWidget(
             label: 'Passer premium',
             fullWidth: true,
-            onPressed: () => context.push(RouteNames.paywall),
+            onPressed: () => QuotaUpsell.openPaywall(context, PaywallTrigger.settingsButton),
           ),
         ],
         const SizedBox(height: AppSpacing.sm),

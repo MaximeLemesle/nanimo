@@ -1,5 +1,7 @@
 import 'dart:developer' as developer;
 
+import 'package:nanimo/core/analytics/analytics.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
 import 'package:nanimo/features/auth/data/models/user_model.dart';
 import 'package:nanimo/features/subscription/data/purchase_repository.dart';
@@ -50,6 +52,9 @@ class SubscriptionReconciler {
         name: 'subscription',
       );
       final confirmed = await _restorer.awaitPremiumConfirmation();
+      analytics.capture(confirmed
+          ? AnalyticsEvents.premiumConfirmationRecovered
+          : AnalyticsEvents.premiumConfirmationTimeout);
       if (!confirmed) {
         developer.log(
           'premium still unconfirmed after reconciliation pass',
