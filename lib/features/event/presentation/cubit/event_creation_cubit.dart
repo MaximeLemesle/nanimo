@@ -1,3 +1,5 @@
+import 'package:nanimo/core/analytics/analytics.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
 import 'package:nanimo/core/utils/pet_icon_resolver.dart';
 import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:nanimo/data/models/referential/pet_icon_model.dart';
@@ -149,6 +151,10 @@ class EventCreationCubit extends Cubit<EventCreationState> {
 
       _pendingEventId = null;
       _uploadedImages.clear();
+      analytics.capture(AnalyticsEvents.memoryCreated, properties: {
+        AnalyticsProperties.photoCount: images.length,
+        AnalyticsProperties.petCount: petIds.length,
+      });
       if (isClosed) return;
       emit(state.copyWith(status: EventCreationStatus.success));
     } on RepositoryException catch (e) {

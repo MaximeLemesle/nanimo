@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:nanimo/config/router/route_guard.dart';
 import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/core/widgets/app_shell.dart';
+import 'package:nanimo/core/analytics/screen_view_route_observer.dart';
 import 'package:nanimo/core/monitoring/breadcrumb_route_observer.dart';
 import 'package:nanimo/core/widgets/bottom_bar_widget/modal_route_observer.dart';
 import 'package:nanimo/core/widgets/error_screen.dart';
@@ -88,7 +89,7 @@ GoRouter createRouter(
 
   /// One instance per Navigator: an observer cannot be attached to two of them.
   return GoRouter(
-    observers: [BreadcrumbRouteObserver()],
+    observers: [BreadcrumbRouteObserver(), ScreenViewRouteObserver()],
     initialLocation: RouteNames.splash,
     refreshListenable: Listenable.merge([
       _AuthCubitListenable(authCubit),
@@ -124,7 +125,7 @@ GoRouter createRouter(
         pageBuilder: (_, state) => _fadePage(state, const SignupPage()),
       ),
       ShellRoute(
-        observers: [modalRouteObserver, BreadcrumbRouteObserver()],
+        observers: [modalRouteObserver, BreadcrumbRouteObserver(), ScreenViewRouteObserver()],
         pageBuilder: (context, state, child) => _fadePage(
           state,
           MultiBlocProvider(

@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
+import 'package:nanimo/core/analytics/analytics.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
 import 'package:nanimo/core/isar/database/sync_service.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
 
@@ -58,6 +60,7 @@ class AuthCubit extends Cubit<AuthState> {
     emit(state.copyWith(isSubmitting: true, clearError: true));
     try {
       await _repository.login(email, password);
+      _trackAuth(AnalyticsEvents.authCompleted, AuthMethod.email);
     } catch (e) {
       emit(state.copyWith(
         isSubmitting: false,
@@ -71,6 +74,8 @@ class AuthCubit extends Cubit<AuthState> {
     emit(state.copyWith(isSubmitting: true, clearError: true));
     try {
       await _repository.register(email, password, userName);
+      _trackAuth(AnalyticsEvents.accountCreated, AuthMethod.email);
+      _trackAuth(AnalyticsEvents.authCompleted, AuthMethod.email);
     } catch (e) {
       emit(state.copyWith(
         isSubmitting: false,
@@ -84,6 +89,7 @@ class AuthCubit extends Cubit<AuthState> {
     emit(state.copyWith(isSubmitting: true, clearError: true));
     try {
       await _repository.signInWithGoogle();
+      _trackAuth(AnalyticsEvents.authCompleted, AuthMethod.google);
     } catch (e) {
       emit(state.copyWith(
         isSubmitting: false,
@@ -97,6 +103,7 @@ class AuthCubit extends Cubit<AuthState> {
     emit(state.copyWith(isSubmitting: true, clearError: true));
     try {
       await _repository.signInWithApple();
+      _trackAuth(AnalyticsEvents.authCompleted, AuthMethod.apple);
     } catch (e) {
       emit(state.copyWith(
         isSubmitting: false,
@@ -117,6 +124,10 @@ class AuthCubit extends Cubit<AuthState> {
   /// Signs out the current user
   Future<void> logout() async {
     await _repository.logout();
+  }
+
+  void _trackAuth(String event, String method) {
+    analytics.capture(event, properties: {AnalyticsProperties.method: method});
   }
 
   /// Clears the current error message (called when user edits a field)

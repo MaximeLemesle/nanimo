@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:nanimo/core/analytics/analytics.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
 import 'package:nanimo/core/utils/pet_icon_resolver.dart';
 import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:nanimo/data/models/referential/pet_icon_model.dart';
@@ -49,10 +51,19 @@ class OnboardingCubit extends Cubit<OnboardingState> {
 
   void nextStep() {
     if (state.currentStep == 1 && state.canGoToStep2) {
+      _trackStepCompleted(1);
       emit(state.copyWith(currentStep: 2));
     } else if (state.currentStep == 2 && state.canGoToStep3) {
+      _trackStepCompleted(2);
       emit(state.copyWith(currentStep: 3));
     }
+  }
+
+  void _trackStepCompleted(int step) {
+    analytics.capture(
+      AnalyticsEvents.onboardingStepCompleted,
+      properties: {AnalyticsProperties.step: step},
+    );
   }
 
   void previousStep() {
@@ -71,6 +82,7 @@ class OnboardingCubit extends Cubit<OnboardingState> {
         state.speciesStatus == ReferentialStatus.loaded) {
       return;
     }
+    analytics.capture(AnalyticsEvents.onboardingStarted);
     emit(state.copyWith(
       speciesStatus: ReferentialStatus.loading,
       clearSpeciesError: true,
