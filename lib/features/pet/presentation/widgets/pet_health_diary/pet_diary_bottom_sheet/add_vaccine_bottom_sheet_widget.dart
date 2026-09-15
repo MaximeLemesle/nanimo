@@ -6,6 +6,7 @@ import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/date_field_widget.dart';
 import 'package:nanimo/features/health/data/models/health_diary_vaccine_model.dart';
+import 'package:nanimo/core/utils/diary_date_bounds.dart';
 
 typedef VaccineSubmit = void Function({
   required String vaccineName,
@@ -17,9 +18,13 @@ class AddVaccineBottomSheetWidget extends StatefulWidget {
   final VaccineSubmit onSubmit;
   final HealthDiaryVaccineModel? initial;
 
+  /// Floor of both date pickers.
+  final DateTime birthdate;
+
   const AddVaccineBottomSheetWidget({
     super.key,
     required this.onSubmit,
+    required this.birthdate,
     this.initial,
   });
 
@@ -92,14 +97,15 @@ class _AddVaccineBottomSheetWidgetState extends State<AddVaccineBottomSheetWidge
         DateFieldWidget(
           label: 'Dernier rappel',
           value: _lastDate,
-          lastDate: DateTime(DateTime.now().year + 30),
+          firstDate: widget.birthdate,
           onChanged: (date) => setState(() => _lastDate = date),
         ),
         const SizedBox(height: AppSpacing.sm),
         DateFieldWidget(
           label: 'Prochain rappel',
           value: _nextDate,
-          lastDate: DateTime(DateTime.now().year + 30),
+          firstDate: widget.birthdate,
+          lastDate: DiaryDateBounds.openEnd(),
           onChanged: (date) => setState(() => _nextDate = date),
         ),
       ],

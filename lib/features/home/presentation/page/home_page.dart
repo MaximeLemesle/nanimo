@@ -12,6 +12,9 @@ import 'package:nanimo/features/home/presentation/widgets/home_memory_polaroid_w
 import 'package:nanimo/features/home/presentation/widgets/home_pet_list_widget.dart';
 import 'package:nanimo/features/journal/presentation/widgets/journal_event_detail/journal_event_detail_bottom_sheet_widget.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/add_vet_visit_bottom_sheet_widget.dart';
+import 'package:nanimo/features/home/presentation/widgets/home_vet_visit_card_widget.dart';
+import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -88,12 +91,54 @@ class HomePage extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.xl),
 
+                /// Booked vet appointments
+                HomeVetVisitCardWidget(
+                  visits: state.upcomingVetVisits(now: now),
+                  portraits: state.portraits,
+                  now: now,
+                  onVisitTap: (petId) {
+                    context.read<PetDetailsCubit>().selectPet(petId);
+                    context.push(RouteNames.healthDiary);
+                  },
+                  onAddPressed: () => _addVetVisit(context, state),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+
                 /// Display the latest article
                 const HomeArticleCardWidget(),
               ],
             );
           },
         ),
+      ),
+    );
+  }
+
+  /// The home is a multi-animal screen, so the sheet carries its own selector.
+  void _addVetVisit(BuildContext context, HomeState state) {
+    final petDetails = context.read<PetDetailsCubit>();
+    BottomSheetWidget.show<void>(
+      context,
+      AddVetVisitBottomSheetWidget(
+        pets: state.pets,
+        portraits: state.portraits,
+        initialPetId: petDetails.state.selectedPetId ?? state.pets.first.petId,
+        birthdate: state.pets.first.birthdate,
+        onSubmit: ({
+          required String title,
+          required DateTime visitedAt,
+          String? vetName,
+          String? clinicName,
+          String? petId,
+        }) {
+          petDetails.addVetVisit(
+            title: title,
+            visitedAt: visitedAt,
+            vetName: vetName,
+            clinicName: clinicName,
+            petId: petId,
+          );
+        },
       ),
     );
   }

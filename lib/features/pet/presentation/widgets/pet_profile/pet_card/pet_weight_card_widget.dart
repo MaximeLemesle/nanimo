@@ -13,9 +13,13 @@ class PetWeightCardWidget extends StatelessWidget {
   final List<HealthDiaryWeightLogModel> logs;
   final WeightSubmit onWeightSubmitted;
 
+  /// Floor of the date picker of the weight sheet.
+  final DateTime birthdate;
+
   const PetWeightCardWidget({
     super.key,
     required this.logs,
+    required this.birthdate,
     required this.onWeightSubmitted,
   });
 
@@ -41,7 +45,10 @@ class PetWeightCardWidget extends StatelessWidget {
             onPressed: () {
               BottomSheetWidget.show<void>(
                 context,
-                AddWeightBottomSheetWidget(onSubmit: onWeightSubmitted),
+                AddWeightBottomSheetWidget(
+                  birthdate: birthdate,
+                  onSubmit: onWeightSubmitted,
+                ),
               );
             },
           ),

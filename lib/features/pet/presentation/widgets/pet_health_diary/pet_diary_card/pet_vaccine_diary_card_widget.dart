@@ -17,7 +17,14 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/vaccin
 class PetVaccineDiaryCardWidget extends StatefulWidget {
   final List<HealthDiaryVaccineModel> vaccines;
 
-  const PetVaccineDiaryCardWidget({super.key, required this.vaccines});
+  /// Floor of the date pickers of the vaccine sheet.
+  final DateTime birthdate;
+
+  const PetVaccineDiaryCardWidget({
+    super.key,
+    required this.vaccines,
+    required this.birthdate,
+  });
 
   @override
   State<PetVaccineDiaryCardWidget> createState() => _PetVaccineDiaryCardWidgetState();
@@ -82,6 +89,7 @@ class _PetVaccineDiaryCardWidgetState extends State<PetVaccineDiaryCardWidget> {
             BottomSheetWidget.show<void>(
               context,
               AddVaccineBottomSheetWidget(
+                birthdate: widget.birthdate,
                 onSubmit: ({required String vaccineName, required DateTime lastDate, required DateTime nextDate}) {
                   context.read<PetDetailsCubit>().addVaccine(
                         vaccineName: vaccineName,
@@ -103,6 +111,7 @@ class _PetVaccineDiaryCardWidgetState extends State<PetVaccineDiaryCardWidget> {
     BottomSheetWidget.show<void>(
       context,
       AddVaccineBottomSheetWidget(
+        birthdate: widget.birthdate,
         initial: vaccine,
         onSubmit: ({required String vaccineName, required DateTime lastDate, required DateTime nextDate}) {
           cubit.updateVaccine(

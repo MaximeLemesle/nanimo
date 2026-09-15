@@ -80,6 +80,7 @@ void main() {
     when(() => eventRepo.watchAllImages()).thenAnswer((_) => Stream.value(const {}));
     when(() => healthRepo.watchAllDiaries()).thenAnswer((_) => Stream.value(const []));
     when(() => healthRepo.watchAllVaccines()).thenAnswer((_) => Stream.value(const []));
+    when(() => healthRepo.watchAllVetVisits()).thenAnswer((_) => Stream.value(const []));
     when(() => authRepo.watchCurrentUser()).thenAnswer((_) => Stream.value(_maxime));
   });
 

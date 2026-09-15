@@ -14,7 +14,14 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_bottom_
 class PetWeightGraphDiaryCardWidget extends StatelessWidget {
   final List<HealthDiaryWeightLogModel> weightLogs;
 
-  const PetWeightGraphDiaryCardWidget({super.key, required this.weightLogs});
+  /// Floor of the date picker of the weight sheet.
+  final DateTime birthdate;
+
+  const PetWeightGraphDiaryCardWidget({
+    super.key,
+    required this.weightLogs,
+    required this.birthdate,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +56,7 @@ class PetWeightGraphDiaryCardWidget extends StatelessWidget {
             BottomSheetWidget.show<void>(
               context,
               AddWeightBottomSheetWidget(
+                birthdate: birthdate,
                 onSubmit: context.read<PetDetailsCubit>().addWeightLog,
               ),
             );

@@ -6,12 +6,17 @@ import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/date_field_widget.dart';
 import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
+import 'package:nanimo/core/utils/diary_date_bounds.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_picker_widget.dart';
+import 'package:nanimo/features/pet/data/models/pet_model.dart';
+import 'package:nanimo/core/utils/pet_portrait.dart';
 
 typedef VetVisitSubmit = void Function({
   required String title,
   required DateTime visitedAt,
   String? vetName,
   String? clinicName,
+  String? petId,
 });
 
 class AddVetVisitBottomSheetWidget extends StatefulWidget {
@@ -20,7 +25,23 @@ class AddVetVisitBottomSheetWidget extends StatefulWidget {
   /// Non-null turns the sheet into a pre-filled edit form, like [AddVaccineBottomSheetWidget].
   final VetVisitModel? initial;
 
-  const AddVetVisitBottomSheetWidget({super.key, required this.onSubmit, this.initial});
+  /// Floor of the date picker. Ignored when [pets] carries the selected animal.
+  final DateTime? birthdate;
+
+  /// Opt-in animal selector, same contract as [AddWeightBottomSheetWidget].
+  final List<PetModel> pets;
+  final Map<String, PetPortrait> portraits;
+  final String? initialPetId;
+
+  const AddVetVisitBottomSheetWidget({
+    super.key,
+    required this.onSubmit,
+    this.birthdate,
+    this.initial,
+    this.pets = const [],
+    this.portraits = const {},
+    this.initialPetId,
+  });
 
   @override
   State<AddVetVisitBottomSheetWidget> createState() =>
@@ -33,6 +54,20 @@ class _AddVetVisitBottomSheetWidgetState
   late final TextEditingController _vetController;
   late final TextEditingController _clinicController;
   DateTime? _visitedAt;
+  late String? _petId = widget.initial?.petId ??
+      widget.initialPetId ??
+      (widget.pets.isNotEmpty ? widget.pets.first.petId : null);
+
+  /// An existing visit already belongs to an animal, nothing left to pick.
+  bool get _showPetPicker => widget.initial == null && widget.pets.length > 1;
+
+  /// The picker may change the animal under the date field.
+  DateTime? get _birthdate {
+    for (final pet in widget.pets) {
+      if (pet.petId == _petId) return pet.birthdate;
+    }
+    return widget.birthdate;
+  }
 
   @override
   void initState() {
@@ -44,8 +79,9 @@ class _AddVetVisitBottomSheetWidgetState
     _visitedAt = initial?.visitedAt;
   }
 
-  bool get _isValid =>
-      _titleController.text.trim().isNotEmpty && _visitedAt != null;
+  bool get _isValid => _titleController.text.trim().isNotEmpty &&
+      _visitedAt != null &&
+      (!_showPetPicker || _petId != null);
 
   @override
   void dispose() {
@@ -64,6 +100,7 @@ class _AddVetVisitBottomSheetWidgetState
       visitedAt: _visitedAt!,
       vetName: vet.isEmpty ? null : vet,
       clinicName: clinic.isEmpty ? null : clinic,
+      petId: _petId,
     );
     Navigator.of(context).pop();
   }
@@ -79,11 +116,22 @@ class _AddVetVisitBottomSheetWidgetState
         state: _isValid ? ButtonState.normal : ButtonState.disabled,
       ),
       children: [
+        if (_showPetPicker) ...[
+          PetPickerWidget.single(
+            pets: widget.pets,
+            portraits: widget.portraits,
+            selectedPetId: _petId,
+            onSelected: (id) => setState(() => _petId = id),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+        ],
         _buildField(_titleController, 'Motif de la visite', capitalize: true),
         const SizedBox(height: AppSpacing.md),
         DateFieldWidget(
           label: 'Date de la visite',
           value: _visitedAt,
+          firstDate: _birthdate,
+          lastDate: DiaryDateBounds.openEnd(),
           onChanged: (date) => setState(() => _visitedAt = date),
         ),
         const SizedBox(height: AppSpacing.md),

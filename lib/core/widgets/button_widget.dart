@@ -123,16 +123,20 @@ class _ButtonWidgetState extends State<ButtonWidget> {
                 ? MainAxisAlignment.center
                 : MainAxisAlignment.start,
             children: [
-              widget.isLoading
-                  ? SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(textColor),
-                      ),
-                    )
-                  : _getButtonContent(context, textColor),
+              /// A non-flexible child of a Row is laid out unbounded, so the
+              /// label could never shrink.
+              Flexible(
+                child: widget.isLoading
+                    ? SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(textColor),
+                        ),
+                      )
+                    : _getButtonContent(context, textColor),
+              ),
             ],
           ),
         ),
@@ -147,30 +151,38 @@ class _ButtonWidgetState extends State<ButtonWidget> {
         return Icon(widget.icon, color: textColor, size: AppSpacing.lg);
       case ButtonIcon.left:
         return Row(
+          mainAxisSize: MainAxisSize.min,
           spacing: AppSpacing.md,
           children: [
             Icon(widget.icon, color: textColor, size: AppSpacing.lg),
-            Text(
-              widget.label!,
-              textAlign: TextAlign.center,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(color: textColor),
+            Flexible(
+              child: Text(
+                widget.label!,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context)
+                    .textTheme
+                    .titleLarge
+                    ?.copyWith(color: textColor),
+              ),
             ),
           ],
         );
       case ButtonIcon.right:
         return Row(
+          mainAxisSize: MainAxisSize.min,
           spacing: AppSpacing.md,
           children: [
-            Text(
-              widget.label!,
-              textAlign: TextAlign.center,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(color: textColor),
+            Flexible(
+              child: Text(
+                widget.label!,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context)
+                    .textTheme
+                    .titleLarge
+                    ?.copyWith(color: textColor),
+              ),
             ),
             Icon(widget.icon, color: textColor, size: AppSpacing.lg),
           ],

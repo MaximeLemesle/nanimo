@@ -264,14 +264,16 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     }
   }
 
+  /// [petId] targets another animal without moving the global selection.
   Future<void> addVetVisit({
     required String title,
     required DateTime visitedAt,
     String? vetName,
     String? clinicName,
+    String? petId,
   }) async {
-    final petId = state.selectedPetId;
-    if (petId == null) return;
+    final targetId = petId ?? state.selectedPetId;
+    if (targetId == null) return;
     try {
       final visit = VetVisitModel(
         vetVisitId: const Uuid().v4(),
@@ -279,7 +281,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
         visitedAt: visitedAt,
         vetName: vetName,
         clinicName: clinicName,
-        petId: petId,
+        petId: targetId,
       );
       await _healthRepository.addVetVisit(visit);
     } catch (err) {

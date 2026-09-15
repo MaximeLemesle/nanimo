@@ -16,7 +16,14 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_di
 class PetVetVisitDiaryCardWidget extends StatefulWidget {
   final List<VetVisitModel> visits;
 
-  const PetVetVisitDiaryCardWidget({super.key, required this.visits});
+  /// Floor of the date picker of the visit sheet.
+  final DateTime birthdate;
+
+  const PetVetVisitDiaryCardWidget({
+    super.key,
+    required this.visits,
+    required this.birthdate,
+  });
 
   @override
   State<PetVetVisitDiaryCardWidget> createState() => _PetVetVisitDiaryCardWidgetState();
@@ -75,7 +82,8 @@ class _PetVetVisitDiaryCardWidgetState extends State<PetVetVisitDiaryCardWidget>
             BottomSheetWidget.show<void>(
               context,
               AddVetVisitBottomSheetWidget(
-                onSubmit: ({required String title, required DateTime visitedAt, String? vetName, String? clinicName}) {
+                birthdate: widget.birthdate,
+                onSubmit: ({required String title, required DateTime visitedAt, String? vetName, String? clinicName, String? petId}) {
                   context.read<PetDetailsCubit>().addVetVisit(
                         title: title,
                         visitedAt: visitedAt,
@@ -97,8 +105,9 @@ class _PetVetVisitDiaryCardWidgetState extends State<PetVetVisitDiaryCardWidget>
     BottomSheetWidget.show<void>(
       context,
       AddVetVisitBottomSheetWidget(
+        birthdate: widget.birthdate,
         initial: visit,
-        onSubmit: ({required String title, required DateTime visitedAt, String? vetName, String? clinicName}) {
+        onSubmit: ({required String title, required DateTime visitedAt, String? vetName, String? clinicName, String? petId}) {
           cubit.updateVetVisit(
             VetVisitModel(
               vetVisitId: visit.vetVisitId,
