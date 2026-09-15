@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nanimo/features/health/data/models/recommended_vaccines_model.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/create_health_diary_bottom_sheet_widget.dart';
+import 'package:nanimo/features/pet/data/models/pet_model.dart';
 
 const _recommended = [
   RecommendedVaccineModel(
@@ -39,6 +40,7 @@ void main() {
               isScrollControlled: true,
               builder: (_) => CreateHealthDiaryBottomSheetWidget(
                 petName: 'Yummy',
+                gender: Gender.female,
                 birthdate: DateTime(2024, 1, 1),
                 recommendedVaccines: _recommended,
                 onSubmit: ({

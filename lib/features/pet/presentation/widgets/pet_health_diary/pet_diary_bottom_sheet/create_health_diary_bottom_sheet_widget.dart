@@ -12,6 +12,8 @@ import 'package:nanimo/features/health/data/models/recommended_vaccines_model.da
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/add_vet_visit_bottom_sheet_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/create_health_diary_section/birth_weight_section_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/create_health_diary_section/health_diary_section_widget.dart';
+import 'package:nanimo/features/pet/data/models/pet_model.dart';
+import 'package:nanimo/core/utils/gender_formatter.dart';
 
 typedef VaccineEntry = ({
   String name,
@@ -40,6 +42,7 @@ typedef CreateHealthDiarySubmit = void Function({
 
 class CreateHealthDiaryBottomSheetWidget extends StatefulWidget {
   final String petName;
+  final Gender gender;
   final DateTime birthdate;
   final List<RecommendedVaccineModel> recommendedVaccines;
   final CreateHealthDiarySubmit onSubmit;
@@ -47,6 +50,7 @@ class CreateHealthDiaryBottomSheetWidget extends StatefulWidget {
   const CreateHealthDiaryBottomSheetWidget({
     super.key,
     required this.petName,
+    required this.gender,
     required this.birthdate,
     required this.recommendedVaccines,
     required this.onSubmit,
@@ -162,7 +166,7 @@ class _CreateHealthDiaryBottomSheetWidgetState
 
         /// Sterilized
         HealthDiarySectionWidget(
-          label: 'Stérilisé',
+          label: GenderFormatter.neuteringLabel(widget.gender),
           value: _isSterilized,
           onChanged: (value) => setState(() => _isSterilized = value),
         ),

@@ -6,8 +6,11 @@ import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card_widget/pet_card_item_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card_widget/pet_card_widget.dart';
+import 'package:nanimo/features/pet/data/models/pet_model.dart';
+import 'package:nanimo/core/utils/gender_formatter.dart';
 
 class PetHealthInfoCardWidget extends StatelessWidget {
+  final Gender gender;
   final HealthDiaryModel? diary;
   final List<VetVisitModel> vetVisits;
   final VoidCallback? onFillPressed;
@@ -15,6 +18,7 @@ class PetHealthInfoCardWidget extends StatelessWidget {
 
   const PetHealthInfoCardWidget({
     super.key,
+    required this.gender,
     this.diary,
     this.vetVisits = const [],
     this.onFillPressed,
@@ -87,7 +91,7 @@ class PetHealthInfoCardWidget extends StatelessWidget {
                 ),
           items: [
             PetCardItemWidget(
-              label: 'Stérilisé',
+              label: GenderFormatter.neuteringLabel(gender),
               value: diary?.isSterilized == null
                   ? '—'
                   : (diary!.isSterilized! ? 'Oui' : 'Non'),
