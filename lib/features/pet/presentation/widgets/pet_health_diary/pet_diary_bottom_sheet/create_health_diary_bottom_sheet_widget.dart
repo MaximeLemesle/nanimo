@@ -7,11 +7,11 @@ import 'package:nanimo/core/utils/weight_formatter.dart';
 import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/date_field_widget.dart';
-import 'package:nanimo/core/widgets/text_field_widget.dart';
 import 'package:nanimo/features/health/data/models/recommended_vaccines_model.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/add_vet_visit_bottom_sheet_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/create_health_diary_section/birth_weight_section_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/create_health_diary_section/health_diary_section_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/chip_number_field_widget.dart';
 
 typedef VaccineEntry = ({
   String name,
@@ -184,11 +184,9 @@ class _CreateHealthDiaryBottomSheetWidgetState
           label: 'Pucé',
           value: _isChipped,
           onChanged: (value) => setState(() => _isChipped = value),
-          child: TextFieldWidget(
+          child: ChipNumberFieldWidget(
             controller: _chipController,
-            label: 'Numéro de puce',
-            keyboardType: TextInputType.number,
-            onChanged: (_) => setState(() {}),
+            onChanged: () => setState(() {}),
           ),
         ),
 
