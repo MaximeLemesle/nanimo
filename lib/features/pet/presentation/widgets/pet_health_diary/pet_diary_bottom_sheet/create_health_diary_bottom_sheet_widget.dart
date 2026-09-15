@@ -86,8 +86,12 @@ class _CreateHealthDiaryBottomSheetWidgetState
   }
 
   /// Opens the vet visit sheet and appends the created visit.
+  ///
+  /// The sheet closes itself after [onSubmit], so this callback must not pop:
+  /// a second pop would dismiss this sheet too and drop the whole diary.
   Future<void> _addVetVisit() async {
-    final result = await BottomSheetWidget.show<VetVisitEntry?>(
+    VetVisitEntry? created;
+    await BottomSheetWidget.show<void>(
       context,
       AddVetVisitBottomSheetWidget(
         onSubmit: ({
@@ -96,17 +100,18 @@ class _CreateHealthDiaryBottomSheetWidgetState
           String? vetName,
           String? clinicName,
         }) {
-          Navigator.of(context).pop((
+          created = (
             title: title,
             visitedAt: visitedAt,
             vetName: vetName,
             clinicName: clinicName,
-          ));
+          );
         },
       ),
     );
-    if (result != null && mounted) {
-      setState(() => _vetVisits.add(result));
+    final visit = created;
+    if (visit != null && mounted) {
+      setState(() => _vetVisits.add(visit));
     }
   }
 
