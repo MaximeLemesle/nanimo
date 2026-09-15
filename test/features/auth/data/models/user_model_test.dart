@@ -91,4 +91,64 @@ void main() {
       expect(json['subscription_expires_at'], isNull);
     });
   });
+
+  // NAN-083: nothing read the expiry date, so a lost revocation event granted
+  // premium for life.
+  group('UserModel expiry enforcement', () {
+    final now = DateTime.parse('2026-09-16T12:00:00.000Z');
+
+    UserModel premium({DateTime? expiresAt}) => UserModel(
+          userId: 'user-1',
+          userName: 'Paid user',
+          mail: 'paid@example.com',
+          subscriptionStatus: SubscriptionStatus.premium,
+          subscriptionExpiresAt: expiresAt,
+        );
+
+    UserModel freemium({DateTime? expiresAt}) => UserModel(
+          userId: 'user-2',
+          userName: 'Free user',
+          mail: 'free@example.com',
+          subscriptionStatus: SubscriptionStatus.freemium,
+          subscriptionExpiresAt: expiresAt,
+        );
+
+    test('a premium user whose date has passed is served freemium', () {
+      final user = premium(expiresAt: now.subtract(const Duration(days: 1)));
+
+      expect(user.planNameAt(now), 'freemium');
+      expect(user.hasActivePremiumAt(now), isFalse);
+    });
+
+    test('a premium user whose date is ahead keeps premium', () {
+      final user = premium(expiresAt: now.add(const Duration(days: 1)));
+
+      expect(user.planNameAt(now), 'premium');
+      expect(user.hasActivePremiumAt(now), isTrue);
+    });
+
+    test('a null date takes nothing away from a premium user', () {
+      expect(premium().planNameAt(now), 'premium');
+      expect(premium().hasActivePremiumAt(now), isTrue);
+    });
+
+    test('the exact expiry instant is still premium', () {
+      final user = premium(expiresAt: now);
+
+      expect(user.planNameAt(now), 'premium');
+    });
+
+    test('a freemium user is never affected, whatever the date', () {
+      expect(freemium().planNameAt(now), 'freemium');
+      expect(
+        freemium(expiresAt: now.add(const Duration(days: 365))).planNameAt(now),
+        'freemium',
+      );
+      expect(
+        freemium(expiresAt: now.subtract(const Duration(days: 365)))
+            .hasActivePremiumAt(now),
+        isFalse,
+      );
+    });
+  });
 }
