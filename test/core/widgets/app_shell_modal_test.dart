@@ -26,6 +26,7 @@ import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/settings/data/settings_repository.dart';
 import 'package:nanimo/features/subscription/data/purchase_repository.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
+import 'package:nanimo/features/home/data/article_repository.dart';
 
 class _MockReferentialRepository extends Mock implements ReferentialRepository {}
 
@@ -36,6 +37,8 @@ class _MockHealthRepository extends Mock implements HealthRepository {}
 class _MockEventRepository extends Mock implements EventRepository {}
 
 class _MockAuthRepository extends Mock implements AuthRepository {}
+
+class _MockArticleRepository extends Mock implements ArticleRepository {}
 
 class _MockSettingsRepository extends Mock implements SettingsRepository {}
 
@@ -106,6 +109,7 @@ void main() {
   late _MockHealthRepository healthRepo;
   late _MockEventRepository eventRepo;
   late _MockAuthRepository authRepo;
+  late _MockArticleRepository articleRepo;
   late OnboardingCubit onboardingCubit;
   late PetCreationCubit petCreationCubit;
   late HomeCubit homeCubit;
@@ -120,6 +124,9 @@ void main() {
     healthRepo = _MockHealthRepository();
     eventRepo = _MockEventRepository();
     authRepo = _MockAuthRepository();
+    articleRepo = _MockArticleRepository();
+    when(() => articleRepo.watchCurrentArticle())
+        .thenAnswer((_) => Stream.value(null));
 
     when(() => eventRepo.watchEvents()).thenAnswer((_) => Stream.value(const []));
     when(() => eventRepo.watchPetEvents()).thenAnswer((_) => Stream.value(const {}));
@@ -170,6 +177,7 @@ void main() {
       eventRepository: eventRepo,
       healthRepository: healthRepo,
       authRepository: authRepo,
+      articleRepository: articleRepo,
     );
     petDetailsCubit = PetDetailsCubit(
       petRepository: petRepo,
@@ -184,6 +192,7 @@ void main() {
       referentialRepository: referentialRepo,
       petRepository: petRepo,
       healthRepository: healthRepo,
+      articleRepository: articleRepo,
       settingsRepository: _MockSettingsRepository(),
       purchaseRepository: _MockPurchaseRepository(),
     );

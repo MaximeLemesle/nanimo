@@ -42,6 +42,7 @@ import 'package:nanimo/features/onboarding/presentation/page/splash_page.dart';
 import 'package:nanimo/features/pet/presentation/page/edit_pet_page.dart';
 import 'package:nanimo/features/pet/presentation/page/pet_page.dart';
 import 'package:nanimo/features/pet/presentation/page/pet_health_diary_page.dart';
+import 'package:nanimo/features/home/data/article_repository.dart';
 
 CustomTransitionPage<void> _fadePage(GoRouterState state, Widget child) {
   return CustomTransitionPage<void>(
@@ -78,6 +79,7 @@ GoRouter createRouter(
   required ReferentialRepository referentialRepository,
   required PetRepository petRepository,
   required HealthRepository healthRepository,
+  required ArticleRepository articleRepository,
   required SettingsRepository settingsRepository,
   required PurchaseRepository purchaseRepository,
 }) {
@@ -137,6 +139,7 @@ GoRouter createRouter(
                   eventRepository: eventRepository,
                   healthRepository: healthRepository,
                   authRepository: authRepository,
+                  articleRepository: articleRepository,
                 ),
               ),
               BlocProvider(

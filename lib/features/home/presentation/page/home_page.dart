@@ -89,7 +89,7 @@ class HomePage extends StatelessWidget {
                 const SizedBox(height: AppSpacing.xl),
 
                 /// Display the latest article
-                const HomeArticleCardWidget(),
+                HomeArticleCardWidget(article: state.article),
               ],
             );
           },

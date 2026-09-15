@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:nanimo/core/isar/cache/schemas/article_cache.dart';
+import 'package:nanimo/core/isar/cache/schemas/article_sync_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_image_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_type_cache.dart';
@@ -305,6 +307,104 @@ void main() {
       expect(await harness.isar.petIconCaches.count(), 0);
     });
   });
+
+  // NAN-094: the pull is guarded by a locally stored timestamp.
+  group('syncArticles', () {
+    final now = DateTime(2026, 9, 16, 12);
+
+    List<Map<String, dynamic>> rows() => [
+          {
+            'id_article': 'a1',
+            'title': 'Le conseil courant',
+            'paragraphs': ['Un paragraphe'],
+            'published_at': '2026-09-14T08:00:00.000Z',
+          },
+        ];
+
+    Future<void> seedLastSync(DateTime at) async {
+      await harness.isar.writeTxn(() async {
+        await harness.isar.articleSyncCaches.put(ArticleSyncCache.at(at));
+      });
+    }
+
+    test('pulls and caches the articles on a first launch', () async {
+      stubSelect(supabase, 'articles', resolver: rows);
+
+      await syncService.syncArticles(now: now);
+
+      final cached = await harness.isar.articleCaches.getByArticleId('a1');
+      expect(cached, isNotNull);
+      expect(cached!.title, 'Le conseil courant');
+      expect(cached.paragraphs, ['Un paragraphe']);
+    });
+
+    test('records when it last pulled', () async {
+      stubSelect(supabase, 'articles', resolver: rows);
+
+      await syncService.syncArticles(now: now);
+
+      final stamp =
+          await harness.isar.articleSyncCaches.get(ArticleSyncCache.singletonId);
+      expect(stamp!.syncedAt, now);
+    });
+
+    test('asks for nothing again within the day', () async {
+      await seedLastSync(now.subtract(const Duration(hours: 3)));
+      var calls = 0;
+      stubSelect(supabase, 'articles', resolver: () {
+        calls++;
+        return rows();
+      });
+
+      await syncService.syncArticles(now: now);
+
+      expect(calls, 0);
+    });
+
+    test('asks again once the day has passed', () async {
+      await seedLastSync(now.subtract(const Duration(hours: 25)));
+      var calls = 0;
+      stubSelect(supabase, 'articles', resolver: () {
+        calls++;
+        return rows();
+      });
+
+      await syncService.syncArticles(now: now);
+
+      expect(calls, 1);
+    });
+
+    /// Editing the text in the database must reach the app without a release.
+    test('replaces the cached text with the one from the database', () async {
+      await harness.isar.writeTxn(() async {
+        await harness.isar.articleCaches.putByArticleId(
+          ArticleCache()
+            ..articleId = 'a1'
+            ..title = 'Ancien titre'
+            ..paragraphs = ['Ancien texte']
+            ..publishedAt = DateTime.utc(2026, 9, 14, 8),
+        );
+      });
+      stubSelect(supabase, 'articles', resolver: rows);
+
+      await syncService.syncArticles(now: now);
+
+      final cached = await harness.isar.articleCaches.getByArticleId('a1');
+      expect(cached!.title, 'Le conseil courant');
+    });
+
+    test('leaves the cache alone when the network fails', () async {
+      stubSelect(supabase, 'articles', resolver: () => throw Exception('x'));
+
+      await syncService.syncArticles(now: now);
+
+      expect(await harness.isar.articleCaches.count(), 0);
+      expect(
+        await harness.isar.articleSyncCaches.get(ArticleSyncCache.singletonId),
+        isNull,
+      );
+    });
+  });
 }
 
 /// Polls [count] until it returns a positive value or the timeout elapses.
@@ -314,4 +414,5 @@ Future<void> _waitFor(Future<int> Function() count) async {
     if (await count() > 0) return;
     await Future<void>.delayed(const Duration(milliseconds: 20));
   }
+  throw StateError('timed out waiting for the cache to fill');
 }

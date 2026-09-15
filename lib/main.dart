@@ -30,6 +30,7 @@ import 'package:nanimo/features/subscription/data/purchase_repository.dart';
 import 'package:nanimo/features/subscription/data/subscription_repository.dart';
 import 'package:nanimo/features/subscription/data/subscription_reconciler.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
+import 'package:nanimo/features/home/data/article_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
@@ -86,6 +87,7 @@ void main() async {
   final petRepository = PetRepository(supabase, isar);
   final healthRepository = HealthRepository(supabase, isar);
   final eventRepository = EventRepository(supabase, isar);
+  final articleRepository = ArticleRepository(isar);
   final settingsRepository = SettingsRepository(supabase, isar);
 
   final purchaseRepository = await _buildPurchaseRepository();
@@ -152,6 +154,7 @@ void main() async {
         referentialRepository: referentialRepository,
         petRepository: petRepository,
         healthRepository: healthRepository,
+        articleRepository: articleRepository,
         settingsRepository: settingsRepository,
         purchaseRepository: purchaseRepository,
         subscriptionReconciler: subscriptionReconciler,
@@ -193,6 +196,7 @@ class MyApp extends StatefulWidget {
   final ReferentialRepository referentialRepository;
   final PetRepository petRepository;
   final HealthRepository healthRepository;
+  final ArticleRepository articleRepository;
   final SettingsRepository settingsRepository;
   final PurchaseRepository purchaseRepository;
   final SubscriptionReconciler subscriptionReconciler;
@@ -207,6 +211,7 @@ class MyApp extends StatefulWidget {
     required this.referentialRepository,
     required this.petRepository,
     required this.healthRepository,
+    required this.articleRepository,
     required this.settingsRepository,
     required this.purchaseRepository,
     required this.subscriptionReconciler,
@@ -267,6 +272,7 @@ class _MyAppState extends State<MyApp> {
           referentialRepository: widget.referentialRepository,
           petRepository: widget.petRepository,
           healthRepository: widget.healthRepository,
+          articleRepository: widget.articleRepository,
           settingsRepository: widget.settingsRepository,
           purchaseRepository: widget.purchaseRepository,
         ),
