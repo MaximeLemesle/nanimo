@@ -176,7 +176,15 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: BlocProvider.value(value: cubit, child: const EditEventPage()),
+        home: MultiBlocProvider(
+          providers: [
+            BlocProvider<EditEventCubit>.value(value: cubit),
+            BlocProvider<SubscriptionCubit>.value(
+              value: _FakeSubscriptionCubit(1),
+            ),
+          ],
+          child: const EditEventPage(),
+        ),
       ),
     );
     await tester.pump();

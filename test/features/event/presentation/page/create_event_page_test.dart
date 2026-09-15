@@ -188,7 +188,15 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: BlocProvider.value(value: cubit, child: const CreateEventPage()),
+        home: MultiBlocProvider(
+          providers: [
+            BlocProvider<EventCreationCubit>.value(value: cubit),
+            BlocProvider<SubscriptionCubit>.value(
+              value: _FakeSubscriptionCubit(1, 'freemium'),
+            ),
+          ],
+          child: const CreateEventPage(),
+        ),
       ),
     );
     await tester.pump();
@@ -345,7 +353,10 @@ void main() {
 
       await tester.tap(find.byType(PolaroidCollageWidget));
       await tester.pumpAndSettle();
-      expect(findAppIcon(AppIcons.crown), findsOneWidget);
+
+      /// Four crowns on the collage behind (frames 2 to 5), one in the sheet.
+      expect(findAppIcon(AppIcons.crown), findsNWidgets(5));
+
       
       await tester.tap(find.text('Sélectionner une photo'));
       await tester.pumpAndSettle();

@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
+import 'package:nanimo/core/widgets/app_icon_widget.dart';
 
 sealed class CollageImage {
   const CollageImage();
@@ -32,12 +33,17 @@ class PolaroidCollageWidget extends StatelessWidget {
   final void Function(int index)? onImageTap;
   final Future<String> Function(String assetPath)? urlResolver;
 
+  /// Index from which the frames are premium only, null marking nothing. The
+  /// widget is told, never asks: it also renders stored souvenirs.
+  final int? premiumFromIndex;
+
   const PolaroidCollageWidget({
     super.key,
     required this.images,
     required this.onTap,
     this.onImageTap,
     this.urlResolver,
+    this.premiumFromIndex,
   });
 
   static const int maxImages = 5;
@@ -92,6 +98,11 @@ class PolaroidCollageWidget extends StatelessWidget {
       ? _offsets[index].translate(0, -_placeholderBackRaise)
       : _offsets[index];
 
+  bool _isPremiumFrame(int index) {
+    final from = premiumFromIndex;
+    return from != null && index >= from;
+  }
+
   Widget _buildPlaceholder() {
     return Center(
       child: Stack(
@@ -102,18 +113,45 @@ class PolaroidCollageWidget extends StatelessWidget {
               offset: _frameOffset(i),
               child: Transform.rotate(
                 angle: _angles[i],
-                child: _frame(
-                  dashed: true,
-                  child: Icon(
-                    Icons.photo,
-                    size: AppSpacing.xl,
-                    color: AppColors.textSecondary,
+                child: _markPremium(
+                  i,
+                  _frame(
+                    dashed: true,
+                    child: Icon(
+                      Icons.photo,
+                      size: AppSpacing.xl,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
               ),
             ),
         ],
       ),
+    );
+  }
+
+  /// Overlaps included: the stack is a pile. The frame carries no gesture of
+  /// its own, the pile keeps the single [onTap] of the widget.
+  Widget _markPremium(int index, Widget frame) {
+    if (!_isPremiumFrame(index)) return frame;
+
+    return Stack(
+      children: [
+        Opacity(opacity: 0.55, child: frame),
+        Positioned(
+          top: AppSpacing.xs,
+          right: AppSpacing.xs,
+          child: Semantics(
+            label: 'Réservé au premium',
+            child: AppIconWidget(
+              AppIcons.crown,
+              color: AppColors.tertiary,
+              size: 18,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -141,10 +179,13 @@ class PolaroidCollageWidget extends StatelessWidget {
               offset: _frameOffset(i),
               child: Transform.rotate(
                 angle: _angles[i],
-                child: _tappable(
+                child: _markPremium(
                   i,
-                  _frame(
-                    child: _image(visible[i], 150),
+                  _tappable(
+                    i,
+                    _frame(
+                      child: _image(visible[i], 150),
+                    ),
                   ),
                 ),
               ),

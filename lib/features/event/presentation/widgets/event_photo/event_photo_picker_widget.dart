@@ -45,13 +45,24 @@ class EventPhotoPickerWidget extends StatelessWidget {
     return max;
   }
 
+  /// Frames the plan will never let the owner fill, null while it is unknown.
+  static int? premiumFromIndex(SubscriptionState subscription) {
+    if (!subscription.isLoaded) return null;
+    final max = maxImagesForPlan(subscription);
+    if (max >= PolaroidCollageWidget.maxImages) return null;
+    return max;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return PolaroidCollageWidget(
-      images: images,
-      urlResolver: urlResolver,
-      onTap: () => _openGrid(context),
-      onImageTap: (_) => _openGrid(context),
+    return BlocBuilder<SubscriptionCubit, SubscriptionState>(
+      builder: (context, subscription) => PolaroidCollageWidget(
+        images: images,
+        urlResolver: urlResolver,
+        premiumFromIndex: premiumFromIndex(subscription),
+        onTap: () => _openGrid(context),
+        onImageTap: (_) => _openGrid(context),
+      ),
     );
   }
 

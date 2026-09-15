@@ -213,9 +213,12 @@ void main() {
 
     await pumpPicker(tester, initial: const [], maxImagesPerEvent: 1);
 
+    /// Four crowns on the collage behind (frames 2 to 5), one in the sheet.
+    expect(findAppIcon(AppIcons.crown), findsNWidgets(4));
+
     await tester.tap(find.byType(PolaroidCollageWidget));
     await tester.pumpAndSettle();
-    expect(findAppIcon(AppIcons.crown), findsOneWidget);
+    expect(findAppIcon(AppIcons.crown), findsNWidgets(5));
 
     await tester.tap(find.text('Sélectionner plusieurs photos'));
     await tester.pumpAndSettle();
@@ -321,5 +324,32 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(pathsOf(images), ['/tmp/a.jpg', '/tmp/b.jpg', '/tmp/c.jpg']);
+  });
+
+  // NAN-093: the collage promised five slots to every owner, free included.
+  group('premium frames', () {
+    testWidgets('a free plan sees four crowned frames', (tester) async {
+      await pumpPicker(tester, initial: const [], maxImagesPerEvent: 1);
+
+      expect(findAppIcon(AppIcons.crown), findsNWidgets(4));
+    });
+
+    testWidgets('a premium plan sees none', (tester) async {
+      await pumpPicker(
+        tester,
+        initial: const [],
+        maxImagesPerEvent: 5,
+        planName: 'premium',
+      );
+
+      expect(findAppIcon(AppIcons.crown), findsNothing);
+    });
+
+    /// A wrongly marked collage sells the premium to someone who may pay.
+    testWidgets('an unloaded plan marks nothing', (tester) async {
+      await pumpPicker(tester, initial: const [], subscriptionLoaded: false);
+
+      expect(findAppIcon(AppIcons.crown), findsNothing);
+    });
   });
 }

@@ -50,6 +50,9 @@ class PaywallTrigger {
   static const addPhoto = 'add_photo';
   static const multiSelectPhotos = 'multi_select_photos';
   static const settingsButton = 'settings_button';
+
+  /// The only entry that is not a limit reached.
+  static const onboarding = 'onboarding';
   static const notifications = 'notifications';
   static const unknown = 'unknown';
 }
