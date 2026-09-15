@@ -20,6 +20,7 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pe
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_health_onboarding_card_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_park_header_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_weight_card_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_name_age_widget.dart';
 
 class PetPage extends StatelessWidget {
   const PetPage({super.key});
@@ -81,14 +82,10 @@ class PetPage extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Expanded(
-                            child: Text(
-                              pet.petName,
-                              style: AppTextStyles.title01,
+                            child: PetNameAgeWidget(
+                              name: pet.petName,
+                              birthdate: pet.birthdate,
                             ),
-                          ),
-                          Text(
-                            DateFormatter.age(pet.birthdate),
-                            style: AppTextStyles.numberBig,
                           ),
                           const SizedBox(width: AppSpacing.sm),
                           IconButton(
