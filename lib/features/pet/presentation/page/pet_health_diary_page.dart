@@ -8,9 +8,48 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_di
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card/pet_vaccine_diary_card_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card/pet_vet_visit_diary_card_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card/pet_weight_graph_diary_card_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_bottom_sheet/add_weight_bottom_sheet_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/edit_health_info_bottom_sheet_widget.dart';
+import 'package:nanimo/features/health/data/models/health_diary_model.dart';
+import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
+import 'package:nanimo/config/router/route_names.dart';
+import 'package:go_router/go_router.dart';
 
 class PetHealthDiaryPage extends StatelessWidget {
   const PetHealthDiaryPage({super.key});
+
+  /// The chip number and the neutering belong to the health info sheet.
+  void _editHealthInfo(BuildContext context, HealthDiaryModel? diary) {
+    if (diary == null) return;
+    final cubit = context.read<PetDetailsCubit>();
+    BottomSheetWidget.show<void>(
+      context,
+      EditHealthInfoBottomSheetWidget(
+        diary: diary,
+        onSubmit: ({
+          required bool isSterilized,
+          required bool isChipped,
+          String? chipNumber,
+          DateTime? lastDeworming,
+        }) {
+          cubit.updateHealthInfo(
+            isSterilized: isSterilized,
+            isChipped: isChipped,
+            chipNumber: chipNumber,
+            lastDeworming: lastDeworming,
+          );
+        },
+      ),
+    );
+  }
+
+  void _addWeight(BuildContext context) {
+    final cubit = context.read<PetDetailsCubit>();
+    BottomSheetWidget.show<void>(
+      context,
+      AddWeightBottomSheetWidget(onSubmit: cubit.addWeightLog),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +85,11 @@ class PetHealthDiaryPage extends StatelessWidget {
                 raceName: state.raceName ?? '—',
                 weightLogs: state.weightLogs,
                 diary: state.diary,
+                onEditIdentity: () => context.push(
+                  '${RouteNames.editPet}/${state.selectedPet!.petId}',
+                ),
+                onEditHealthInfo: () => _editHealthInfo(context, state.diary),
+                onEditWeight: () => _addWeight(context),
               ),
 
               const SizedBox(height: AppSpacing.lg),

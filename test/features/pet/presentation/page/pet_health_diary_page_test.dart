@@ -14,6 +14,8 @@ import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/pet/presentation/page/pet_health_diary_page.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_bottom_sheet/add_weight_bottom_sheet_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/edit_health_info_bottom_sheet_widget.dart';
 
 class _MockPetRepository extends Mock implements PetRepository {}
 
@@ -117,6 +119,14 @@ void main() {
         petId: 'p',
       ),
     );
+    registerFallbackValue(
+      HealthDiaryWeightLogModel(
+        healthDiaryWeightLogId: 'f',
+        weight: 1,
+        loggedAt: DateTime(2026, 1, 1),
+        petId: 'p',
+      ),
+    );
   });
 
   setUp(() {
@@ -129,6 +139,7 @@ void main() {
     when(() => healthRepo.addVetVisit(any())).thenAnswer((_) async {});
     when(() => healthRepo.updateVetVisit(any())).thenAnswer((_) async {});
     when(() => healthRepo.updateVaccine(any())).thenAnswer((_) async {});
+    when(() => healthRepo.addWeightLog(any())).thenAnswer((_) async {});
     when(() => healthRepo.watchDiaryForPet(any()))
         .thenAnswer((_) => Stream.value(_diary));
     when(() => healthRepo.getVaccinesForDiary(any()))
@@ -364,6 +375,93 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Enregistrer'), findsNothing);
+
+      await cubit.close();
+    });
+  });
+
+  // NAN-089: the summary showed the age without the date that produces it.
+  group('the summary', () {
+    Future<PetDetailsCubit> pumpDiary(WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 2000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final cubit = createCubit();
+      await tester.pumpWidget(buildPage(cubit));
+      await tester.pumpAndSettle();
+      return cubit;
+    }
+
+    testWidgets('shows the birthdate just above the age', (tester) async {
+      final cubit = await pumpDiary(tester);
+
+      expect(find.text('Date de naissance'), findsOneWidget);
+      expect(find.text('01/01/2024'), findsOneWidget);
+
+      final birthdate = tester.getRect(find.text('Date de naissance'));
+      final age = tester.getRect(find.text('Âge'));
+      expect(birthdate.top, lessThan(age.top));
+
+      await cubit.close();
+    });
+
+    testWidgets('carries a pencil like the other sections', (tester) async {
+      final cubit = await pumpDiary(tester);
+
+      expect(find.byTooltip('Modifier une information'), findsOneWidget);
+
+      await cubit.close();
+    });
+
+    /// Same one-shot arming as the other sections.
+    testWidgets('a row is inert until the section is armed', (tester) async {
+      final cubit = await pumpDiary(tester);
+
+      await tester.tap(find.text('Numéro de puce'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Modifier les informations de santé'), findsNothing);
+
+      await cubit.close();
+    });
+
+    testWidgets('the chip and the neutering open the health info sheet',
+        (tester) async {
+      final cubit = await pumpDiary(tester);
+
+      await tester.tap(find.byTooltip('Modifier une information'));
+      await tester.pumpAndSettle();
+      expect(find.text('Choisis l\'information à modifier'), findsOneWidget);
+
+      await tester.tap(find.text('Numéro de puce'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(EditHealthInfoBottomSheetWidget), findsOneWidget);
+
+      await cubit.close();
+    });
+
+    testWidgets('the weight opens the weight sheet', (tester) async {
+      final cubit = await pumpDiary(tester);
+
+      await tester.tap(find.byTooltip('Modifier une information'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Poids'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AddWeightBottomSheetWidget), findsOneWidget);
+
+      await cubit.close();
+    });
+
+    /// Nine rows, seven editable: the species and the age are inert.
+    testWidgets('leaves the species and the age inert', (tester) async {
+      final cubit = await pumpDiary(tester);
+
+      await tester.tap(find.byTooltip('Modifier une information'));
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.chevron_right_rounded), findsNWidgets(7));
 
       await cubit.close();
     });
