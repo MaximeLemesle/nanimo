@@ -12,6 +12,8 @@ import 'package:nanimo/features/home/presentation/widgets/home_memory_polaroid_w
 import 'package:nanimo/features/home/presentation/widgets/home_pet_list_widget.dart';
 import 'package:nanimo/features/journal/presentation/widgets/journal_event_detail/journal_event_detail_bottom_sheet_widget.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
+import 'package:nanimo/features/subscription/presentation/pet_lock.dart';
+import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -70,6 +72,10 @@ class HomePage extends StatelessWidget {
                 HomePetListWidget(
                   pets: state.pets,
                   portraits: state.portraits,
+                  lockedPetIds: PetLock.lockedPetIds(
+                    state.pets,
+                    context.watch<SubscriptionCubit>().state,
+                  ),
                   onPetTap: (petId) {
                     context.read<PetDetailsCubit>().selectPet(petId);
                     context.push(RouteNames.pet);

@@ -14,6 +14,8 @@ import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/pet/presentation/page/pet_health_diary_page.dart';
+import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
+import 'package:nanimo/features/subscription/data/models/subscription_config_model.dart';
 
 class _MockPetRepository extends Mock implements PetRepository {}
 
@@ -90,6 +92,20 @@ final _weightLogs = [
   ),
 ];
 
+class _FakeSubscriptionCubit extends Cubit<SubscriptionState>
+    implements SubscriptionCubit {
+  _FakeSubscriptionCubit()
+      : super(SubscriptionState.loaded(const SubscriptionConfigModel(
+          configId: 'cfg',
+          planName: 'premium',
+          maxImagesPerEvent: 5,
+          maxPets: 10,
+        )));
+
+  @override
+  void noSuchMethod(Invocation invocation) {}
+}
+
 void main() {
   late _MockPetRepository petRepo;
   late _MockHealthRepository healthRepo;
@@ -144,8 +160,13 @@ void main() {
 
   Widget buildPage(PetDetailsCubit cubit) {
     return MaterialApp(
-      home: BlocProvider<PetDetailsCubit>.value(
-        value: cubit,
+      home: MultiBlocProvider(
+        providers: [
+          BlocProvider<PetDetailsCubit>.value(value: cubit),
+          BlocProvider<SubscriptionCubit>.value(
+            value: _FakeSubscriptionCubit(),
+          ),
+        ],
         child: const PetHealthDiaryPage(),
       ),
     );

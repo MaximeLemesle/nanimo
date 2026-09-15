@@ -17,7 +17,10 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/vaccin
 class PetVaccineDiaryCardWidget extends StatefulWidget {
   final List<HealthDiaryVaccineModel> vaccines;
 
-  const PetVaccineDiaryCardWidget({super.key, required this.vaccines});
+  /// The record is still read, nothing is written.
+  final bool readOnly;
+
+  const PetVaccineDiaryCardWidget({super.key, required this.vaccines, this.readOnly = false});
 
   @override
   State<PetVaccineDiaryCardWidget> createState() => _PetVaccineDiaryCardWidgetState();
@@ -38,7 +41,7 @@ class _PetVaccineDiaryCardWidgetState extends State<PetVaccineDiaryCardWidget> {
   Widget build(BuildContext context) {
     return PetDiaryCardWidget(
       title: 'Vaccins',
-      action: widget.vaccines.isEmpty
+      action: widget.vaccines.isEmpty || widget.readOnly
           ? null
           : PetDiaryEditButtonWidget(
               isSelecting: _isSelecting,
@@ -71,28 +74,30 @@ class _PetVaccineDiaryCardWidgetState extends State<PetVaccineDiaryCardWidget> {
           ],
           emptyLabel: 'Aucun vaccin enregistré pour le moment.',
         ),
-        const SizedBox(height: AppSpacing.md),
-        ButtonWidget(
-          label: 'Ajouter un vaccin',
-          type: ButtonType.secondary,
-          icon: Icons.add,
-          iconPosition: ButtonIcon.left,
-          fullWidth: true,
-          onPressed: () {
-            BottomSheetWidget.show<void>(
-              context,
-              AddVaccineBottomSheetWidget(
-                onSubmit: ({required String vaccineName, required DateTime lastDate, required DateTime nextDate}) {
-                  context.read<PetDetailsCubit>().addVaccine(
-                        vaccineName: vaccineName,
-                        lastDate: lastDate,
-                        nextDate: nextDate,
-                      );
-                },
-              ),
-            );
-          },
-        ),
+        if (!widget.readOnly) ...[
+          const SizedBox(height: AppSpacing.md),
+          ButtonWidget(
+            label: 'Ajouter un vaccin',
+            type: ButtonType.secondary,
+            icon: Icons.add,
+            iconPosition: ButtonIcon.left,
+            fullWidth: true,
+            onPressed: () {
+              BottomSheetWidget.show<void>(
+                context,
+                AddVaccineBottomSheetWidget(
+                  onSubmit: ({required String vaccineName, required DateTime lastDate, required DateTime nextDate}) {
+                    context.read<PetDetailsCubit>().addVaccine(
+                          vaccineName: vaccineName,
+                          lastDate: lastDate,
+                          nextDate: nextDate,
+                        );
+                  },
+                ),
+              );
+            },
+          ),
+        ],
       ],
     );
   }

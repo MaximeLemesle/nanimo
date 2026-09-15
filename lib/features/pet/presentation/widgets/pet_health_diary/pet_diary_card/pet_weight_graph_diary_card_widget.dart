@@ -14,7 +14,10 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_bottom_
 class PetWeightGraphDiaryCardWidget extends StatelessWidget {
   final List<HealthDiaryWeightLogModel> weightLogs;
 
-  const PetWeightGraphDiaryCardWidget({super.key, required this.weightLogs});
+  /// The record is still read, nothing is written.
+  final bool readOnly;
+
+  const PetWeightGraphDiaryCardWidget({super.key, required this.weightLogs, this.readOnly = false});
 
   @override
   Widget build(BuildContext context) {
@@ -39,21 +42,23 @@ class PetWeightGraphDiaryCardWidget extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.md),
-        ButtonWidget(
-          label: 'Mettre à jour le poids',
-          icon: Icons.add,
-          iconPosition: ButtonIcon.right,
-          fullWidth: true,
-          onPressed: () {
-            BottomSheetWidget.show<void>(
-              context,
-              AddWeightBottomSheetWidget(
-                onSubmit: context.read<PetDetailsCubit>().addWeightLog,
-              ),
-            );
-          },
-        ),
+        if (!readOnly) ...[
+          const SizedBox(height: AppSpacing.md),
+          ButtonWidget(
+            label: 'Mettre à jour le poids',
+            icon: Icons.add,
+            iconPosition: ButtonIcon.right,
+            fullWidth: true,
+            onPressed: () {
+              BottomSheetWidget.show<void>(
+                context,
+                AddWeightBottomSheetWidget(
+                  onSubmit: context.read<PetDetailsCubit>().addWeightLog,
+                ),
+              );
+            },
+          ),
+        ],
       ],
     );
   }

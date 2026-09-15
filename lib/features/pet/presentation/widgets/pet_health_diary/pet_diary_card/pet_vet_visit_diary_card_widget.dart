@@ -16,7 +16,10 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_di
 class PetVetVisitDiaryCardWidget extends StatefulWidget {
   final List<VetVisitModel> visits;
 
-  const PetVetVisitDiaryCardWidget({super.key, required this.visits});
+  /// The record is still read, nothing is written.
+  final bool readOnly;
+
+  const PetVetVisitDiaryCardWidget({super.key, required this.visits, this.readOnly = false});
 
   @override
   State<PetVetVisitDiaryCardWidget> createState() => _PetVetVisitDiaryCardWidgetState();
@@ -37,7 +40,7 @@ class _PetVetVisitDiaryCardWidgetState extends State<PetVetVisitDiaryCardWidget>
   Widget build(BuildContext context) {
     return PetDiaryCardWidget(
       title: 'Visites vétérinaires',
-      action: widget.visits.isEmpty
+      action: widget.visits.isEmpty || widget.readOnly
           ? null
           : PetDiaryEditButtonWidget(
               isSelecting: _isSelecting,
@@ -64,29 +67,31 @@ class _PetVetVisitDiaryCardWidgetState extends State<PetVetVisitDiaryCardWidget>
           ],
           emptyLabel: 'Aucune visite vétérinaire enregistrée pour le moment.',
         ),
-        const SizedBox(height: AppSpacing.md),
-        ButtonWidget(
-          label: 'Ajouter une visite',
-          type: ButtonType.secondary,
-          icon: Icons.add,
-          iconPosition: ButtonIcon.left,
-          fullWidth: true,
-          onPressed: () {
-            BottomSheetWidget.show<void>(
-              context,
-              AddVetVisitBottomSheetWidget(
-                onSubmit: ({required String title, required DateTime visitedAt, String? vetName, String? clinicName}) {
-                  context.read<PetDetailsCubit>().addVetVisit(
-                        title: title,
-                        visitedAt: visitedAt,
-                        vetName: vetName,
-                        clinicName: clinicName,
-                      );
-                },
-              ),
-            );
-          },
-        ),
+        if (!widget.readOnly) ...[
+          const SizedBox(height: AppSpacing.md),
+          ButtonWidget(
+            label: 'Ajouter une visite',
+            type: ButtonType.secondary,
+            icon: Icons.add,
+            iconPosition: ButtonIcon.left,
+            fullWidth: true,
+            onPressed: () {
+              BottomSheetWidget.show<void>(
+                context,
+                AddVetVisitBottomSheetWidget(
+                  onSubmit: ({required String title, required DateTime visitedAt, String? vetName, String? clinicName}) {
+                    context.read<PetDetailsCubit>().addVetVisit(
+                          title: title,
+                          visitedAt: visitedAt,
+                          vetName: vetName,
+                          clinicName: clinicName,
+                        );
+                  },
+                ),
+              );
+            },
+          ),
+        ],
       ],
     );
   }

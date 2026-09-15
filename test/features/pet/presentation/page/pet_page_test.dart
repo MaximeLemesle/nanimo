@@ -15,6 +15,8 @@ import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/pet/presentation/page/pet_page.dart';
+import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
+import 'package:nanimo/features/subscription/data/models/subscription_config_model.dart';
 
 class _MockPetRepository extends Mock implements PetRepository {}
 
@@ -61,6 +63,20 @@ final _weightLogs = [
   ),
 ];
 
+class _FakeSubscriptionCubit extends Cubit<SubscriptionState>
+    implements SubscriptionCubit {
+  _FakeSubscriptionCubit({String planName = 'premium', int maxPets = 10})
+      : super(SubscriptionState.loaded(SubscriptionConfigModel(
+          configId: 'cfg',
+          planName: planName,
+          maxImagesPerEvent: planName == 'premium' ? 5 : 1,
+          maxPets: maxPets,
+        )));
+
+  @override
+  void noSuchMethod(Invocation invocation) {}
+}
+
 void main() {
   late _MockPetRepository petRepo;
   late _MockHealthRepository healthRepo;
@@ -99,8 +115,13 @@ void main() {
 
   Widget buildPage(PetDetailsCubit cubit) {
     return MaterialApp(
-      home: BlocProvider<PetDetailsCubit>.value(
-        value: cubit,
+      home: MultiBlocProvider(
+        providers: [
+          BlocProvider<PetDetailsCubit>.value(value: cubit),
+          BlocProvider<SubscriptionCubit>.value(
+            value: _FakeSubscriptionCubit(),
+          ),
+        ],
         child: const PetPage(),
       ),
     );
@@ -142,8 +163,13 @@ void main() {
       routes: [
         GoRoute(
           path: '/home/pet',
-          builder: (_, __) => BlocProvider<PetDetailsCubit>.value(
-            value: cubit,
+          builder: (_, __) => MultiBlocProvider(
+            providers: [
+              BlocProvider<PetDetailsCubit>.value(value: cubit),
+              BlocProvider<SubscriptionCubit>.value(
+                value: _FakeSubscriptionCubit(),
+              ),
+            ],
             child: const PetPage(),
           ),
         ),
@@ -235,5 +261,103 @@ void main() {
     expect(find.text('Création du carnet de santé'), findsOneWidget);
 
     await cubit.close();
+  });
+
+  // NAN-082: a lapsed premium owner keeps every animal, read only.
+  group('a pet the plan no longer covers', () {
+    PetModel petAt(String id, DateTime createdAt) => PetModel(
+          petId: id,
+          petName: id,
+          birthdate: DateTime(2024, 1, 1),
+          gender: Gender.male,
+          createdAt: createdAt,
+          petRaceId: 'r1',
+          petSpeciesId: 's1',
+        );
+
+    Future<PetDetailsCubit> pumpLocked(
+      WidgetTester tester, {
+      String planName = 'freemium',
+      int maxPets = 1,
+    }) async {
+      await tester.binding.setSurfaceSize(const Size(1080, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final pets = [
+        petAt('first', DateTime(2025, 1, 1)),
+        petAt('second', DateTime(2026, 1, 1)),
+      ];
+      when(() => petRepo.watchPets()).thenAnswer((_) => Stream.value(pets));
+
+      final cubit = PetDetailsCubit(
+        petRepository: petRepo,
+        healthRepository: healthRepo,
+        referentialRepository: refRepo,
+      );
+      await tester.pumpWidget(MaterialApp(
+        home: MultiBlocProvider(
+          providers: [
+            BlocProvider<PetDetailsCubit>.value(value: cubit),
+            BlocProvider<SubscriptionCubit>.value(
+              value: _FakeSubscriptionCubit(
+                planName: planName,
+                maxPets: maxPets,
+              ),
+            ),
+          ],
+          child: const PetPage(),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      cubit.selectPet('second');
+      await tester.pumpAndSettle();
+      return cubit;
+    }
+
+    testWidgets('says so and offers the way back', (tester) async {
+      final cubit = await pumpLocked(tester);
+
+      expect(
+        find.text('La fiche de second est en lecture seule'),
+        findsOneWidget,
+      );
+      expect(find.text('Reprendre le premium'), findsOneWidget);
+
+      await cubit.close();
+    });
+
+    testWidgets('drops the edit pencil', (tester) async {
+      final cubit = await pumpLocked(tester);
+
+      expect(find.byTooltip('Modifier second'), findsNothing);
+
+      await cubit.close();
+    });
+
+    testWidgets('drops the weight update button', (tester) async {
+      final cubit = await pumpLocked(tester);
+
+      expect(find.text('Mettre à jour le poids'), findsNothing);
+
+      await cubit.close();
+    });
+
+    testWidgets('still shows the animal and its record', (tester) async {
+      final cubit = await pumpLocked(tester);
+
+      expect(find.text('second'), findsWidgets);
+      expect(find.text('Identité'), findsOneWidget);
+
+      await cubit.close();
+    });
+
+    testWidgets('leaves a covered pet alone', (tester) async {
+      final cubit = await pumpLocked(tester, planName: 'premium', maxPets: 10);
+
+      expect(find.text('Reprendre le premium'), findsNothing);
+      expect(find.byTooltip('Modifier second'), findsOneWidget);
+
+      await cubit.close();
+    });
   });
 }
