@@ -6,6 +6,7 @@ import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/date_field_widget.dart';
 import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
+import 'package:nanimo/core/widgets/confirm_deletion_dialog.dart';
 
 typedef VetVisitSubmit = void Function({
   required String title,
@@ -20,7 +21,10 @@ class AddVetVisitBottomSheetWidget extends StatefulWidget {
   /// Non-null turns the sheet into a pre-filled edit form, like [AddVaccineBottomSheetWidget].
   final VetVisitModel? initial;
 
-  const AddVetVisitBottomSheetWidget({super.key, required this.onSubmit, this.initial});
+  /// Offered in edit mode only, behind a confirmation.
+  final VoidCallback? onDelete;
+
+  const AddVetVisitBottomSheetWidget({super.key, required this.onSubmit, this.initial, this.onDelete});
 
   @override
   State<AddVetVisitBottomSheetWidget> createState() =>
@@ -68,6 +72,17 @@ class _AddVetVisitBottomSheetWidgetState
     Navigator.of(context).pop();
   }
 
+  Future<void> _confirmDelete() async {
+    final confirmed = await confirmDeletion(
+      context,
+      title: 'Supprimer cette visite ?',
+      message: 'La visite disparaîtra du carnet de santé et ne pourra pas être récupérée.',
+    );
+    if (!confirmed || !mounted) return;
+    widget.onDelete!();
+    Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     return BottomSheetWidget(
@@ -92,6 +107,15 @@ class _AddVetVisitBottomSheetWidgetState
         const SizedBox(height: AppSpacing.md),
         _buildField(_clinicController, 'Clinique (optionnel)',
             capitalize: true),
+        if (widget.onDelete != null) ...[
+          const SizedBox(height: AppSpacing.md),
+          TextButton.icon(
+            onPressed: _confirmDelete,
+            icon: const Icon(Icons.delete_outline, size: 20),
+            label: const Text('Supprimer'),
+            style: TextButton.styleFrom(foregroundColor: AppColors.secondary600),
+          ),
+        ],
       ],
     );
   }
