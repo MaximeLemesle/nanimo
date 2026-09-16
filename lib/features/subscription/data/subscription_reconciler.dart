@@ -3,7 +3,6 @@ import 'dart:developer' as developer;
 import 'package:nanimo/core/analytics/analytics.dart';
 import 'package:nanimo/core/analytics/analytics_events.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
-import 'package:nanimo/features/auth/data/models/user_model.dart';
 import 'package:nanimo/features/subscription/data/purchase_repository.dart';
 import 'package:nanimo/features/subscription/data/subscription_restorer.dart';
 
@@ -43,7 +42,7 @@ class SubscriptionReconciler {
 
       final user = await _authRepository.getCurrentUser();
       if (user == null) return;
-      if (user.subscriptionStatus == SubscriptionStatus.premium) return;
+      if (user.hasActivePremium) return;
 
       if (!await _purchaseRepository.isPremiumActive()) return;
 
