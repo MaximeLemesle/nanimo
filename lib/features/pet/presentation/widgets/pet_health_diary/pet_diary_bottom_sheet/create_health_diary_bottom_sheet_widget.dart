@@ -7,13 +7,13 @@ import 'package:nanimo/core/utils/weight_formatter.dart';
 import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/date_field_widget.dart';
-import 'package:nanimo/core/widgets/text_field_widget.dart';
 import 'package:nanimo/features/health/data/models/recommended_vaccines_model.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/add_vet_visit_bottom_sheet_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/create_health_diary_section/birth_weight_section_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/create_health_diary_section/health_diary_section_widget.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/core/utils/gender_formatter.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/chip_number_field_widget.dart';
 
 typedef VaccineEntry = ({
   String name,
@@ -90,8 +90,12 @@ class _CreateHealthDiaryBottomSheetWidgetState
   }
 
   /// Opens the vet visit sheet and appends the created visit.
+  ///
+  /// The sheet closes itself after [onSubmit], so this callback must not pop:
+  /// a second pop would dismiss this sheet too and drop the whole diary.
   Future<void> _addVetVisit() async {
-    final result = await BottomSheetWidget.show<VetVisitEntry?>(
+    VetVisitEntry? created;
+    await BottomSheetWidget.show<void>(
       context,
       AddVetVisitBottomSheetWidget(
         onSubmit: ({
@@ -100,17 +104,18 @@ class _CreateHealthDiaryBottomSheetWidgetState
           String? vetName,
           String? clinicName,
         }) {
-          Navigator.of(context).pop((
+          created = (
             title: title,
             visitedAt: visitedAt,
             vetName: vetName,
             clinicName: clinicName,
-          ));
+          );
         },
       ),
     );
-    if (result != null && mounted) {
-      setState(() => _vetVisits.add(result));
+    final visit = created;
+    if (visit != null && mounted) {
+      setState(() => _vetVisits.add(visit));
     }
   }
 
@@ -188,11 +193,9 @@ class _CreateHealthDiaryBottomSheetWidgetState
           label: 'Pucé',
           value: _isChipped,
           onChanged: (value) => setState(() => _isChipped = value),
-          child: TextFieldWidget(
+          child: ChipNumberFieldWidget(
             controller: _chipController,
-            label: 'Numéro de puce',
-            keyboardType: TextInputType.number,
-            onChanged: (_) => setState(() {}),
+            onChanged: () => setState(() {}),
           ),
         ),
 
