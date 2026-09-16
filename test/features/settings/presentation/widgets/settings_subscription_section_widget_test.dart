@@ -259,4 +259,22 @@ void main() {
       findsOneWidget,
     );
   });
+
+  // NAN-083: the badge must read the expiry date like the quotas do.
+  testWidgets('an expired premium plan reads as freemium', (tester) async {
+    await pumpSection(
+      tester,
+      SettingsState(
+        status: SettingsStatus.loaded,
+        user: _user(
+          SubscriptionStatus.premium,
+          expiresAt: DateTime.now().subtract(const Duration(days: 1)),
+        ),
+      ),
+    );
+
+    expect(find.text('Freemium'), findsOneWidget);
+    expect(find.text('Premium'), findsNothing);
+    expect(find.text('Passer premium'), findsOneWidget);
+  });
 }
