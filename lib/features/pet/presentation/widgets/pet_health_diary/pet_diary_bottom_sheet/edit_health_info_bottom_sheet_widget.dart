@@ -4,9 +4,9 @@ import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/date_field_widget.dart';
-import 'package:nanimo/core/widgets/text_field_widget.dart';
 import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/create_health_diary_section/health_diary_section_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/chip_number_field_widget.dart';
 
 typedef EditHealthInfoSubmit = void Function({
   required bool isSterilized,
@@ -103,11 +103,9 @@ class _EditHealthInfoBottomSheetWidgetState
           label: 'Pucé',
           value: _isChipped,
           onChanged: (value) => setState(() => _isChipped = value),
-          child: TextFieldWidget(
+          child: ChipNumberFieldWidget(
             controller: _chipController,
-            label: 'Numéro de puce',
-            keyboardType: TextInputType.number,
-            onChanged: (_) => setState(() {}),
+            onChanged: () => setState(() {}),
           ),
         ),
       ],
