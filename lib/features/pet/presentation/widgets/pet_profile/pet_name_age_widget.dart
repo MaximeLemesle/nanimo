@@ -37,9 +37,7 @@ class PetNameAgeWidget extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final needed = _widthOf(context, name, nameStyle) +
-            _gap +
-            _widthOf(context, age, ageStyle);
+        final needed = _widthOf(context, name, nameStyle) + _gap + _widthOf(context, age, ageStyle);
 
         if (needed <= constraints.maxWidth) {
           return Row(
@@ -57,7 +55,7 @@ class PetNameAgeWidget extends StatelessWidget {
           children: [
             Text(name, style: nameStyle),
             const SizedBox(height: AppSpacing.xs),
-            Text(age, style: ageStyle, textAlign: TextAlign.right),
+            Text(age, style: ageStyle),
           ],
         );
       },
