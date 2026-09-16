@@ -82,10 +82,17 @@ class DateFormatter {
     }
 
     if (years <= 0) {
-      if (months <= 0) return 'Moins d\'un mois';
+      if (months <= 0) return _daysLabel(birthdate, reference);
       return months == 1 ? '1 mois' : '$months mois';
     }
     return years == 1 ? '1 an' : '$years ans';
+  }
+
+  /// Under a month, days say more than « moins d'un mois ».
+  static String _daysLabel(DateTime birthdate, DateTime reference) {
+    final days = reference.difference(birthdate).inDays;
+    if (days <= 0) return 'Moins d\'un jour';
+    return days == 1 ? '1 jour' : '$days jours';
   }
 
   /// Detailed age such as « 2 ans et 3 mois » (falls back to [age]).
