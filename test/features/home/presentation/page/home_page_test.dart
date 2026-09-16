@@ -22,6 +22,7 @@ import 'package:nanimo/features/journal/presentation/cubit/journal_cubit.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/vaccine_status_badge_widget.dart';
+import 'package:nanimo/features/home/data/article_repository.dart';
 
 class _MockPetRepository extends Mock implements PetRepository {}
 
@@ -32,6 +33,8 @@ class _MockEventRepository extends Mock implements EventRepository {}
 class _MockHealthRepository extends Mock implements HealthRepository {}
 
 class _MockAuthRepository extends Mock implements AuthRepository {}
+
+class _MockArticleRepository extends Mock implements ArticleRepository {}
 
 final _milo = PetModel(
   petId: 'p1',
@@ -63,6 +66,7 @@ void main() {
   late _MockEventRepository eventRepo;
   late _MockHealthRepository healthRepo;
   late _MockAuthRepository authRepo;
+  late _MockArticleRepository articleRepo;
   late StreamController<List<PetModel>> petsController;
 
   setUp(() {
@@ -71,6 +75,9 @@ void main() {
     eventRepo = _MockEventRepository();
     healthRepo = _MockHealthRepository();
     authRepo = _MockAuthRepository();
+    articleRepo = _MockArticleRepository();
+    when(() => articleRepo.watchCurrentArticle())
+        .thenAnswer((_) => Stream.value(null));
     petsController = StreamController<List<PetModel>>();
 
     when(() => petRepo.watchPets()).thenAnswer((_) => petsController.stream);
@@ -92,6 +99,7 @@ void main() {
       eventRepository: eventRepo,
       healthRepository: healthRepo,
       authRepository: authRepo,
+      articleRepository: articleRepo,
     );
   }
 

@@ -15,6 +15,8 @@ façon tracée (audit **A-11**).
 | `0004_freemium_quota_triggers.sql` | Quotas serveur `max_pets` / `max_images_per_event` (A-2), résolus par `plan_name` = `subscription_status` |
 | `0005_create_event_rpc.sql` | RPC transactionnelle `create_event` (A-3) — *pas encore branchée dans `EventRepository`* |
 | `0006_delete_account_rpc.sql` | RPC `delete_account` (security definer), utilisée par la page Paramètres |
+| `0007_subscription_quotas_and_purchases.sql` | Quotas vendus par le paywall + table de traçabilité des achats RevenueCat |
+| `0009_articles.sql` | Table `articles` des conseils de l'accueil, lecture seule, rotation portée par `published_at` |
 
 ## Appliquer
 

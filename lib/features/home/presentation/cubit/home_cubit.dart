@@ -16,6 +16,8 @@ import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/health/data/models/health_diary_vaccine_model.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
+import 'package:nanimo/features/home/data/models/article_model.dart';
+import 'package:nanimo/features/home/data/article_repository.dart';
 
 part 'home_state.dart';
 
@@ -25,6 +27,7 @@ class HomeCubit extends Cubit<HomeState> {
   final EventRepository _eventRepository;
   final HealthRepository _healthRepository;
   final AuthRepository _authRepository;
+  final ArticleRepository _articleRepository;
 
   StreamSubscription<List<PetModel>>? _petsSubscription;
   StreamSubscription<List<EventModel>>? _eventsSubscription;
@@ -33,6 +36,7 @@ class HomeCubit extends Cubit<HomeState> {
   StreamSubscription<List<HealthDiaryModel>>? _diariesSubscription;
   StreamSubscription<List<HealthDiaryVaccineModel>>? _vaccinesSubscription;
   StreamSubscription<UserModel?>? _userSubscription;
+  StreamSubscription<ArticleModel?>? _articleSubscription;
 
   HomeCubit({
     required PetRepository petRepository,
@@ -40,11 +44,13 @@ class HomeCubit extends Cubit<HomeState> {
     required EventRepository eventRepository,
     required HealthRepository healthRepository,
     required AuthRepository authRepository,
+    required ArticleRepository articleRepository,
   })  : _petRepository = petRepository,
         _referentialRepository = referentialRepository,
         _eventRepository = eventRepository,
         _healthRepository = healthRepository,
         _authRepository = authRepository,
+        _articleRepository = articleRepository,
         super(const HomeState()) {
     _petsSubscription = _petRepository.watchPets().listen(_onPetsChanged);
     _eventsSubscription =
@@ -57,6 +63,8 @@ class HomeCubit extends Cubit<HomeState> {
         _healthRepository.watchAllDiaries().listen(_onDiariesChanged);
     _vaccinesSubscription =
         _healthRepository.watchAllVaccines().listen(_onVaccinesChanged);
+    _articleSubscription =
+        _articleRepository.watchCurrentArticle().listen(_onArticleChanged);
     _userSubscription =
         _authRepository.watchCurrentUser().listen(_onUserChanged);
     _loadSpecies();
@@ -85,6 +93,10 @@ class HomeCubit extends Cubit<HomeState> {
 
   void _onVaccinesChanged(List<HealthDiaryVaccineModel> vaccines) {
     emit(state.copyWith(vaccines: vaccines));
+  }
+
+  void _onArticleChanged(ArticleModel? article) {
+    emit(state.copyWith(article: article));
   }
 
   void _onUserChanged(UserModel? user) {
@@ -144,6 +156,7 @@ class HomeCubit extends Cubit<HomeState> {
     _imagesSubscription?.cancel();
     _diariesSubscription?.cancel();
     _vaccinesSubscription?.cancel();
+    _articleSubscription?.cancel();
     _userSubscription?.cancel();
     return super.close();
   }

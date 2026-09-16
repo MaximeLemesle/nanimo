@@ -21,6 +21,10 @@ class HomeState extends Equatable {
   final List<HealthDiaryModel> diaries;
   final List<HealthDiaryVaccineModel> vaccines;
 
+  /// Null until the cache holds a published article: the card then falls back
+  /// on its embedded tip.
+  final ArticleModel? article;
+
   const HomeState({
     this.status = HomeStatus.loading,
     this.pets = const [],
@@ -32,6 +36,7 @@ class HomeState extends Equatable {
     this.imagePathsByEvent = const {},
     this.diaries = const [],
     this.vaccines = const [],
+    this.article,
   });
 
   /// Events whose entry date falls within the last 7 days.
@@ -139,6 +144,7 @@ class HomeState extends Equatable {
     Map<String, List<String>>? imagePathsByEvent,
     List<HealthDiaryModel>? diaries,
     List<HealthDiaryVaccineModel>? vaccines,
+    ArticleModel? article,
   }) {
     return HomeState(
       status: status ?? this.status,
@@ -151,6 +157,7 @@ class HomeState extends Equatable {
       imagePathsByEvent: imagePathsByEvent ?? this.imagePathsByEvent,
       diaries: diaries ?? this.diaries,
       vaccines: vaccines ?? this.vaccines,
+      article: article ?? this.article,
     );
   }
 
@@ -166,5 +173,6 @@ class HomeState extends Equatable {
         imagePathsByEvent,
         diaries,
         vaccines,
+        article,
       ];
 }

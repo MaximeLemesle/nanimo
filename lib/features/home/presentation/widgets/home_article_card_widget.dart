@@ -4,9 +4,13 @@ import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/core/widgets/rounded_border_widget.dart';
+import 'package:nanimo/features/home/data/models/article_model.dart';
 
-const String _title = 'La mue d’automne : le grand retour des poils partout';
-const List<String> _paragraphs = [
+/// The tip that ships with the binary, kept as a fallback for a first launch
+/// or an unreachable database.
+const String _fallbackTitle =
+    'La mue d’automne : le grand retour des poils partout';
+const List<String> _fallbackParagraphs = [
   "Tu retrouves des poils sur le canapé, tes vêtements… et dans des endroits improbables ? Pas de panique : avec l’arrivée de l’automne, ton animal peut simplement être en pleine mue saisonnière.",
   "Chez le chien comme chez le chat, le pelage se renouvelle pour se préparer aux températures plus fraîches. Résultat : pendant quelques semaines, ça peut tomber beaucoup plus que d’habitude !",
   "Le bon réflexe ? Un petit coup de brosse régulier pour retirer les poils morts, éviter les nœuds et limiter l’invasion à la maison. Chez le chat, ça permet aussi qu’il avale moins de poils pendant sa toilette.",
@@ -15,10 +19,19 @@ const List<String> _paragraphs = [
 ];
 
 class HomeArticleCardWidget extends StatelessWidget {
-  const HomeArticleCardWidget({super.key});
+  /// Null while the cache holds no published article.
+  final ArticleModel? article;
+
+  const HomeArticleCardWidget({super.key, this.article});
+
+  String get _title => article?.title ?? _fallbackTitle;
+  List<String> get _paragraphs => article?.paragraphs ?? _fallbackParagraphs;
 
   void _openArticle(BuildContext context) {
-    BottomSheetWidget.show<void>(context, const _ArticleBottomSheet());
+    BottomSheetWidget.show<void>(
+      context,
+      _ArticleBottomSheet(title: _title, paragraphs: _paragraphs),
+    );
   }
 
   @override
@@ -69,7 +82,10 @@ class HomeArticleCardWidget extends StatelessWidget {
 }
 
 class _ArticleBottomSheet extends StatelessWidget {
-  const _ArticleBottomSheet();
+  final String title;
+  final List<String> paragraphs;
+
+  const _ArticleBottomSheet({required this.title, required this.paragraphs});
 
   @override
   Widget build(BuildContext context) {
@@ -95,16 +111,16 @@ class _ArticleBottomSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
-            Text(_title, style: AppTextStyles.title02),
+            Text(title, style: AppTextStyles.title02),
             const SizedBox(height: AppSpacing.lg),
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    for (var i = 0; i < _paragraphs.length; i++) ...[
+                    for (var i = 0; i < paragraphs.length; i++) ...[
                       if (i > 0) const SizedBox(height: AppSpacing.md),
-                      Text(_paragraphs[i], style: AppTextStyles.text),
+                      Text(paragraphs[i], style: AppTextStyles.text),
                     ],
                   ],
                 ),

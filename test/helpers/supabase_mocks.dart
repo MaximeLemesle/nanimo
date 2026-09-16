@@ -135,6 +135,13 @@ class FakeSelectChain extends Fake
       this;
 
   @override
+  PostgrestTransformBuilder<List<Map<String, dynamic>>> limit(
+    int count, {
+    String? referencedTable,
+  }) =>
+      this;
+
+  @override
   PostgrestTransformBuilder<Map<String, dynamic>> single() =>
       FakeSingleChain(_resolver);
 }
