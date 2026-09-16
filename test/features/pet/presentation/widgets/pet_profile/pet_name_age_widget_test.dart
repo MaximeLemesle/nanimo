@@ -67,4 +67,36 @@ void main() {
     final age = tester.getRect(find.text('21 jours'));
     expect(age.top, lessThan(name.bottom));
   });
+
+  testWidgets('pins the age to the right edge when both fit', (tester) async {
+    const width = 700.0;
+    await tester.pumpWidget(harness('Milo', DateTime(2026, 5, 25), width: width));
+
+    final host = tester.getRect(find.byType(PetNameAgeWidget));
+    final name = tester.getRect(find.text('Milo'));
+    final age = tester.getRect(find.text('21 jours'));
+
+    expect(name.left, host.left);
+    expect(age.right, moreOrLessEquals(host.right, epsilon: 0.5));
+  });
+
+  testWidgets('keeps the age on the right edge once it has wrapped',
+      (tester) async {
+    await tester.pumpWidget(harness(_longName, DateTime(2026, 5, 25)));
+
+    final host = tester.getRect(find.byType(PetNameAgeWidget));
+    final age = tester.getRect(find.text('21 jours'));
+
+    expect(age.right, moreOrLessEquals(host.right, epsilon: 0.5));
+  });
+
+  testWidgets('gives the name every pixel the age leaves', (tester) async {
+    const width = 700.0;
+    await tester.pumpWidget(harness('Milo', DateTime(2026, 5, 25), width: width));
+
+    final name = tester.getRect(find.text('Milo'));
+    final age = tester.getRect(find.text('21 jours'));
+
+    expect(name.width, moreOrLessEquals(width - age.width - 8, epsilon: 0.5));
+  });
 }
