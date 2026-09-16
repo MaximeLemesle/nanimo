@@ -79,31 +79,25 @@ class PetPage extends StatelessWidget {
                     spacing: AppSpacing.lg,
                     children: [
                       /// Pet name + age
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: PetNameAgeWidget(
-                              name: pet.petName,
-                              birthdate: pet.birthdate,
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          IconButton(
-                            onPressed: () => context.push(
-                              '${RouteNames.editPet}/${pet.petId}',
-                            ),
-                            icon: const Icon(Icons.edit_outlined),
-                            color: AppColors.textSecondary,
-                            tooltip: 'Modifier ${pet.petName}',
-                            visualDensity: VisualDensity.compact,
-                          ),
-                        ],
+                      PetNameAgeWidget(
+                        name: pet.petName,
+                        birthdate: pet.birthdate,
                       ),
 
                       /// Identity card
                       PetCardWidget(
                         label: 'Identité',
+                        action: IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(Icons.edit_outlined, size: 20),
+                          color: AppColors.textSecondary,
+                          tooltip: 'Modifier ${pet.petName}',
+                          onPressed: () => context.push(
+                            '${RouteNames.editPet}/${pet.petId}',
+                          ),
+                        ),
                         items: [
                           PetCardItemWidget(
                             label: 'Espèce',
