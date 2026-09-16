@@ -6,6 +6,8 @@ import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/date_field_widget.dart';
 import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/create_health_diary_section/health_diary_section_widget.dart';
+import 'package:nanimo/features/pet/data/models/pet_model.dart';
+import 'package:nanimo/core/utils/gender_formatter.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/chip_number_field_widget.dart';
 
 typedef EditHealthInfoSubmit = void Function({
@@ -17,11 +19,13 @@ typedef EditHealthInfoSubmit = void Function({
 
 /// Edits the three facts shown on the health card: sterilisation, chip, deworming.
 class EditHealthInfoBottomSheetWidget extends StatefulWidget {
+  final Gender gender;
   final HealthDiaryModel diary;
   final EditHealthInfoSubmit onSubmit;
 
   const EditHealthInfoBottomSheetWidget({
     super.key,
+    required this.gender,
     required this.diary,
     required this.onSubmit,
   });
@@ -83,7 +87,7 @@ class _EditHealthInfoBottomSheetWidgetState
       ),
       children: [
         HealthDiarySectionWidget(
-          label: 'Stérilisé',
+          label: GenderFormatter.neuteringLabel(widget.gender),
           value: _isSterilized,
           onChanged: (value) => setState(() => _isSterilized = value),
         ),

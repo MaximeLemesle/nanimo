@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/edit_health_info_bottom_sheet_widget.dart';
+import 'package:nanimo/features/pet/data/models/pet_model.dart';
 
 void main() {
   late bool submitted;
@@ -20,7 +21,11 @@ void main() {
     capturedDeworming = null;
   });
 
-  Future<void> pumpSheet(WidgetTester tester, HealthDiaryModel diary) async {
+  Future<void> pumpSheet(
+    WidgetTester tester,
+    HealthDiaryModel diary, {
+    Gender gender = Gender.female,
+  }) async {
     tester.view.physicalSize = const Size(1200, 2400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -34,6 +39,7 @@ void main() {
                 context: context,
                 isScrollControlled: true,
                 builder: (_) => EditHealthInfoBottomSheetWidget(
+                  gender: gender,
                   diary: diary,
                   onSubmit: ({
                     required bool isSterilized,
@@ -153,5 +159,22 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(capturedDeworming, isNull);
+  });
+
+  // NAN-091: the sheet must say the same word as the summary it edits.
+  group('neutering wording', () {
+    testWidgets('a female reads Stérilisée', (tester) async {
+      await pumpSheet(tester, diary(), gender: Gender.female);
+
+      expect(find.text('Stérilisée'), findsOneWidget);
+      expect(find.text('Castré'), findsNothing);
+    });
+
+    testWidgets('a male reads Castré', (tester) async {
+      await pumpSheet(tester, diary(), gender: Gender.male);
+
+      expect(find.text('Castré'), findsOneWidget);
+      expect(find.text('Stérilisée'), findsNothing);
+    });
   });
 }
