@@ -113,4 +113,49 @@ void main() {
     expect(capturedVaccines.first.name, 'Typhus félin');
     expect(capturedVaccines.first.recurrence, 365);
   });
+
+  // NAN-087: the vet visit sheet used to pop twice, taking the diary sheet down
+  // with it and losing everything already typed.
+  testWidgets('keeps the diary sheet open and lists the visit after adding one',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(harness());
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, '0,3');
+    await tester.pumpAndSettle();
+
+    // Enable "Déjà allé chez le véto ?" (5th switch) then open the visit sheet.
+    await tester.tap(find.byType(CupertinoSwitch).at(4));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Ajouter une visite'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Motif de la visite'), 'Rappel annuel');
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(InkWell, 'Sélectionner une date').last);
+    await tester.pumpAndSettle();
+    await tester.tapAt(const Offset(400, 50));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Enregistrer').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Création du carnet de santé'), findsOneWidget);
+    expect(find.textContaining('Rappel annuel'), findsOneWidget);
+    expect(submitted, isFalse);
+
+    // The typed weight survived, and the visit rides along on submit.
+    await tester.tap(find.text('Enregistrer'));
+    await tester.pumpAndSettle();
+
+    expect(submitted, isTrue);
+    expect(capturedWeight, 0.3);
+    expect(capturedVisits.length, 1);
+    expect(capturedVisits.first.title, 'Rappel annuel');
+  });
 }
