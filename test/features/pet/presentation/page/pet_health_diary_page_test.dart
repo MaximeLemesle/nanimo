@@ -19,8 +19,7 @@ class _MockPetRepository extends Mock implements PetRepository {}
 
 class _MockHealthRepository extends Mock implements HealthRepository {}
 
-class _MockReferentialRepository extends Mock
-    implements ReferentialRepository {}
+class _MockReferentialRepository extends Mock implements ReferentialRepository {}
 
 final _pet = PetModel(
   petId: 'p1',
@@ -117,6 +116,14 @@ void main() {
         petId: 'p',
       ),
     );
+    registerFallbackValue(
+      HealthDiaryWeightLogModel(
+        healthDiaryWeightLogId: 'f',
+        weight: 1,
+        loggedAt: DateTime(2026, 1, 1),
+        petId: 'p',
+      ),
+    );
   });
 
   setUp(() {
@@ -129,17 +136,17 @@ void main() {
     when(() => healthRepo.addVetVisit(any())).thenAnswer((_) async {});
     when(() => healthRepo.updateVetVisit(any())).thenAnswer((_) async {});
     when(() => healthRepo.updateVaccine(any())).thenAnswer((_) async {});
-    when(() => healthRepo.watchDiaryForPet(any()))
-        .thenAnswer((_) => Stream.value(_diary));
-    when(() => healthRepo.getVaccinesForDiary(any()))
-        .thenAnswer((_) => Stream.value(_vaccines));
-    when(() => healthRepo.getWeightLogsForPet(any()))
-        .thenAnswer((_) => Stream.value(_weightLogs));
-    when(() => healthRepo.getVetVisitsForPet(any()))
-        .thenAnswer((_) => Stream.value(_vetVisits));
+    when(() => healthRepo.deleteVaccine(any())).thenAnswer((_) async {});
+    when(() => healthRepo.deleteVetVisit(any())).thenAnswer((_) async {});
+    when(() => healthRepo.addWeightLog(any())).thenAnswer((_) async {});
+    when(() => healthRepo.updateWeightLog(any())).thenAnswer((_) async {});
+    when(() => healthRepo.deleteWeightLog(any())).thenAnswer((_) async {});
+    when(() => healthRepo.watchDiaryForPet(any())).thenAnswer((_) => Stream.value(_diary));
+    when(() => healthRepo.getVaccinesForDiary(any())).thenAnswer((_) => Stream.value(_vaccines));
+    when(() => healthRepo.getWeightLogsForPet(any())).thenAnswer((_) => Stream.value(_weightLogs));
+    when(() => healthRepo.getVetVisitsForPet(any())).thenAnswer((_) => Stream.value(_vetVisits));
     when(() => refRepo.fetchSpecies()).thenAnswer((_) async => [_species]);
-    when(() => refRepo.fetchRacesBySpecies(any()))
-        .thenAnswer((_) async => _races);
+    when(() => refRepo.fetchRacesBySpecies(any())).thenAnswer((_) async => _races);
   });
 
   Widget buildPage(PetDetailsCubit cubit) {
@@ -206,8 +213,7 @@ void main() {
     await tester.tap(find.text('Ajouter une visite'));
     await tester.pumpAndSettle();
 
-    await tester.enterText(
-        find.widgetWithText(TextField, 'Motif de la visite'), 'Rappel vaccin');
+    await tester.enterText(find.widgetWithText(TextField, 'Motif de la visite'), 'Rappel vaccin');
     await tester.tap(find.text('Sélectionner une date'));
     await tester.pumpAndSettle();
     await tester.tapAt(const Offset(400, 50));
@@ -364,6 +370,179 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Enregistrer'), findsNothing);
+
+      await cubit.close();
+    });
+  });
+
+  // NAN-080: NAN-085 shipped the edit only, and not for the weight logs.
+  group('deleting an entry', () {
+    Future<PetDetailsCubit> openEditor(
+      WidgetTester tester, {
+      required String tooltip,
+      required String row,
+    }) async {
+      await tester.binding.setSurfaceSize(const Size(800, 2000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final cubit = createCubit();
+      await tester.pumpWidget(buildPage(cubit));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip(tooltip));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(row));
+      await tester.pumpAndSettle();
+      return cubit;
+    }
+
+    Finder confirmButton() => find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.widgetWithText(TextButton, 'Supprimer'),
+        );
+
+    testWidgets('the create form offers no deletion', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 2000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final cubit = createCubit();
+      await tester.pumpWidget(buildPage(cubit));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Ajouter un vaccin'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Supprimer'), findsNothing);
+
+      await cubit.close();
+    });
+
+    testWidgets('a vaccine is deleted once confirmed', (tester) async {
+      final cubit = await openEditor(tester, tooltip: 'Modifier un vaccin', row: 'Typhus félin');
+
+      await tester.tap(find.text('Supprimer le vaccin'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Supprimer ce vaccin ?'), findsOneWidget);
+      await tester.tap(confirmButton());
+      await tester.pumpAndSettle();
+
+      verify(() => healthRepo.deleteVaccine('v1')).called(1);
+      verifyNever(() => healthRepo.updateVaccine(any()));
+
+      await cubit.close();
+    });
+
+    testWidgets('cancelling the confirmation deletes nothing', (tester) async {
+      final cubit = await openEditor(tester, tooltip: 'Modifier un vaccin', row: 'Typhus félin');
+
+      await tester.tap(find.text('Supprimer le vaccin'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(TextButton, 'Annuler'));
+      await tester.pumpAndSettle();
+
+      verifyNever(() => healthRepo.deleteVaccine(any()));
+
+      /// The sheet is still there, so nothing typed has been lost either.
+      expect(find.text('Modifier le vaccin'), findsWidgets);
+
+      await cubit.close();
+    });
+
+    testWidgets('a vet visit is deleted once confirmed', (tester) async {
+      final cubit = await openEditor(tester, tooltip: 'Modifier une visite', row: 'Bilan annuel');
+
+      await tester.tap(find.text('Supprimer la visite'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Supprimer cette visite ?'), findsOneWidget);
+      await tester.tap(confirmButton());
+      await tester.pumpAndSettle();
+
+      verify(() => healthRepo.deleteVetVisit('vv1')).called(1);
+
+      await cubit.close();
+    });
+  });
+
+  group('editing a weight log', () {
+    Future<PetDetailsCubit> pumpDiary(WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 2000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final cubit = createCubit();
+      await tester.pumpWidget(buildPage(cubit));
+      await tester.pumpAndSettle();
+      return cubit;
+    }
+
+    testWidgets('the weight section carries a pencil like the others', (tester) async {
+      final cubit = await pumpDiary(tester);
+
+      expect(find.byTooltip('Modifier une pesée'), findsOneWidget);
+
+      await cubit.close();
+    });
+
+    testWidgets('arming the section lists the logs, most recent first', (tester) async {
+      final cubit = await pumpDiary(tester);
+
+      expect(find.text('Poids naissance'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Modifier une pesée'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Choisis la pesée à modifier'), findsOneWidget);
+      expect(find.text('Poids naissance'), findsNothing);
+
+      final recent = tester.getRect(find.text('3,2 kg le 01/06/2026'));
+      final older = tester.getRect(find.text('1,2 kg le 01/01/2026'));
+      expect(recent.top, lessThan(older.top));
+
+      await cubit.close();
+    });
+
+    testWidgets('picking a log opens it pre-filled and updates on save', (tester) async {
+      final cubit = await pumpDiary(tester);
+
+      await tester.tap(find.byTooltip('Modifier une pesée'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('3,2 kg le 01/06/2026'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Modifier la pesée'), findsWidgets);
+      expect(find.widgetWithText(TextField, '3,2'), findsOneWidget);
+
+      await tester.tap(find.text('Enregistrer'));
+      await tester.pumpAndSettle();
+
+      final captured = verify(() => healthRepo.updateWeightLog(captureAny())).captured.single as HealthDiaryWeightLogModel;
+      expect(captured.healthDiaryWeightLogId, 'w2');
+      expect(captured.weight, 3.2);
+      verifyNever(() => healthRepo.addWeightLog(any()));
+
+      await cubit.close();
+    });
+
+    testWidgets('a log is deleted once confirmed', (tester) async {
+      final cubit = await pumpDiary(tester);
+
+      await tester.tap(find.byTooltip('Modifier une pesée'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('3,2 kg le 01/06/2026'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Supprimer la pesée'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Supprimer cette pesée ?'), findsOneWidget);
+      await tester.tap(find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.widgetWithText(TextButton, 'Supprimer'),
+      ));
+      await tester.pumpAndSettle();
+
+      verify(() => healthRepo.deleteWeightLog('w2')).called(1);
 
       await cubit.close();
     });

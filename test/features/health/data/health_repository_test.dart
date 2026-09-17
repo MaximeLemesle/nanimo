@@ -402,6 +402,33 @@ void main() {
     });
   });
 
+  // NAN-080: the only repository method the ticket still had to write.
+  group('updateWeightLog', () {
+    test('updates Supabase then refreshes the cache', () async {
+      await seedWeight(buildWeightLog('w1', weight: 5.5));
+      stubUpdate(supabase, 'health_diary_weight_log', resolver: () => null);
+
+      await repo.updateWeightLog(buildWeightLog(
+        'w1',
+        weight: 6.4,
+        loggedAt: DateTime.utc(2027, 2, 2),
+      ));
+
+      final cached = await harness.isar.weightLogCaches.getByHealthDiaryWeightLogId('w1');
+      expect(cached!.weight, 6.4);
+      expect(cached.loggedAt.isAtSameMomentAs(DateTime.utc(2027, 2, 2)), isTrue);
+    });
+
+    test('throws when Supabase fails', () async {
+      stubUpdate(supabase, 'health_diary_weight_log', resolver: () => throw Exception('x'));
+
+      await expectLater(
+        repo.updateWeightLog(buildWeightLog('w1')),
+        throwsA(isA<RepositoryNetworkException>()),
+      );
+    });
+  });
+
   group('deleteWeightLog', () {
     test('removes the weight log from cache', () async {
       await seedWeight(buildWeightLog('w1'));

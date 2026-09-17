@@ -177,6 +177,26 @@ class HealthRepository {
     });
   }
 
+  Future<void> updateWeightLog(HealthDiaryWeightLogModel log) async {
+    try {
+      await _supabase
+          .from('health_diary_weight_log')
+          .update(log.toJson())
+          .eq('id_health_diary_weight_log', log.healthDiaryWeightLogId);
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'updateWeightLog',
+          networkMessage: 'Une connexion internet est requise pour modifier un poids.',
+          serverMessage: 'Impossible de modifier le poids pour le moment.');
+    }
+
+    await _isar.writeTxn(() async {
+      await _isar.weightLogCaches.putByHealthDiaryWeightLogId(
+        WeightLogCache.fromModel(log),
+      );
+    });
+  }
+
   Future<void> deleteWeightLog(String healthDiaryWeightLogId) async {
     try {
       await _supabase

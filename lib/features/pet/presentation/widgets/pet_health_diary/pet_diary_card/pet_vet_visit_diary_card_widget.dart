@@ -98,6 +98,7 @@ class _PetVetVisitDiaryCardWidgetState extends State<PetVetVisitDiaryCardWidget>
       context,
       AddVetVisitBottomSheetWidget(
         initial: visit,
+        onDelete: () => cubit.deleteVetVisit(visit.vetVisitId),
         onSubmit: ({required String title, required DateTime visitedAt, String? vetName, String? clinicName}) {
           cubit.updateVetVisit(
             VetVisitModel(

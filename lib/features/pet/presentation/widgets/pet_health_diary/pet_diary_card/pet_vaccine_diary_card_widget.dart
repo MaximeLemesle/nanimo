@@ -104,6 +104,7 @@ class _PetVaccineDiaryCardWidgetState extends State<PetVaccineDiaryCardWidget> {
       context,
       AddVaccineBottomSheetWidget(
         initial: vaccine,
+        onDelete: () => cubit.deleteVaccine(vaccine.healthDiaryVaccineId),
         onSubmit: ({required String vaccineName, required DateTime lastDate, required DateTime nextDate}) {
           cubit.updateVaccine(
             HealthDiaryVaccineModel(
