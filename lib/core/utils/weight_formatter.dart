@@ -6,6 +6,11 @@ class WeightFormatter {
     return '${weight.toStringAsFixed(1).replaceAll('.', ',')} kg';
   }
 
+  /// [label] without the unit, to type back into an edit field.
+  static String input(double weight) {
+    return weight.toStringAsFixed(1).replaceAll('.', ',');
+  }
+
   static double? parseWeight(String raw) {
     final value = double.tryParse(raw.trim().replaceAll(',', '.'));
     if (value == null || value <= 0) return null;

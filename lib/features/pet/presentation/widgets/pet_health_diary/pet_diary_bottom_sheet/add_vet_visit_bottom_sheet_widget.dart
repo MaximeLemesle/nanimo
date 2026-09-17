@@ -6,6 +6,7 @@ import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/date_field_widget.dart';
 import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
+import 'package:nanimo/core/widgets/confirm_deletion_dialog.dart';
 
 typedef VetVisitSubmit = void Function({
   required String title,
@@ -20,15 +21,16 @@ class AddVetVisitBottomSheetWidget extends StatefulWidget {
   /// Non-null turns the sheet into a pre-filled edit form, like [AddVaccineBottomSheetWidget].
   final VetVisitModel? initial;
 
-  const AddVetVisitBottomSheetWidget({super.key, required this.onSubmit, this.initial});
+  /// Offered in edit mode only, behind a confirmation.
+  final VoidCallback? onDelete;
+
+  const AddVetVisitBottomSheetWidget({super.key, required this.onSubmit, this.initial, this.onDelete});
 
   @override
-  State<AddVetVisitBottomSheetWidget> createState() =>
-      _AddVetVisitBottomSheetWidgetState();
+  State<AddVetVisitBottomSheetWidget> createState() => _AddVetVisitBottomSheetWidgetState();
 }
 
-class _AddVetVisitBottomSheetWidgetState
-    extends State<AddVetVisitBottomSheetWidget> {
+class _AddVetVisitBottomSheetWidgetState extends State<AddVetVisitBottomSheetWidget> {
   late final TextEditingController _titleController;
   late final TextEditingController _vetController;
   late final TextEditingController _clinicController;
@@ -44,8 +46,7 @@ class _AddVetVisitBottomSheetWidgetState
     _visitedAt = initial?.visitedAt;
   }
 
-  bool get _isValid =>
-      _titleController.text.trim().isNotEmpty && _visitedAt != null;
+  bool get _isValid => _titleController.text.trim().isNotEmpty && _visitedAt != null;
 
   @override
   void dispose() {
@@ -68,15 +69,39 @@ class _AddVetVisitBottomSheetWidgetState
     Navigator.of(context).pop();
   }
 
+  Future<void> _confirmDelete() async {
+    final confirmed = await confirmDeletion(
+      context,
+      title: 'Supprimer cette visite ?',
+      message: 'La visite disparaîtra du carnet de santé et ne pourra pas être récupérée.',
+    );
+    if (!confirmed || !mounted) return;
+    widget.onDelete!();
+    Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     return BottomSheetWidget(
       title: widget.initial == null ? 'Ajouter une visite' : 'Modifier la visite',
-      action: ButtonWidget(
-        label: 'Enregistrer',
-        fullWidth: true,
-        onPressed: _isValid ? _submit : null,
-        state: _isValid ? ButtonState.normal : ButtonState.disabled,
+      action: Column(
+        children: [
+          if (widget.onDelete != null) ...[
+            ButtonWidget(
+              label: 'Supprimer la visite',
+              type: ButtonType.delete,
+              fullWidth: true,
+              onPressed: _confirmDelete,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
+          ButtonWidget(
+            label: 'Enregistrer',
+            fullWidth: true,
+            onPressed: _isValid ? _submit : null,
+            state: _isValid ? ButtonState.normal : ButtonState.disabled,
+          ),
+        ],
       ),
       children: [
         _buildField(_titleController, 'Motif de la visite', capitalize: true),
@@ -87,11 +112,9 @@ class _AddVetVisitBottomSheetWidgetState
           onChanged: (date) => setState(() => _visitedAt = date),
         ),
         const SizedBox(height: AppSpacing.md),
-        _buildField(_vetController, 'Vétérinaire (optionnel)',
-            capitalize: true),
+        _buildField(_vetController, 'Vétérinaire (optionnel)', capitalize: true),
         const SizedBox(height: AppSpacing.md),
-        _buildField(_clinicController, 'Clinique (optionnel)',
-            capitalize: true),
+        _buildField(_clinicController, 'Clinique (optionnel)', capitalize: true),
       ],
     );
   }
@@ -103,8 +126,7 @@ class _AddVetVisitBottomSheetWidgetState
   }) {
     return TextField(
       controller: controller,
-      textCapitalization:
-          capitalize ? TextCapitalization.sentences : TextCapitalization.none,
+      textCapitalization: capitalize ? TextCapitalization.sentences : TextCapitalization.none,
       onChanged: (_) => setState(() {}),
       decoration: InputDecoration(
         labelText: label,

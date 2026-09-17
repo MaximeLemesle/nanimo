@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nanimo/features/subscription/presentation/pending_premium_intent.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -56,6 +57,7 @@ void main() {
   /// of a bare `maybePop`, and `GoRouter.of` throws without one.
   Future<void> pumpPaywall(WidgetTester tester,
       {Future<bool> Function(Uri)? onOpenLegalLink,
+      bool isPreview = false,
       Duration confirmationTimeout = const Duration(milliseconds: 30)}) async {
     tester.view.physicalSize = const Size(1000, 2400);
     tester.view.devicePixelRatio = 1.0;
@@ -73,8 +75,19 @@ void main() {
               confirmationTimeout: confirmationTimeout,
               pollInterval: const Duration(milliseconds: 10),
             )..loadOffers(),
-            child: PaywallPage(onOpenLegalLink: onOpenLegalLink),
+            child: PaywallPage(
+              onOpenLegalLink: onOpenLegalLink,
+              isPreview: isPreview,
+            ),
           ),
+        ),
+        GoRoute(
+          path: RouteNames.signup,
+          builder: (_, __) => const Scaffold(body: Text('signup-stub')),
+        ),
+        GoRoute(
+          path: RouteNames.login,
+          builder: (_, __) => const Scaffold(body: Text('login-stub')),
         ),
         GoRoute(
           path: RouteNames.premiumWelcome,
@@ -378,5 +391,51 @@ void main() {
     await settle(tester);
 
     expect(find.textContaining('Aucun abonnement à restaurer'), findsOneWidget);
+  });
+
+  /// NAN-093: during the onboarding the offer is shown before the account
+  /// exists. RevenueCat would bill an anonymous id and the webhook drops those,
+  /// so the preview charges nothing and hands the choice to the signup.
+  group('preview, before the signup', () {
+    setUp(() {
+      when(() => purchaseRepository.getOffers())
+          .thenAnswer((_) async => [_annual]);
+    });
+    tearDown(pendingPremiumIntent.clear);
+
+    testWidgets('buys nothing and remembers the chosen plan', (tester) async {
+      await pumpPaywall(tester, isPreview: true);
+
+      await tester.tap(find.text('Passer premium'));
+      await settle(tester);
+
+      verifyNever(() => purchaseRepository.purchase(any()));
+      expect(find.text('signup-stub'), findsOneWidget);
+      expect(pendingPremiumIntent.isPending, isTrue);
+    });
+
+    testWidgets('dismissing keeps nothing and still reaches the signup',
+        (tester) async {
+      await pumpPaywall(tester, isPreview: true);
+
+      await tester.tap(find.byTooltip('Fermer'));
+      await settle(tester);
+
+      verifyNever(() => purchaseRepository.purchase(any()));
+      expect(find.text('signup-stub'), findsOneWidget);
+      expect(pendingPremiumIntent.isPending, isFalse);
+    });
+
+    /// Apple wants the restore reachable from any screen that sells, and there
+    /// is nothing to restore onto until the owner is back in their account.
+    testWidgets('sends an existing subscriber to the login', (tester) async {
+      await pumpPaywall(tester, isPreview: true);
+
+      await tester.tap(find.text('J\'ai déjà un abonnement'));
+      await settle(tester);
+
+      verifyNever(() => purchaseRepository.restore());
+      expect(find.text('login-stub'), findsOneWidget);
+    });
   });
 }

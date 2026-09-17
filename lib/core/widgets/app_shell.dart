@@ -14,6 +14,8 @@ import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_bottom_sheet/add_weight_bottom_sheet_widget.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:nanimo/features/subscription/presentation/quota_upsell.dart';
+import 'package:nanimo/features/subscription/presentation/pending_premium_intent.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
 
 class AppShell extends StatefulWidget {
   final Widget child;
@@ -31,6 +33,7 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   bool _isCreateMenuOpen = false;
+  bool _onboardingPaywallPending = false;
 
   @override
   void initState() {
@@ -128,14 +131,31 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final index = _currentIndex(context);
 
-    return BlocListener<PetCreationCubit, PetCreationState>(
-      listenWhen: (previous, current) => previous.status != current.status,
-      listener: _onPetCreationChanged,
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<PetCreationCubit, PetCreationState>(
+          listenWhen: (previous, current) => previous.status != current.status,
+          listener: _onPetCreationChanged,
+        ),
+
+        /// The plan loads in parallel with the signup and may land after the
+        /// pet, so the paywall waits for it instead of being skipped.
+        BlocListener<SubscriptionCubit, SubscriptionState>(
+          listenWhen: (previous, current) => previous.isLoaded != current.isLoaded,
+          listener: (context, _) => _showOnboardingPaywall(context),
+        ),
+      ],
       child: _buildScaffold(context, index),
     );
   }
 
   void _onPetCreationChanged(BuildContext context, PetCreationState state) {
+    if (state.status == PetCreationStatus.success &&
+        state.createdDuringOnboarding) {
+      _onboardingPaywallPending = true;
+      _showOnboardingPaywall(context);
+      return;
+    }
     if (state.status != PetCreationStatus.error) return;
     ScaffoldMessenger.of(context)
       ..clearSnackBars()
@@ -148,6 +168,27 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
           ),
         ),
       );
+  }
+
+  /// Pushed once, right after the onboarding pet lands. No persistence: the
+  /// onboarding runs once, so nothing can call this a second time.
+  void _showOnboardingPaywall(BuildContext context) {
+    if (!_onboardingPaywallPending) return;
+    if (!pendingPremiumIntent.isPending) {
+      _onboardingPaywallPending = false;
+      return;
+    }
+
+    final subscription = context.read<SubscriptionCubit>().state;
+    if (!subscription.isLoaded) return;
+
+    _onboardingPaywallPending = false;
+    if (subscription.isPremium) {
+      pendingPremiumIntent.clear();
+      return;
+    }
+
+    QuotaUpsell.openPaywall(context, PaywallTrigger.onboarding);
   }
 
   /// Only a free user whose plan is known and already full gets the marker:

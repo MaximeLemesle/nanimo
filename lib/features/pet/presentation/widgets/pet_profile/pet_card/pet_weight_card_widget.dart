@@ -39,7 +39,7 @@ class PetWeightCardWidget extends StatelessWidget {
           WeightChartWidget(logs: logs),
           if (!readOnly)
             ButtonWidget(
-              label: 'Mettre à jour le poids',
+              label: 'Ajouter une pesée',
               icon: Icons.add,
               iconPosition: ButtonIcon.right,
               fullWidth: true,

@@ -6,6 +6,8 @@ import 'package:nanimo/data/models/referential/pet_race_model.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/event/data/event_repository.dart';
+import 'package:nanimo/features/health/data/health_repository.dart';
+import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/pet/presentation/cubit/edit_pet_cubit.dart';
@@ -15,6 +17,8 @@ class _MockPetRepository extends Mock implements PetRepository {}
 class _MockReferentialRepository extends Mock implements ReferentialRepository {}
 
 class _MockEventRepository extends Mock implements EventRepository {}
+
+class _MockHealthRepository extends Mock implements HealthRepository {}
 
 const _catSpecies = PetSpeciesModel(
   petSpeciesId: 'sp-cat',
@@ -53,6 +57,13 @@ const _siamoisIcon = PetIconModel(
   petRaceId: 'race-siamois',
 );
 
+const _diary = HealthDiaryModel(
+  healthDiaryId: 'diary-milo',
+  petId: 'pet-milo',
+  isSterilized: false,
+  isChipped: false,
+);
+
 PetModel buildMilo() => PetModel(
       petId: 'pet-milo',
       petName: 'Milo',
@@ -68,21 +79,27 @@ void main() {
   late _MockPetRepository petRepo;
   late _MockReferentialRepository referentialRepo;
   late _MockEventRepository eventRepo;
+  late _MockHealthRepository healthRepo;
 
   EditPetCubit buildCubit() => EditPetCubit(
         petRepository: petRepo,
         referentialRepository: referentialRepo,
         eventRepository: eventRepo,
+        healthRepository: healthRepo,
       );
 
   setUpAll(() {
     registerFallbackValue(buildMilo());
+    registerFallbackValue(
+      const HealthDiaryModel(healthDiaryId: 'fallback', petId: 'pet-milo'),
+    );
   });
 
   setUp(() {
     petRepo = _MockPetRepository();
     referentialRepo = _MockReferentialRepository();
     eventRepo = _MockEventRepository();
+    healthRepo = _MockHealthRepository();
 
     when(() => petRepo.getPetById('pet-milo'))
         .thenAnswer((_) async => buildMilo());
@@ -94,6 +111,9 @@ void main() {
         .thenAnswer((_) async => [_catSpecies]);
     when(() => referentialRepo.fetchIcons())
         .thenAnswer((_) async => [_europeenIcon, _siamoisIcon]);
+    when(() => healthRepo.getDiaryForPet('pet-milo'))
+        .thenAnswer((_) async => _diary);
+    when(() => healthRepo.upsertDiary(any())).thenAnswer((_) async {});
   });
 
   group('load', () {
@@ -159,6 +179,9 @@ void main() {
         petRaceId: 'race-europeen',
         gender: Gender.female,
         birthdate: DateTime.utc(2021, 3, 2),
+        isSterilized: true,
+        isChipped: true,
+        chipNumber: '250269',
       );
 
       final saved =
@@ -184,6 +207,9 @@ void main() {
         petRaceId: 'race-siamois',
         gender: Gender.male,
         birthdate: DateTime.utc(2022, 5, 1),
+        isSterilized: true,
+        isChipped: true,
+        chipNumber: '250269',
       );
 
       final saved =
@@ -204,6 +230,9 @@ void main() {
         petRaceId: 'race-siamois',
         gender: Gender.male,
         birthdate: DateTime.utc(2022, 5, 1),
+        isSterilized: true,
+        isChipped: true,
+        chipNumber: '250269',
       );
 
       final saved =
@@ -224,6 +253,9 @@ void main() {
         petRaceId: 'race-europeen',
         gender: Gender.male,
         birthdate: DateTime.utc(2022, 5, 1),
+        isSterilized: true,
+        isChipped: true,
+        chipNumber: '250269',
       );
 
       expect(cubit.state.status, EditPetStatus.error);
@@ -240,6 +272,9 @@ void main() {
         petRaceId: 'race-europeen',
         gender: Gender.male,
         birthdate: DateTime.utc(2022, 5, 1),
+        isSterilized: true,
+        isChipped: true,
+        chipNumber: '250269',
       );
 
       expect(cubit.state.status, EditPetStatus.error);
@@ -257,6 +292,9 @@ void main() {
         petRaceId: 'race-europeen',
         gender: Gender.male,
         birthdate: DateTime.utc(2022, 5, 1),
+        isSterilized: true,
+        isChipped: true,
+        chipNumber: '250269',
       );
 
       verifyNever(() => petRepo.updatePet(any()));
