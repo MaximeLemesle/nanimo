@@ -72,7 +72,7 @@ class PetSummaryDiaryCardWidget extends StatelessWidget {
                   : 'Non',
             ),
             PetDiaryRow(
-              label: 'Stérilisée',
+              label: GenderFormatter.neuteringLabel(pet.gender),
               value: diary?.isSterilized == null
                   ? 'Non'
                   : (diary!.isSterilized! ? 'Oui' : 'Non'),

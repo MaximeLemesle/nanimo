@@ -15,6 +15,7 @@ import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/pet/presentation/page/pet_page.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card_widget/pet_card_widget.dart';
 
 class _MockPetRepository extends Mock implements PetRepository {}
 
@@ -128,6 +129,28 @@ void main() {
     await cubit.close();
   });
 
+  testWidgets('carries the edit pencil inside the identity card',
+      (tester) async {
+    final cubit = PetDetailsCubit(
+      petRepository: petRepo,
+      healthRepository: healthRepo,
+      referentialRepository: refRepo,
+    );
+    await tester.pumpWidget(buildPage(cubit));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: find.widgetWithText(PetCardWidget, 'Identité'),
+        matching: find.byTooltip('Modifier Yummy'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.byTooltip('Modifier Yummy'), findsOneWidget);
+
+    await cubit.close();
+  });
+
   testWidgets('the edit button routes to the pet edit page', (tester) async {
     final cubit = PetDetailsCubit(
       petRepository: petRepo,
@@ -180,7 +203,7 @@ void main() {
     await tester.pumpWidget(buildPage(cubit));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Mettre à jour le poids'));
+    await tester.tap(find.text('Ajouter une pesée'));
     await tester.pumpAndSettle();
 
     expect(find.text('Enregistrer'), findsOneWidget);

@@ -328,6 +328,15 @@ class _EditPetPageState extends State<EditPetPage> {
               ),
               const SizedBox(height: AppSpacing.xxl),
               ButtonWidget(
+                label: 'Supprimer',
+                type: ButtonType.delete,
+                fullWidth: true,
+                isLoading: isDeleting,
+                state: busy ? ButtonState.disabled : ButtonState.normal,
+                onPressed: () => _confirmAndDelete(context, pet),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              ButtonWidget(
                 label: 'Enregistrer',
                 fullWidth: true,
                 isLoading: isSaving,
@@ -343,15 +352,6 @@ class _EditPetPageState extends State<EditPetPage> {
                         chipNumber: _chipController.text,
                       );
                 },
-              ),
-              const SizedBox(height: AppSpacing.md),
-              ButtonWidget(
-                label: 'Supprimer',
-                type: ButtonType.delete,
-                fullWidth: true,
-                isLoading: isDeleting,
-                state: busy ? ButtonState.disabled : ButtonState.normal,
-                onPressed: () => _confirmAndDelete(context, pet),
               ),
             ],
           ),

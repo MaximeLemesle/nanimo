@@ -25,7 +25,8 @@ class SettingsState extends Equatable {
   /// freemium, and no subscription action may be offered.
   bool get isSubscriptionLoaded => user != null;
 
-  bool get isPremium => user?.subscriptionStatus == SubscriptionStatus.premium;
+  /// Reads the expiry date like the quotas do.
+  bool get isPremium => user?.hasActivePremium ?? false;
 
   SettingsState copyWith({
     SettingsStatus? status,

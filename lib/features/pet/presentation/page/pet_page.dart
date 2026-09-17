@@ -20,6 +20,8 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pe
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_health_onboarding_card_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_park_header_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_weight_card_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_name_age_widget.dart';
+import 'package:nanimo/features/pet/data/models/pet_model.dart';
 
 class PetPage extends StatelessWidget {
   const PetPage({super.key});
@@ -77,35 +79,25 @@ class PetPage extends StatelessWidget {
                     spacing: AppSpacing.lg,
                     children: [
                       /// Pet name + age
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              pet.petName,
-                              style: AppTextStyles.title01,
-                            ),
-                          ),
-                          Text(
-                            DateFormatter.age(pet.birthdate),
-                            style: AppTextStyles.numberBig,
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          IconButton(
-                            onPressed: () => context.push(
-                              '${RouteNames.editPet}/${pet.petId}',
-                            ),
-                            icon: const Icon(Icons.edit_outlined),
-                            color: AppColors.textSecondary,
-                            tooltip: 'Modifier ${pet.petName}',
-                            visualDensity: VisualDensity.compact,
-                          ),
-                        ],
+                      PetNameAgeWidget(
+                        name: pet.petName,
+                        birthdate: pet.birthdate,
                       ),
 
                       /// Identity card
                       PetCardWidget(
                         label: 'Identité',
+                        action: IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(Icons.edit_outlined, size: 20),
+                          color: AppColors.textSecondary,
+                          tooltip: 'Modifier ${pet.petName}',
+                          onPressed: () => context.push(
+                            '${RouteNames.editPet}/${pet.petId}',
+                          ),
+                        ),
                         items: [
                           PetCardItemWidget(
                             label: 'Espèce',
@@ -135,6 +127,7 @@ class PetPage extends StatelessWidget {
                               context,
                               CreateHealthDiaryBottomSheetWidget(
                                 petName: pet.petName,
+                                gender: pet.gender,
                                 birthdate: pet.birthdate,
                                 recommendedVaccines: state.recommendedVaccines,
                                 onSubmit: ({
@@ -176,10 +169,11 @@ class PetPage extends StatelessWidget {
 
                         /// Health info card
                         PetHealthInfoCardWidget(
+                          gender: pet.gender,
                           diary: state.diary,
                           vetVisits: state.vetVisits,
                           onFillPressed: () => context.push(RouteNames.healthDiary),
-                          onEditPressed: state.diary == null ? null : () => _editHealthInfo(context, state.diary!),
+                          onEditPressed: state.diary == null ? null : () => _editHealthInfo(context, pet.gender, state.diary!),
                         ),
 
                         /// Vaccines card
@@ -221,11 +215,12 @@ class PetPage extends StatelessWidget {
     );
   }
 
-  void _editHealthInfo(BuildContext context, HealthDiaryModel diary) {
+  void _editHealthInfo(BuildContext context, Gender gender, HealthDiaryModel diary) {
     final cubit = context.read<PetDetailsCubit>();
     BottomSheetWidget.show<void>(
       context,
       EditHealthInfoBottomSheetWidget(
+        gender: gender,
         diary: diary,
         onSubmit: ({
           required bool isSterilized,

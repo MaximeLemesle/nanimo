@@ -29,10 +29,16 @@ void main() {
   group('DateFormatter.age', () {
     final now = DateTime(2026, 6, 15);
 
-    test('returns "Moins d\'un mois" for newborns', () {
+    test('returns days for a pet under a month old', () {
+      expect(DateFormatter.age(DateTime(2026, 6, 1), now: now), '14 jours');
+      expect(DateFormatter.age(DateTime(2026, 5, 25), now: now), '21 jours');
+      expect(DateFormatter.age(DateTime(2026, 6, 14), now: now), '1 jour');
+    });
+
+    test('falls back to a phrase on the day of birth', () {
       expect(
-        DateFormatter.age(DateTime(2026, 6, 1), now: now),
-        "Moins d'un mois",
+        DateFormatter.age(DateTime(2026, 6, 15), now: now),
+        "Moins d'un jour",
       );
     });
 
