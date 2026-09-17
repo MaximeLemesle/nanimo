@@ -11,7 +11,7 @@ import 'package:nanimo/core/widgets/app_scaffold.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/nanimo_text_field_widget.dart';
 import 'package:nanimo/core/widgets/species_icon_widget.dart';
-import 'package:nanimo/core/widgets/text_field_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/chip_number_field_widget.dart';
 import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/presentation/cubit/edit_pet_cubit.dart';
@@ -319,11 +319,9 @@ class _EditPetPageState extends State<EditPetPage> {
                 label: 'Pucé',
                 value: _isChipped,
                 onChanged: (value) => setState(() => _isChipped = value),
-                child: TextFieldWidget(
+                child: ChipNumberFieldWidget(
                   controller: _chipController,
-                  label: 'Numéro de puce',
-                  keyboardType: TextInputType.number,
-                  onChanged: (_) => setState(() {}),
+                  onChanged: () => setState(() {}),
                 ),
               ),
               const SizedBox(height: AppSpacing.xxl),
