@@ -38,20 +38,30 @@ class EventPhotoPickerWidget extends StatelessWidget {
   /// single authority, capped by what the collage can lay out.
   static int maxImagesForPlan(SubscriptionState subscription) {
     var max = 0;
-    while (max < PolaroidCollageWidget.maxImages &&
-        subscription.canAddImageToEvent(max)) {
+    while (max < PolaroidCollageWidget.maxImages && subscription.canAddImageToEvent(max)) {
       max++;
     }
     return max;
   }
 
+  /// Frames the plan will never let the owner fill, null while it is unknown.
+  static int? premiumFromIndex(SubscriptionState subscription) {
+    if (!subscription.isLoaded) return null;
+    final max = maxImagesForPlan(subscription);
+    if (max >= PolaroidCollageWidget.maxImages) return null;
+    return max;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return PolaroidCollageWidget(
-      images: images,
-      urlResolver: urlResolver,
-      onTap: () => _openGrid(context),
-      onImageTap: (_) => _openGrid(context),
+    return BlocBuilder<SubscriptionCubit, SubscriptionState>(
+      builder: (context, subscription) => PolaroidCollageWidget(
+        images: images,
+        urlResolver: urlResolver,
+        premiumFromIndex: premiumFromIndex(subscription),
+        onTap: () => _openGrid(context),
+        onImageTap: (_) => _openGrid(context),
+      ),
     );
   }
 
@@ -89,8 +99,7 @@ class EventPhotoPickerWidget extends StatelessWidget {
       return;
     }
 
-    final picked =
-        await AddImageBottomSheetWidget.show(context, subscription: subscription);
+    final picked = await AddImageBottomSheetWidget.show(context, subscription: subscription);
     if (picked == null || picked.isEmpty || !context.mounted) return;
 
     onChanged([

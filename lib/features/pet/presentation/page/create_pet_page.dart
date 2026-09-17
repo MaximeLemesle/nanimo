@@ -6,6 +6,8 @@ import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/step_indicator_widget.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
+import 'package:nanimo/features/subscription/presentation/quota_upsell.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
@@ -36,8 +38,7 @@ class _CreatePetPageState extends State<CreatePetPage> {
     super.dispose();
   }
 
-  bool _isInApp(BuildContext context) =>
-      context.read<AuthCubit>().state.status == AuthStatus.authenticated;
+  bool _isInApp(BuildContext context) => context.read<AuthCubit>().state.status == AuthStatus.authenticated;
 
   void _handleBack(BuildContext context, OnboardingState state) {
     if (state.currentStep == 1) {
@@ -70,9 +71,11 @@ class _CreatePetPageState extends State<CreatePetPage> {
     if (_isInApp(context)) {
       context.read<OnboardingCubit>().reset();
       context.go(RouteNames.pet);
-    } else {
-      context.go(RouteNames.signup);
+      return;
     }
+
+    /// The offer is shown before the account is asked for
+    QuotaUpsell.openPaywall(context, PaywallTrigger.onboarding, preview: true);
   }
 
   bool _isNextEnabled(OnboardingState state) {
@@ -91,8 +94,7 @@ class _CreatePetPageState extends State<CreatePetPage> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<OnboardingCubit, OnboardingState>(
-      listenWhen: (previous, current) =>
-          previous.currentStep != current.currentStep,
+      listenWhen: (previous, current) => previous.currentStep != current.currentStep,
       listener: (context, state) {
         if (_pageController.hasClients) {
           _pageController.animateToPage(
@@ -146,15 +148,9 @@ class _CreatePetPageState extends State<CreatePetPage> {
                   Padding(
                     padding: const EdgeInsets.all(AppSpacing.lg),
                     child: ButtonWidget(
-                      label: state.currentStep == 3
-                          ? (_isInApp(context) ? 'Créer' : 'Créer mon compte')
-                          : 'Continuer',
-                      onPressed: _isNextEnabled(state)
-                          ? () => _handleNext(context, state)
-                          : null,
-                      state: _isNextEnabled(state)
-                          ? ButtonState.normal
-                          : ButtonState.disabled,
+                      label: state.currentStep == 3 ? (_isInApp(context) ? 'Créer' : 'Créer mon compte') : 'Continuer',
+                      onPressed: _isNextEnabled(state) ? () => _handleNext(context, state) : null,
+                      state: _isNextEnabled(state) ? ButtonState.normal : ButtonState.disabled,
                       fullWidth: true,
                     ),
                   ),

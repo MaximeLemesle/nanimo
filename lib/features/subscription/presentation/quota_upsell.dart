@@ -77,12 +77,16 @@ class QuotaUpsell {
   /// `/paywall` sits on the root navigator, above whatever raised the block.
   /// Every entry point goes through here so [trigger] is never lost, which is
   /// the property that says which limit actually converts.
-  static void openPaywall(BuildContext context, String trigger) {
+  static void openPaywall(
+    BuildContext context,
+    String trigger, {
+    bool preview = false,
+  }) {
     analytics.capture(
       AnalyticsEvents.paywallOpened,
       properties: {AnalyticsProperties.trigger: trigger},
     );
-    GoRouter.of(context).push(RouteNames.paywall);
+    GoRouter.of(context).push(_paywallLocation(preview));
   }
 
   static void openPaywallWith(GoRouter router, String trigger) {
@@ -92,6 +96,11 @@ class QuotaUpsell {
     );
     router.push(RouteNames.paywall);
   }
+
+  /// The preview cannot charge, so it is a different destination, not a flag
+  /// the page has to infer from whatever provider happens to be in scope.
+  static String _paywallLocation(bool preview) =>
+      preview ? '${RouteNames.paywall}?preview=1' : RouteNames.paywall;
 
   static void _showMessage(BuildContext context, String message) {
     ScaffoldMessenger.of(context)
