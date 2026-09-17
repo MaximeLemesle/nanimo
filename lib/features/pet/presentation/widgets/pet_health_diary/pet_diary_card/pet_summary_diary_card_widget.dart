@@ -6,6 +6,7 @@ import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/health/data/models/health_diary_weight_log_model.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card_widget/pet_diary_card_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card_widget/pet_diary_edit_button_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card_widget/pet_diary_table_widget.dart';
 
 class PetSummaryDiaryCardWidget extends StatelessWidget {
@@ -15,6 +16,9 @@ class PetSummaryDiaryCardWidget extends StatelessWidget {
   final List<HealthDiaryWeightLogModel> weightLogs;
   final HealthDiaryModel? diary;
 
+  /// Opens the pet edit screen, which owns every field shown here.
+  final VoidCallback? onEdit;
+
   const PetSummaryDiaryCardWidget({
     super.key,
     required this.pet,
@@ -22,23 +26,35 @@ class PetSummaryDiaryCardWidget extends StatelessWidget {
     required this.raceName,
     required this.weightLogs,
     this.diary,
+    this.onEdit,
   });
 
   @override
   Widget build(BuildContext context) {
     return PetDiaryCardWidget(
       title: 'Récapitulatif',
+      action: onEdit == null
+          ? null
+          : PetDiaryEditButtonWidget(
+              tooltip: 'Modifier les informations',
+              onPressed: onEdit!,
+            ),
       children: [
         PetDiaryTableWidget(
           rows: [
             PetDiaryRow(label: 'Nom', value: pet.petName),
-            PetDiaryRow(
-              label: 'Espèce',
-              value: speciesName,
-            ),
+            PetDiaryRow(label: 'Espèce', value: speciesName),
             PetDiaryRow(label: 'Race', value: raceName),
             PetDiaryRow(
-                label: 'Genre', value: GenderFormatter.label(pet.gender)),
+              label: 'Genre',
+              value: GenderFormatter.label(pet.gender),
+            ),
+
+            /// Above the age, which is derived from it.
+            PetDiaryRow(
+              label: 'Date de naissance',
+              value: DateFormatter.date(pet.birthdate),
+            ),
             PetDiaryRow(
               label: 'Âge',
               value: DateFormatter.ageDetailed(pet.birthdate),
@@ -52,7 +68,7 @@ class PetSummaryDiaryCardWidget extends StatelessWidget {
             PetDiaryRow(
               label: 'Numéro de puce',
               value: (diary?.isChipped == true && diary?.chipNumber != null)
-                  ? diary?.chipNumber!
+                  ? diary!.chipNumber!
                   : 'Non',
             ),
             PetDiaryRow(

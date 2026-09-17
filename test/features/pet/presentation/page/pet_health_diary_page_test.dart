@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_bottom_sheet/add_weight_bottom_sheet_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card/pet_summary_diary_card_widget.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -543,6 +546,103 @@ void main() {
       await tester.pumpAndSettle();
 
       verify(() => healthRepo.deleteWeightLog('w2')).called(1);
+
+      await cubit.close();
+    });
+  });
+
+  // NAN-089: the summary showed the age without the date that produces it.
+  group('the summary', () {
+    Future<PetDetailsCubit> pumpDiary(WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 2000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final cubit = createCubit();
+      await tester.pumpWidget(buildPage(cubit));
+      await tester.pumpAndSettle();
+      return cubit;
+    }
+
+    testWidgets('shows the birthdate just above the age', (tester) async {
+      final cubit = await pumpDiary(tester);
+
+      expect(find.text('Date de naissance'), findsOneWidget);
+      expect(find.text('01/01/2024'), findsOneWidget);
+
+      final birthdate = tester.getRect(find.text('Date de naissance'));
+      final age = tester.getRect(find.text('Âge'));
+      expect(birthdate.top, lessThan(age.top));
+
+      await cubit.close();
+    });
+
+    testWidgets('carries a pencil like the other sections', (tester) async {
+      final cubit = await pumpDiary(tester);
+
+      expect(find.byTooltip('Modifier les informations'), findsOneWidget);
+
+      await cubit.close();
+    });
+
+    /// NAN-089: the pencil no longer arms a selection, it goes straight to the
+    /// edit page, which now owns every field the summary shows.
+    testWidgets('the pencil routes to the pet edit page', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 2000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final cubit = createCubit();
+      addTearDown(cubit.close);
+
+      String? pushedPath;
+      final router = GoRouter(
+        initialLocation: '/home/pet/diary',
+        routes: [
+          GoRoute(
+            path: '/home/pet/diary',
+            builder: (_, __) => BlocProvider<PetDetailsCubit>.value(
+              value: cubit,
+              child: const PetHealthDiaryPage(),
+            ),
+          ),
+          GoRoute(
+            path: '/pet/edit/:petId',
+            builder: (_, state) {
+              pushedPath = state.uri.path;
+              return const Scaffold(body: SizedBox.shrink());
+            },
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Modifier les informations'));
+      await tester.pumpAndSettle();
+
+      expect(pushedPath, '/pet/edit/p1');
+    });
+
+    /// Every row is now read-only: no chevron, and a tap opens nothing.
+    testWidgets('leaves every row inert', (tester) async {
+      final cubit = await pumpDiary(tester);
+
+      expect(
+        find.descendant(
+          of: find.byType(PetSummaryDiaryCardWidget),
+          matching: find.byIcon(Icons.chevron_right_rounded),
+        ),
+        findsNothing,
+      );
+
+      await tester.tap(find.text('Numéro de puce'));
+      await tester.pumpAndSettle();
+      expect(find.text('Modifier les informations de santé'), findsNothing);
+
+      await tester.tap(find.text('Poids'));
+      await tester.pumpAndSettle();
+      expect(find.byType(AddWeightBottomSheetWidget), findsNothing);
 
       await cubit.close();
     });

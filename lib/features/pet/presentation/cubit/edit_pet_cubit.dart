@@ -7,8 +7,11 @@ import 'package:nanimo/data/models/referential/pet_icon_model.dart';
 import 'package:nanimo/data/models/referential/pet_race_model.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/event/data/event_repository.dart';
+import 'package:nanimo/features/health/data/health_repository.dart';
+import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
+import 'package:uuid/uuid.dart';
 
 part 'edit_pet_state.dart';
 
@@ -17,14 +20,17 @@ class EditPetCubit extends Cubit<EditPetState> {
   final PetRepository _petRepository;
   final ReferentialRepository _referentialRepository;
   final EventRepository _eventRepository;
+  final HealthRepository _healthRepository;
 
   EditPetCubit({
     required PetRepository petRepository,
     required ReferentialRepository referentialRepository,
     required EventRepository eventRepository,
+    required HealthRepository healthRepository,
   })  : _petRepository = petRepository,
         _referentialRepository = referentialRepository,
         _eventRepository = eventRepository,
+        _healthRepository = healthRepository,
         super(const EditPetState());
 
   Future<void> load(String petId) async {
@@ -41,6 +47,16 @@ class EditPetCubit extends Cubit<EditPetState> {
     final eventCount = await _eventRepository.countEventsForPet(petId);
     if (isClosed) return;
     emit(state.copyWith(pet: pet, eventCount: eventCount));
+
+    /// A pet without a diary yet is normal: the form then starts on defaults
+    /// and the first save creates it.
+    try {
+      final diary = await _healthRepository.getDiaryForPet(petId);
+      if (isClosed) return;
+      if (diary != null) emit(state.copyWith(diary: diary));
+    } catch (_) {
+      if (isClosed) return;
+    }
 
     try {
       final races =
@@ -80,6 +96,9 @@ class EditPetCubit extends Cubit<EditPetState> {
     required String petRaceId,
     required Gender gender,
     required DateTime birthdate,
+    required bool isSterilized,
+    required bool isChipped,
+    String? chipNumber,
   }) async {
     final pet = state.pet;
     if (pet == null) return;
@@ -101,6 +120,26 @@ class EditPetCubit extends Cubit<EditPetState> {
         petIconId: icon?.petIconId ?? pet.petIconId,
       ));
       if (isClosed) return;
+
+      /// The identity is already written at this point, so a diary failure
+      /// gets its own message rather than passing for a failed save.
+      try {
+        await _saveHealthInfo(
+          petId: pet.petId,
+          isSterilized: isSterilized,
+          isChipped: isChipped,
+          chipNumber: chipNumber,
+        );
+      } catch (_) {
+        if (isClosed) return;
+        emit(state.copyWith(
+          status: EditPetStatus.error,
+          error: 'Les informations de santé n\'ont pas pu être enregistrées.',
+        ));
+        return;
+      }
+
+      if (isClosed) return;
       emit(state.copyWith(status: EditPetStatus.success));
     } on RepositoryException catch (e) {
       if (isClosed) return;
@@ -112,6 +151,32 @@ class EditPetCubit extends Cubit<EditPetState> {
         error: 'Une erreur est survenue lors de la modification de l\'animal.',
       ));
     }
+  }
+
+  /// Deworming and the last vet appointment are carried over untouched: the
+  /// form does not show them, and the upsert would blank them.
+  Future<void> _saveHealthInfo({
+    required String petId,
+    required bool isSterilized,
+    required bool isChipped,
+    String? chipNumber,
+  }) async {
+    final current = state.diary;
+    final trimmed = chipNumber?.trim();
+
+    final diary = HealthDiaryModel(
+      healthDiaryId: current?.healthDiaryId ?? const Uuid().v4(),
+      petId: petId,
+      isSterilized: isSterilized,
+      isChipped: isChipped,
+      chipNumber: isChipped && trimmed != null && trimmed.isNotEmpty ? trimmed : null,
+      lastDeworming: current?.lastDeworming,
+      lastVetAppointment: current?.lastVetAppointment,
+    );
+
+    await _healthRepository.upsertDiary(diary);
+    if (isClosed) return;
+    emit(state.copyWith(diary: diary));
   }
 
   Future<void> delete() async {

@@ -8,6 +8,8 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_di
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card/pet_vaccine_diary_card_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card/pet_vet_visit_diary_card_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card/pet_weight_graph_diary_card_widget.dart';
+import 'package:nanimo/config/router/route_names.dart';
+import 'package:go_router/go_router.dart';
 
 class PetHealthDiaryPage extends StatelessWidget {
   const PetHealthDiaryPage({super.key});
@@ -46,6 +48,9 @@ class PetHealthDiaryPage extends StatelessWidget {
                 raceName: state.raceName ?? '—',
                 weightLogs: state.weightLogs,
                 diary: state.diary,
+                onEdit: () => context.push(
+                  '${RouteNames.editPet}/${state.selectedPet!.petId}',
+                ),
               ),
 
               const SizedBox(height: AppSpacing.lg),
