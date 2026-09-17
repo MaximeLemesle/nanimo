@@ -102,12 +102,25 @@ class _AddWeightBottomSheetWidgetState extends State<AddWeightBottomSheetWidget>
   @override
   Widget build(BuildContext context) {
     return BottomSheetWidget(
-      title: widget.initial == null ? 'Mettre à jour le poids' : 'Modifier la pesée',
-      action: ButtonWidget(
-        label: 'Enregistrer',
-        onPressed: _isValid ? _submit : null,
-        state: _isValid ? ButtonState.normal : ButtonState.disabled,
-        fullWidth: true,
+      title: widget.initial == null ? 'Ajouter une pesée' : 'Modifier la pesée',
+      action: Column(
+        children: [
+          if (widget.onDelete != null) ...[
+            ButtonWidget(
+              label: 'Supprimer la pesée',
+              type: ButtonType.delete,
+              fullWidth: true,
+              onPressed: _confirmDelete,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
+          ButtonWidget(
+            label: 'Enregistrer',
+            onPressed: _isValid ? _submit : null,
+            state: _isValid ? ButtonState.normal : ButtonState.disabled,
+            fullWidth: true,
+          ),
+        ],
       ),
       children: [
         if (_showPetPicker) ...[
@@ -147,15 +160,6 @@ class _AddWeightBottomSheetWidgetState extends State<AddWeightBottomSheetWidget>
           value: _loggedAt,
           onChanged: (date) => setState(() => _loggedAt = date),
         ),
-        if (widget.onDelete != null) ...[
-          const SizedBox(height: AppSpacing.md),
-          TextButton.icon(
-            onPressed: _confirmDelete,
-            icon: const Icon(Icons.delete_outline, size: 20),
-            label: const Text('Supprimer'),
-            style: TextButton.styleFrom(foregroundColor: AppColors.secondary600),
-          ),
-        ],
       ],
     );
   }

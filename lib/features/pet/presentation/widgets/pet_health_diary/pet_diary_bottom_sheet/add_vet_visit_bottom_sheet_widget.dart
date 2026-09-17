@@ -27,12 +27,10 @@ class AddVetVisitBottomSheetWidget extends StatefulWidget {
   const AddVetVisitBottomSheetWidget({super.key, required this.onSubmit, this.initial, this.onDelete});
 
   @override
-  State<AddVetVisitBottomSheetWidget> createState() =>
-      _AddVetVisitBottomSheetWidgetState();
+  State<AddVetVisitBottomSheetWidget> createState() => _AddVetVisitBottomSheetWidgetState();
 }
 
-class _AddVetVisitBottomSheetWidgetState
-    extends State<AddVetVisitBottomSheetWidget> {
+class _AddVetVisitBottomSheetWidgetState extends State<AddVetVisitBottomSheetWidget> {
   late final TextEditingController _titleController;
   late final TextEditingController _vetController;
   late final TextEditingController _clinicController;
@@ -48,8 +46,7 @@ class _AddVetVisitBottomSheetWidgetState
     _visitedAt = initial?.visitedAt;
   }
 
-  bool get _isValid =>
-      _titleController.text.trim().isNotEmpty && _visitedAt != null;
+  bool get _isValid => _titleController.text.trim().isNotEmpty && _visitedAt != null;
 
   @override
   void dispose() {
@@ -87,11 +84,24 @@ class _AddVetVisitBottomSheetWidgetState
   Widget build(BuildContext context) {
     return BottomSheetWidget(
       title: widget.initial == null ? 'Ajouter une visite' : 'Modifier la visite',
-      action: ButtonWidget(
-        label: 'Enregistrer',
-        fullWidth: true,
-        onPressed: _isValid ? _submit : null,
-        state: _isValid ? ButtonState.normal : ButtonState.disabled,
+      action: Column(
+        children: [
+          if (widget.onDelete != null) ...[
+            ButtonWidget(
+              label: 'Supprimer la visite',
+              type: ButtonType.delete,
+              fullWidth: true,
+              onPressed: _confirmDelete,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
+          ButtonWidget(
+            label: 'Enregistrer',
+            fullWidth: true,
+            onPressed: _isValid ? _submit : null,
+            state: _isValid ? ButtonState.normal : ButtonState.disabled,
+          ),
+        ],
       ),
       children: [
         _buildField(_titleController, 'Motif de la visite', capitalize: true),
@@ -102,20 +112,9 @@ class _AddVetVisitBottomSheetWidgetState
           onChanged: (date) => setState(() => _visitedAt = date),
         ),
         const SizedBox(height: AppSpacing.md),
-        _buildField(_vetController, 'Vétérinaire (optionnel)',
-            capitalize: true),
+        _buildField(_vetController, 'Vétérinaire (optionnel)', capitalize: true),
         const SizedBox(height: AppSpacing.md),
-        _buildField(_clinicController, 'Clinique (optionnel)',
-            capitalize: true),
-        if (widget.onDelete != null) ...[
-          const SizedBox(height: AppSpacing.md),
-          TextButton.icon(
-            onPressed: _confirmDelete,
-            icon: const Icon(Icons.delete_outline, size: 20),
-            label: const Text('Supprimer'),
-            style: TextButton.styleFrom(foregroundColor: AppColors.secondary600),
-          ),
-        ],
+        _buildField(_clinicController, 'Clinique (optionnel)', capitalize: true),
       ],
     );
   }
@@ -127,8 +126,7 @@ class _AddVetVisitBottomSheetWidgetState
   }) {
     return TextField(
       controller: controller,
-      textCapitalization:
-          capitalize ? TextCapitalization.sentences : TextCapitalization.none,
+      textCapitalization: capitalize ? TextCapitalization.sentences : TextCapitalization.none,
       onChanged: (_) => setState(() {}),
       decoration: InputDecoration(
         labelText: label,

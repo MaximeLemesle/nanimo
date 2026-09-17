@@ -180,7 +180,7 @@ void main() {
     await tester.pumpWidget(buildPage(cubit));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Mettre à jour le poids'));
+    await tester.tap(find.text('Ajouter une pesée'));
     await tester.pumpAndSettle();
 
     expect(find.text('Enregistrer'), findsOneWidget);

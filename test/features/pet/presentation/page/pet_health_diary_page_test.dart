@@ -19,8 +19,7 @@ class _MockPetRepository extends Mock implements PetRepository {}
 
 class _MockHealthRepository extends Mock implements HealthRepository {}
 
-class _MockReferentialRepository extends Mock
-    implements ReferentialRepository {}
+class _MockReferentialRepository extends Mock implements ReferentialRepository {}
 
 final _pet = PetModel(
   petId: 'p1',
@@ -142,17 +141,12 @@ void main() {
     when(() => healthRepo.addWeightLog(any())).thenAnswer((_) async {});
     when(() => healthRepo.updateWeightLog(any())).thenAnswer((_) async {});
     when(() => healthRepo.deleteWeightLog(any())).thenAnswer((_) async {});
-    when(() => healthRepo.watchDiaryForPet(any()))
-        .thenAnswer((_) => Stream.value(_diary));
-    when(() => healthRepo.getVaccinesForDiary(any()))
-        .thenAnswer((_) => Stream.value(_vaccines));
-    when(() => healthRepo.getWeightLogsForPet(any()))
-        .thenAnswer((_) => Stream.value(_weightLogs));
-    when(() => healthRepo.getVetVisitsForPet(any()))
-        .thenAnswer((_) => Stream.value(_vetVisits));
+    when(() => healthRepo.watchDiaryForPet(any())).thenAnswer((_) => Stream.value(_diary));
+    when(() => healthRepo.getVaccinesForDiary(any())).thenAnswer((_) => Stream.value(_vaccines));
+    when(() => healthRepo.getWeightLogsForPet(any())).thenAnswer((_) => Stream.value(_weightLogs));
+    when(() => healthRepo.getVetVisitsForPet(any())).thenAnswer((_) => Stream.value(_vetVisits));
     when(() => refRepo.fetchSpecies()).thenAnswer((_) async => [_species]);
-    when(() => refRepo.fetchRacesBySpecies(any()))
-        .thenAnswer((_) async => _races);
+    when(() => refRepo.fetchRacesBySpecies(any())).thenAnswer((_) async => _races);
   });
 
   Widget buildPage(PetDetailsCubit cubit) {
@@ -219,8 +213,7 @@ void main() {
     await tester.tap(find.text('Ajouter une visite'));
     await tester.pumpAndSettle();
 
-    await tester.enterText(
-        find.widgetWithText(TextField, 'Motif de la visite'), 'Rappel vaccin');
+    await tester.enterText(find.widgetWithText(TextField, 'Motif de la visite'), 'Rappel vaccin');
     await tester.tap(find.text('Sélectionner une date'));
     await tester.pumpAndSettle();
     await tester.tapAt(const Offset(400, 50));
@@ -427,7 +420,7 @@ void main() {
     testWidgets('a vaccine is deleted once confirmed', (tester) async {
       final cubit = await openEditor(tester, tooltip: 'Modifier un vaccin', row: 'Typhus félin');
 
-      await tester.tap(find.text('Supprimer'));
+      await tester.tap(find.text('Supprimer le vaccin'));
       await tester.pumpAndSettle();
 
       expect(find.text('Supprimer ce vaccin ?'), findsOneWidget);
@@ -443,7 +436,7 @@ void main() {
     testWidgets('cancelling the confirmation deletes nothing', (tester) async {
       final cubit = await openEditor(tester, tooltip: 'Modifier un vaccin', row: 'Typhus félin');
 
-      await tester.tap(find.text('Supprimer'));
+      await tester.tap(find.text('Supprimer le vaccin'));
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(TextButton, 'Annuler'));
       await tester.pumpAndSettle();
@@ -459,7 +452,7 @@ void main() {
     testWidgets('a vet visit is deleted once confirmed', (tester) async {
       final cubit = await openEditor(tester, tooltip: 'Modifier une visite', row: 'Bilan annuel');
 
-      await tester.tap(find.text('Supprimer'));
+      await tester.tap(find.text('Supprimer la visite'));
       await tester.pumpAndSettle();
 
       expect(find.text('Supprimer cette visite ?'), findsOneWidget);
@@ -502,8 +495,8 @@ void main() {
       expect(find.text('Choisis la pesée à modifier'), findsOneWidget);
       expect(find.text('Poids naissance'), findsNothing);
 
-      final recent = tester.getRect(find.text('01/06/2026'));
-      final older = tester.getRect(find.text('01/01/2026'));
+      final recent = tester.getRect(find.text('3,2 kg le 01/06/2026'));
+      final older = tester.getRect(find.text('1,2 kg le 01/01/2026'));
       expect(recent.top, lessThan(older.top));
 
       await cubit.close();
@@ -514,7 +507,7 @@ void main() {
 
       await tester.tap(find.byTooltip('Modifier une pesée'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('01/06/2026'));
+      await tester.tap(find.text('3,2 kg le 01/06/2026'));
       await tester.pumpAndSettle();
 
       expect(find.text('Modifier la pesée'), findsWidgets);
@@ -523,9 +516,7 @@ void main() {
       await tester.tap(find.text('Enregistrer'));
       await tester.pumpAndSettle();
 
-      final captured = verify(() => healthRepo.updateWeightLog(captureAny()))
-          .captured
-          .single as HealthDiaryWeightLogModel;
+      final captured = verify(() => healthRepo.updateWeightLog(captureAny())).captured.single as HealthDiaryWeightLogModel;
       expect(captured.healthDiaryWeightLogId, 'w2');
       expect(captured.weight, 3.2);
       verifyNever(() => healthRepo.addWeightLog(any()));
@@ -538,10 +529,10 @@ void main() {
 
       await tester.tap(find.byTooltip('Modifier une pesée'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('01/06/2026'));
+      await tester.tap(find.text('3,2 kg le 01/06/2026'));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Supprimer'));
+      await tester.tap(find.text('Supprimer la pesée'));
       await tester.pumpAndSettle();
 
       expect(find.text('Supprimer cette pesée ?'), findsOneWidget);

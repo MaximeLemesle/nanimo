@@ -46,10 +46,7 @@ class _AddVaccineBottomSheetWidgetState extends State<AddVaccineBottomSheetWidge
     _nextDate = initial?.nextDate;
   }
 
-  bool get _isValid =>
-      _nameController.text.trim().isNotEmpty &&
-      _lastDate != null &&
-      _nextDate != null;
+  bool get _isValid => _nameController.text.trim().isNotEmpty && _lastDate != null && _nextDate != null;
 
   @override
   void dispose() {
@@ -81,13 +78,25 @@ class _AddVaccineBottomSheetWidgetState extends State<AddVaccineBottomSheetWidge
   @override
   Widget build(BuildContext context) {
     return BottomSheetWidget(
-      title:
-          widget.initial == null ? 'Ajouter un vaccin' : 'Modifier le vaccin',
-      action: ButtonWidget(
-        label: 'Enregistrer',
-        fullWidth: true,
-        onPressed: _isValid ? _submit : null,
-        state: _isValid ? ButtonState.normal : ButtonState.disabled,
+      title: widget.initial == null ? 'Ajouter un vaccin' : 'Modifier le vaccin',
+      action: Column(
+        children: [
+          if (widget.onDelete != null) ...[
+            ButtonWidget(
+              label: 'Supprimer le vaccin',
+              type: ButtonType.delete,
+              fullWidth: true,
+              onPressed: _confirmDelete,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
+          ButtonWidget(
+            label: 'Enregistrer',
+            fullWidth: true,
+            onPressed: _isValid ? _submit : null,
+            state: _isValid ? ButtonState.normal : ButtonState.disabled,
+          ),
+        ],
       ),
       children: [
         TextField(
@@ -118,15 +127,6 @@ class _AddVaccineBottomSheetWidgetState extends State<AddVaccineBottomSheetWidge
           lastDate: DateTime(DateTime.now().year + 30),
           onChanged: (date) => setState(() => _nextDate = date),
         ),
-        if (widget.onDelete != null) ...[
-          const SizedBox(height: AppSpacing.md),
-          TextButton.icon(
-            onPressed: _confirmDelete,
-            icon: const Icon(Icons.delete_outline, size: 20),
-            label: const Text('Supprimer'),
-            style: TextButton.styleFrom(foregroundColor: AppColors.secondary600),
-          ),
-        ],
       ],
     );
   }

@@ -21,12 +21,10 @@ class PetWeightGraphDiaryCardWidget extends StatefulWidget {
   const PetWeightGraphDiaryCardWidget({super.key, required this.weightLogs});
 
   @override
-  State<PetWeightGraphDiaryCardWidget> createState() =>
-      _PetWeightGraphDiaryCardWidgetState();
+  State<PetWeightGraphDiaryCardWidget> createState() => _PetWeightGraphDiaryCardWidgetState();
 }
 
-class _PetWeightGraphDiaryCardWidgetState
-    extends State<PetWeightGraphDiaryCardWidget> {
+class _PetWeightGraphDiaryCardWidgetState extends State<PetWeightGraphDiaryCardWidget> {
   bool _isSelecting = false;
 
   @override
@@ -45,9 +43,7 @@ class _PetWeightGraphDiaryCardWidgetState
           ? null
           : PetDiaryEditButtonWidget(
               isSelecting: _isSelecting,
-              tooltip: _isSelecting
-                  ? 'Annuler la modification'
-                  : 'Modifier une pesée',
+              tooltip: _isSelecting ? 'Annuler la modification' : 'Modifier une pesée',
               onPressed: () => setState(() => _isSelecting = !_isSelecting),
             ),
       children: [
@@ -64,8 +60,7 @@ class _PetWeightGraphDiaryCardWidgetState
             rows: [
               for (final log in widget.weightLogs.reversed)
                 PetDiaryRow(
-                  label: DateFormatter.date(log.loggedAt),
-                  value: WeightFormatter.label(log.weight),
+                  label: '${WeightFormatter.label(log.weight)} le ${DateFormatter.date(log.loggedAt)}',
                   trailing: const Icon(
                     Icons.chevron_right_rounded,
                     color: AppColors.primary,
@@ -79,21 +74,17 @@ class _PetWeightGraphDiaryCardWidgetState
             rows: [
               PetDiaryRow(
                 label: 'Poids naissance',
-                value: widget.weightLogs.isEmpty
-                    ? '—'
-                    : WeightFormatter.label(widget.weightLogs.first.weight),
+                value: widget.weightLogs.isEmpty ? '—' : WeightFormatter.label(widget.weightLogs.first.weight),
               ),
               PetDiaryRow(
                 label: 'Dernier poids',
-                value: widget.weightLogs.isEmpty
-                    ? '—'
-                    : WeightFormatter.label(widget.weightLogs.last.weight),
+                value: widget.weightLogs.isEmpty ? '—' : WeightFormatter.label(widget.weightLogs.last.weight),
               ),
             ],
           ),
         const SizedBox(height: AppSpacing.md),
         ButtonWidget(
-          label: 'Mettre à jour le poids',
+          label: 'Ajouter une pesée',
           icon: Icons.add,
           iconPosition: ButtonIcon.right,
           fullWidth: true,
