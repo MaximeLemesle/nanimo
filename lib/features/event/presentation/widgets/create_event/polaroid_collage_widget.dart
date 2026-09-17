@@ -32,9 +32,6 @@ class PolaroidCollageWidget extends StatelessWidget {
   final VoidCallback onTap;
   final void Function(int index)? onImageTap;
   final Future<String> Function(String assetPath)? urlResolver;
-
-  /// Index from which the frames are premium only, null marking nothing. The
-  /// widget is told, never asks: it also renders stored souvenirs.
   final int? premiumFromIndex;
 
   const PolaroidCollageWidget({
@@ -81,8 +78,7 @@ class PolaroidCollageWidget extends StatelessWidget {
     }
 
     final isPlaceholder = images.isEmpty;
-    final count =
-        isPlaceholder ? _placeholderFrameCount : images.take(maxImages).length;
+    final count = isPlaceholder ? _placeholderFrameCount : images.take(maxImages).length;
     final outer = _collageFrameSize + padding;
     var half = 0.0;
     for (var i = 0; i < count; i++) {
@@ -94,13 +90,22 @@ class PolaroidCollageWidget extends StatelessWidget {
     return 2 * half;
   }
 
-  Offset _frameOffset(int index) => index < _placeholderFrameCount - 1
-      ? _offsets[index].translate(0, -_placeholderBackRaise)
-      : _offsets[index];
+  Offset _frameOffset(int index) =>
+      index < _placeholderFrameCount - 1 ? _offsets[index].translate(0, -_placeholderBackRaise) : _offsets[index];
 
   bool _isPremiumFrame(int index) {
     final from = premiumFromIndex;
     return from != null && index >= from;
+  }
+
+  /// The empty pile holds interchangeable slots, so the free ones take the last
+  /// indices: a Stack paints in order, and the last painted sits on top. The
+  /// owner then sees the frame they can fill, with the locked ones behind it.
+  /// The filled collage keeps [_isPremiumFrame], where index i is photo i.
+  bool _isPremiumPlaceholderFrame(int index) {
+    final from = premiumFromIndex;
+    if (from == null) return false;
+    return index < _placeholderFrameCount - from;
   }
 
   Widget _buildPlaceholder() {
@@ -114,7 +119,7 @@ class PolaroidCollageWidget extends StatelessWidget {
               child: Transform.rotate(
                 angle: _angles[i],
                 child: _markPremium(
-                  i,
+                  _isPremiumPlaceholderFrame(i),
                   _frame(
                     dashed: true,
                     child: Icon(
@@ -133,8 +138,8 @@ class PolaroidCollageWidget extends StatelessWidget {
 
   /// Overlaps included: the stack is a pile. The frame carries no gesture of
   /// its own, the pile keeps the single [onTap] of the widget.
-  Widget _markPremium(int index, Widget frame) {
-    if (!_isPremiumFrame(index)) return frame;
+  Widget _markPremium(bool isPremium, Widget frame) {
+    if (!isPremium) return frame;
 
     return Stack(
       children: [
@@ -180,7 +185,7 @@ class PolaroidCollageWidget extends StatelessWidget {
               child: Transform.rotate(
                 angle: _angles[i],
                 child: _markPremium(
-                  i,
+                  _isPremiumFrame(i),
                   _tappable(
                     i,
                     _frame(
@@ -203,8 +208,7 @@ class PolaroidCollageWidget extends StatelessWidget {
           height: size,
           fit: BoxFit.cover,
         ),
-      RemoteCollageImage(:final assetPath) when urlResolver != null =>
-        FutureBuilder<String>(
+      RemoteCollageImage(:final assetPath) when urlResolver != null => FutureBuilder<String>(
           future: urlResolver!(assetPath),
           builder: (context, snapshot) {
             if (snapshot.connectionState != ConnectionState.done) {
@@ -220,15 +224,13 @@ class PolaroidCollageWidget extends StatelessWidget {
               height: size,
               fit: BoxFit.cover,
               placeholder: (_, __) => _imagePlaceholder(size),
-              errorWidget: (_, __, ___) =>
-                  _imagePlaceholder(size, icon: Icons.broken_image_outlined),
+              errorWidget: (_, __, ___) => _imagePlaceholder(size, icon: Icons.broken_image_outlined),
             );
           },
         ),
 
       /// A stored photo with no resolver to sign its url cannot be fetched.
-      RemoteCollageImage() =>
-        _imagePlaceholder(size, icon: Icons.broken_image_outlined),
+      RemoteCollageImage() => _imagePlaceholder(size, icon: Icons.broken_image_outlined),
     };
   }
 
@@ -261,9 +263,7 @@ class PolaroidCollageWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.backgroundSurface,
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: dashed
-            ? null
-            : Border.all(color: AppColors.backgroundStroke, width: 2),
+        border: dashed ? null : Border.all(color: AppColors.backgroundStroke, width: 2),
         boxShadow: dashed
             ? null
             : const [

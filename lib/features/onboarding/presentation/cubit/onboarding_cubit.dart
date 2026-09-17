@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:nanimo/core/analytics/analytics.dart';
+import 'package:nanimo/core/monitoring/error_reporter.dart';
 import 'package:nanimo/core/analytics/analytics_events.dart';
 import 'package:nanimo/core/utils/pet_icon_resolver.dart';
 import 'package:nanimo/core/utils/pet_portrait.dart';
@@ -109,7 +110,16 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       final icons = await _referentialRepository.fetchIcons();
       if (isClosed) return;
       emit(state.copyWith(icons: icons));
-    } catch (_) {}
+    } catch (e, st) {
+      /// Swallowed until now, which made the failure indistinguishable from a
+      /// breed nobody drew: both end on the species icon. The portrait stays
+      /// degraded on purpose, but the reason stops being invisible.
+      errorReporter.captureException(
+        e,
+        stackTrace: st,
+        hint: 'fetchIcons failed, portraits fall back to the species icon',
+      );
+    }
   }
 
   Future<void> _fetchRaces(String speciesId) async {

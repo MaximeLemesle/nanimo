@@ -6,6 +6,8 @@ import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/step_indicator_widget.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
+import 'package:nanimo/features/subscription/presentation/quota_upsell.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
@@ -70,9 +72,12 @@ class _CreatePetPageState extends State<CreatePetPage> {
     if (_isInApp(context)) {
       context.read<OnboardingCubit>().reset();
       context.go(RouteNames.pet);
-    } else {
-      context.go(RouteNames.signup);
+      return;
     }
+
+    /// NAN-093: the offer is shown before the account is asked for. The paywall
+    /// is in preview here and carries the way out to the signup itself.
+    QuotaUpsell.openPaywall(context, PaywallTrigger.onboarding, preview: true);
   }
 
   bool _isNextEnabled(OnboardingState state) {

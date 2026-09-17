@@ -14,6 +14,7 @@ import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_bottom_sheet/add_weight_bottom_sheet_widget.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:nanimo/features/subscription/presentation/quota_upsell.dart';
+import 'package:nanimo/features/subscription/presentation/pending_premium_intent.dart';
 import 'package:nanimo/core/analytics/analytics_events.dart';
 
 class AppShell extends StatefulWidget {
@@ -171,14 +172,25 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
 
   /// Pushed once, right after the onboarding pet lands. No persistence: the
   /// onboarding runs once, so nothing can call this a second time.
+  ///
+  /// NAN-093: the offer is now shown before the signup, so this is no longer
+  /// the first sight of it. It reopens only to finish what the owner started,
+  /// never to ask a second time someone who already said no.
   void _showOnboardingPaywall(BuildContext context) {
     if (!_onboardingPaywallPending) return;
+    if (!pendingPremiumIntent.isPending) {
+      _onboardingPaywallPending = false;
+      return;
+    }
 
     final subscription = context.read<SubscriptionCubit>().state;
     if (!subscription.isLoaded) return;
 
     _onboardingPaywallPending = false;
-    if (subscription.isPremium) return;
+    if (subscription.isPremium) {
+      pendingPremiumIntent.clear();
+      return;
+    }
 
     QuotaUpsell.openPaywall(context, PaywallTrigger.onboarding);
   }

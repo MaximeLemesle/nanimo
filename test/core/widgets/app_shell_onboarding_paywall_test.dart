@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nanimo/features/subscription/presentation/pending_premium_intent.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/core/widgets/app_shell.dart';
@@ -115,13 +116,32 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('opens once the onboarding pet has landed', (tester) async {
+  /// NAN-093: the offer is shown before the signup now, so landing the pet no
+  /// longer opens it. Only an owner who asked to subscribe back there comes
+  /// through, and the paywall reopens to finish the purchase they started.
+  testWidgets('reopens to finish a purchase started before the signup',
+      (tester) async {
+    pendingPremiumIntent.remember('annual');
+    addTearDown(pendingPremiumIntent.clear);
+
     await pumpShell(tester, subscriptionState: _plan('freemium'));
 
     petCreation.created(duringOnboarding: true);
     await tester.pumpAndSettle();
 
     expect(find.text('paywall-stub'), findsOneWidget);
+  });
+
+  testWidgets('asks nothing again of someone who declined before the signup',
+      (tester) async {
+    pendingPremiumIntent.clear();
+
+    await pumpShell(tester, subscriptionState: _plan('freemium'));
+
+    petCreation.created(duringOnboarding: true);
+    await tester.pumpAndSettle();
+
+    expect(find.text('paywall-stub'), findsNothing);
   });
 
   testWidgets('stays away from an in-app pet creation', (tester) async {
@@ -134,6 +154,9 @@ void main() {
   });
 
   testWidgets('never opens for someone who already pays', (tester) async {
+    pendingPremiumIntent.remember('annual');
+    addTearDown(pendingPremiumIntent.clear);
+
     await pumpShell(tester, subscriptionState: _plan('premium'));
 
     petCreation.created(duringOnboarding: true);
@@ -144,6 +167,9 @@ void main() {
 
   /// The plan may land after the pet on a slow network.
   testWidgets('waits for the plan, then opens', (tester) async {
+    pendingPremiumIntent.remember('annual');
+    addTearDown(pendingPremiumIntent.clear);
+
     await pumpShell(
       tester,
       subscriptionState: const SubscriptionState.unknown(),
@@ -161,6 +187,9 @@ void main() {
 
   testWidgets('a plan landing late on a premium account opens nothing',
       (tester) async {
+    pendingPremiumIntent.remember('annual');
+    addTearDown(pendingPremiumIntent.clear);
+
     await pumpShell(
       tester,
       subscriptionState: const SubscriptionState.unknown(),

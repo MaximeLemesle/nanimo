@@ -129,6 +129,41 @@ void main() {
       expect(find.text('Premium'), findsNothing);
     });
 
+    /// NAN-093: the frame the owner can fill is the one painted last, so it
+    /// sits on top of the pile and the locked ones stack up behind it.
+    testWidgets('leaves the free frame on top of the pile', (tester) async {
+      await tester.pumpWidget(wrap(
+        PolaroidCollageWidget(
+          images: const [],
+          onTap: () {},
+          premiumFromIndex: 1,
+        ),
+      ));
+
+      final pile = tester.widget<Stack>(
+        find.descendant(
+          of: find.byType(PolaroidCollageWidget),
+          matching: find.byType(Stack),
+        ).first,
+      );
+
+      /// A Stack paints its children in order: the last one is the top frame.
+      final crowns = [
+        for (final child in pile.children)
+          find
+              .descendant(
+                of: find.byWidget(child),
+                matching: findAppIcon(AppIcons.crown),
+              )
+              .evaluate()
+              .isNotEmpty,
+      ];
+
+      expect(crowns.length, 5);
+      expect(crowns.last, isFalse, reason: 'the top frame must stay free');
+      expect(crowns.sublist(0, 4), everyElement(isTrue));
+    });
+
     /// The pile is the "add a photo" affordance, so no frame takes the tap.
     testWidgets('leaves the collage its one gesture', (tester) async {
       var tapped = 0;

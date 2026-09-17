@@ -38,8 +38,7 @@ class EventPhotoPickerWidget extends StatelessWidget {
   /// single authority, capped by what the collage can lay out.
   static int maxImagesForPlan(SubscriptionState subscription) {
     var max = 0;
-    while (max < PolaroidCollageWidget.maxImages &&
-        subscription.canAddImageToEvent(max)) {
+    while (max < PolaroidCollageWidget.maxImages && subscription.canAddImageToEvent(max)) {
       max++;
     }
     return max;
@@ -100,8 +99,7 @@ class EventPhotoPickerWidget extends StatelessWidget {
       return;
     }
 
-    final picked =
-        await AddImageBottomSheetWidget.show(context, subscription: subscription);
+    final picked = await AddImageBottomSheetWidget.show(context, subscription: subscription);
     if (picked == null || picked.isEmpty || !context.mounted) return;
 
     onChanged([

@@ -254,7 +254,9 @@ GoRouter createRouter(
               purchaseRepository: purchaseRepository,
               authRepository: authRepository,
             )..loadOffers(),
-            child: const PaywallPage(),
+            child: PaywallPage(
+              isPreview: state.uri.queryParameters['preview'] == '1',
+            ),
           ),
         ),
       ),

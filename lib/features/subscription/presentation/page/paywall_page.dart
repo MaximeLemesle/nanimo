@@ -8,6 +8,7 @@ import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/features/subscription/data/models/paywall_offer_model.dart';
+import 'package:nanimo/features/subscription/presentation/pending_premium_intent.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/paywall_cubit.dart';
 import 'package:nanimo/features/subscription/presentation/paywall_content.dart';
 import 'package:nanimo/features/subscription/presentation/widgets/paywall_confirming_widget.dart';
@@ -15,16 +16,57 @@ import 'package:nanimo/features/subscription/presentation/widgets/paywall_legal_
 import 'package:nanimo/features/subscription/presentation/widgets/paywall_memories_widget.dart';
 import 'package:nanimo/features/subscription/presentation/widgets/paywall_offer_card_widget.dart';
 
-class PaywallPage extends StatelessWidget {
+class PaywallPage extends StatefulWidget {
   final Future<bool> Function(Uri url)? onOpenLegalLink;
 
-  const PaywallPage({super.key, this.onOpenLegalLink});
+  /// NAN-093: pushed during the onboarding, before there is an account. The
+  /// offer is shown but nothing can be charged, so the page sends to the signup
+  /// and the choice is replayed there. Set by the route, never guessed.
+  final bool isPreview;
+
+  const PaywallPage({
+    super.key,
+    this.onOpenLegalLink,
+    this.isPreview = false,
+  });
+
+  @override
+  State<PaywallPage> createState() => _PaywallPageState();
+}
+
+class _PaywallPageState extends State<PaywallPage> {
+  bool _intentReplayed = false;
+
+  bool get _isPreview => widget.isPreview;
+
+  /// The owner asked to subscribe a few screens ago and now has an account.
+  /// Apple's own sheet is the confirmation, so nothing is taken silently.
+  void _replayPendingIntent(BuildContext context, PaywallState state) {
+    if (_intentReplayed || _isPreview || !state.isLoaded) return;
+    if (!pendingPremiumIntent.isPending) return;
+
+    final packageId = pendingPremiumIntent.take();
+    if (packageId == null) return;
+    _intentReplayed = true;
+
+    final cubit = context.read<PaywallCubit>();
+    cubit.selectOffer(packageId);
+    cubit.purchase();
+  }
+
+  void _rememberAndSignUp(BuildContext context, PaywallState state) {
+    final packageId = state.selectedPackageId;
+    if (packageId != null) pendingPremiumIntent.remember(packageId);
+    context.go(RouteNames.signup);
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<PaywallCubit, PaywallState>(
       listenWhen: (previous, current) => previous.errorMessage != current.errorMessage || previous.status != current.status,
       listener: (context, state) {
+        _replayPendingIntent(context, state);
+
         if (state.errorMessage != null && state.status != PaywallStatus.error) {
           ScaffoldMessenger.of(context)
             ..clearSnackBars()
@@ -67,6 +109,17 @@ class PaywallPage extends StatelessWidget {
     );
   }
 
+  /// In preview the paywall was pushed over the onboarding, which the owner is
+  /// leaving either way: dismissing it means "not now", not "go back a step".
+  void _close(BuildContext context) {
+    if (_isPreview) {
+      pendingPremiumIntent.clear();
+      context.go(RouteNames.signup);
+      return;
+    }
+    Navigator.of(context).maybePop();
+  }
+
   Widget _body(BuildContext context, PaywallState state) {
     if (state.status == PaywallStatus.loading) {
       return const Center(child: CircularProgressIndicator());
@@ -99,7 +152,7 @@ class PaywallPage extends StatelessWidget {
                       icon: const Icon(Icons.close_rounded),
                       color: AppColors.textPrimary,
                       tooltip: 'Fermer',
-                      onPressed: () => Navigator.of(context).maybePop(),
+                      onPressed: () => _close(context),
                     ),
                   ),
                   const PaywallMemoriesWidget(isAnimated: true),
@@ -144,7 +197,11 @@ class PaywallPage extends StatelessWidget {
                     fullWidth: true,
                     isLoading: state.isPurchasing,
                     state: state.isBusy ? ButtonState.disabled : ButtonState.normal,
-                    onPressed: state.isBusy ? null : () => context.read<PaywallCubit>().purchase(),
+                    onPressed: state.isBusy
+                        ? null
+                        : () => _isPreview
+                            ? _rememberAndSignUp(context, state)
+                            : context.read<PaywallCubit>().purchase(),
                   ),
                   _restoreLink(context, state),
                   Text(
@@ -156,7 +213,7 @@ class PaywallPage extends StatelessWidget {
                       color: AppColors.textSecondary,
                     ),
                   ),
-                  PaywallLegalLinksWidget(onOpen: onOpenLegalLink),
+                  PaywallLegalLinksWidget(onOpen: widget.onOpenLegalLink),
                 ],
               ),
             ),
@@ -166,7 +223,19 @@ class PaywallPage extends StatelessWidget {
     );
   }
 
+  /// Apple wants the restore reachable from any screen that sells. Without an
+  /// account there is nothing to restore onto yet, so it leads to the login.
   Widget _restoreLink(BuildContext context, PaywallState state) {
+    if (_isPreview) {
+      return TextButton(
+        onPressed: () => context.go(RouteNames.login),
+        child: Text(
+          'J\'ai déjà un abonnement',
+          style: AppTextStyles.textSmall.copyWith(color: AppColors.textSecondary),
+        ),
+      );
+    }
+
     return TextButton(
       onPressed: state.isBusy ? null : () => context.read<PaywallCubit>().restore(),
       child: state.isRestoring
@@ -191,7 +260,7 @@ class PaywallPage extends StatelessWidget {
             icon: const Icon(Icons.close_rounded),
             color: AppColors.textPrimary,
             tooltip: 'Fermer',
-            onPressed: () => Navigator.of(context).maybePop(),
+            onPressed: () => _close(context),
           ),
         ),
         Center(
