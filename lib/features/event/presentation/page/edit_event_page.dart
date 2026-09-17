@@ -18,6 +18,8 @@ import 'package:nanimo/features/event/presentation/widgets/create_event/create_e
 import 'package:nanimo/features/event/presentation/widgets/create_event/polaroid_collage_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/sticker_selector_widget.dart';
 import 'package:nanimo/features/event/presentation/widgets/event_photo/event_photo_picker_widget.dart';
+import 'package:nanimo/features/subscription/presentation/pet_lock.dart';
+import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 
 class EditEventPage extends StatefulWidget {
   const EditEventPage({super.key});
@@ -225,11 +227,15 @@ class _EditEventPageState extends State<EditEventPage> {
                       ],
                       onTap: () async {
                         final state = context.read<EditEventCubit>().state;
+                        final subscription =
+                            context.read<SubscriptionCubit>().state;
                         final selected = await PetSelectBottomSheetWidget.show(
                           context,
                           pets: state.pets,
                           selectedPetIds: state.selectedPetIds,
                           portraits: state.portraits,
+                          lockedPetIds:
+                              PetLock.lockedPetIds(state.pets, subscription),
                         );
                         if (selected == null || !mounted) return;
                         setState(() {

@@ -8,17 +8,25 @@ import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/pet_avatar_widget.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
+import 'package:nanimo/features/subscription/presentation/quota_upsell.dart';
+import 'package:nanimo/core/widgets/app_icon_widget.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
 
 class PetSelectBottomSheetWidget extends StatefulWidget {
   final List<PetModel> pets;
   final List<String> selectedPetIds;
   final Map<String, PetPortrait> portraits;
 
+  /// Animals the plan no longer covers: crowned, not selectable, and touching
+  /// one opens the paywall.
+  final Set<String> lockedPetIds;
+
   const PetSelectBottomSheetWidget({
     super.key,
     required this.pets,
     required this.selectedPetIds,
     required this.portraits,
+    this.lockedPetIds = const {},
   });
 
   static Future<List<String>?> show(
@@ -26,6 +34,7 @@ class PetSelectBottomSheetWidget extends StatefulWidget {
     required List<PetModel> pets,
     required List<String> selectedPetIds,
     required Map<String, PetPortrait> portraits,
+    Set<String> lockedPetIds = const {},
   }) {
     return BottomSheetWidget.show<List<String>>(
       context,
@@ -33,6 +42,7 @@ class PetSelectBottomSheetWidget extends StatefulWidget {
         pets: pets,
         selectedPetIds: selectedPetIds,
         portraits: portraits,
+        lockedPetIds: lockedPetIds,
       ),
     );
   }
@@ -92,6 +102,11 @@ class _PetSelectBottomSheetWidgetState
               child: InkWell(
                 borderRadius: BorderRadius.circular(AppRadius.md),
                 onTap: () {
+                  if (widget.lockedPetIds.contains(pet.petId)) {
+                    Navigator.of(context).pop();
+                    QuotaUpsell.openPaywall(context, PaywallTrigger.lockedPet);
+                    return;
+                  }
                   setState(() {
                     if (_selected.contains(pet.petId)) {
                       _selected.remove(pet.petId);
@@ -112,14 +127,27 @@ class _PetSelectBottomSheetWidgetState
                       width: 2,
                     ),
                   ),
-                  child: Row(
-                    children: [
-                      _petIcon(pet),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: Text(pet.petName, style: AppTextStyles.text),
-                      ),
-                    ],
+                  child: Opacity(
+                    opacity:
+                        widget.lockedPetIds.contains(pet.petId) ? 0.55 : 1,
+                    child: Row(
+                      children: [
+                        _petIcon(pet),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Text(pet.petName, style: AppTextStyles.text),
+                        ),
+                        if (widget.lockedPetIds.contains(pet.petId))
+                          Semantics(
+                            label: 'Réservé au premium',
+                            child: AppIconWidget(
+                              AppIcons.crown,
+                              color: AppColors.tertiary,
+                              size: 18,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),

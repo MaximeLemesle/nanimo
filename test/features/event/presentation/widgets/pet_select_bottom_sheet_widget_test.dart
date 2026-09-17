@@ -3,6 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nanimo/features/event/presentation/widgets/create_event/create_event_bottom_sheet/pet_select_bottom_sheet_widget.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
+import '../../../../helpers/app_icon_finder.dart';
+
+import 'package:nanimo/core/widgets/app_icon_widget.dart';
+import 'package:nanimo/config/router/route_names.dart';
+import 'package:go_router/go_router.dart';
 
 final _milo = PetModel(
   petId: 'pet-milo',
@@ -120,5 +125,78 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Aucun animal disponible.'), findsOneWidget);
+  });
+
+  // NAN-082: such an animal can be read, not attached to a new souvenir.
+  group('a pet the plan no longer covers', () {
+    Widget lockedHarness(Future<void> Function(BuildContext) onTap) => MaterialApp.router(
+          routerConfig: GoRouter(
+            initialLocation: '/',
+            routes: [
+              GoRoute(
+                path: '/',
+                builder: (_, __) => Scaffold(
+                  body: Builder(
+                    builder: (context) => ElevatedButton(
+                      onPressed: () => onTap(context),
+                      child: const Text('open'),
+                    ),
+                  ),
+                ),
+              ),
+              GoRoute(
+                path: RouteNames.paywall,
+                builder: (_, __) => const Scaffold(body: Text('paywall-stub')),
+              ),
+            ],
+          ),
+        );
+
+    Future<List<String>?> openSheet(WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      List<String>? result;
+      await tester.pumpWidget(lockedHarness((context) async {
+        result = await PetSelectBottomSheetWidget.show(
+          context,
+          pets: [_milo, _rex],
+          selectedPetIds: const [],
+          portraits: const {},
+          lockedPetIds: const {'pet-rex'},
+        );
+      }));
+
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      return result;
+    }
+
+    testWidgets('is shown, crowned, and still listed', (tester) async {
+      await openSheet(tester);
+
+      expect(find.text('Rex'), findsOneWidget);
+      expect(findAppIcon(AppIcons.crown), findsOneWidget);
+    });
+
+    testWidgets('cannot be selected, and opens the paywall', (tester) async {
+      await openSheet(tester);
+
+      await tester.tap(find.text('Rex'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('paywall-stub'), findsOneWidget);
+    });
+
+    testWidgets('leaves the covered animal selectable', (tester) async {
+      await openSheet(tester);
+
+      await tester.tap(find.text('Milo'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Valider'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('paywall-stub'), findsNothing);
+    });
   });
 }

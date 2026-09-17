@@ -18,7 +18,10 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_bottom_
 class PetWeightGraphDiaryCardWidget extends StatefulWidget {
   final List<HealthDiaryWeightLogModel> weightLogs;
 
-  const PetWeightGraphDiaryCardWidget({super.key, required this.weightLogs});
+  /// The record is still read, nothing is written.
+  final bool readOnly;
+
+  const PetWeightGraphDiaryCardWidget({super.key, required this.weightLogs, this.readOnly = false});
 
   @override
   State<PetWeightGraphDiaryCardWidget> createState() => _PetWeightGraphDiaryCardWidgetState();
@@ -39,7 +42,7 @@ class _PetWeightGraphDiaryCardWidgetState extends State<PetWeightGraphDiaryCardW
   Widget build(BuildContext context) {
     return PetDiaryCardWidget(
       title: 'Évolution du poids',
-      action: widget.weightLogs.isEmpty
+      action: widget.weightLogs.isEmpty || widget.readOnly
           ? null
           : PetDiaryEditButtonWidget(
               isSelecting: _isSelecting,
@@ -82,21 +85,23 @@ class _PetWeightGraphDiaryCardWidgetState extends State<PetWeightGraphDiaryCardW
               ),
             ],
           ),
-        const SizedBox(height: AppSpacing.md),
-        ButtonWidget(
-          label: 'Ajouter une pesée',
-          icon: Icons.add,
-          iconPosition: ButtonIcon.right,
-          fullWidth: true,
-          onPressed: () {
-            BottomSheetWidget.show<void>(
-              context,
-              AddWeightBottomSheetWidget(
-                onSubmit: context.read<PetDetailsCubit>().addWeightLog,
-              ),
-            );
-          },
-        ),
+        if (!widget.readOnly) ...[
+          const SizedBox(height: AppSpacing.md),
+          ButtonWidget(
+            label: 'Ajouter une pesée',
+            icon: Icons.add,
+            iconPosition: ButtonIcon.right,
+            fullWidth: true,
+            onPressed: () {
+              BottomSheetWidget.show<void>(
+                context,
+                AddWeightBottomSheetWidget(
+                  onSubmit: context.read<PetDetailsCubit>().addWeightLog,
+                ),
+              );
+            },
+          ),
+        ],
       ],
     );
   }
