@@ -240,6 +240,7 @@ GoRouter createRouter(
               petRepository: petRepository,
               referentialRepository: referentialRepository,
               eventRepository: eventRepository,
+              healthRepository: healthRepository,
             )..load(state.pathParameters['petId']!),
             child: const EditPetPage(),
           ),

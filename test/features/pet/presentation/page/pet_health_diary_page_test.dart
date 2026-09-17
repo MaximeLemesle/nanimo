@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card/pet_summary_diary_card_widget.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -15,14 +17,12 @@ import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/pet/presentation/page/pet_health_diary_page.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_bottom_sheet/add_weight_bottom_sheet_widget.dart';
-import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/edit_health_info_bottom_sheet_widget.dart';
 
 class _MockPetRepository extends Mock implements PetRepository {}
 
 class _MockHealthRepository extends Mock implements HealthRepository {}
 
-class _MockReferentialRepository extends Mock
-    implements ReferentialRepository {}
+class _MockReferentialRepository extends Mock implements ReferentialRepository {}
 
 final _pet = PetModel(
   petId: 'p1',
@@ -140,17 +140,12 @@ void main() {
     when(() => healthRepo.updateVetVisit(any())).thenAnswer((_) async {});
     when(() => healthRepo.updateVaccine(any())).thenAnswer((_) async {});
     when(() => healthRepo.addWeightLog(any())).thenAnswer((_) async {});
-    when(() => healthRepo.watchDiaryForPet(any()))
-        .thenAnswer((_) => Stream.value(_diary));
-    when(() => healthRepo.getVaccinesForDiary(any()))
-        .thenAnswer((_) => Stream.value(_vaccines));
-    when(() => healthRepo.getWeightLogsForPet(any()))
-        .thenAnswer((_) => Stream.value(_weightLogs));
-    when(() => healthRepo.getVetVisitsForPet(any()))
-        .thenAnswer((_) => Stream.value(_vetVisits));
+    when(() => healthRepo.watchDiaryForPet(any())).thenAnswer((_) => Stream.value(_diary));
+    when(() => healthRepo.getVaccinesForDiary(any())).thenAnswer((_) => Stream.value(_vaccines));
+    when(() => healthRepo.getWeightLogsForPet(any())).thenAnswer((_) => Stream.value(_weightLogs));
+    when(() => healthRepo.getVetVisitsForPet(any())).thenAnswer((_) => Stream.value(_vetVisits));
     when(() => refRepo.fetchSpecies()).thenAnswer((_) async => [_species]);
-    when(() => refRepo.fetchRacesBySpecies(any()))
-        .thenAnswer((_) async => _races);
+    when(() => refRepo.fetchRacesBySpecies(any())).thenAnswer((_) async => _races);
   });
 
   Widget buildPage(PetDetailsCubit cubit) {
@@ -217,8 +212,7 @@ void main() {
     await tester.tap(find.text('Ajouter une visite'));
     await tester.pumpAndSettle();
 
-    await tester.enterText(
-        find.widgetWithText(TextField, 'Motif de la visite'), 'Rappel vaccin');
+    await tester.enterText(find.widgetWithText(TextField, 'Motif de la visite'), 'Rappel vaccin');
     await tester.tap(find.text('Sélectionner une date'));
     await tester.pumpAndSettle();
     await tester.tapAt(const Offset(400, 50));
@@ -408,60 +402,70 @@ void main() {
     testWidgets('carries a pencil like the other sections', (tester) async {
       final cubit = await pumpDiary(tester);
 
-      expect(find.byTooltip('Modifier une information'), findsOneWidget);
+      expect(find.byTooltip('Modifier les informations'), findsOneWidget);
 
       await cubit.close();
     });
 
-    /// Same one-shot arming as the other sections.
-    testWidgets('a row is inert until the section is armed', (tester) async {
+    /// NAN-089: the pencil no longer arms a selection, it goes straight to the
+    /// edit page, which now owns every field the summary shows.
+    testWidgets('the pencil routes to the pet edit page', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 2000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final cubit = createCubit();
+      addTearDown(cubit.close);
+
+      String? pushedPath;
+      final router = GoRouter(
+        initialLocation: '/home/pet/diary',
+        routes: [
+          GoRoute(
+            path: '/home/pet/diary',
+            builder: (_, __) => BlocProvider<PetDetailsCubit>.value(
+              value: cubit,
+              child: const PetHealthDiaryPage(),
+            ),
+          ),
+          GoRoute(
+            path: '/pet/edit/:petId',
+            builder: (_, state) {
+              pushedPath = state.uri.path;
+              return const Scaffold(body: SizedBox.shrink());
+            },
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Modifier les informations'));
+      await tester.pumpAndSettle();
+
+      expect(pushedPath, '/pet/edit/p1');
+    });
+
+    /// Every row is now read-only: no chevron, and a tap opens nothing.
+    testWidgets('leaves every row inert', (tester) async {
       final cubit = await pumpDiary(tester);
+
+      expect(
+        find.descendant(
+          of: find.byType(PetSummaryDiaryCardWidget),
+          matching: find.byIcon(Icons.chevron_right_rounded),
+        ),
+        findsNothing,
+      );
 
       await tester.tap(find.text('Numéro de puce'));
       await tester.pumpAndSettle();
-
       expect(find.text('Modifier les informations de santé'), findsNothing);
 
-      await cubit.close();
-    });
-
-    testWidgets('the chip and the neutering open the health info sheet',
-        (tester) async {
-      final cubit = await pumpDiary(tester);
-
-      await tester.tap(find.byTooltip('Modifier une information'));
-      await tester.pumpAndSettle();
-      expect(find.text('Choisis l\'information à modifier'), findsOneWidget);
-
-      await tester.tap(find.text('Numéro de puce'));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(EditHealthInfoBottomSheetWidget), findsOneWidget);
-
-      await cubit.close();
-    });
-
-    testWidgets('the weight opens the weight sheet', (tester) async {
-      final cubit = await pumpDiary(tester);
-
-      await tester.tap(find.byTooltip('Modifier une information'));
-      await tester.pumpAndSettle();
       await tester.tap(find.text('Poids'));
       await tester.pumpAndSettle();
-
-      expect(find.byType(AddWeightBottomSheetWidget), findsOneWidget);
-
-      await cubit.close();
-    });
-
-    /// Nine rows, seven editable: the species and the age are inert.
-    testWidgets('leaves the species and the age inert', (tester) async {
-      final cubit = await pumpDiary(tester);
-
-      await tester.tap(find.byTooltip('Modifier une information'));
-      await tester.pumpAndSettle();
-
-      expect(find.byIcon(Icons.chevron_right_rounded), findsNWidgets(7));
+      expect(find.byType(AddWeightBottomSheetWidget), findsNothing);
 
       await cubit.close();
     });

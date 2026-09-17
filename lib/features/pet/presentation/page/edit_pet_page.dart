@@ -11,9 +11,12 @@ import 'package:nanimo/core/widgets/app_scaffold.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/nanimo_text_field_widget.dart';
 import 'package:nanimo/core/widgets/species_icon_widget.dart';
+import 'package:nanimo/core/widgets/text_field_widget.dart';
+import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/presentation/cubit/edit_pet_cubit.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_creation/grid_tile_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/create_health_diary_section/health_diary_section_widget.dart';
 
 class EditPetPage extends StatefulWidget {
   const EditPetPage({super.key});
@@ -26,9 +29,12 @@ class _EditPetPageState extends State<EditPetPage> {
   static const _genderOptions = [Gender.female, Gender.male];
 
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _chipController = TextEditingController();
   String? _raceId;
   Gender? _gender;
   DateTime? _birthdate;
+  bool _isSterilized = false;
+  bool _isChipped = false;
   bool _seeded = false;
 
   @override
@@ -43,11 +49,12 @@ class _EditPetPageState extends State<EditPetPage> {
   void dispose() {
     _nameController.removeListener(_onNameChanged);
     _nameController.dispose();
+    _chipController.dispose();
     super.dispose();
   }
 
-  /// Prefills the form from the loaded pet
-  void _seedFromPet(PetModel pet) {
+  /// Prefills the form from the loaded pet and its diary
+  void _seedFromPet(PetModel pet, HealthDiaryModel? diary) {
     _seeded = true;
     _raceId = pet.petRaceId.isEmpty ? null : pet.petRaceId;
     _gender = pet.gender == Gender.unknown ? null : pet.gender;
@@ -55,6 +62,9 @@ class _EditPetPageState extends State<EditPetPage> {
     _nameController.removeListener(_onNameChanged);
     _nameController.text = pet.petName;
     _nameController.addListener(_onNameChanged);
+    _isSterilized = diary?.isSterilized ?? false;
+    _isChipped = diary?.isChipped ?? false;
+    _chipController.text = diary?.chipNumber ?? '';
   }
 
   String _formatDate(DateTime date) {
@@ -157,7 +167,7 @@ class _EditPetPageState extends State<EditPetPage> {
         }
 
         final pet = state.pet!;
-        if (!_seeded) _seedFromPet(pet);
+        if (!_seeded) _seedFromPet(pet, state.diary);
 
         final isSaving = state.status == EditPetStatus.loading;
         final isDeleting = state.status == EditPetStatus.deleting;
@@ -296,6 +306,26 @@ class _EditPetPageState extends State<EditPetPage> {
                   ),
                 ),
               ),
+              const SizedBox(height: AppSpacing.lg),
+              _FieldLabel('Sa santé'),
+              const SizedBox(height: AppSpacing.md),
+              HealthDiarySectionWidget(
+                label: 'Stérilisé',
+                value: _isSterilized,
+                onChanged: (value) => setState(() => _isSterilized = value),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              HealthDiarySectionWidget(
+                label: 'Pucé',
+                value: _isChipped,
+                onChanged: (value) => setState(() => _isChipped = value),
+                child: TextFieldWidget(
+                  controller: _chipController,
+                  label: 'Numéro de puce',
+                  keyboardType: TextInputType.number,
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
               const SizedBox(height: AppSpacing.xxl),
               ButtonWidget(
                 label: 'Enregistrer',
@@ -308,6 +338,9 @@ class _EditPetPageState extends State<EditPetPage> {
                         petRaceId: _raceId!,
                         gender: _gender!,
                         birthdate: _birthdate!,
+                        isSterilized: _isSterilized,
+                        isChipped: _isChipped,
+                        chipNumber: _chipController.text,
                       );
                 },
               ),
