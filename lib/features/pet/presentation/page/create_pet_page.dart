@@ -38,8 +38,7 @@ class _CreatePetPageState extends State<CreatePetPage> {
     super.dispose();
   }
 
-  bool _isInApp(BuildContext context) =>
-      context.read<AuthCubit>().state.status == AuthStatus.authenticated;
+  bool _isInApp(BuildContext context) => context.read<AuthCubit>().state.status == AuthStatus.authenticated;
 
   void _handleBack(BuildContext context, OnboardingState state) {
     if (state.currentStep == 1) {
@@ -75,8 +74,7 @@ class _CreatePetPageState extends State<CreatePetPage> {
       return;
     }
 
-    /// NAN-093: the offer is shown before the account is asked for. The paywall
-    /// is in preview here and carries the way out to the signup itself.
+    /// The offer is shown before the account is asked for
     QuotaUpsell.openPaywall(context, PaywallTrigger.onboarding, preview: true);
   }
 
@@ -96,8 +94,7 @@ class _CreatePetPageState extends State<CreatePetPage> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<OnboardingCubit, OnboardingState>(
-      listenWhen: (previous, current) =>
-          previous.currentStep != current.currentStep,
+      listenWhen: (previous, current) => previous.currentStep != current.currentStep,
       listener: (context, state) {
         if (_pageController.hasClients) {
           _pageController.animateToPage(
@@ -151,15 +148,9 @@ class _CreatePetPageState extends State<CreatePetPage> {
                   Padding(
                     padding: const EdgeInsets.all(AppSpacing.lg),
                     child: ButtonWidget(
-                      label: state.currentStep == 3
-                          ? (_isInApp(context) ? 'Créer' : 'Créer mon compte')
-                          : 'Continuer',
-                      onPressed: _isNextEnabled(state)
-                          ? () => _handleNext(context, state)
-                          : null,
-                      state: _isNextEnabled(state)
-                          ? ButtonState.normal
-                          : ButtonState.disabled,
+                      label: state.currentStep == 3 ? (_isInApp(context) ? 'Créer' : 'Créer mon compte') : 'Continuer',
+                      onPressed: _isNextEnabled(state) ? () => _handleNext(context, state) : null,
+                      state: _isNextEnabled(state) ? ButtonState.normal : ButtonState.disabled,
                       fullWidth: true,
                     ),
                   ),

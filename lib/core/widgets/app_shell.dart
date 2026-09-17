@@ -172,10 +172,6 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
 
   /// Pushed once, right after the onboarding pet lands. No persistence: the
   /// onboarding runs once, so nothing can call this a second time.
-  ///
-  /// NAN-093: the offer is now shown before the signup, so this is no longer
-  /// the first sight of it. It reopens only to finish what the owner started,
-  /// never to ask a second time someone who already said no.
   void _showOnboardingPaywall(BuildContext context) {
     if (!_onboardingPaywallPending) return;
     if (!pendingPremiumIntent.isPending) {

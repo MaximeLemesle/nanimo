@@ -98,10 +98,7 @@ class PolaroidCollageWidget extends StatelessWidget {
     return from != null && index >= from;
   }
 
-  /// The empty pile holds interchangeable slots, so the free ones take the last
-  /// indices: a Stack paints in order, and the last painted sits on top. The
-  /// owner then sees the frame they can fill, with the locked ones behind it.
-  /// The filled collage keeps [_isPremiumFrame], where index i is photo i.
+  /// The owner then sees the frame they can fill, with the locked ones behind it.
   bool _isPremiumPlaceholderFrame(int index) {
     final from = premiumFromIndex;
     if (from == null) return false;

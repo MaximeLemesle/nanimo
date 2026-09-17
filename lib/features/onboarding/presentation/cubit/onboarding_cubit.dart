@@ -79,8 +79,7 @@ class OnboardingCubit extends Cubit<OnboardingState> {
 
   /// Fetch the list of available species
   Future<void> fetchSpecies() async {
-    if (state.speciesStatus == ReferentialStatus.loading ||
-        state.speciesStatus == ReferentialStatus.loaded) {
+    if (state.speciesStatus == ReferentialStatus.loading || state.speciesStatus == ReferentialStatus.loaded) {
       return;
     }
     analytics.capture(AnalyticsEvents.onboardingStarted);
@@ -111,9 +110,6 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       if (isClosed) return;
       emit(state.copyWith(icons: icons));
     } catch (e, st) {
-      /// Swallowed until now, which made the failure indistinguishable from a
-      /// breed nobody drew: both end on the species icon. The portrait stays
-      /// degraded on purpose, but the reason stops being invisible.
       errorReporter.captureException(
         e,
         stackTrace: st,

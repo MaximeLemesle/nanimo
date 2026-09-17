@@ -18,10 +18,6 @@ import 'package:nanimo/features/subscription/presentation/widgets/paywall_offer_
 
 class PaywallPage extends StatefulWidget {
   final Future<bool> Function(Uri url)? onOpenLegalLink;
-
-  /// NAN-093: pushed during the onboarding, before there is an account. The
-  /// offer is shown but nothing can be charged, so the page sends to the signup
-  /// and the choice is replayed there. Set by the route, never guessed.
   final bool isPreview;
 
   const PaywallPage({
