@@ -17,10 +17,18 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/vaccin
 class PetVaccineDiaryCardWidget extends StatefulWidget {
   final List<HealthDiaryVaccineModel> vaccines;
 
+  /// Floor of the date pickers of the vaccine sheet.
+  final DateTime birthdate;
+
   /// The record is still read, nothing is written.
   final bool readOnly;
 
-  const PetVaccineDiaryCardWidget({super.key, required this.vaccines, this.readOnly = false});
+  const PetVaccineDiaryCardWidget({
+    super.key,
+    required this.vaccines,
+    required this.birthdate,
+    this.readOnly = false,
+  });
 
   @override
   State<PetVaccineDiaryCardWidget> createState() => _PetVaccineDiaryCardWidgetState();
@@ -86,7 +94,8 @@ class _PetVaccineDiaryCardWidgetState extends State<PetVaccineDiaryCardWidget> {
               BottomSheetWidget.show<void>(
                 context,
                 AddVaccineBottomSheetWidget(
-                  onSubmit: ({required String vaccineName, required DateTime lastDate, required DateTime nextDate}) {
+                  birthdate: widget.birthdate,
+                  onSubmit: ({required String vaccineName, required DateTime lastDate, required DateTime nextDate, String? petId}) {
                     context.read<PetDetailsCubit>().addVaccine(
                           vaccineName: vaccineName,
                           lastDate: lastDate,
@@ -108,9 +117,10 @@ class _PetVaccineDiaryCardWidgetState extends State<PetVaccineDiaryCardWidget> {
     BottomSheetWidget.show<void>(
       context,
       AddVaccineBottomSheetWidget(
+        birthdate: widget.birthdate,
         initial: vaccine,
         onDelete: () => cubit.deleteVaccine(vaccine.healthDiaryVaccineId),
-        onSubmit: ({required String vaccineName, required DateTime lastDate, required DateTime nextDate}) {
+        onSubmit: ({required String vaccineName, required DateTime lastDate, required DateTime nextDate, String? petId}) {
           cubit.updateVaccine(
             HealthDiaryVaccineModel(
               healthDiaryVaccineId: vaccine.healthDiaryVaccineId,

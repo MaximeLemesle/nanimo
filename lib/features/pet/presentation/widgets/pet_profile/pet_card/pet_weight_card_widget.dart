@@ -13,12 +13,16 @@ class PetWeightCardWidget extends StatelessWidget {
   final List<HealthDiaryWeightLogModel> logs;
   final WeightSubmit onWeightSubmitted;
 
+  /// Floor of the date picker of the weight sheet.
+  final DateTime birthdate;
+
   /// Drops the update button: the chart is still read, nothing is written.
   final bool readOnly;
 
   const PetWeightCardWidget({
     super.key,
     required this.logs,
+    required this.birthdate,
     required this.onWeightSubmitted,
     this.readOnly = false,
   });
@@ -46,7 +50,10 @@ class PetWeightCardWidget extends StatelessWidget {
               onPressed: () {
                 BottomSheetWidget.show<void>(
                   context,
-                  AddWeightBottomSheetWidget(onSubmit: onWeightSubmitted),
+                  AddWeightBottomSheetWidget(
+                    birthdate: birthdate,
+                    onSubmit: onWeightSubmitted,
+                  ),
                 );
               },
             ),

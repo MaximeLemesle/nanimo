@@ -210,6 +210,22 @@ void main() {
     await cubit.close();
   });
 
+  /// NAN-090 review: the visits come before the vaccines.
+  testWidgets('puts the vet visits above the vaccines', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 2000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final cubit = createCubit();
+    await tester.pumpWidget(buildPage(cubit));
+    await tester.pumpAndSettle();
+
+    final visits = tester.getTopLeft(find.text('Visites vétérinaires')).dy;
+    final vaccines = tester.getTopLeft(find.text('Vaccins')).dy;
+    expect(visits, lessThan(vaccines));
+
+    await cubit.close();
+  });
+
   testWidgets('opens the add vaccine modal', (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 2000));
     addTearDown(() => tester.binding.setSurfaceSize(null));

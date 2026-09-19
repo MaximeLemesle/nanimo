@@ -226,6 +226,15 @@ class HealthRepository {
         .map((rows) => rows.map((c) => c.toModel()).toList());
   }
 
+  /// Watches every cached vet visit, across all pets.
+  Stream<List<VetVisitModel>> watchAllVetVisits() {
+    return _isar.vetVisitCaches
+        .where()
+        .sortByVisitedAt()
+        .watch(fireImmediately: true)
+        .map((rows) => rows.map((c) => c.toModel()).toList());
+  }
+
   Future<void> addVetVisit(VetVisitModel visit) async {
     try {
       await _supabase.from('vet_visits').insert(visit.toJson());

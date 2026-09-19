@@ -98,11 +98,13 @@ class _CreateHealthDiaryBottomSheetWidgetState
     await BottomSheetWidget.show<void>(
       context,
       AddVetVisitBottomSheetWidget(
+        birthdate: widget.birthdate,
         onSubmit: ({
           required String title,
           required DateTime visitedAt,
           String? vetName,
           String? clinicName,
+          String? petId,
         }) {
           created = (
             title: title,
@@ -184,6 +186,7 @@ class _CreateHealthDiaryBottomSheetWidgetState
           child: DateFieldWidget(
             label: 'Dernier vermifuge',
             value: _lastDeworming,
+            firstDate: widget.birthdate,
             onChanged: (date) => setState(() => _lastDeworming = date),
           ),
         ),
@@ -269,6 +272,7 @@ class _CreateHealthDiaryBottomSheetWidgetState
             DateFieldWidget(
               label: 'Date du vaccin',
               value: _checkedVaccines[vaccine.name],
+              firstDate: widget.birthdate,
               onChanged: (date) =>
                   setState(() => _checkedVaccines[vaccine.name] = date),
             ),

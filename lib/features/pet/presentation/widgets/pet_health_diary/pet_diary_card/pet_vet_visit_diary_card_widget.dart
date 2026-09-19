@@ -16,10 +16,18 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_di
 class PetVetVisitDiaryCardWidget extends StatefulWidget {
   final List<VetVisitModel> visits;
 
+  /// Floor of the date picker of the visit sheet.
+  final DateTime birthdate;
+
   /// The record is still read, nothing is written.
   final bool readOnly;
 
-  const PetVetVisitDiaryCardWidget({super.key, required this.visits, this.readOnly = false});
+  const PetVetVisitDiaryCardWidget({
+    super.key,
+    required this.visits,
+    required this.birthdate,
+    this.readOnly = false,
+  });
 
   @override
   State<PetVetVisitDiaryCardWidget> createState() => _PetVetVisitDiaryCardWidgetState();
@@ -79,7 +87,8 @@ class _PetVetVisitDiaryCardWidgetState extends State<PetVetVisitDiaryCardWidget>
               BottomSheetWidget.show<void>(
                 context,
                 AddVetVisitBottomSheetWidget(
-                  onSubmit: ({required String title, required DateTime visitedAt, String? vetName, String? clinicName}) {
+                  birthdate: widget.birthdate,
+                  onSubmit: ({required String title, required DateTime visitedAt, String? vetName, String? clinicName, String? petId}) {
                     context.read<PetDetailsCubit>().addVetVisit(
                           title: title,
                           visitedAt: visitedAt,
@@ -102,9 +111,10 @@ class _PetVetVisitDiaryCardWidgetState extends State<PetVetVisitDiaryCardWidget>
     BottomSheetWidget.show<void>(
       context,
       AddVetVisitBottomSheetWidget(
+        birthdate: widget.birthdate,
         initial: visit,
         onDelete: () => cubit.deleteVetVisit(visit.vetVisitId),
-        onSubmit: ({required String title, required DateTime visitedAt, String? vetName, String? clinicName}) {
+        onSubmit: ({required String title, required DateTime visitedAt, String? vetName, String? clinicName, String? petId}) {
           cubit.updateVetVisit(
             VetVisitModel(
               vetVisitId: visit.vetVisitId,

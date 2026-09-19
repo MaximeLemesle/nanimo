@@ -51,4 +51,66 @@ void main() {
     expect(find.text('24/08/2026'), findsOneWidget);
     expect(find.text('Milo'), findsNothing);
   });
+
+  /// The way in is not an empty-state affordance: a second booster is booked
+  /// from the same place as the first.
+  group('the way to book a booster', () {
+    Future<void> pumpCard(
+      WidgetTester tester,
+      List<VaccineAlert> alerts, {
+      VoidCallback? onAddPressed,
+    }) async {
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: HomeHealthCardWidget(
+            alerts: alerts,
+            portraits: const {},
+            onAddPressed: onAddPressed,
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('shows with nothing due', (tester) async {
+      var tapped = false;
+      await pumpCard(tester, const [], onAddPressed: () => tapped = true);
+
+      expect(find.text('Tout est à jour !'), findsOneWidget);
+      expect(find.text('Ajouter un vaccin à venir'), findsOneWidget);
+
+      await tester.tap(find.text('Ajouter un vaccin à venir'));
+      await tester.pumpAndSettle();
+      expect(tapped, isTrue);
+    });
+
+    testWidgets('still shows once a booster is listed', (tester) async {
+      await pumpCard(tester, [_alert()]);
+
+      expect(find.text('Ajouter un vaccin à venir'), findsOneWidget);
+    });
+  });
 }
+
+VaccineAlert _alert() => (
+      vaccine: HealthDiaryVaccineModel(
+        healthDiaryVaccineId: 'vaccine-1',
+        vaccineName: 'Rage',
+        lastDate: DateTime(2025, 8, 24),
+        nextDate: DateTime(2026, 8, 24),
+        recurrence: 365,
+        doseNumber: 1,
+        totalDoseNumber: 1,
+        healthDiaryId: 'diary-1',
+      ),
+      pet: PetModel(
+        petId: 'pet-1',
+        petName: 'Milo',
+        birthdate: DateTime(2022, 6, 15),
+        gender: Gender.male,
+        createdAt: DateTime(2026, 6, 10),
+        petRaceId: 'race-1',
+        petSpeciesId: 'species-1',
+      ),
+      status: VaccineStatus.soon,
+    );

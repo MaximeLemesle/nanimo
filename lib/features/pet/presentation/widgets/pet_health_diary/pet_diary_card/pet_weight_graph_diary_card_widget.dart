@@ -18,10 +18,18 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_bottom_
 class PetWeightGraphDiaryCardWidget extends StatefulWidget {
   final List<HealthDiaryWeightLogModel> weightLogs;
 
+  /// Floor of the date picker of the weight sheet.
+  final DateTime birthdate;
+
   /// The record is still read, nothing is written.
   final bool readOnly;
 
-  const PetWeightGraphDiaryCardWidget({super.key, required this.weightLogs, this.readOnly = false});
+  const PetWeightGraphDiaryCardWidget({
+    super.key,
+    required this.weightLogs,
+    required this.birthdate,
+    this.readOnly = false,
+  });
 
   @override
   State<PetWeightGraphDiaryCardWidget> createState() => _PetWeightGraphDiaryCardWidgetState();
@@ -96,6 +104,7 @@ class _PetWeightGraphDiaryCardWidgetState extends State<PetWeightGraphDiaryCardW
               BottomSheetWidget.show<void>(
                 context,
                 AddWeightBottomSheetWidget(
+                  birthdate: widget.birthdate,
                   onSubmit: context.read<PetDetailsCubit>().addWeightLog,
                 ),
               );
@@ -112,6 +121,7 @@ class _PetWeightGraphDiaryCardWidgetState extends State<PetWeightGraphDiaryCardW
     BottomSheetWidget.show<void>(
       context,
       AddWeightBottomSheetWidget(
+        birthdate: widget.birthdate,
         initial: log,
         onDelete: () => cubit.deleteWeightLog(log.healthDiaryWeightLogId),
         onSubmit: (weight, loggedAt, {String? petId}) {

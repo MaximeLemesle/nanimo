@@ -16,6 +16,7 @@ import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/health/data/models/health_diary_vaccine_model.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
+import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
 
 part 'home_state.dart';
 
@@ -32,6 +33,7 @@ class HomeCubit extends Cubit<HomeState> {
   StreamSubscription<Map<String, List<String>>>? _imagesSubscription;
   StreamSubscription<List<HealthDiaryModel>>? _diariesSubscription;
   StreamSubscription<List<HealthDiaryVaccineModel>>? _vaccinesSubscription;
+  StreamSubscription<List<VetVisitModel>>? _vetVisitsSubscription;
   StreamSubscription<UserModel?>? _userSubscription;
 
   HomeCubit({
@@ -57,6 +59,8 @@ class HomeCubit extends Cubit<HomeState> {
         _healthRepository.watchAllDiaries().listen(_onDiariesChanged);
     _vaccinesSubscription =
         _healthRepository.watchAllVaccines().listen(_onVaccinesChanged);
+    _vetVisitsSubscription =
+        _healthRepository.watchAllVetVisits().listen(_onVetVisitsChanged);
     _userSubscription =
         _authRepository.watchCurrentUser().listen(_onUserChanged);
     _loadSpecies();
@@ -85,6 +89,10 @@ class HomeCubit extends Cubit<HomeState> {
 
   void _onVaccinesChanged(List<HealthDiaryVaccineModel> vaccines) {
     emit(state.copyWith(vaccines: vaccines));
+  }
+
+  void _onVetVisitsChanged(List<VetVisitModel> visits) {
+    emit(state.copyWith(vetVisits: visits));
   }
 
   void _onUserChanged(UserModel? user) {
@@ -144,6 +152,7 @@ class HomeCubit extends Cubit<HomeState> {
     _imagesSubscription?.cancel();
     _diariesSubscription?.cancel();
     _vaccinesSubscription?.cancel();
+    _vetVisitsSubscription?.cancel();
     _userSubscription?.cancel();
     return super.close();
   }

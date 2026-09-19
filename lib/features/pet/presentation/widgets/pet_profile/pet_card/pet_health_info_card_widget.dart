@@ -16,19 +16,24 @@ class PetHealthInfoCardWidget extends StatelessWidget {
   final VoidCallback? onFillPressed;
   final VoidCallback? onEditPressed;
 
+  final DateTime? now;
+
   const PetHealthInfoCardWidget({
     super.key,
     required this.gender,
     this.diary,
+    this.now,
     this.vetVisits = const [],
     this.onFillPressed,
     this.onEditPressed,
   });
 
-  /// The most recent visit on record, falling back to the diary column
-  DateTime? get _lastVetAppointment {
+  /// The most recent **past** visit, falling back to the diary column.
+  /// A booked appointment is not the last one attended.
+  DateTime? lastVetAppointmentAt(DateTime now) {
     DateTime? latest;
     for (final visit in vetVisits) {
+      if (visit.visitedAt.isAfter(now)) continue;
       if (latest == null || visit.visitedAt.isAfter(latest)) {
         latest = visit.visitedAt;
       }
@@ -38,7 +43,7 @@ class PetHealthInfoCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lastVetAppointment = _lastVetAppointment;
+    final lastVetAppointment = lastVetAppointmentAt(now ?? DateTime.now());
     final hasInfo = diary != null &&
         (diary?.isSterilized != null ||
             diary?.isChipped != null ||
