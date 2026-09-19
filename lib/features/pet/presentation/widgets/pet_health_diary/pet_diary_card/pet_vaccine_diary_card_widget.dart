@@ -95,7 +95,7 @@ class _PetVaccineDiaryCardWidgetState extends State<PetVaccineDiaryCardWidget> {
                 context,
                 AddVaccineBottomSheetWidget(
                   birthdate: widget.birthdate,
-                  onSubmit: ({required String vaccineName, required DateTime lastDate, required DateTime nextDate}) {
+                  onSubmit: ({required String vaccineName, required DateTime lastDate, required DateTime nextDate, String? petId}) {
                     context.read<PetDetailsCubit>().addVaccine(
                           vaccineName: vaccineName,
                           lastDate: lastDate,
@@ -120,7 +120,7 @@ class _PetVaccineDiaryCardWidgetState extends State<PetVaccineDiaryCardWidget> {
         birthdate: widget.birthdate,
         initial: vaccine,
         onDelete: () => cubit.deleteVaccine(vaccine.healthDiaryVaccineId),
-        onSubmit: ({required String vaccineName, required DateTime lastDate, required DateTime nextDate}) {
+        onSubmit: ({required String vaccineName, required DateTime lastDate, required DateTime nextDate, String? petId}) {
           cubit.updateVaccine(
             HealthDiaryVaccineModel(
               healthDiaryVaccineId: vaccine.healthDiaryVaccineId,

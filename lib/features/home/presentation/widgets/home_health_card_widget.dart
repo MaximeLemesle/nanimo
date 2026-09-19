@@ -4,6 +4,7 @@ import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/utils/date_formatter.dart';
+import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/pet_avatar_widget.dart';
 import 'package:nanimo/core/widgets/rounded_border_widget.dart';
 import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
@@ -13,12 +14,14 @@ class HomeHealthCardWidget extends StatelessWidget {
   final List<VaccineAlert> alerts;
   final Map<String, PetPortrait> portraits;
   final void Function(String petId)? onAlertTap;
+  final VoidCallback? onAddPressed;
 
   const HomeHealthCardWidget({
     super.key,
     required this.alerts,
     required this.portraits,
     this.onAlertTap,
+    this.onAddPressed,
   });
 
   @override
@@ -66,6 +69,17 @@ class HomeHealthCardWidget extends StatelessWidget {
                   if (i < alerts.length - 1)
                     const SizedBox(height: AppSpacing.sm),
                 ],
+
+              /// The way in stays reachable once the list is filled.
+              const SizedBox(height: AppSpacing.md),
+              ButtonWidget(
+                label: 'Ajouter un vaccin à venir',
+                type: ButtonType.secondary,
+                icon: Icons.add,
+                iconPosition: ButtonIcon.left,
+                fullWidth: true,
+                onPressed: onAddPressed,
+              ),
             ],
           ),
         ),

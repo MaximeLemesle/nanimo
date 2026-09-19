@@ -216,6 +216,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     }
   }
 
+  /// [petId] targets another animal without moving the global selection.
   Future<void> addVaccine({
     required String vaccineName,
     required DateTime lastDate,
@@ -223,11 +224,12 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     int recurrence = 0,
     int doseNumber = 1,
     int totalDoseNumber = 1,
+    String? petId,
   }) async {
-    final petId = state.selectedPetId;
-    if (petId == null) return;
+    final targetId = petId ?? state.selectedPetId;
+    if (targetId == null) return;
     try {
-      final healthDiaryId = await _ensureDiary(petId);
+      final healthDiaryId = await _ensureDiaryFor(targetId);
       if (healthDiaryId == null) return;
       final vaccine = HealthDiaryVaccineModel(
         healthDiaryVaccineId: const Uuid().v4(),
@@ -327,6 +329,19 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
   }
 
   /// Returns the diary id for [petId], creating an empty diary if needed.
+  /// [state.diary] belongs to the selected animal, so another one is fetched.
+  Future<String?> _ensureDiaryFor(String petId) async {
+    if (petId == state.selectedPetId) return _ensureDiary(petId);
+    final existing = await _healthRepository.getDiaryForPet(petId);
+    if (existing != null) return existing.healthDiaryId;
+    final diary = HealthDiaryModel(
+      healthDiaryId: const Uuid().v4(),
+      petId: petId,
+    );
+    await _healthRepository.upsertDiary(diary);
+    return diary.healthDiaryId;
+  }
+
   Future<String?> _ensureDiary(String petId) async {
     final existing = state.diary;
     if (existing != null) return existing.healthDiaryId;

@@ -79,12 +79,14 @@ void main() {
   });
 
   group('vaccine dates', () {
-    Widget sheet() => AddVaccineBottomSheetWidget(
+    Widget sheet({bool upcomingOnly = false}) => AddVaccineBottomSheetWidget(
           birthdate: _birthdate,
+          upcomingOnly: upcomingOnly,
           onSubmit: ({
             required String vaccineName,
             required DateTime lastDate,
             required DateTime nextDate,
+            String? petId,
           }) {},
         );
 
@@ -102,6 +104,19 @@ void main() {
       final picker = await openPicker(tester, sheet(), 'Prochain rappel');
 
       expectSameDay(picker.minimumDate!, _birthdate);
+      expect(picker.maximumDate!.isAfter(DateTime.now()), isTrue);
+    });
+
+    /// Booked from the home, a booster already gone is not one to come.
+    testWidgets('booked ahead, the next booster floors at today',
+        (tester) async {
+      final picker = await openPicker(
+        tester,
+        sheet(upcomingOnly: true),
+        'Prochain rappel',
+      );
+
+      expectSameDay(picker.minimumDate!, DateTime.now());
       expect(picker.maximumDate!.isAfter(DateTime.now()), isTrue);
     });
   });
