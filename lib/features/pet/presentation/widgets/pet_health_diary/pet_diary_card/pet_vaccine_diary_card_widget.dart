@@ -20,10 +20,14 @@ class PetVaccineDiaryCardWidget extends StatefulWidget {
   /// Floor of the date pickers of the vaccine sheet.
   final DateTime birthdate;
 
+  /// The record is still read, nothing is written.
+  final bool readOnly;
+
   const PetVaccineDiaryCardWidget({
     super.key,
     required this.vaccines,
     required this.birthdate,
+    this.readOnly = false,
   });
 
   @override
@@ -45,7 +49,7 @@ class _PetVaccineDiaryCardWidgetState extends State<PetVaccineDiaryCardWidget> {
   Widget build(BuildContext context) {
     return PetDiaryCardWidget(
       title: 'Vaccins',
-      action: widget.vaccines.isEmpty
+      action: widget.vaccines.isEmpty || widget.readOnly
           ? null
           : PetDiaryEditButtonWidget(
               isSelecting: _isSelecting,
@@ -78,29 +82,31 @@ class _PetVaccineDiaryCardWidgetState extends State<PetVaccineDiaryCardWidget> {
           ],
           emptyLabel: 'Aucun vaccin enregistré pour le moment.',
         ),
-        const SizedBox(height: AppSpacing.md),
-        ButtonWidget(
-          label: 'Ajouter un vaccin',
-          type: ButtonType.secondary,
-          icon: Icons.add,
-          iconPosition: ButtonIcon.left,
-          fullWidth: true,
-          onPressed: () {
-            BottomSheetWidget.show<void>(
-              context,
-              AddVaccineBottomSheetWidget(
-                birthdate: widget.birthdate,
-                onSubmit: ({required String vaccineName, required DateTime lastDate, required DateTime nextDate}) {
-                  context.read<PetDetailsCubit>().addVaccine(
-                        vaccineName: vaccineName,
-                        lastDate: lastDate,
-                        nextDate: nextDate,
-                      );
-                },
-              ),
-            );
-          },
-        ),
+        if (!widget.readOnly) ...[
+          const SizedBox(height: AppSpacing.md),
+          ButtonWidget(
+            label: 'Ajouter un vaccin',
+            type: ButtonType.secondary,
+            icon: Icons.add,
+            iconPosition: ButtonIcon.left,
+            fullWidth: true,
+            onPressed: () {
+              BottomSheetWidget.show<void>(
+                context,
+                AddVaccineBottomSheetWidget(
+                  birthdate: widget.birthdate,
+                  onSubmit: ({required String vaccineName, required DateTime lastDate, required DateTime nextDate}) {
+                    context.read<PetDetailsCubit>().addVaccine(
+                          vaccineName: vaccineName,
+                          lastDate: lastDate,
+                          nextDate: nextDate,
+                        );
+                  },
+                ),
+              );
+            },
+          ),
+        ],
       ],
     );
   }
@@ -113,6 +119,7 @@ class _PetVaccineDiaryCardWidgetState extends State<PetVaccineDiaryCardWidget> {
       AddVaccineBottomSheetWidget(
         birthdate: widget.birthdate,
         initial: vaccine,
+        onDelete: () => cubit.deleteVaccine(vaccine.healthDiaryVaccineId),
         onSubmit: ({required String vaccineName, required DateTime lastDate, required DateTime nextDate}) {
           cubit.updateVaccine(
             HealthDiaryVaccineModel(

@@ -15,6 +15,8 @@ import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/add_vet_visit_bottom_sheet_widget.dart';
 import 'package:nanimo/features/home/presentation/widgets/home_vet_visit_card_widget.dart';
 import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
+import 'package:nanimo/features/subscription/presentation/pet_lock.dart';
+import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -73,6 +75,10 @@ class HomePage extends StatelessWidget {
                 HomePetListWidget(
                   pets: state.pets,
                   portraits: state.portraits,
+                  lockedPetIds: PetLock.lockedPetIds(
+                    state.pets,
+                    context.watch<SubscriptionCubit>().state,
+                  ),
                   onPetTap: (petId) {
                     context.read<PetDetailsCubit>().selectPet(petId);
                     context.push(RouteNames.pet);
@@ -124,6 +130,7 @@ class HomePage extends StatelessWidget {
         portraits: state.portraits,
         initialPetId: petDetails.state.selectedPetId ?? state.pets.first.petId,
         birthdate: state.pets.first.birthdate,
+        upcomingOnly: true,
         onSubmit: ({
           required String title,
           required DateTime visitedAt,

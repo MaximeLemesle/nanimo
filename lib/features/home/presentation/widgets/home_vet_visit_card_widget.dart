@@ -42,46 +42,44 @@ class HomeVetVisitCardWidget extends StatelessWidget {
           borderColor: AppColors.backgroundStroke,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: visits.isEmpty
-                ? _emptyState()
-                : [
-                    for (var i = 0; i < visits.length; i++) ...[
-                      if (i > 0) ...[
-                        const Divider(
-                            color: AppColors.secondary200, height: 1),
-                        const SizedBox(height: AppSpacing.sm),
-                      ],
-                      _VisitRow(
-                        entry: visits[i],
-                        portrait: portraits[visits[i].pet.petId],
-                        onTap: onVisitTap,
-                        now: now,
-                      ),
-                      if (i < visits.length - 1)
-                        const SizedBox(height: AppSpacing.sm),
-                    ],
+            children: [
+              if (visits.isEmpty)
+                Text(
+                  'Aucune visite chez le vétérinaire de prévue',
+                  style: AppTextStyles.textBold,
+                )
+              else
+                for (var i = 0; i < visits.length; i++) ...[
+                  if (i > 0) ...[
+                    const Divider(color: AppColors.secondary200, height: 1),
+                    const SizedBox(height: AppSpacing.sm),
                   ],
+                  _VisitRow(
+                    entry: visits[i],
+                    portrait: portraits[visits[i].pet.petId],
+                    onTap: onVisitTap,
+                    now: now,
+                  ),
+                  if (i < visits.length - 1)
+                    const SizedBox(height: AppSpacing.sm),
+                ],
+
+              /// The way in stays reachable once the list is filled.
+              const SizedBox(height: AppSpacing.md),
+              ButtonWidget(
+                label: 'Ajouter une visite à venir',
+                type: ButtonType.secondary,
+                icon: Icons.add,
+                iconPosition: ButtonIcon.left,
+                fullWidth: true,
+                onPressed: onAddPressed,
+              ),
+            ],
           ),
         ),
       ],
     );
   }
-
-  List<Widget> _emptyState() => [
-        Text(
-          'Aucune visite chez le vétérinaire de prévue',
-          style: AppTextStyles.textBold,
-        ),
-        const SizedBox(height: AppSpacing.md),
-        ButtonWidget(
-          label: 'Ajouter une visite à venir',
-          type: ButtonType.secondary,
-          icon: Icons.add,
-          iconPosition: ButtonIcon.left,
-          fullWidth: true,
-          onPressed: onAddPressed,
-        ),
-      ];
 }
 
 class _VisitRow extends StatelessWidget {

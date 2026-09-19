@@ -240,6 +240,7 @@ GoRouter createRouter(
               petRepository: petRepository,
               referentialRepository: referentialRepository,
               eventRepository: eventRepository,
+              healthRepository: healthRepository,
             )..load(state.pathParameters['petId']!),
             child: const EditPetPage(),
           ),
@@ -254,7 +255,9 @@ GoRouter createRouter(
               purchaseRepository: purchaseRepository,
               authRepository: authRepository,
             )..loadOffers(),
-            child: const PaywallPage(),
+            child: PaywallPage(
+              isPreview: state.uri.queryParameters['preview'] == '1',
+            ),
           ),
         ),
       ),

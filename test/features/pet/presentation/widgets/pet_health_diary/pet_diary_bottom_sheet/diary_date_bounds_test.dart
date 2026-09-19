@@ -53,6 +53,29 @@ void main() {
       expectSameDay(picker.minimumDate!, _birthdate);
       expect(picker.maximumDate!.isAfter(DateTime.now()), isTrue);
     });
+
+    /// Booked from the home, a date already gone is not a visit to come.
+    testWidgets('booked ahead, the floor is today, not the birthdate',
+        (tester) async {
+      final picker = await openPicker(
+        tester,
+        AddVetVisitBottomSheetWidget(
+          birthdate: _birthdate,
+          upcomingOnly: true,
+          onSubmit: ({
+            required String title,
+            required DateTime visitedAt,
+            String? vetName,
+            String? clinicName,
+            String? petId,
+          }) {},
+        ),
+        'Date de la visite',
+      );
+
+      expectSameDay(picker.minimumDate!, DateTime.now());
+      expect(picker.maximumDate!.isAfter(DateTime.now()), isTrue);
+    });
   });
 
   group('vaccine dates', () {

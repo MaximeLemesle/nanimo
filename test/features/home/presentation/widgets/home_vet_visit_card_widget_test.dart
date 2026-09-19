@@ -101,7 +101,23 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Dans 24 j'), findsOneWidget);
-      expect(find.text('Ajouter une visite à venir'), findsNothing);
+    });
+
+    /// The way in is not an empty-state affordance: a second appointment is
+    /// booked from the same place as the first.
+    testWidgets('still offers the way to book', (tester) async {
+      var tapped = false;
+      await pumpCard(
+        tester,
+        [_entry('v1', 'Rappel annuel', 24)],
+        onAddPressed: () => tapped = true,
+      );
+
+      expect(find.text('Ajouter une visite à venir'), findsOneWidget);
+
+      await tester.tap(find.text('Ajouter une visite à venir'));
+      await tester.pumpAndSettle();
+      expect(tapped, isTrue);
     });
 
     testWidgets('drops the missing fields from the subtitle', (tester) async {

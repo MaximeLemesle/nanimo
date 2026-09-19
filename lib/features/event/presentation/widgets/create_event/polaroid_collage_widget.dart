@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
+import 'package:nanimo/core/widgets/app_icon_widget.dart';
 
 sealed class CollageImage {
   const CollageImage();
@@ -31,6 +32,7 @@ class PolaroidCollageWidget extends StatelessWidget {
   final VoidCallback onTap;
   final void Function(int index)? onImageTap;
   final Future<String> Function(String assetPath)? urlResolver;
+  final int? premiumFromIndex;
 
   const PolaroidCollageWidget({
     super.key,
@@ -38,6 +40,7 @@ class PolaroidCollageWidget extends StatelessWidget {
     required this.onTap,
     this.onImageTap,
     this.urlResolver,
+    this.premiumFromIndex,
   });
 
   static const int maxImages = 5;
@@ -75,8 +78,7 @@ class PolaroidCollageWidget extends StatelessWidget {
     }
 
     final isPlaceholder = images.isEmpty;
-    final count =
-        isPlaceholder ? _placeholderFrameCount : images.take(maxImages).length;
+    final count = isPlaceholder ? _placeholderFrameCount : images.take(maxImages).length;
     final outer = _collageFrameSize + padding;
     var half = 0.0;
     for (var i = 0; i < count; i++) {
@@ -88,9 +90,20 @@ class PolaroidCollageWidget extends StatelessWidget {
     return 2 * half;
   }
 
-  Offset _frameOffset(int index) => index < _placeholderFrameCount - 1
-      ? _offsets[index].translate(0, -_placeholderBackRaise)
-      : _offsets[index];
+  Offset _frameOffset(int index) =>
+      index < _placeholderFrameCount - 1 ? _offsets[index].translate(0, -_placeholderBackRaise) : _offsets[index];
+
+  bool _isPremiumFrame(int index) {
+    final from = premiumFromIndex;
+    return from != null && index >= from;
+  }
+
+  /// The owner then sees the frame they can fill, with the locked ones behind it.
+  bool _isPremiumPlaceholderFrame(int index) {
+    final from = premiumFromIndex;
+    if (from == null) return false;
+    return index < _placeholderFrameCount - from;
+  }
 
   Widget _buildPlaceholder() {
     return Center(
@@ -102,18 +115,45 @@ class PolaroidCollageWidget extends StatelessWidget {
               offset: _frameOffset(i),
               child: Transform.rotate(
                 angle: _angles[i],
-                child: _frame(
-                  dashed: true,
-                  child: Icon(
-                    Icons.photo,
-                    size: AppSpacing.xl,
-                    color: AppColors.textSecondary,
+                child: _markPremium(
+                  _isPremiumPlaceholderFrame(i),
+                  _frame(
+                    dashed: true,
+                    child: Icon(
+                      Icons.photo,
+                      size: AppSpacing.xl,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
               ),
             ),
         ],
       ),
+    );
+  }
+
+  /// Overlaps included: the stack is a pile. The frame carries no gesture of
+  /// its own, the pile keeps the single [onTap] of the widget.
+  Widget _markPremium(bool isPremium, Widget frame) {
+    if (!isPremium) return frame;
+
+    return Stack(
+      children: [
+        Opacity(opacity: 0.55, child: frame),
+        Positioned(
+          top: AppSpacing.xs,
+          right: AppSpacing.xs,
+          child: Semantics(
+            label: 'Réservé au premium',
+            child: AppIconWidget(
+              AppIcons.crown,
+              color: AppColors.tertiary,
+              size: 18,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -141,10 +181,13 @@ class PolaroidCollageWidget extends StatelessWidget {
               offset: _frameOffset(i),
               child: Transform.rotate(
                 angle: _angles[i],
-                child: _tappable(
-                  i,
-                  _frame(
-                    child: _image(visible[i], 150),
+                child: _markPremium(
+                  _isPremiumFrame(i),
+                  _tappable(
+                    i,
+                    _frame(
+                      child: _image(visible[i], 150),
+                    ),
                   ),
                 ),
               ),
@@ -162,8 +205,7 @@ class PolaroidCollageWidget extends StatelessWidget {
           height: size,
           fit: BoxFit.cover,
         ),
-      RemoteCollageImage(:final assetPath) when urlResolver != null =>
-        FutureBuilder<String>(
+      RemoteCollageImage(:final assetPath) when urlResolver != null => FutureBuilder<String>(
           future: urlResolver!(assetPath),
           builder: (context, snapshot) {
             if (snapshot.connectionState != ConnectionState.done) {
@@ -179,15 +221,13 @@ class PolaroidCollageWidget extends StatelessWidget {
               height: size,
               fit: BoxFit.cover,
               placeholder: (_, __) => _imagePlaceholder(size),
-              errorWidget: (_, __, ___) =>
-                  _imagePlaceholder(size, icon: Icons.broken_image_outlined),
+              errorWidget: (_, __, ___) => _imagePlaceholder(size, icon: Icons.broken_image_outlined),
             );
           },
         ),
 
       /// A stored photo with no resolver to sign its url cannot be fetched.
-      RemoteCollageImage() =>
-        _imagePlaceholder(size, icon: Icons.broken_image_outlined),
+      RemoteCollageImage() => _imagePlaceholder(size, icon: Icons.broken_image_outlined),
     };
   }
 
@@ -220,9 +260,7 @@ class PolaroidCollageWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.backgroundSurface,
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: dashed
-            ? null
-            : Border.all(color: AppColors.backgroundStroke, width: 2),
+        border: dashed ? null : Border.all(color: AppColors.backgroundStroke, width: 2),
         boxShadow: dashed
             ? null
             : const [

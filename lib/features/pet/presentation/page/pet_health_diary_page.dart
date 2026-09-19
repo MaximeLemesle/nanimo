@@ -8,6 +8,10 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_di
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card/pet_vaccine_diary_card_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card/pet_vet_visit_diary_card_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card/pet_weight_graph_diary_card_widget.dart';
+import 'package:nanimo/features/subscription/presentation/pet_lock.dart';
+import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
+import 'package:nanimo/config/router/route_names.dart';
+import 'package:go_router/go_router.dart';
 
 class PetHealthDiaryPage extends StatelessWidget {
   const PetHealthDiaryPage({super.key});
@@ -25,6 +29,12 @@ class PetHealthDiaryPage extends StatelessWidget {
       },
       builder: (context, state) {
         final pet = state.selectedPet;
+        final isLocked = pet != null &&
+            PetLock.isLocked(
+              pet.petId,
+              state.pets,
+              context.watch<SubscriptionCubit>().state,
+            );
         return Scaffold(
           backgroundColor: AppColors.background,
           appBar: AppBar(
@@ -46,14 +56,9 @@ class PetHealthDiaryPage extends StatelessWidget {
                 raceName: state.raceName ?? '—',
                 weightLogs: state.weightLogs,
                 diary: state.diary,
-              ),
-
-              const SizedBox(height: AppSpacing.lg),
-
-              /// Vaccine list card
-              PetVaccineDiaryCardWidget(
-                vaccines: state.vaccines,
-                birthdate: state.selectedPet!.birthdate,
+                onEdit: () => context.push(
+                  '${RouteNames.editPet}/${state.selectedPet!.petId}',
+                ),
               ),
 
               const SizedBox(height: AppSpacing.lg),
@@ -62,6 +67,16 @@ class PetHealthDiaryPage extends StatelessWidget {
               PetVetVisitDiaryCardWidget(
                 visits: state.vetVisits,
                 birthdate: state.selectedPet!.birthdate,
+                readOnly: isLocked,
+              ),
+
+              const SizedBox(height: AppSpacing.lg),
+
+              /// Vaccine list card
+              PetVaccineDiaryCardWidget(
+                vaccines: state.vaccines,
+                birthdate: state.selectedPet!.birthdate,
+                readOnly: isLocked,
               ),
 
               const SizedBox(height: AppSpacing.lg),
@@ -70,6 +85,7 @@ class PetHealthDiaryPage extends StatelessWidget {
               PetWeightGraphDiaryCardWidget(
                 weightLogs: state.weightLogs,
                 birthdate: state.selectedPet!.birthdate,
+                readOnly: isLocked,
               ),
 
               const SizedBox(height: AppSpacing.lg),

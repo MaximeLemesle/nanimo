@@ -10,6 +10,7 @@ import 'package:nanimo/core/utils/diary_date_bounds.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_picker_widget.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/core/utils/pet_portrait.dart';
+import 'package:nanimo/core/widgets/confirm_deletion_dialog.dart';
 
 typedef VetVisitSubmit = void Function({
   required String title,
@@ -33,6 +34,12 @@ class AddVetVisitBottomSheetWidget extends StatefulWidget {
   final Map<String, PetPortrait> portraits;
   final String? initialPetId;
 
+  /// Offered in edit mode only, behind a confirmation.
+  final VoidCallback? onDelete;
+
+  /// Books ahead: the floor becomes today instead of the birthdate.
+  final bool upcomingOnly;
+
   const AddVetVisitBottomSheetWidget({
     super.key,
     required this.onSubmit,
@@ -41,15 +48,15 @@ class AddVetVisitBottomSheetWidget extends StatefulWidget {
     this.pets = const [],
     this.portraits = const {},
     this.initialPetId,
+    this.onDelete,
+    this.upcomingOnly = false,
   });
 
   @override
-  State<AddVetVisitBottomSheetWidget> createState() =>
-      _AddVetVisitBottomSheetWidgetState();
+  State<AddVetVisitBottomSheetWidget> createState() => _AddVetVisitBottomSheetWidgetState();
 }
 
-class _AddVetVisitBottomSheetWidgetState
-    extends State<AddVetVisitBottomSheetWidget> {
+class _AddVetVisitBottomSheetWidgetState extends State<AddVetVisitBottomSheetWidget> {
   late final TextEditingController _titleController;
   late final TextEditingController _vetController;
   late final TextEditingController _clinicController;
@@ -68,6 +75,10 @@ class _AddVetVisitBottomSheetWidgetState
     }
     return widget.birthdate;
   }
+
+  /// Booking ahead, a past date is not a visit to come.
+  DateTime? get _firstDate =>
+      widget.upcomingOnly ? DiaryDateBounds.today() : _birthdate;
 
   @override
   void initState() {
@@ -105,15 +116,39 @@ class _AddVetVisitBottomSheetWidgetState
     Navigator.of(context).pop();
   }
 
+  Future<void> _confirmDelete() async {
+    final confirmed = await confirmDeletion(
+      context,
+      title: 'Supprimer cette visite ?',
+      message: 'La visite disparaîtra du carnet de santé et ne pourra pas être récupérée.',
+    );
+    if (!confirmed || !mounted) return;
+    widget.onDelete!();
+    Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     return BottomSheetWidget(
       title: widget.initial == null ? 'Ajouter une visite' : 'Modifier la visite',
-      action: ButtonWidget(
-        label: 'Enregistrer',
-        fullWidth: true,
-        onPressed: _isValid ? _submit : null,
-        state: _isValid ? ButtonState.normal : ButtonState.disabled,
+      action: Column(
+        children: [
+          if (widget.onDelete != null) ...[
+            ButtonWidget(
+              label: 'Supprimer la visite',
+              type: ButtonType.delete,
+              fullWidth: true,
+              onPressed: _confirmDelete,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
+          ButtonWidget(
+            label: 'Enregistrer',
+            fullWidth: true,
+            onPressed: _isValid ? _submit : null,
+            state: _isValid ? ButtonState.normal : ButtonState.disabled,
+          ),
+        ],
       ),
       children: [
         if (_showPetPicker) ...[
@@ -130,16 +165,14 @@ class _AddVetVisitBottomSheetWidgetState
         DateFieldWidget(
           label: 'Date de la visite',
           value: _visitedAt,
-          firstDate: _birthdate,
+          firstDate: _firstDate,
           lastDate: DiaryDateBounds.openEnd(),
           onChanged: (date) => setState(() => _visitedAt = date),
         ),
         const SizedBox(height: AppSpacing.md),
-        _buildField(_vetController, 'Vétérinaire (optionnel)',
-            capitalize: true),
+        _buildField(_vetController, 'Vétérinaire (optionnel)', capitalize: true),
         const SizedBox(height: AppSpacing.md),
-        _buildField(_clinicController, 'Clinique (optionnel)',
-            capitalize: true),
+        _buildField(_clinicController, 'Clinique (optionnel)', capitalize: true),
       ],
     );
   }
@@ -151,8 +184,7 @@ class _AddVetVisitBottomSheetWidgetState
   }) {
     return TextField(
       controller: controller,
-      textCapitalization:
-          capitalize ? TextCapitalization.sentences : TextCapitalization.none,
+      textCapitalization: capitalize ? TextCapitalization.sentences : TextCapitalization.none,
       onChanged: (_) => setState(() {}),
       decoration: InputDecoration(
         labelText: label,

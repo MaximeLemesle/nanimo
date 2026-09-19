@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_health_info_card_widget.dart';
+import 'package:nanimo/features/pet/data/models/pet_model.dart';
 
 HealthDiaryModel _diary({
   bool? isSterilized = true,
@@ -36,6 +37,7 @@ void main() {
     List<VetVisitModel> vetVisits = const [],
     VoidCallback? onEditPressed,
     DateTime? now,
+    Gender gender = Gender.female,
   }) async {
     tester.view.physicalSize = const Size(1200, 2400);
     tester.view.devicePixelRatio = 1.0;
@@ -46,6 +48,7 @@ void main() {
         home: Scaffold(
           body: SingleChildScrollView(
             child: PetHealthInfoCardWidget(
+              gender: gender,
               diary: diary,
               now: now,
               vetVisits: vetVisits,
@@ -182,6 +185,29 @@ void main() {
       );
 
       expect(find.text('03/04/2025'), findsOneWidget);
+    });
+  });
+
+  // NAN-091: the same word was used for every animal.
+  group('neutering wording', () {
+    testWidgets('a female reads Stérilisée', (tester) async {
+      await pumpCard(tester, diary: _diary(), gender: Gender.female);
+
+      expect(find.text('Stérilisée'), findsOneWidget);
+      expect(find.text('Castré'), findsNothing);
+    });
+
+    testWidgets('a male reads Castré', (tester) async {
+      await pumpCard(tester, diary: _diary(), gender: Gender.male);
+
+      expect(find.text('Castré'), findsOneWidget);
+      expect(find.text('Stérilisée'), findsNothing);
+    });
+
+    testWidgets('an unknown gender keeps the generic term', (tester) async {
+      await pumpCard(tester, diary: _diary(), gender: Gender.unknown);
+
+      expect(find.text('Stérilisé'), findsOneWidget);
     });
   });
 }

@@ -290,6 +290,42 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     }
   }
 
+  Future<void> deleteVaccine(String healthDiaryVaccineId) async {
+    try {
+      await _healthRepository.deleteVaccine(healthDiaryVaccineId);
+    } catch (err) {
+      if (isClosed) return;
+      emit(state.copyWith(error: err.toString()));
+    }
+  }
+
+  Future<void> deleteVetVisit(String vetVisitId) async {
+    try {
+      await _healthRepository.deleteVetVisit(vetVisitId);
+    } catch (err) {
+      if (isClosed) return;
+      emit(state.copyWith(error: err.toString()));
+    }
+  }
+
+  Future<void> updateWeightLog(HealthDiaryWeightLogModel log) async {
+    try {
+      await _healthRepository.updateWeightLog(log);
+    } catch (err) {
+      if (isClosed) return;
+      emit(state.copyWith(error: err.toString()));
+    }
+  }
+
+  Future<void> deleteWeightLog(String healthDiaryWeightLogId) async {
+    try {
+      await _healthRepository.deleteWeightLog(healthDiaryWeightLogId);
+    } catch (err) {
+      if (isClosed) return;
+      emit(state.copyWith(error: err.toString()));
+    }
+  }
+
   /// Returns the diary id for [petId], creating an empty diary if needed.
   Future<String?> _ensureDiary(String petId) async {
     final existing = state.diary;

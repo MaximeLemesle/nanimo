@@ -7,6 +7,7 @@ import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/date_field_widget.dart';
 import 'package:nanimo/features/health/data/models/health_diary_vaccine_model.dart';
 import 'package:nanimo/core/utils/diary_date_bounds.dart';
+import 'package:nanimo/core/widgets/confirm_deletion_dialog.dart';
 
 typedef VaccineSubmit = void Function({
   required String vaccineName,
@@ -21,11 +22,15 @@ class AddVaccineBottomSheetWidget extends StatefulWidget {
   /// Floor of both date pickers.
   final DateTime birthdate;
 
+  /// Offered in edit mode only, behind a confirmation.
+  final VoidCallback? onDelete;
+
   const AddVaccineBottomSheetWidget({
     super.key,
     required this.onSubmit,
     required this.birthdate,
     this.initial,
+    this.onDelete,
   });
 
   @override
@@ -46,10 +51,7 @@ class _AddVaccineBottomSheetWidgetState extends State<AddVaccineBottomSheetWidge
     _nextDate = initial?.nextDate;
   }
 
-  bool get _isValid =>
-      _nameController.text.trim().isNotEmpty &&
-      _lastDate != null &&
-      _nextDate != null;
+  bool get _isValid => _nameController.text.trim().isNotEmpty && _lastDate != null && _nextDate != null;
 
   @override
   void dispose() {
@@ -67,16 +69,39 @@ class _AddVaccineBottomSheetWidgetState extends State<AddVaccineBottomSheetWidge
     Navigator.of(context).pop();
   }
 
+  Future<void> _confirmDelete() async {
+    final confirmed = await confirmDeletion(
+      context,
+      title: 'Supprimer ce vaccin ?',
+      message: 'La ligne disparaîtra du carnet de santé et ne pourra pas être récupérée.',
+    );
+    if (!confirmed || !mounted) return;
+    widget.onDelete!();
+    Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     return BottomSheetWidget(
-      title:
-          widget.initial == null ? 'Ajouter un vaccin' : 'Modifier le vaccin',
-      action: ButtonWidget(
-        label: 'Enregistrer',
-        fullWidth: true,
-        onPressed: _isValid ? _submit : null,
-        state: _isValid ? ButtonState.normal : ButtonState.disabled,
+      title: widget.initial == null ? 'Ajouter un vaccin' : 'Modifier le vaccin',
+      action: Column(
+        children: [
+          if (widget.onDelete != null) ...[
+            ButtonWidget(
+              label: 'Supprimer le vaccin',
+              type: ButtonType.delete,
+              fullWidth: true,
+              onPressed: _confirmDelete,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
+          ButtonWidget(
+            label: 'Enregistrer',
+            fullWidth: true,
+            onPressed: _isValid ? _submit : null,
+            state: _isValid ? ButtonState.normal : ButtonState.disabled,
+          ),
+        ],
       ),
       children: [
         TextField(
