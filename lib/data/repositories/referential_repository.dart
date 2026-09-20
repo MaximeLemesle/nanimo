@@ -2,6 +2,7 @@ import 'package:isar/isar.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_type_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_icon_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_species_cache.dart';
+import 'package:nanimo/core/utils/pet_race_order.dart';
 import 'package:nanimo/data/models/referential/pet_icon_model.dart';
 import 'package:nanimo/data/models/referential/pet_race_model.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
@@ -48,12 +49,14 @@ class ReferentialRepository {
     return rows.map((c) => c.toModel()).toList();
   }
 
-  /// Loading pet races
+  /// Loading pet races, ordered by [PetRaceOrder] rather than by the database
+  /// collation, which files « Autre » under A and sorts accents its own way.
   Future<List<PetRaceModel>> fetchRacesBySpecies(String petSpeciesId) async {
     try {
-      final response = await _supabase.from('pet_race').select().eq('pet_species_id', petSpeciesId).order('pet_race_name');
+      final response = await _supabase.from('pet_race').select().eq('pet_species_id', petSpeciesId);
 
-      return (response as List).map((element) => PetRaceModel.fromJson(element)).toList();
+      final races = (response as List).map((element) => PetRaceModel.fromJson(element)).toList();
+      return PetRaceOrder.sorted(races);
     } catch (err) {
       throw Exception('Erreur chargement des races : $err');
     }
