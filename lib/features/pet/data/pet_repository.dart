@@ -18,16 +18,25 @@ class PetRepository {
   })  : _writeRetryAttempts = writeRetryAttempts,
         _writeRetryBackoff = writeRetryBackoff;
 
+  /// Oldest first, and the pet id breaks the ties. Two pets created in the
+  /// same instant would otherwise come back in Isar's own order, which the
+  /// clear-and-refill of each sync is free to change: the park would reshuffle
+  /// on its own between two launches.
   Stream<List<PetModel>> watchPets() {
     return _isar.petCaches
         .where()
         .sortByCreatedAt()
+        .thenByPetId()
         .watch(fireImmediately: true)
         .map((rows) => rows.map((c) => c.toModel()).toList());
   }
 
   Future<List<PetModel>> getPets() async {
-    final rows = await _isar.petCaches.where().sortByCreatedAt().findAll();
+    final rows = await _isar.petCaches
+        .where()
+        .sortByCreatedAt()
+        .thenByPetId()
+        .findAll();
     return rows.map((cache) => cache.toModel()).toList();
   }
 

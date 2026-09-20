@@ -59,6 +59,27 @@ void main() {
       final emission = await repo.watchPets().first;
       expect(emission.map((p) => p.petId).toList(), ['p1', 'p2']);
     });
+
+    /// NAN-095: the park must never reshuffle on its own. Two pets created in
+    /// the same instant fall back on the id, which does not move.
+    test('breaks a createdAt tie on the pet id', () async {
+      final sameInstant = DateTime.utc(2024, 3, 12, 9, 30);
+      await seed(buildPet('p3', 'Nala', createdAt: sameInstant));
+      await seed(buildPet('p1', 'Rex', createdAt: sameInstant));
+      await seed(buildPet('p2', 'Felix', createdAt: sameInstant));
+
+      final first = await repo.watchPets().first;
+      expect(first.map((p) => p.petId).toList(), ['p1', 'p2', 'p3']);
+
+      /// What each sync does to the cache, and what used to move the order.
+      await harness.isar.writeTxn(() => harness.isar.petCaches.clear());
+      await seed(buildPet('p2', 'Felix', createdAt: sameInstant));
+      await seed(buildPet('p3', 'Nala', createdAt: sameInstant));
+      await seed(buildPet('p1', 'Rex', createdAt: sameInstant));
+
+      final second = await repo.watchPets().first;
+      expect(second.map((p) => p.petId).toList(), ['p1', 'p2', 'p3']);
+    });
   });
 
   group('getPets', () {
