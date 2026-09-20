@@ -2,8 +2,6 @@ class ArticleModel {
   final String articleId;
   final String title;
   final List<String> paragraphs;
-
-  /// Never null on a row that reached the device.
   final DateTime publishedAt;
 
   const ArticleModel({

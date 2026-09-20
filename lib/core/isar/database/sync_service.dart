@@ -44,19 +44,10 @@ class SyncService {
     });
   }
 
-  /// The home tips. Pulled on every launch like the thirteen other tables:
-  /// it is the only bounded query of the service, so rationing it saved the
-  /// cheapest request while events and images went out whole.
-  ///
-  /// The RLS policy has already dropped the drafts and the scheduled rows,
-  /// hence the plain select.
+  /// The home tips
   Future<void> syncArticles() async {
     try {
-      final data = await _supabase
-          .from('articles')
-          .select()
-          .order('published_at', ascending: false)
-          .limit(5);
+      final data = await _supabase.from('articles').select().order('published_at', ascending: false).limit(5);
       final articles = data.map((e) => ArticleCache.fromJson(e)).toList();
 
       await _isar.writeTxn(() async {
