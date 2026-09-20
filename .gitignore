@@ -68,3 +68,7 @@ coverage/
 
 # Zed config
 .zed/
+
+# Supabase CLI local state and hand-made dumps, both machine-specific
+supabase/.temp/
+supabase/backups/

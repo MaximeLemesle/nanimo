@@ -1,42 +1,62 @@
-# Supabase — schéma versionné
+# Supabase — le schéma de Nanimo
 
-Ce dossier versionne le schéma PostgreSQL, les policies RLS, les triggers et les
-fonctions RPC de Nanimo. Jusqu'ici tout cela ne vivait que dans la console
-Supabase (hors Git) — impossible à reviewer, reproduire ou faire évoluer de
-façon tracée (audit **A-11**).
+Un seul fichier décrit la base : `migrations/0001_baseline.sql`. Il est généré
+depuis la base live, jamais écrit à la main.
 
-## Contenu
+## La règle
 
-| Migration | Rôle |
-| --- | --- |
-| `0001_initial_schema.sql` | Tables, enums, index (modèle de CLAUDE.md §3) |
-| `0002_row_level_security.sql` | RLS : accès via la jointure `users_pets` |
-| `0003_updated_at_delta_sync.sql` | Colonnes `updated_at` + `moddatetime` (delta sync, A-6) — *pas encore lu côté client, sync full-table* |
-| `0004_freemium_quota_triggers.sql` | Quotas serveur `max_pets` / `max_images_per_event` (A-2), résolus par `plan_name` = `subscription_status` |
-| `0005_create_event_rpc.sql` | RPC transactionnelle `create_event` (A-3) — *pas encore branchée dans `EventRepository`* |
-| `0006_delete_account_rpc.sql` | RPC `delete_account` (security definer), utilisée par la page Paramètres |
-| `0007_subscription_quotas_and_purchases.sql` | Quotas vendus par le paywall + table de traçabilité des achats RevenueCat |
-| `0008_subscription_expiry_enforcement.sql` | `subscription_expires_at` devient une condition d'accès : les trois résolutions de plan passent par `effective_plan_name` |
-| `0009_articles.sql` | Table `articles` des conseils de l'accueil, lecture seule, rotation portée par `published_at` |
+**La base live est la source de vérité.** Ce dossier la décrit, il ne la pilote
+pas.
 
-## Appliquer
+Un changement de schéma se fait à la main dans le SQL editor Supabase, puis on
+régénère la baseline pour que le dépôt reflète le nouvel état.
 
-**La base live est la source de vérité, pas ce dossier.** Ces fichiers décrivent
-l'état voulu du schéma ; ils ne sont pas rejoués comme un historique et
-`supabase db push` n'est jamais lancé sur live. Un changement de schéma se fait à
-la main dans le SQL editor Supabase, puis se reflète ici dans le fichier concerné.
+🔴 **Ne jamais lancer `supabase db push`.** La base n'a aucun historique de
+migrations enregistré : la colonne `Remote` de `supabase migration list` est
+vide. Un push rejouerait la baseline depuis zéro sur une base déjà peuplée.
+
+## Régénérer la baseline
+
+Docker Desktop doit tourner, le dump s'exécute dans un conteneur.
 
 ```bash
-supabase link --project-ref <ref>   # une seule fois
-supabase db diff                    # inspecter l'écart entre live et ce dossier
+supabase link --project-ref <ref>     # une seule fois par clone
+supabase db dump --linked -f /tmp/nanimo_schema.sql
 ```
 
-> **Note** : l'écart est réel et connu (`0001` décrit `id_subscription_config` en
-> `serial` là où live est en `uuid`, `max_storage_mb` vs `max_storage_in_mb`…).
-> Avant de faire foi d'un fichier, vérifie la colonne sur live.
+Puis remplacer le corps de `migrations/0001_baseline.sql` par ce fichier, en
+gardant l'en-tête de provenance et en mettant sa date à jour.
 
-## Prochaines étapes (référencées dans l'audit)
+Avant de commiter, vérifier que le dump ne contient **aucune donnée** :
 
-- Brancher `create_event` dans `EventRepository.createEvent` (`supabase.rpc('create_event', …)`) une fois la fonction déployée.
-- Implémenter le delta sync côté client sur `updated_at` (aujourd'hui : full-table).
-- Ajouter des tests RLS (pgTAP ou intégration sur `supabase start`).
+```bash
+grep -c "^INSERT INTO" /tmp/nanimo_schema.sql   # doit rendre 0
+```
+
+Le dump ne couvre que le schéma `public`. Les objets des schémas `auth`,
+`storage` et `realtime` n'y sont pas, `handle_new_user` par exemple. Ce n'est
+pas une omission, c'est le périmètre.
+
+## Ce que le dépôt ne suit plus
+
+`supabase/.temp/` est l'état local du CLI, dont la référence du projet lié.
+`supabase/backups/` contenait deux dumps faits à la main, périmés. Les deux sont
+dans le `.gitignore` depuis NAN-075. Un nouveau clone devra refaire
+`supabase link`.
+
+## Historique
+
+Jusqu'au 20/09/2026, ce dossier portait neuf migrations `0001` à `0009` qui
+avaient divergé de la base **dans les deux sens** : elles décrivaient des objets
+absents et en ignoraient de présents. NAN-075 les a remplacées par la baseline.
+L'historique git les conserve, le dernier commit avant remplacement fait foi.
+
+Deux écarts trouvés à cette occasion ont été corrigés dans la base le même jour,
+avant le dump : la fonction `delete_account`, que l'application appelle depuis
+les Paramètres, n'existait pas, et les deux triggers de quota freemium
+n'étaient pas posés.
+
+## Les fonctions Edge
+
+`functions/revenuecat-webhook/` n'est pas concerné par ce qui précède. Il se
+déploie avec `supabase functions deploy`.

@@ -1,3 +1,23 @@
+-- ---------------------------------------------------------------------------
+-- 0001 — Schéma de base, généré depuis la base live
+--
+-- Ce fichier n'est pas écrit à la main. Il est le résultat de :
+--
+--   supabase db dump --linked -f supabase/migrations/0001_baseline.sql
+--
+-- Généré le 20/09/2026. Il remplace les neuf migrations 0001 à 0009, qui
+-- avaient divergé de la base dans les deux sens : elles décrivaient des objets
+-- absents (`create_event`, `owns_pet`, huit triggers `updated_at` sur des
+-- colonnes qui n'existent pas) et ignoraient des objets présents
+-- (`delete_pet`, `pet_is_claimable`). L'historique git les conserve.
+--
+-- ⚠️ Ne jamais lancer `supabase db push`. La base live n'a aucun historique de
+-- migrations enregistré, un push rejouerait ce fichier depuis zéro. Il sert à
+-- lire et à reviewer le schéma, pas à le déployer.
+--
+-- La procédure de régénération est dans supabase/README.md.
+-- ---------------------------------------------------------------------------
+
 
 
 
@@ -85,6 +105,91 @@ CREATE TYPE "public"."weight_unit_enum" AS ENUM (
 ALTER TYPE "public"."weight_unit_enum" OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."delete_account"() RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+begin
+  if auth.uid() is null then
+    raise exception 'not authenticated';
+  end if;
+
+  delete from public.events
+  where id_event in (
+    select pe.event_id
+    from public.pets_events pe
+    join public.users_pets up on up.pet_id = pe.pet_id
+    where up.user_id = auth.uid()
+  );
+
+  delete from public.pets
+  where id_pet in (
+    select pet_id from public.users_pets where user_id = auth.uid()
+  );
+
+  delete from public.users where id_user = auth.uid();
+
+  delete from auth.users where id = auth.uid();
+end;
+$$;
+
+
+ALTER FUNCTION "public"."delete_account"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."delete_pet"("p_pet_id" "uuid") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+begin
+  if auth.uid() is null then
+    raise exception 'not authenticated';
+  end if;
+
+  if not exists (
+    select 1 from public.users_pets
+    where user_id = auth.uid() and pet_id = p_pet_id
+  ) then
+    raise exception 'not owned';
+  end if;
+
+  delete from public.events
+  where id_event in (
+    select pe.event_id
+    from public.pets_events pe
+    where pe.pet_id = p_pet_id
+      and not exists (
+        select 1
+        from public.pets_events other
+        where other.event_id = pe.event_id
+          and other.pet_id <> p_pet_id
+      )
+  );
+
+  delete from public.pets where id_pet = p_pet_id;
+end;
+$$;
+
+
+ALTER FUNCTION "public"."delete_pet"("p_pet_id" "uuid") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."effective_plan_name"("status" "public"."subscription_status_enum", "expires_at" timestamp with time zone) RETURNS "public"."subscription_status_enum"
+    LANGUAGE "sql" STABLE
+    AS $$
+  select case
+    when status = 'premium'
+     and expires_at is not null
+     and expires_at < now()
+    then 'freemium'::subscription_status_enum
+    else status
+  end;
+$$;
+
+
+ALTER FUNCTION "public"."effective_plan_name"("status" "public"."subscription_status_enum", "expires_at" timestamp with time zone) OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."enforce_max_images"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -100,7 +205,9 @@ begin
   from pets_events pe
   join users_pets up on up.pet_id = pe.pet_id
   join users u on u.id_user = up.user_id
-  join subscription_config sc on sc.plan_name = u.subscription_status
+  join subscription_config sc
+    on sc.plan_name = public.effective_plan_name(
+         u.subscription_status, u.subscription_expires_at)
   where pe.event_id = new.event_id;
 
   if current_count >= coalesce(allowed, 0) then
@@ -126,7 +233,9 @@ begin
   select count(*) into current_count from users_pets where user_id = new.user_id;
   select sc.max_pets into allowed
   from users u
-  join subscription_config sc on sc.plan_name = u.subscription_status
+  join subscription_config sc
+    on sc.plan_name = public.effective_plan_name(
+         u.subscription_status, u.subscription_expires_at)
   where u.id_user = new.user_id;
 
   if current_count >= coalesce(allowed, 0) then
@@ -164,6 +273,21 @@ CREATE OR REPLACE FUNCTION "public"."handle_new_user"() RETURNS "trigger"
 
 ALTER FUNCTION "public"."handle_new_user"() OWNER TO "postgres";
 
+
+CREATE OR REPLACE FUNCTION "public"."pet_is_claimable"("p_pet_id" "uuid", "p_user_id" "uuid") RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  select not exists (
+    select 1 from public.users_pets
+    where pet_id = p_pet_id
+      and user_id <> p_user_id
+  );
+$$;
+
+
+ALTER FUNCTION "public"."pet_is_claimable"("p_pet_id" "uuid", "p_user_id" "uuid") OWNER TO "postgres";
+
 SET default_tablespace = '';
 
 SET default_table_access_method = "heap";
@@ -173,8 +297,7 @@ CREATE TABLE IF NOT EXISTS "public"."subscription_config" (
     "id_subscription_config" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "plan_name" "public"."subscription_status_enum" NOT NULL,
     "max_images_per_event" integer NOT NULL,
-    "max_pets" integer NOT NULL,
-    "max_storage_in_mb" integer NOT NULL
+    "max_pets" integer NOT NULL
 );
 
 
@@ -188,7 +311,9 @@ CREATE OR REPLACE FUNCTION "public"."plan_for_pet"("target_pet" "uuid") RETURNS 
   select sc.*
   from users_pets up
   join users u on u.id_user = up.user_id
-  join subscription_config sc on sc.plan_name = u.subscription_status
+  join subscription_config sc
+    on sc.plan_name = public.effective_plan_name(
+         u.subscription_status, u.subscription_expires_at)
   where up.pet_id = target_pet
   limit 1;
 $$;
@@ -227,6 +352,36 @@ $$;
 
 
 ALTER FUNCTION "public"."rls_auto_enable"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."set_updated_at"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+
+ALTER FUNCTION "public"."set_updated_at"() OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."articles" (
+    "id_article" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "title" "text" NOT NULL,
+    "paragraphs" "text"[] NOT NULL,
+    "published_at" timestamp with time zone,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+ALTER TABLE "public"."articles" OWNER TO "postgres";
+
+
+COMMENT ON COLUMN "public"."articles"."published_at" IS 'Null = brouillon. Date future = programmé. L''article affiché est celui dont la date publiée est la plus récente et déjà passée.';
+
 
 
 CREATE TABLE IF NOT EXISTS "public"."event_image" (
@@ -322,7 +477,8 @@ CREATE TABLE IF NOT EXISTS "public"."pet_icons" (
     "pet_icon_name" "text" NOT NULL,
     "asset_path" "text" NOT NULL,
     "is_premium" boolean DEFAULT false NOT NULL,
-    "pet_species_id" "uuid"
+    "pet_species_id" "uuid",
+    "pet_race_id" "uuid"
 );
 
 
@@ -386,6 +542,24 @@ CREATE TABLE IF NOT EXISTS "public"."recommended_vaccines" (
 ALTER TABLE "public"."recommended_vaccines" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."subscription_purchase" (
+    "id_subscription_purchase" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "event_id" "text" NOT NULL,
+    "event_type" "text" NOT NULL,
+    "product_id" "text",
+    "store" "text",
+    "environment" "text",
+    "purchased_at" timestamp with time zone,
+    "expires_at" timestamp with time zone,
+    "raw_event" "jsonb" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+ALTER TABLE "public"."subscription_purchase" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."users" (
     "id_user" "uuid" NOT NULL,
     "user_name" "text" NOT NULL,
@@ -419,6 +593,11 @@ CREATE TABLE IF NOT EXISTS "public"."vet_visits" (
 
 
 ALTER TABLE "public"."vet_visits" OWNER TO "postgres";
+
+
+ALTER TABLE ONLY "public"."articles"
+    ADD CONSTRAINT "articles_pkey" PRIMARY KEY ("id_article");
+
 
 
 ALTER TABLE ONLY "public"."event_image"
@@ -511,6 +690,16 @@ ALTER TABLE ONLY "public"."subscription_config"
 
 
 
+ALTER TABLE ONLY "public"."subscription_purchase"
+    ADD CONSTRAINT "subscription_purchase_event_id_key" UNIQUE ("event_id");
+
+
+
+ALTER TABLE ONLY "public"."subscription_purchase"
+    ADD CONSTRAINT "subscription_purchase_pkey" PRIMARY KEY ("id_subscription_purchase");
+
+
+
 ALTER TABLE ONLY "public"."users"
     ADD CONSTRAINT "users_mail_key" UNIQUE ("mail");
 
@@ -528,6 +717,10 @@ ALTER TABLE ONLY "public"."users"
 
 ALTER TABLE ONLY "public"."vet_visits"
     ADD CONSTRAINT "vet_visits_pkey" PRIMARY KEY ("id_vet_visit");
+
+
+
+CREATE INDEX "articles_published_at_idx" ON "public"."articles" USING "btree" ("published_at" DESC) WHERE ("published_at" IS NOT NULL);
 
 
 
@@ -567,6 +760,22 @@ CREATE INDEX "idx_vet_visits_visited_at" ON "public"."vet_visits" USING "btree" 
 
 
 
+CREATE INDEX "subscription_purchase_user_idx" ON "public"."subscription_purchase" USING "btree" ("user_id", "created_at" DESC);
+
+
+
+CREATE OR REPLACE TRIGGER "articles_set_updated_at" BEFORE UPDATE ON "public"."articles" FOR EACH ROW EXECUTE FUNCTION "public"."set_updated_at"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_enforce_max_images" BEFORE INSERT ON "public"."event_image" FOR EACH ROW EXECUTE FUNCTION "public"."enforce_max_images"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_enforce_max_pets" BEFORE INSERT ON "public"."users_pets" FOR EACH ROW EXECUTE FUNCTION "public"."enforce_max_pets"();
+
+
+
 ALTER TABLE ONLY "public"."event_image"
     ADD CONSTRAINT "event_image_event_id_fkey" FOREIGN KEY ("event_id") REFERENCES "public"."events"("id_event") ON DELETE CASCADE;
 
@@ -594,6 +803,11 @@ ALTER TABLE ONLY "public"."health_diary_weight_log"
 
 ALTER TABLE ONLY "public"."notifications"
     ADD CONSTRAINT "notifications_pet_id_fkey" FOREIGN KEY ("pet_id") REFERENCES "public"."pets"("id_pet") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."pet_icons"
+    ADD CONSTRAINT "pet_icons_pet_race_id_fkey" FOREIGN KEY ("pet_race_id") REFERENCES "public"."pet_race"("id_pet_race") ON DELETE SET NULL;
 
 
 
@@ -637,6 +851,11 @@ ALTER TABLE ONLY "public"."recommended_vaccines"
 
 
 
+ALTER TABLE ONLY "public"."subscription_purchase"
+    ADD CONSTRAINT "subscription_purchase_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id_user") ON DELETE CASCADE;
+
+
+
 ALTER TABLE ONLY "public"."users"
     ADD CONSTRAINT "users_id_user_fkey" FOREIGN KEY ("id_user") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
@@ -670,31 +889,11 @@ CREATE POLICY "Enable insert for authenticated users only" ON "public"."events" 
 
 
 
-CREATE POLICY "Enable insert for authenticated users only" ON "public"."health_diary_vaccines" FOR INSERT TO "authenticated" WITH CHECK (true);
-
-
-
-CREATE POLICY "Enable insert for authenticated users only" ON "public"."health_diary_weight_log" FOR INSERT TO "authenticated" WITH CHECK (true);
-
-
-
 CREATE POLICY "Enable insert for authenticated users only" ON "public"."pets" FOR INSERT TO "authenticated" WITH CHECK (true);
 
 
 
-CREATE POLICY "Enable insert for authenticated users only" ON "public"."users_pets" FOR INSERT TO "authenticated" WITH CHECK (true);
-
-
-
 CREATE POLICY "Enable read access for all users" ON "public"."event_type" FOR SELECT USING (true);
-
-
-
-CREATE POLICY "Enable read access for all users" ON "public"."health_diary_vaccines" FOR SELECT USING (true);
-
-
-
-CREATE POLICY "Enable read access for all users" ON "public"."health_diary_weight_log" FOR SELECT USING (true);
 
 
 
@@ -741,6 +940,13 @@ CREATE POLICY "Users manage vet visits of their pets" ON "public"."vet_visits" U
   WHERE (("up"."pet_id" = "vet_visits"."pet_id") AND ("up"."user_id" = "auth"."uid"()))))) WITH CHECK ((EXISTS ( SELECT 1
    FROM "public"."users_pets" "up"
   WHERE (("up"."pet_id" = "vet_visits"."pet_id") AND ("up"."user_id" = "auth"."uid"())))));
+
+
+
+ALTER TABLE "public"."articles" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "articles_select_published" ON "public"."articles" FOR SELECT TO "authenticated" USING ((("published_at" IS NOT NULL) AND ("published_at" <= "now"())));
 
 
 
@@ -811,13 +1017,74 @@ ALTER TABLE "public"."health_diary" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."health_diary_vaccines" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "health_diary_vaccines_delete_own" ON "public"."health_diary_vaccines" FOR DELETE TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM ("public"."health_diary" "hd"
+     JOIN "public"."users_pets" "up" ON (("up"."pet_id" = "hd"."pet_id")))
+  WHERE (("hd"."id_health_diary" = "health_diary_vaccines"."health_diary_id") AND ("up"."user_id" = "auth"."uid"())))));
+
+
+
+CREATE POLICY "health_diary_vaccines_insert_own" ON "public"."health_diary_vaccines" FOR INSERT TO "authenticated" WITH CHECK ((EXISTS ( SELECT 1
+   FROM ("public"."health_diary" "hd"
+     JOIN "public"."users_pets" "up" ON (("up"."pet_id" = "hd"."pet_id")))
+  WHERE (("hd"."id_health_diary" = "health_diary_vaccines"."health_diary_id") AND ("up"."user_id" = "auth"."uid"())))));
+
+
+
+CREATE POLICY "health_diary_vaccines_select_own" ON "public"."health_diary_vaccines" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM ("public"."health_diary" "hd"
+     JOIN "public"."users_pets" "up" ON (("up"."pet_id" = "hd"."pet_id")))
+  WHERE (("hd"."id_health_diary" = "health_diary_vaccines"."health_diary_id") AND ("up"."user_id" = "auth"."uid"())))));
+
+
+
+CREATE POLICY "health_diary_vaccines_update_own" ON "public"."health_diary_vaccines" FOR UPDATE TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM ("public"."health_diary" "hd"
+     JOIN "public"."users_pets" "up" ON (("up"."pet_id" = "hd"."pet_id")))
+  WHERE (("hd"."id_health_diary" = "health_diary_vaccines"."health_diary_id") AND ("up"."user_id" = "auth"."uid"()))))) WITH CHECK ((EXISTS ( SELECT 1
+   FROM ("public"."health_diary" "hd"
+     JOIN "public"."users_pets" "up" ON (("up"."pet_id" = "hd"."pet_id")))
+  WHERE (("hd"."id_health_diary" = "health_diary_vaccines"."health_diary_id") AND ("up"."user_id" = "auth"."uid"())))));
+
+
+
 ALTER TABLE "public"."health_diary_weight_log" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "health_diary_weight_log_delete_own" ON "public"."health_diary_weight_log" FOR DELETE TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM "public"."users_pets" "up"
+  WHERE (("up"."pet_id" = "health_diary_weight_log"."pet_id") AND ("up"."user_id" = "auth"."uid"())))));
+
+
+
+CREATE POLICY "health_diary_weight_log_insert_own" ON "public"."health_diary_weight_log" FOR INSERT TO "authenticated" WITH CHECK ((EXISTS ( SELECT 1
+   FROM "public"."users_pets" "up"
+  WHERE (("up"."pet_id" = "health_diary_weight_log"."pet_id") AND ("up"."user_id" = "auth"."uid"())))));
+
+
+
+CREATE POLICY "health_diary_weight_log_select_own" ON "public"."health_diary_weight_log" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM "public"."users_pets" "up"
+  WHERE (("up"."pet_id" = "health_diary_weight_log"."pet_id") AND ("up"."user_id" = "auth"."uid"())))));
+
+
+
+CREATE POLICY "health_diary_weight_log_update_own" ON "public"."health_diary_weight_log" FOR UPDATE TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM "public"."users_pets" "up"
+  WHERE (("up"."pet_id" = "health_diary_weight_log"."pet_id") AND ("up"."user_id" = "auth"."uid"()))))) WITH CHECK ((EXISTS ( SELECT 1
+   FROM "public"."users_pets" "up"
+  WHERE (("up"."pet_id" = "health_diary_weight_log"."pet_id") AND ("up"."user_id" = "auth"."uid"())))));
+
 
 
 ALTER TABLE "public"."notifications" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."pet_icons" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "pet_icons_read" ON "public"."pet_icons" FOR SELECT USING (true);
+
 
 
 ALTER TABLE "public"."pet_race" ENABLE ROW LEVEL SECURITY;
@@ -892,10 +1159,21 @@ CREATE POLICY "referential_read_config" ON "public"."subscription_config" FOR SE
 ALTER TABLE "public"."subscription_config" ENABLE ROW LEVEL SECURITY;
 
 
+ALTER TABLE "public"."subscription_purchase" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "subscription_purchase_select_own" ON "public"."subscription_purchase" FOR SELECT USING (("auth"."uid"() = "user_id"));
+
+
+
 ALTER TABLE "public"."users" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."users_pets" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "users_pets_insert_own" ON "public"."users_pets" FOR INSERT TO "authenticated" WITH CHECK ((("user_id" = "auth"."uid"()) AND "public"."pet_is_claimable"("pet_id", "auth"."uid"())));
+
 
 
 CREATE POLICY "users_select_self" ON "public"."users" FOR SELECT TO "authenticated" USING (("id_user" = "auth"."uid"()));
@@ -1068,6 +1346,24 @@ GRANT USAGE ON SCHEMA "public" TO "service_role";
 
 
 
+REVOKE ALL ON FUNCTION "public"."delete_account"() FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."delete_account"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."delete_account"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."delete_pet"("p_pet_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."delete_pet"("p_pet_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."delete_pet"("p_pet_id" "uuid") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."effective_plan_name"("status" "public"."subscription_status_enum", "expires_at" timestamp with time zone) TO "anon";
+GRANT ALL ON FUNCTION "public"."effective_plan_name"("status" "public"."subscription_status_enum", "expires_at" timestamp with time zone) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."effective_plan_name"("status" "public"."subscription_status_enum", "expires_at" timestamp with time zone) TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."enforce_max_images"() TO "anon";
 GRANT ALL ON FUNCTION "public"."enforce_max_images"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."enforce_max_images"() TO "service_role";
@@ -1083,6 +1379,13 @@ GRANT ALL ON FUNCTION "public"."enforce_max_pets"() TO "service_role";
 GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "anon";
 GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "service_role";
+
+
+
+REVOKE ALL ON FUNCTION "public"."pet_is_claimable"("p_pet_id" "uuid", "p_user_id" "uuid") FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."pet_is_claimable"("p_pet_id" "uuid", "p_user_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."pet_is_claimable"("p_pet_id" "uuid", "p_user_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."pet_is_claimable"("p_pet_id" "uuid", "p_user_id" "uuid") TO "service_role";
 
 
 
@@ -1104,6 +1407,9 @@ GRANT ALL ON FUNCTION "public"."rls_auto_enable"() TO "service_role";
 
 
 
+GRANT ALL ON FUNCTION "public"."set_updated_at"() TO "anon";
+GRANT ALL ON FUNCTION "public"."set_updated_at"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."set_updated_at"() TO "service_role";
 
 
 
@@ -1116,6 +1422,15 @@ GRANT ALL ON FUNCTION "public"."rls_auto_enable"() TO "service_role";
 
 
 
+
+
+
+
+
+
+GRANT ALL ON TABLE "public"."articles" TO "anon";
+GRANT ALL ON TABLE "public"."articles" TO "authenticated";
+GRANT ALL ON TABLE "public"."articles" TO "service_role";
 
 
 
@@ -1194,6 +1509,12 @@ GRANT ALL ON TABLE "public"."pets_events" TO "service_role";
 GRANT ALL ON TABLE "public"."recommended_vaccines" TO "anon";
 GRANT ALL ON TABLE "public"."recommended_vaccines" TO "authenticated";
 GRANT ALL ON TABLE "public"."recommended_vaccines" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."subscription_purchase" TO "anon";
+GRANT ALL ON TABLE "public"."subscription_purchase" TO "authenticated";
+GRANT ALL ON TABLE "public"."subscription_purchase" TO "service_role";
 
 
 
