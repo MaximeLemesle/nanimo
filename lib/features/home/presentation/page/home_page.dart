@@ -87,18 +87,6 @@ class HomePage extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.xl),
 
-                /// List of vaccine alerts for the user's pets
-                HomeHealthCardWidget(
-                  alerts: state.vaccineAlerts(now: now),
-                  portraits: state.portraits,
-                  onAlertTap: (petId) {
-                    context.read<PetDetailsCubit>().selectPet(petId);
-                    context.push(RouteNames.healthDiary);
-                  },
-                  onAddPressed: () => _addVaccine(context, state),
-                ),
-                const SizedBox(height: AppSpacing.xl),
-
                 /// Booked vet appointments
                 HomeVetVisitCardWidget(
                   visits: state.upcomingVetVisits(now: now),
@@ -109,6 +97,18 @@ class HomePage extends StatelessWidget {
                     context.push(RouteNames.healthDiary);
                   },
                   onAddPressed: () => _addVetVisit(context, state),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                
+                /// List of vaccine alerts for the user's pets
+                HomeHealthCardWidget(
+                  alerts: state.vaccineAlerts(now: now),
+                  portraits: state.portraits,
+                  onAlertTap: (petId) {
+                    context.read<PetDetailsCubit>().selectPet(petId);
+                    context.push(RouteNames.healthDiary);
+                  },
+                  onAddPressed: () => _addVaccine(context, state),
                 ),
                 const SizedBox(height: AppSpacing.xl),
 
