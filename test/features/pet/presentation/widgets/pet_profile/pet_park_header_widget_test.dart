@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_park_header_widget.dart';
@@ -140,6 +141,112 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(avatarRect(tester, 1).center.dx, closeTo(195, 0.5));
+    });
+  });
+
+  // NAN-095: scrolling is the selection gesture, not just a way to look.
+  group('scrolling the park', () {
+    /// One avatar slot. The strip is padded by half a viewport minus half a
+    /// slot, so dragging by this lands the next pet dead centre.
+    const slot = 156.0;
+
+    Future<void> dragBy(WidgetTester tester, double dx) async {
+      await tester.drag(find.byType(Scrollable), Offset(-dx, 0));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('selects the pet it comes to rest on', (tester) async {
+      String? selected;
+      await pumpAt(
+        tester,
+        build([for (var i = 0; i < 6; i++) _pet('$i')],
+            onSelect: (id) => selected = id),
+        const Size(390, 800),
+      );
+
+      await dragBy(tester, slot * 2);
+
+      expect(selected, '2');
+    });
+
+    /// Each pet crossed on the way would repaint the page below it.
+    testWidgets('reports once, not for every pet crossed', (tester) async {
+      final reported = <String>[];
+      await pumpAt(
+        tester,
+        build([for (var i = 0; i < 6; i++) _pet('$i')],
+            onSelect: reported.add),
+        const Size(390, 800),
+      );
+
+      await dragBy(tester, slot * 3);
+
+      expect(reported, ['3']);
+    });
+
+    /// The loop the two mechanisms would otherwise form: selecting centres,
+    /// centring scrolls, scrolling would select again.
+    testWidgets('centring after a selection does not select again',
+        (tester) async {
+      final reported = <String>[];
+      await pumpAt(
+        tester,
+        _Harness(pets: [for (var i = 0; i < 6; i++) _pet('$i')]),
+        const Size(390, 800),
+      );
+
+      await dragBy(tester, slot * 2);
+      await tester.pumpAndSettle();
+
+      expect(avatarRect(tester, 2).center.dx, closeTo(195, 0.5));
+      expect(reported, isEmpty);
+    });
+
+    testWidgets('a single pet stays selected whatever the drag',
+        (tester) async {
+      final reported = <String>[];
+      await pumpAt(
+        tester,
+        build([_pet('a')], onSelect: reported.add),
+        const Size(390, 800),
+      );
+
+      await dragBy(tester, slot * 2);
+
+      expect(reported, isEmpty);
+    });
+
+    testWidgets('buzzes once per pet passing the middle', (tester) async {
+      var taps = 0;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'HapticFeedback.vibrate') taps++;
+          return null;
+        },
+      );
+      addTearDown(() => tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null));
+
+      await pumpAt(
+        tester,
+        build([for (var i = 0; i < 6; i++) _pet('$i')]),
+        const Size(390, 800),
+      );
+
+      /// Stepped by hand: a single drag is one jump, which crosses the three
+      /// pets at once and would buzz once.
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.byType(Scrollable)),
+      );
+      for (var i = 0; i < 3; i++) {
+        await gesture.moveBy(const Offset(-slot, 0));
+        await tester.pump();
+      }
+      await gesture.up();
+      await tester.pumpAndSettle();
+
+      expect(taps, 3);
     });
   });
 
