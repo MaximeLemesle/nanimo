@@ -23,6 +23,9 @@ import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/vaccine_status_badge_widget.dart';
 import 'package:nanimo/features/home/data/article_repository.dart';
+import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart'
+    hide SubscriptionStatus;
+import 'package:nanimo/features/subscription/data/models/subscription_config_model.dart';
 
 class _MockPetRepository extends Mock implements PetRepository {}
 
@@ -60,6 +63,20 @@ const _maxime = UserModel(
   subscriptionStatus: SubscriptionStatus.freemium,
 );
 
+class _FakeSubscriptionCubit extends Cubit<SubscriptionState>
+    implements SubscriptionCubit {
+  _FakeSubscriptionCubit()
+      : super(SubscriptionState.loaded(const SubscriptionConfigModel(
+          configId: 'cfg',
+          planName: 'premium',
+          maxImagesPerEvent: 5,
+          maxPets: 10,
+        )));
+
+  @override
+  void noSuchMethod(Invocation invocation) {}
+}
+
 void main() {
   late _MockPetRepository petRepo;
   late _MockReferentialRepository referentialRepo;
@@ -87,6 +104,7 @@ void main() {
     when(() => eventRepo.watchAllImages()).thenAnswer((_) => Stream.value(const {}));
     when(() => healthRepo.watchAllDiaries()).thenAnswer((_) => Stream.value(const []));
     when(() => healthRepo.watchAllVaccines()).thenAnswer((_) => Stream.value(const []));
+    when(() => healthRepo.watchAllVetVisits()).thenAnswer((_) => Stream.value(const []));
     when(() => authRepo.watchCurrentUser()).thenAnswer((_) => Stream.value(_maxime));
   });
 
@@ -106,7 +124,15 @@ void main() {
   Widget buildPage(HomeCubit cubit) {
     return MaterialApp(
       home: Scaffold(
-        body: BlocProvider.value(value: cubit, child: const HomePage()),
+        body: MultiBlocProvider(
+          providers: [
+            BlocProvider<HomeCubit>.value(value: cubit),
+            BlocProvider<SubscriptionCubit>.value(
+              value: _FakeSubscriptionCubit(),
+            ),
+          ],
+          child: const HomePage(),
+        ),
       ),
     );
   }
@@ -233,6 +259,9 @@ void main() {
             providers: [
               BlocProvider.value(value: cubit),
               BlocProvider.value(value: journalCubit),
+              BlocProvider<SubscriptionCubit>.value(
+                value: _FakeSubscriptionCubit(),
+              ),
             ],
             child: const HomePage(),
           ),

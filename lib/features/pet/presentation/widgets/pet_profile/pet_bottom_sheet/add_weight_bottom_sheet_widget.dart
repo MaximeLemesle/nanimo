@@ -9,6 +9,9 @@ import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/date_field_widget.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_picker_widget.dart';
+import 'package:nanimo/features/health/data/models/health_diary_weight_log_model.dart';
+import 'package:nanimo/core/utils/weight_formatter.dart';
+import 'package:nanimo/core/widgets/confirm_deletion_dialog.dart';
 
 typedef WeightSubmit = void Function(
   double weight,
@@ -22,12 +25,24 @@ class AddWeightBottomSheetWidget extends StatefulWidget {
   final Map<String, PetPortrait> portraits;
   final String? initialPetId;
 
+  /// Floor of the date picker. Ignored when [pets] carries the selected animal.
+  final DateTime? birthdate;
+
+  /// Non-null turns the sheet into a pre-filled edit form.
+  final HealthDiaryWeightLogModel? initial;
+
+  /// Offered in edit mode only, behind a confirmation.
+  final VoidCallback? onDelete;
+
   const AddWeightBottomSheetWidget({
     super.key,
     required this.onSubmit,
     this.pets = const [],
     this.portraits = const {},
     this.initialPetId,
+    this.birthdate,
+    this.initial,
+    this.onDelete,
   });
 
   @override
@@ -35,12 +50,32 @@ class AddWeightBottomSheetWidget extends StatefulWidget {
 }
 
 class _AddWeightBottomSheetWidgetState extends State<AddWeightBottomSheetWidget> {
-  final TextEditingController _controller = TextEditingController();
-  DateTime _loggedAt = DateTime.now();
-  bool _isValid = false;
-  late String? _petId = widget.initialPetId ?? (widget.pets.isNotEmpty ? widget.pets.first.petId : null);
+  late final TextEditingController _controller;
+  late DateTime _loggedAt;
+  late bool _isValid;
+  late String? _petId = widget.initial?.petId ?? widget.initialPetId ?? (widget.pets.isNotEmpty ? widget.pets.first.petId : null);
 
-  bool get _showPetPicker => widget.pets.length > 1;
+  /// An existing log already belongs to a pet, there is nothing left to pick.
+  bool get _showPetPicker => widget.initial == null && widget.pets.length > 1;
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initial;
+    _controller = TextEditingController(
+      text: initial == null ? '' : WeightFormatter.input(initial.weight),
+    );
+    _loggedAt = initial?.loggedAt ?? DateTime.now();
+    _isValid = initial != null;
+  }
+
+  /// The picker may change the animal under the date field.
+  DateTime? get _birthdate {
+    for (final pet in widget.pets) {
+      if (pet.petId == _petId) return pet.birthdate;
+    }
+    return widget.birthdate;
+  }
 
   @override
   void dispose() {
@@ -65,15 +100,39 @@ class _AddWeightBottomSheetWidgetState extends State<AddWeightBottomSheetWidget>
     Navigator.of(context).pop();
   }
 
+  Future<void> _confirmDelete() async {
+    final confirmed = await confirmDeletion(
+      context,
+      title: 'Supprimer cette pesée ?',
+      message: 'La pesée disparaîtra du carnet de santé et de la courbe de poids, et ne pourra pas être récupérée.',
+    );
+    if (!confirmed || !mounted) return;
+    widget.onDelete!();
+    Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     return BottomSheetWidget(
-      title: 'Mettre à jour le poids',
-      action: ButtonWidget(
-        label: 'Enregistrer',
-        onPressed: _isValid ? _submit : null,
-        state: _isValid ? ButtonState.normal : ButtonState.disabled,
-        fullWidth: true,
+      title: widget.initial == null ? 'Ajouter une pesée' : 'Modifier la pesée',
+      action: Column(
+        children: [
+          if (widget.onDelete != null) ...[
+            ButtonWidget(
+              label: 'Supprimer la pesée',
+              type: ButtonType.delete,
+              fullWidth: true,
+              onPressed: _confirmDelete,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
+          ButtonWidget(
+            label: 'Enregistrer',
+            onPressed: _isValid ? _submit : null,
+            state: _isValid ? ButtonState.normal : ButtonState.disabled,
+            fullWidth: true,
+          ),
+        ],
       ),
       children: [
         if (_showPetPicker) ...[
@@ -87,7 +146,7 @@ class _AddWeightBottomSheetWidgetState extends State<AddWeightBottomSheetWidget>
         ],
         TextField(
           controller: _controller,
-          autofocus: true,
+          autofocus: widget.initial == null,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
@@ -111,6 +170,7 @@ class _AddWeightBottomSheetWidgetState extends State<AddWeightBottomSheetWidget>
         DateFieldWidget(
           label: 'Date de la pesée',
           value: _loggedAt,
+          firstDate: _birthdate,
           onChanged: (date) => setState(() => _loggedAt = date),
         ),
       ],

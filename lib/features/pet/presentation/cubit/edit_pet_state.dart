@@ -10,6 +10,9 @@ class EditPetState extends Equatable {
   final String? speciesName;
   final String? speciesIconKey;
   final int eventCount;
+
+  /// The health facts the form now edits alongside the identity ones.
+  final HealthDiaryModel? diary;
   final String? error;
 
   const EditPetState({
@@ -20,6 +23,7 @@ class EditPetState extends Equatable {
     this.speciesName,
     this.speciesIconKey,
     this.eventCount = 0,
+    this.diary,
     this.error,
   });
 
@@ -45,6 +49,7 @@ class EditPetState extends Equatable {
     String? speciesName,
     String? speciesIconKey,
     int? eventCount,
+    HealthDiaryModel? diary,
     String? error,
   }) {
     return EditPetState(
@@ -55,6 +60,7 @@ class EditPetState extends Equatable {
       speciesName: speciesName ?? this.speciesName,
       speciesIconKey: speciesIconKey ?? this.speciesIconKey,
       eventCount: eventCount ?? this.eventCount,
+      diary: diary ?? this.diary,
       error: error ?? this.error,
     );
   }
@@ -68,6 +74,7 @@ class EditPetState extends Equatable {
         speciesName,
         speciesIconKey,
         eventCount,
+        diary,
         error,
       ];
 }

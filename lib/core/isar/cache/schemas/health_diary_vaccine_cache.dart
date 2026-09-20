@@ -61,7 +61,7 @@ class HealthDiaryVaccineCache {
     return HealthDiaryVaccineModel(
       healthDiaryVaccineId: healthDiaryVaccineId,
       vaccineName: vaccineName,
-      lastDate: lastDate ?? epoch,
+      lastDate: lastDate,
       nextDate: nextDate ?? epoch,
       recurrence: recurrence ?? 0,
       doseNumber: doseNumber ?? 0,

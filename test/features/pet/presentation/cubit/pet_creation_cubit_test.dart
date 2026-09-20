@@ -226,4 +226,55 @@ void main() {
       await cubit.close();
     });
   });
+
+  // NAN-093: the onboarding paywall follows the signup pet, never an in-app one.
+  group('createdDuringOnboarding', () {
+    test('is true on the pet inserted after the signup', () async {
+      when(() => petRepo.createPet(any())).thenAnswer((_) async {});
+
+      final cubit = createCubit();
+      prepareDraft(cubit);
+      authStream.add(const AuthState.authenticated());
+      await Future<void>.delayed(Duration.zero);
+
+      expect(cubit.state.status, PetCreationStatus.success);
+      expect(cubit.state.createdDuringOnboarding, isTrue);
+      await cubit.close();
+    });
+
+    test('is false on an in-app creation', () async {
+      when(() => authCubit.state)
+          .thenReturn(const AuthState.authenticated());
+      when(() => petRepo.createPet(any())).thenAnswer((_) async {});
+
+      final cubit = createCubit();
+      prepareDraft(cubit);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(cubit.state.status, PetCreationStatus.success);
+      expect(cubit.state.createdDuringOnboarding, isFalse);
+      await cubit.close();
+    });
+
+    /// A failed insert retried from the shell is still the onboarding one.
+    test('survives a retry', () async {
+      var attempts = 0;
+      when(() => petRepo.createPet(any())).thenAnswer((_) async {
+        attempts++;
+        if (attempts == 1) throw RepositoryNetworkException('offline');
+      });
+
+      final cubit = createCubit();
+      prepareDraft(cubit);
+      authStream.add(const AuthState.authenticated());
+      await Future<void>.delayed(Duration.zero);
+      expect(cubit.state.status, PetCreationStatus.error);
+
+      await cubit.retry();
+
+      expect(cubit.state.status, PetCreationStatus.success);
+      expect(cubit.state.createdDuringOnboarding, isTrue);
+      await cubit.close();
+    });
+  });
 }

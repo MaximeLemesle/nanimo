@@ -177,6 +177,26 @@ class HealthRepository {
     });
   }
 
+  Future<void> updateWeightLog(HealthDiaryWeightLogModel log) async {
+    try {
+      await _supabase
+          .from('health_diary_weight_log')
+          .update(log.toJson())
+          .eq('id_health_diary_weight_log', log.healthDiaryWeightLogId);
+    } catch (e, st) {
+      throw mapRepositoryError(e, st,
+          operation: 'updateWeightLog',
+          networkMessage: 'Une connexion internet est requise pour modifier un poids.',
+          serverMessage: 'Impossible de modifier le poids pour le moment.');
+    }
+
+    await _isar.writeTxn(() async {
+      await _isar.weightLogCaches.putByHealthDiaryWeightLogId(
+        WeightLogCache.fromModel(log),
+      );
+    });
+  }
+
   Future<void> deleteWeightLog(String healthDiaryWeightLogId) async {
     try {
       await _supabase
@@ -202,6 +222,15 @@ class HealthRepository {
         .filter()
         .petIdEqualTo(petId)
         .sortByVisitedAtDesc()
+        .watch(fireImmediately: true)
+        .map((rows) => rows.map((c) => c.toModel()).toList());
+  }
+
+  /// Watches every cached vet visit, across all pets.
+  Stream<List<VetVisitModel>> watchAllVetVisits() {
+    return _isar.vetVisitCaches
+        .where()
+        .sortByVisitedAt()
         .watch(fireImmediately: true)
         .map((rows) => rows.map((c) => c.toModel()).toList());
   }

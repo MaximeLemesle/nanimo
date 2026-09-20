@@ -216,18 +216,20 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     }
   }
 
+  /// [petId] targets another animal without moving the global selection.
   Future<void> addVaccine({
     required String vaccineName,
-    required DateTime lastDate,
+    DateTime? lastDate,
     required DateTime nextDate,
     int recurrence = 0,
     int doseNumber = 1,
     int totalDoseNumber = 1,
+    String? petId,
   }) async {
-    final petId = state.selectedPetId;
-    if (petId == null) return;
+    final targetId = petId ?? state.selectedPetId;
+    if (targetId == null) return;
     try {
-      final healthDiaryId = await _ensureDiary(petId);
+      final healthDiaryId = await _ensureDiaryFor(targetId);
       if (healthDiaryId == null) return;
       final vaccine = HealthDiaryVaccineModel(
         healthDiaryVaccineId: const Uuid().v4(),
@@ -264,14 +266,16 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     }
   }
 
+  /// [petId] targets another animal without moving the global selection.
   Future<void> addVetVisit({
     required String title,
     required DateTime visitedAt,
     String? vetName,
     String? clinicName,
+    String? petId,
   }) async {
-    final petId = state.selectedPetId;
-    if (petId == null) return;
+    final targetId = petId ?? state.selectedPetId;
+    if (targetId == null) return;
     try {
       final visit = VetVisitModel(
         vetVisitId: const Uuid().v4(),
@@ -279,7 +283,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
         visitedAt: visitedAt,
         vetName: vetName,
         clinicName: clinicName,
-        petId: petId,
+        petId: targetId,
       );
       await _healthRepository.addVetVisit(visit);
     } catch (err) {
@@ -288,7 +292,56 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     }
   }
 
+  Future<void> deleteVaccine(String healthDiaryVaccineId) async {
+    try {
+      await _healthRepository.deleteVaccine(healthDiaryVaccineId);
+    } catch (err) {
+      if (isClosed) return;
+      emit(state.copyWith(error: err.toString()));
+    }
+  }
+
+  Future<void> deleteVetVisit(String vetVisitId) async {
+    try {
+      await _healthRepository.deleteVetVisit(vetVisitId);
+    } catch (err) {
+      if (isClosed) return;
+      emit(state.copyWith(error: err.toString()));
+    }
+  }
+
+  Future<void> updateWeightLog(HealthDiaryWeightLogModel log) async {
+    try {
+      await _healthRepository.updateWeightLog(log);
+    } catch (err) {
+      if (isClosed) return;
+      emit(state.copyWith(error: err.toString()));
+    }
+  }
+
+  Future<void> deleteWeightLog(String healthDiaryWeightLogId) async {
+    try {
+      await _healthRepository.deleteWeightLog(healthDiaryWeightLogId);
+    } catch (err) {
+      if (isClosed) return;
+      emit(state.copyWith(error: err.toString()));
+    }
+  }
+
   /// Returns the diary id for [petId], creating an empty diary if needed.
+  /// [state.diary] belongs to the selected animal, so another one is fetched.
+  Future<String?> _ensureDiaryFor(String petId) async {
+    if (petId == state.selectedPetId) return _ensureDiary(petId);
+    final existing = await _healthRepository.getDiaryForPet(petId);
+    if (existing != null) return existing.healthDiaryId;
+    final diary = HealthDiaryModel(
+      healthDiaryId: const Uuid().v4(),
+      petId: petId,
+    );
+    await _healthRepository.upsertDiary(diary);
+    return diary.healthDiaryId;
+  }
+
   Future<String?> _ensureDiary(String petId) async {
     final existing = state.diary;
     if (existing != null) return existing.healthDiaryId;

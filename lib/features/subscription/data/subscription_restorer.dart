@@ -5,7 +5,6 @@ import 'package:equatable/equatable.dart';
 
 import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
-import 'package:nanimo/features/auth/data/models/user_model.dart';
 import 'package:nanimo/features/subscription/data/purchase_repository.dart';
 
 enum RestoreOutcome { restored, nothingFound, failed }
@@ -79,7 +78,7 @@ class SubscriptionRestorer {
     while (DateTime.now().isBefore(deadline)) {
       try {
         final user = await _authRepository.refreshCurrentUser();
-        if (user?.subscriptionStatus == SubscriptionStatus.premium) return true;
+        if (user?.hasActivePremium ?? false) return true;
       } catch (e, st) {
         developer.log('status refresh failed, retrying', name: 'subscription', error: e, stackTrace: st);
       }

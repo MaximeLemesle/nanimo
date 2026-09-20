@@ -2,6 +2,9 @@ part of 'home_cubit.dart';
 
 enum HomeStatus { loading, loaded }
 
+/// A booked vet appointment, resolved to its pet.
+typedef UpcomingVetVisit = ({VetVisitModel visit, PetModel pet});
+
 /// A vaccine needing attention, resolved to its pet.
 typedef VaccineAlert = ({
   HealthDiaryVaccineModel vaccine,
@@ -20,6 +23,7 @@ class HomeState extends Equatable {
   final Map<String, List<String>> imagePathsByEvent;
   final List<HealthDiaryModel> diaries;
   final List<HealthDiaryVaccineModel> vaccines;
+  final List<VetVisitModel> vetVisits;
 
   /// Null until the cache holds a published article: the card then falls back
   /// on its embedded tip.
@@ -37,6 +41,7 @@ class HomeState extends Equatable {
     this.diaries = const [],
     this.vaccines = const [],
     this.article,
+    this.vetVisits = const [],
   });
 
   /// Events whose entry date falls within the last 7 days.
@@ -83,8 +88,7 @@ class HomeState extends Equatable {
   /// Latest event, used as fallback when no anniversary memory exists.
   EventModel? get latestEvent => events.isEmpty ? null : events.first;
 
-  Map<String, String> get _petIdByDiaryId =>
-      {for (final diary in diaries) diary.healthDiaryId: diary.petId};
+  Map<String, String> get _petIdByDiaryId => {for (final diary in diaries) diary.healthDiaryId: diary.petId};
 
   PetModel? _petById(String? petId) {
     if (petId == null) return null;
@@ -113,6 +117,20 @@ class HomeState extends Equatable {
     return alerts;
   }
 
+  /// Appointments still ahead, nearest first. Derived from the date alone,
+  /// there is no status column on a vet visit.
+  List<UpcomingVetVisit> upcomingVetVisits({DateTime? now}) {
+    final reference = now ?? DateTime.now();
+    final today = DateTime(reference.year, reference.month, reference.day);
+    final upcoming = <UpcomingVetVisit>[
+      for (final visit in vetVisits)
+        if (!visit.visitedAt.isBefore(today))
+          if (_petById(visit.petId) case final pet?) (visit: visit, pet: pet),
+    ];
+    upcoming.sort((a, b) => a.visit.visitedAt.compareTo(b.visit.visitedAt));
+    return upcoming;
+  }
+
   /// Worst vaccine status per pet id (overdue > soon > done).
   Map<String, VaccineStatus> vaccineStatusByPet({DateTime? now}) {
     final petIdByDiary = _petIdByDiaryId;
@@ -125,13 +143,13 @@ class HomeState extends Equatable {
     }
     return result;
   }
+
   /// What each pet looks like: its chosen catalogue icon, else its species one.
   Map<String, PetPortrait> get portraits => PetIconResolver.portraitsByPet(
         pets: pets,
         icons: icons,
         speciesIconKeys: iconsKey,
       );
-
 
   HomeState copyWith({
     HomeStatus? status,
@@ -145,6 +163,7 @@ class HomeState extends Equatable {
     List<HealthDiaryModel>? diaries,
     List<HealthDiaryVaccineModel>? vaccines,
     ArticleModel? article,
+    List<VetVisitModel>? vetVisits,
   }) {
     return HomeState(
       status: status ?? this.status,
@@ -158,6 +177,7 @@ class HomeState extends Equatable {
       diaries: diaries ?? this.diaries,
       vaccines: vaccines ?? this.vaccines,
       article: article ?? this.article,
+      vetVisits: vetVisits ?? this.vetVisits,
     );
   }
 
@@ -174,5 +194,6 @@ class HomeState extends Equatable {
         diaries,
         vaccines,
         article,
+        vetVisits,
       ];
 }

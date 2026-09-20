@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nanimo/features/subscription/presentation/page/paywall_page.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nanimo/config/router/app_router.dart';
@@ -111,19 +112,23 @@ const _chien = PetSpeciesModel(
   iconKey: 'dog-border_collie',
 );
 
-const _europeen = PetRaceModel(
-  petRaceId: 'r-europeen',
-  raceName: 'Européen',
+/// Deliberately not the breed the species falls back on: `_chat.iconKey` is
+/// `cat-europeen`, so an icon resolved by breed and an icon lost to the species
+/// fallback would otherwise be the same file, and the test could not tell them
+/// apart. That is exactly how a wrong portrait shipped unnoticed.
+const _maineCoon = PetRaceModel(
+  petRaceId: 'r-maine_coon',
+  raceName: 'Maine Coon',
   petSpeciesId: 's-chat',
 );
 
-const _europeenIcon = PetIconModel(
-  petIconId: 'i-europeen',
-  petIconName: 'Européen',
-  assetPath: 'assets/icons/species/cat-europeen.png',
+const _maineCoonIcon = PetIconModel(
+  petIconId: 'i-maine_coon',
+  petIconName: 'Maine Coon',
+  assetPath: 'assets/icons/species/cat-maine_coon.png',
   isPremium: false,
   petSpeciesId: 's-chat',
-  petRaceId: 'r-europeen',
+  petRaceId: 'r-maine_coon',
 );
 
 const _berger = PetRaceModel(
@@ -193,6 +198,7 @@ void main() {
     when(() => eventRepo.watchAllImages()).thenAnswer((_) => Stream.value(const {}));
     when(() => healthRepo.watchAllDiaries()).thenAnswer((_) => Stream.value(const []));
     when(() => healthRepo.watchAllVaccines()).thenAnswer((_) => Stream.value(const []));
+    when(() => healthRepo.watchAllVetVisits()).thenAnswer((_) => Stream.value(const []));
     when(() => authRepo.watchCurrentUser()).thenAnswer((_) => Stream.value(null));
     petsController = StreamController<List<PetModel>>.broadcast();
     lastPets = const [];
@@ -202,8 +208,8 @@ void main() {
     when(() => healthRepo.getVetVisitsForPet(any())).thenAnswer((_) => Stream.value(const <VetVisitModel>[]));
 
     when(() => referentialRepo.fetchSpecies()).thenAnswer((_) async => [_chat, _chien]);
-    when(() => referentialRepo.fetchIcons()).thenAnswer((_) async => [_europeenIcon]);
-    when(() => referentialRepo.fetchRacesBySpecies(_chat.petSpeciesId)).thenAnswer((_) async => [_europeen]);
+    when(() => referentialRepo.fetchIcons()).thenAnswer((_) async => [_maineCoonIcon]);
+    when(() => referentialRepo.fetchRacesBySpecies(_chat.petSpeciesId)).thenAnswer((_) async => [_maineCoon]);
     when(() => referentialRepo.fetchRacesBySpecies(_chien.petSpeciesId)).thenAnswer((_) async => [_berger]);
     // Replay the latest pets to any late subscriber (cubits scoped to the
     // shell route subscribe only once Home mounts, after emissions may have
@@ -290,7 +296,7 @@ void main() {
   }
 
   /// Cold start → welcome → 3 steps → lands on the signup page.
-  Future<void> goThroughOnboarding(WidgetTester tester) async {
+  Future<void> goThroughOnboarding(WidgetTester tester, {String? expectedAvatarAsset}) async {
     await pumpApp(tester);
     expect(find.byKey(const Key('splash_page')), findsOneWidget);
 
@@ -319,7 +325,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byType(DropdownButtonFormField<String>));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Européen').last);
+    await tester.tap(find.text('Maine Coon').last);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Sélectionner une date'));
     await tester.pumpAndSettle();
@@ -341,11 +347,18 @@ void main() {
       ((provider is ResizeImage ? provider.imageProvider : provider)
               as AssetImage)
           .assetName,
-      _europeenIcon.assetPath,
+      expectedAvatarAsset ?? _maineCoonIcon.assetPath,
     );
 
     await tester.tap(find.text('Créer mon compte'));
     await tester.pumpAndSettle();
+
+    /// NAN-093: the offer is shown before the account is asked for. Dismissing
+    /// it is the "not now" path and lands on the signup all the same.
+    expect(find.byType(PaywallPage), findsOneWidget);
+    await tester.tap(find.byTooltip('Fermer'));
+    await tester.pumpAndSettle();
+
     expect(find.text('Inscription'), findsOneWidget);
   }
 
@@ -429,7 +442,7 @@ void main() {
       await tester.tap(find.text('Commencer'));
       await tester.pumpAndSettle();
 
-      // Step 1 → step 2 with Chat + Européen selected.
+      // Step 1 → step 2 with Chat + Maine Coon selected.
       await tester.enterText(find.byType(TextField), 'Milo');
       await tester.tap(find.text('Chat'));
       await tester.pumpAndSettle();
@@ -437,9 +450,9 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byType(DropdownButtonFormField<String>));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Européen').last);
+      await tester.tap(find.text('Maine Coon').last);
       await tester.pumpAndSettle();
-      expect(onboardingCubit.state.petRaceId, _europeen.petRaceId);
+      expect(onboardingCubit.state.petRaceId, _maineCoon.petRaceId);
 
       // Back to step 1, switch the species to Chien.
       await tester.tap(find.byIcon(Icons.arrow_back_ios_new_rounded));
@@ -453,7 +466,29 @@ void main() {
       await tester.tap(find.text('Continuer'));
       await tester.pumpAndSettle();
       expect(find.text('Choisis une race'), findsOneWidget);
-      expect(find.text('Européen'), findsNothing);
+      expect(find.text('Maine Coon'), findsNothing);
+    });
+
+    /// The species icon is itself a breed drawing (`cat-europeen` for Chat), so
+    /// losing the catalogue shows a European cat to someone who picked a Maine
+    /// Coon. Correct as a fallback, indistinguishable from success on screen,
+    /// which is how a wrong portrait went unnoticed.
+    testWidgets('falls back to the species icon when the catalogue is empty',
+        (tester) async {
+      when(() => referentialRepo.fetchIcons()).thenAnswer((_) async => []);
+
+      await pumpApp(tester);
+      await goThroughOnboarding(
+        tester,
+        expectedAvatarAsset: 'assets/icons/species/${_chat.iconKey}.png',
+      );
+
+      /// The fallback is only worth pinning because it differs from the breed
+      /// the owner picked. Same file, and this test would prove nothing.
+      expect(
+        _maineCoonIcon.assetPath,
+        isNot('assets/icons/species/${_chat.iconKey}.png'),
+      );
     });
 
     testWidgets('existing user logs in via /login without touching onboarding', (tester) async {
@@ -479,7 +514,7 @@ void main() {
           birthdate: DateTime.utc(2021, 3, 2),
           gender: Gender.male,
           createdAt: DateTime.utc(2026, 1, 1),
-          petRaceId: _europeen.petRaceId,
+          petRaceId: _maineCoon.petRaceId,
           petSpeciesId: _chat.petSpeciesId,
         ),
       ]);

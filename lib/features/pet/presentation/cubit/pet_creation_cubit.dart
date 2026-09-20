@@ -69,15 +69,16 @@ class PetCreationCubit extends Cubit<PetCreationState> {
     if (!justSignedIn) return;
 
     if (state.pendingPet == null) return;
-    _createPet();
+    _createPet(duringOnboarding: true);
   }
 
-  Future<void> _createPet() async {
+  Future<void> _createPet({bool duringOnboarding = false}) async {
     final pet = state.pendingPet;
     if (pet == null) return;
 
     emit(state.copyWith(
       status: PetCreationStatus.creating,
+      createdDuringOnboarding: duringOnboarding,
       clearError: true,
     ));
     try {
@@ -111,7 +112,7 @@ class PetCreationCubit extends Cubit<PetCreationState> {
 
   Future<void> retry() async {
     if (state.pendingPet == null) return;
-    await _createPet();
+    await _createPet(duringOnboarding: state.createdDuringOnboarding);
   }
 
   @override

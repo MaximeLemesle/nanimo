@@ -5,6 +5,7 @@ import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/health/data/models/health_diary_vaccine_model.dart';
 import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
+import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
 
 final _now = DateTime(2026, 7, 8, 14);
 
@@ -184,6 +185,81 @@ void main() {
       );
 
       expect(state.vaccineAlerts(now: _now), isEmpty);
+    });
+  });
+
+  // NAN-090: derived from the date alone, there is no status column.
+  group('upcomingVetVisits', () {
+    VetVisitModel visit(String id, DateTime visitedAt, {String petId = 'p1'}) =>
+        VetVisitModel(
+          vetVisitId: id,
+          title: 'Visite $id',
+          visitedAt: visitedAt,
+          petId: petId,
+        );
+
+    test('keeps only the visits still ahead', () {
+      final state = HomeState(
+        pets: [_milo],
+        vetVisits: [
+          visit('past', _now.subtract(const Duration(days: 1))),
+          visit('future', _now.add(const Duration(days: 1))),
+        ],
+      );
+
+      final upcoming = state.upcomingVetVisits(now: _now);
+
+      expect(upcoming.length, 1);
+      expect(upcoming.single.visit.vetVisitId, 'future');
+    });
+
+    test('puts the nearest appointment first', () {
+      final state = HomeState(
+        pets: [_milo, _nala],
+        vetVisits: [
+          visit('far', _now.add(const Duration(days: 40))),
+          visit('near', _now.add(const Duration(days: 2)), petId: 'p2'),
+          visit('mid', _now.add(const Duration(days: 10))),
+        ],
+      );
+
+      expect(
+        state.upcomingVetVisits(now: _now).map((e) => e.visit.vetVisitId),
+        ['near', 'mid', 'far'],
+      );
+    });
+
+    test('resolves each visit to its own pet', () {
+      final state = HomeState(
+        pets: [_milo, _nala],
+        vetVisits: [visit('v1', _now.add(const Duration(days: 2)), petId: 'p2')],
+      );
+
+      expect(state.upcomingVetVisits(now: _now).single.pet.petName, 'Nala');
+    });
+
+    /// It would render a row with no icon and no name.
+    test('drops a visit whose pet is not on the account', () {
+      final state = HomeState(
+        pets: [_milo],
+        vetVisits: [
+          visit('v1', _now.add(const Duration(days: 2)), petId: 'someone-else'),
+        ],
+      );
+
+      expect(state.upcomingVetVisits(now: _now), isEmpty);
+    });
+
+    /// No intervention: it leaves the section but stays in the diary.
+    test('a visit whose date has passed leaves the section on its own', () {
+      final visitedAt = _now.add(const Duration(days: 2));
+      final state = HomeState(pets: [_milo], vetVisits: [visit('v1', visitedAt)]);
+
+      expect(state.upcomingVetVisits(now: _now).length, 1);
+      expect(
+        state.upcomingVetVisits(now: visitedAt.add(const Duration(days: 1))),
+        isEmpty,
+      );
     });
   });
 }

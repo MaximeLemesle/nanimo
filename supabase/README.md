@@ -16,6 +16,7 @@ façon tracée (audit **A-11**).
 | `0005_create_event_rpc.sql` | RPC transactionnelle `create_event` (A-3) — *pas encore branchée dans `EventRepository`* |
 | `0006_delete_account_rpc.sql` | RPC `delete_account` (security definer), utilisée par la page Paramètres |
 | `0007_subscription_quotas_and_purchases.sql` | Quotas vendus par le paywall + table de traçabilité des achats RevenueCat |
+| `0008_subscription_expiry_enforcement.sql` | `subscription_expires_at` devient une condition d'accès : les trois résolutions de plan passent par `effective_plan_name` |
 | `0009_articles.sql` | Table `articles` des conseils de l'accueil, lecture seule, rotation portée par `published_at` |
 
 ## Appliquer
