@@ -1,5 +1,6 @@
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:nanimo/core/isar/cache/schemas/article_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/user_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_type_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/pet_cache.dart';
@@ -42,6 +43,7 @@ class IsarService {
         SubscriptionConfigCacheSchema,
         VetVisitCacheSchema,
         WeightLogCacheSchema,
+        ArticleCacheSchema,
       ],
       directory: dir.path,
     );

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:nanimo/core/isar/cache/schemas/article_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_image_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_type_cache.dart';
@@ -305,6 +306,85 @@ void main() {
       expect(await harness.isar.petIconCaches.count(), 0);
     });
   });
+
+  // NAN-094: pulled on every launch, like the rest of the service.
+  group('syncArticles', () {
+
+    List<Map<String, dynamic>> rows() => [
+          {
+            'id_article': 'a1',
+            'title': 'Le conseil courant',
+            'paragraphs': ['Un paragraphe'],
+            'published_at': '2026-09-14T08:00:00.000Z',
+          },
+        ];
+
+    test('pulls and caches the articles on a first launch', () async {
+      stubSelect(supabase, 'articles', resolver: rows);
+
+      await syncService.syncArticles();
+
+      final cached = await harness.isar.articleCaches.getByArticleId('a1');
+      expect(cached, isNotNull);
+      expect(cached!.title, 'Le conseil courant');
+      expect(cached.paragraphs, ['Un paragraphe']);
+    });
+
+    /// Unpublishing a tip must reach the device on the next launch, not a
+    /// day later.
+    test('asks again on every call', () async {
+      var calls = 0;
+      stubSelect(supabase, 'articles', resolver: () {
+        calls++;
+        return rows();
+      });
+
+      await syncService.syncArticles();
+      await syncService.syncArticles();
+
+      expect(calls, 2);
+    });
+
+    /// A row dropped in the database leaves the cache with it.
+    test('drops a cached article the database no longer returns', () async {
+      stubSelect(supabase, 'articles', resolver: rows);
+      await syncService.syncArticles();
+      expect(await harness.isar.articleCaches.count(), 1);
+
+      stubSelect(supabase, 'articles',
+          resolver: () => <Map<String, dynamic>>[]);
+      await syncService.syncArticles();
+
+      expect(await harness.isar.articleCaches.count(), 0);
+    });
+
+    /// Editing the text in the database must reach the app without a release.
+    test('replaces the cached text with the one from the database', () async {
+      await harness.isar.writeTxn(() async {
+        await harness.isar.articleCaches.putByArticleId(
+          ArticleCache()
+            ..articleId = 'a1'
+            ..title = 'Ancien titre'
+            ..paragraphs = ['Ancien texte']
+            ..publishedAt = DateTime.utc(2026, 9, 14, 8),
+        );
+      });
+      stubSelect(supabase, 'articles', resolver: rows);
+
+      await syncService.syncArticles();
+
+      final cached = await harness.isar.articleCaches.getByArticleId('a1');
+      expect(cached!.title, 'Le conseil courant');
+    });
+
+    test('leaves the cache alone when the network fails', () async {
+      stubSelect(supabase, 'articles', resolver: () => throw Exception('x'));
+
+      await syncService.syncArticles();
+
+      expect(await harness.isar.articleCaches.count(), 0);
+    });
+  });
 }
 
 /// Polls [count] until it returns a positive value or the timeout elapses.
@@ -314,4 +394,5 @@ Future<void> _waitFor(Future<int> Function() count) async {
     if (await count() > 0) return;
     await Future<void>.delayed(const Duration(milliseconds: 20));
   }
+  throw StateError('timed out waiting for the cache to fill');
 }
