@@ -135,7 +135,7 @@ class HomePage extends StatelessWidget {
         upcomingOnly: true,
         onSubmit: ({
           required String vaccineName,
-          required DateTime lastDate,
+          DateTime? lastDate,
           required DateTime nextDate,
           String? petId,
         }) {

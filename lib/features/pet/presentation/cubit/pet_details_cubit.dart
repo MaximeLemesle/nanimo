@@ -219,7 +219,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
   /// [petId] targets another animal without moving the global selection.
   Future<void> addVaccine({
     required String vaccineName,
-    required DateTime lastDate,
+    DateTime? lastDate,
     required DateTime nextDate,
     int recurrence = 0,
     int doseNumber = 1,

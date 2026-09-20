@@ -84,7 +84,7 @@ void main() {
           upcomingOnly: upcomingOnly,
           onSubmit: ({
             required String vaccineName,
-            required DateTime lastDate,
+            DateTime? lastDate,
             required DateTime nextDate,
             String? petId,
           }) {},

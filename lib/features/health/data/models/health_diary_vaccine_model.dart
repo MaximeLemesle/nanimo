@@ -1,7 +1,8 @@
 class HealthDiaryVaccineModel {
   final String healthDiaryVaccineId;
   final String vaccineName;
-  final DateTime lastDate;
+  /// Null when the booster was never given, or is not known.
+  final DateTime? lastDate;
   final DateTime nextDate;
   final int recurrence;
   final int doseNumber;
@@ -11,7 +12,7 @@ class HealthDiaryVaccineModel {
   const HealthDiaryVaccineModel({
     required this.healthDiaryVaccineId,
     required this.vaccineName,
-    required this.lastDate,
+    this.lastDate,
     required this.nextDate,
     required this.recurrence,
     required this.doseNumber,
@@ -23,7 +24,9 @@ class HealthDiaryVaccineModel {
     return HealthDiaryVaccineModel(
       healthDiaryVaccineId: json['id_health_diary_vaccine'],
       vaccineName: json['vaccine_name'],
-      lastDate: DateTime.parse(json['last_date'] as String),
+      lastDate: json['last_date'] == null
+          ? null
+          : DateTime.parse(json['last_date'] as String),
       nextDate: DateTime.parse(json['next_date'] as String),
       recurrence: json['recurrence'],
       doseNumber: json['dose_number'],
@@ -35,7 +38,7 @@ class HealthDiaryVaccineModel {
   Map<String, dynamic> toJson() => {
         'id_health_diary_vaccine': healthDiaryVaccineId,
         'vaccine_name': vaccineName,
-        'last_date': lastDate.toIso8601String(),
+        'last_date': lastDate?.toIso8601String(),
         'next_date': nextDate.toIso8601String(),
         'recurrence': recurrence,
         'dose_number': doseNumber,

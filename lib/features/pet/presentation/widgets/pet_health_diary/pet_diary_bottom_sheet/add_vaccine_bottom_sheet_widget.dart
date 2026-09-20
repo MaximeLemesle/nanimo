@@ -14,7 +14,7 @@ import 'package:nanimo/core/widgets/confirm_deletion_dialog.dart';
 
 typedef VaccineSubmit = void Function({
   required String vaccineName,
-  required DateTime lastDate,
+  DateTime? lastDate,
   required DateTime nextDate,
   String? petId,
 });
@@ -34,7 +34,8 @@ class AddVaccineBottomSheetWidget extends StatefulWidget {
   /// Offered in edit mode only, behind a confirmation.
   final VoidCallback? onDelete;
 
-  /// Books ahead: the next booster floors at today, not at the birthdate.
+  /// Books ahead: the next booster floors at today, and the last one is
+  /// neither asked for nor required. The animal may never have had one.
   final bool upcomingOnly;
 
   const AddVaccineBottomSheetWidget({
@@ -86,7 +87,7 @@ class _AddVaccineBottomSheetWidgetState extends State<AddVaccineBottomSheetWidge
 
   bool get _isValid =>
       _nameController.text.trim().isNotEmpty &&
-      _lastDate != null &&
+      (widget.upcomingOnly || _lastDate != null) &&
       _nextDate != null &&
       (!_showPetPicker || _petId != null);
 
@@ -100,7 +101,7 @@ class _AddVaccineBottomSheetWidgetState extends State<AddVaccineBottomSheetWidge
     if (!_isValid) return;
     widget.onSubmit(
       vaccineName: _nameController.text.trim(),
-      lastDate: _lastDate!,
+      lastDate: _lastDate,
       nextDate: _nextDate!,
       petId: _petId,
     );
@@ -165,13 +166,15 @@ class _AddVaccineBottomSheetWidgetState extends State<AddVaccineBottomSheetWidge
             ),
           ),
         ),
-        const SizedBox(height: AppSpacing.md),
-        DateFieldWidget(
-          label: 'Dernier rappel',
-          value: _lastDate,
-          firstDate: _birthdate,
-          onChanged: (date) => setState(() => _lastDate = date),
-        ),
+        if (!widget.upcomingOnly) ...[
+          const SizedBox(height: AppSpacing.md),
+          DateFieldWidget(
+            label: 'Dernier rappel',
+            value: _lastDate,
+            firstDate: _birthdate,
+            onChanged: (date) => setState(() => _lastDate = date),
+          ),
+        ],
         const SizedBox(height: AppSpacing.sm),
         DateFieldWidget(
           label: 'Prochain rappel',
