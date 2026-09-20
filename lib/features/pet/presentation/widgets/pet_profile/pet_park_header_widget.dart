@@ -1,5 +1,6 @@
 import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/core/widgets/pet_avatar_widget.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
@@ -30,10 +31,19 @@ class _PetParkHeaderWidgetState extends State<PetParkHeaderWidget> {
   static const double _avatarWidth = 156;
 
   final Map<String, GlobalKey> _avatarKeys = {};
+  final ScrollController _controller = ScrollController();
+
+  /// Centring animates the same strip the user drags. Without this, selecting
+  /// would scroll, scrolling would select, and the two would chase each other.
+  bool _isCentering = false;
+
+  /// Pet under the middle of the park, to fire the haptic only on a change.
+  String? _centeredPetId;
 
   @override
   void initState() {
     super.initState();
+    _centeredPetId = widget.selectedPetId;
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => _centerSelected(duration: Duration.zero),
     );
@@ -43,25 +53,69 @@ class _PetParkHeaderWidgetState extends State<PetParkHeaderWidget> {
   void didUpdateWidget(covariant PetParkHeaderWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.selectedPetId != widget.selectedPetId) {
+      _centeredPetId = widget.selectedPetId;
       WidgetsBinding.instance.addPostFrameCallback((_) => _centerSelected());
     }
   }
 
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   /// Slides the selected avatar to the middle of the park: the pet the page is
   /// about should be the one under the eye, wherever it sits in the list.
-  void _centerSelected({
+  Future<void> _centerSelected({
     Duration duration = const Duration(milliseconds: 300),
-  }) {
+  }) async {
     final petId = widget.selectedPetId;
     if (!mounted || petId == null) return;
     final target = _avatarKeys[petId]?.currentContext;
     if (target == null) return;
-    Scrollable.ensureVisible(
-      target,
-      alignment: 0.5,
-      duration: duration,
-      curve: Curves.easeOutCubic,
-    );
+    _isCentering = true;
+    try {
+      await Scrollable.ensureVisible(
+        target,
+        alignment: 0.5,
+        duration: duration,
+        curve: Curves.easeOutCubic,
+      );
+    } finally {
+      _isCentering = false;
+    }
+  }
+
+  /// Avatars are fixed slots laid end to end, and the strip is padded by half
+  /// a viewport minus half a slot, so the offset of avatar *i* is exactly
+  /// `i * _avatarWidth`.
+  PetModel? _petUnderCentre() {
+    if (!_controller.hasClients || widget.pets.isEmpty) return null;
+    final index = (_controller.offset / _avatarWidth)
+        .round()
+        .clamp(0, widget.pets.length - 1);
+    return widget.pets[index];
+  }
+
+  /// Scrolling is the selection gesture: the pet the strip comes to rest on is
+  /// the pet the page is about, without a second tap to confirm it.
+  bool _onScroll(ScrollNotification notification) {
+    if (_isCentering) return false;
+    final pet = _petUnderCentre();
+    if (pet == null) return false;
+
+    if (pet.petId != _centeredPetId) {
+      _centeredPetId = pet.petId;
+      HapticFeedback.selectionClick();
+    }
+
+    /// Fired at rest, not on the way: the pets crossed mid-scroll are not
+    /// choices, and each one would repaint the page below.
+    if (notification is ScrollEndNotification &&
+        pet.petId != widget.selectedPetId) {
+      widget.onSelect(pet.petId);
+    }
+    return false;
   }
 
   @override
@@ -83,18 +137,22 @@ class _PetParkHeaderWidgetState extends State<PetParkHeaderWidget> {
             padding: const EdgeInsets.only(bottom: AppSpacing.lg),
             child: LayoutBuilder(
               builder: (context, constraints) {
-                return SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
+                return NotificationListener<ScrollNotification>(
+                  onNotification: _onScroll,
+                  child: SingleChildScrollView(
+                    controller: _controller,
+                    scrollDirection: Axis.horizontal,
 
-                  /// Slack of half a viewport minus half an avatar, so the
-                  /// first and the last one come to rest dead centre.
-                  padding: EdgeInsets.symmetric(
-                    horizontal: (constraints.maxWidth - _avatarWidth) / 2,
-                  ),
-                  child: Row(
-                    children: [
-                      for (final pet in widget.pets) _buildAvatar(pet),
-                    ],
+                    /// Slack of half a viewport minus half an avatar, so the
+                    /// first and the last one come to rest dead centre.
+                    padding: EdgeInsets.symmetric(
+                      horizontal: (constraints.maxWidth - _avatarWidth) / 2,
+                    ),
+                    child: Row(
+                      children: [
+                        for (final pet in widget.pets) _buildAvatar(pet),
+                      ],
+                    ),
                   ),
                 );
               },
