@@ -63,17 +63,19 @@ class PetHealthDiaryPage extends StatelessWidget {
 
               const SizedBox(height: AppSpacing.lg),
 
-              /// Vaccine list card
-              PetVaccineDiaryCardWidget(
-                vaccines: state.vaccines,
+              /// Vet visit recap card
+              PetVetVisitDiaryCardWidget(
+                visits: state.vetVisits,
+                birthdate: state.selectedPet!.birthdate,
                 readOnly: isLocked,
               ),
 
               const SizedBox(height: AppSpacing.lg),
 
-              /// Vet visit recap card
-              PetVetVisitDiaryCardWidget(
-                visits: state.vetVisits,
+              /// Vaccine list card
+              PetVaccineDiaryCardWidget(
+                vaccines: state.vaccines,
+                birthdate: state.selectedPet!.birthdate,
                 readOnly: isLocked,
               ),
 
@@ -82,6 +84,7 @@ class PetHealthDiaryPage extends StatelessWidget {
               /// Pet weight card
               PetWeightGraphDiaryCardWidget(
                 weightLogs: state.weightLogs,
+                birthdate: state.selectedPet!.birthdate,
                 readOnly: isLocked,
               ),
 

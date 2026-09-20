@@ -184,6 +184,7 @@ class PetPage extends StatelessWidget {
                         /// Weight tracker card
                         PetWeightCardWidget(
                           logs: state.weightLogs,
+                          birthdate: pet.birthdate,
                           readOnly: isLocked,
                           onWeightSubmitted: (weight, loggedAt, {petId}) => context.read<PetDetailsCubit>().addWeightLog(
                                 weight,

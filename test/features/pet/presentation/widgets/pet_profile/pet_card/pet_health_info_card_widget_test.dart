@@ -36,6 +36,7 @@ void main() {
     HealthDiaryModel? diary,
     List<VetVisitModel> vetVisits = const [],
     VoidCallback? onEditPressed,
+    DateTime? now,
     Gender gender = Gender.female,
   }) async {
     tester.view.physicalSize = const Size(1200, 2400);
@@ -49,6 +50,7 @@ void main() {
             child: PetHealthInfoCardWidget(
               gender: gender,
               diary: diary,
+              now: now,
               vetVisits: vetVisits,
               onFillPressed: () {},
               onEditPressed: onEditPressed,
@@ -150,6 +152,39 @@ void main() {
 
       expect(find.text('Remplir le carnet'), findsNothing);
       expect(find.text('15/06/2026'), findsOneWidget);
+    });
+  });
+
+  // NAN-090: with future dates allowed, the maximum is no longer the last
+  // visit attended.
+  group('a booked appointment', () {
+    final now = DateTime(2026, 9, 16);
+
+    testWidgets('never becomes the last vet appointment', (tester) async {
+      await pumpCard(
+        tester,
+        diary: _diary(),
+        vetVisits: [
+          _visit(DateTime(2026, 6, 1)),
+          _visit(DateTime(2026, 12, 24)),
+        ],
+        now: now,
+      );
+
+      expect(find.text('01/06/2026'), findsOneWidget);
+      expect(find.text('24/12/2026'), findsNothing);
+    });
+
+    testWidgets('leaves the diary column showing when it is the only past date',
+        (tester) async {
+      await pumpCard(
+        tester,
+        diary: _diary(lastVetAppointment: DateTime(2025, 4, 3)),
+        vetVisits: [_visit(DateTime(2026, 12, 24))],
+        now: now,
+      );
+
+      expect(find.text('03/04/2025'), findsOneWidget);
     });
   });
 

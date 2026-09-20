@@ -25,6 +25,9 @@ class AddWeightBottomSheetWidget extends StatefulWidget {
   final Map<String, PetPortrait> portraits;
   final String? initialPetId;
 
+  /// Floor of the date picker. Ignored when [pets] carries the selected animal.
+  final DateTime? birthdate;
+
   /// Non-null turns the sheet into a pre-filled edit form.
   final HealthDiaryWeightLogModel? initial;
 
@@ -37,6 +40,7 @@ class AddWeightBottomSheetWidget extends StatefulWidget {
     this.pets = const [],
     this.portraits = const {},
     this.initialPetId,
+    this.birthdate,
     this.initial,
     this.onDelete,
   });
@@ -63,6 +67,14 @@ class _AddWeightBottomSheetWidgetState extends State<AddWeightBottomSheetWidget>
     );
     _loggedAt = initial?.loggedAt ?? DateTime.now();
     _isValid = initial != null;
+  }
+
+  /// The picker may change the animal under the date field.
+  DateTime? get _birthdate {
+    for (final pet in widget.pets) {
+      if (pet.petId == _petId) return pet.birthdate;
+    }
+    return widget.birthdate;
   }
 
   @override
@@ -158,6 +170,7 @@ class _AddWeightBottomSheetWidgetState extends State<AddWeightBottomSheetWidget>
         DateFieldWidget(
           label: 'Date de la pesée',
           value: _loggedAt,
+          firstDate: _birthdate,
           onChanged: (date) => setState(() => _loggedAt = date),
         ),
       ],

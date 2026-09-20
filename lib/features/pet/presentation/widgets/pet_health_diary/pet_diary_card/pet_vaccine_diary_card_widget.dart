@@ -17,10 +17,18 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/vaccin
 class PetVaccineDiaryCardWidget extends StatefulWidget {
   final List<HealthDiaryVaccineModel> vaccines;
 
+  /// Floor of the date pickers of the vaccine sheet.
+  final DateTime birthdate;
+
   /// The record is still read, nothing is written.
   final bool readOnly;
 
-  const PetVaccineDiaryCardWidget({super.key, required this.vaccines, this.readOnly = false});
+  const PetVaccineDiaryCardWidget({
+    super.key,
+    required this.vaccines,
+    required this.birthdate,
+    this.readOnly = false,
+  });
 
   @override
   State<PetVaccineDiaryCardWidget> createState() => _PetVaccineDiaryCardWidgetState();
@@ -55,9 +63,7 @@ class _PetVaccineDiaryCardWidgetState extends State<PetVaccineDiaryCardWidget> {
             for (final vaccine in widget.vaccines)
               PetDiaryRow(
                 label: vaccine.vaccineName,
-                subtitle: vaccineStatusFor(vaccine.nextDate) == VaccineStatus.done
-                    ? 'Dernier rappel le ${DateFormatter.date(vaccine.lastDate)}'
-                    : 'Prochain rappel le ${DateFormatter.date(vaccine.nextDate)}',
+                subtitle: _subtitle(vaccine),
 
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -86,7 +92,8 @@ class _PetVaccineDiaryCardWidgetState extends State<PetVaccineDiaryCardWidget> {
               BottomSheetWidget.show<void>(
                 context,
                 AddVaccineBottomSheetWidget(
-                  onSubmit: ({required String vaccineName, required DateTime lastDate, required DateTime nextDate}) {
+                  birthdate: widget.birthdate,
+                  onSubmit: ({required String vaccineName, DateTime? lastDate, required DateTime nextDate, String? petId}) {
                     context.read<PetDetailsCubit>().addVaccine(
                           vaccineName: vaccineName,
                           lastDate: lastDate,
@@ -102,15 +109,26 @@ class _PetVaccineDiaryCardWidgetState extends State<PetVaccineDiaryCardWidget> {
     );
   }
 
+  /// A booster booked from the home carries no past date to show.
+  String _subtitle(HealthDiaryVaccineModel vaccine) {
+    if (vaccineStatusFor(vaccine.nextDate) != VaccineStatus.done) {
+      return 'Prochain rappel le ${DateFormatter.date(vaccine.nextDate)}';
+    }
+    final last = vaccine.lastDate;
+    if (last == null) return 'Rappel fait';
+    return 'Dernier rappel le ${DateFormatter.date(last)}';
+  }
+
   void _editVaccine(BuildContext context, HealthDiaryVaccineModel vaccine) {
     final cubit = context.read<PetDetailsCubit>();
     setState(() => _isSelecting = false);
     BottomSheetWidget.show<void>(
       context,
       AddVaccineBottomSheetWidget(
+        birthdate: widget.birthdate,
         initial: vaccine,
         onDelete: () => cubit.deleteVaccine(vaccine.healthDiaryVaccineId),
-        onSubmit: ({required String vaccineName, required DateTime lastDate, required DateTime nextDate}) {
+        onSubmit: ({required String vaccineName, DateTime? lastDate, required DateTime nextDate, String? petId}) {
           cubit.updateVaccine(
             HealthDiaryVaccineModel(
               healthDiaryVaccineId: vaccine.healthDiaryVaccineId,

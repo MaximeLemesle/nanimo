@@ -27,6 +27,23 @@ void main() {
       expect(model.healthDiaryId, 'hd-1');
     });
 
+    /// The column is nullable and a booster booked ahead has no past date.
+    test('fromJson accepts a null last_date', () {
+      final model = HealthDiaryVaccineModel.fromJson({
+        'id_health_diary_vaccine': 'vac-1',
+        'vaccine_name': 'Rage',
+        'last_date': null,
+        'next_date': '2027-01-01T00:00:00.000Z',
+        'recurrence': 365,
+        'dose_number': 1,
+        'total_dose_number': 2,
+        'health_diary_id': 'hd-1',
+      });
+
+      expect(model.lastDate, isNull);
+      expect(model.toJson()['last_date'], isNull);
+    });
+
     test('toJson round-trips through fromJson', () {
       final original = HealthDiaryVaccineModel(
         healthDiaryVaccineId: 'vac-1',

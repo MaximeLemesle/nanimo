@@ -258,6 +258,61 @@ void main() {
     await cubit.close();
   });
 
+  /// The home books for any animal. The selected one's diary is not theirs,
+  /// so the vaccine would land in the wrong carnet.
+  test('addVaccine on another pet uses that pet\'s diary', () async {
+    when(() => healthRepo.getDiaryForPet('p2')).thenAnswer(
+      (_) async => HealthDiaryModel(healthDiaryId: 'd2', petId: 'p2'),
+    );
+
+    final cubit = createCubit();
+    await settle();
+    expect(cubit.state.selectedPetId, 'p1');
+
+    await cubit.addVaccine(
+      vaccineName: 'Rage',
+      lastDate: DateTime(2026, 1, 1),
+      nextDate: DateTime(2027, 1, 1),
+      petId: 'p2',
+    );
+
+    final captured = verify(() => healthRepo.addVaccine(captureAny()))
+        .captured
+        .single as HealthDiaryVaccineModel;
+    expect(captured.healthDiaryId, 'd2');
+
+    /// The global selection does not move, same contract as addVetVisit.
+    expect(cubit.state.selectedPetId, 'p1');
+
+    await cubit.close();
+  });
+
+  test('addVaccine creates the diary of an animal that has none', () async {
+    when(() => healthRepo.getDiaryForPet('p2')).thenAnswer((_) async => null);
+
+    final cubit = createCubit();
+    await settle();
+
+    await cubit.addVaccine(
+      vaccineName: 'Rage',
+      lastDate: DateTime(2026, 1, 1),
+      nextDate: DateTime(2027, 1, 1),
+      petId: 'p2',
+    );
+
+    final diary = verify(() => healthRepo.upsertDiary(captureAny()))
+        .captured
+        .last as HealthDiaryModel;
+    expect(diary.petId, 'p2');
+
+    final captured = verify(() => healthRepo.addVaccine(captureAny()))
+        .captured
+        .single as HealthDiaryVaccineModel;
+    expect(captured.healthDiaryId, diary.healthDiaryId);
+
+    await cubit.close();
+  });
+
   test('addVetVisit forwards a new visit to the repository', () async {
     final cubit = createCubit();
     await settle();

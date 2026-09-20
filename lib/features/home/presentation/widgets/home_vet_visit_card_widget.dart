@@ -1,39 +1,40 @@
-import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:flutter/material.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/utils/date_formatter.dart';
+import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
+import 'package:nanimo/core/widgets/day_count_badge_widget.dart';
 import 'package:nanimo/core/widgets/pet_avatar_widget.dart';
 import 'package:nanimo/core/widgets/rounded_border_widget.dart';
 import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
-import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/vaccine_status_badge_widget.dart';
 
-class HomeHealthCardWidget extends StatelessWidget {
-  final List<VaccineAlert> alerts;
+class HomeVetVisitCardWidget extends StatelessWidget {
+  final List<UpcomingVetVisit> visits;
   final Map<String, PetPortrait> portraits;
-  final void Function(String petId)? onAlertTap;
+  final void Function(String petId)? onVisitTap;
   final VoidCallback? onAddPressed;
 
-  const HomeHealthCardWidget({
+  final DateTime? now;
+
+  const HomeVetVisitCardWidget({
     super.key,
-    required this.alerts,
+    required this.visits,
     required this.portraits,
-    this.onAlertTap,
+    this.onVisitTap,
     this.onAddPressed,
+    this.now,
   });
 
   @override
   Widget build(BuildContext context) {
-    final allClear = alerts.isEmpty;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: AppSpacing.sm,
       children: [
         Text(
-          'Vaccins à venir',
+          'Visites à venir',
           style: AppTextStyles.text.copyWith(color: AppColors.textSecondary),
         ),
         RoundedBorderWidget(
@@ -41,39 +42,28 @@ class HomeHealthCardWidget extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (allClear)
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.check_circle_outline,
-                      color: AppColors.primary600,
-                      size: 24,
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Text('Tout est à jour !',
-                          style: AppTextStyles.textBold),
-                    ),
-                  ],
+              if (visits.isEmpty)
+                Text(
+                  'Aucune visite chez le vétérinaire de prévue',
+                  style: AppTextStyles.textBold,
                 )
               else
-                for (var i = 0; i < alerts.length; i++) ...[
-                  if (i > 0)
+                for (var i = 0; i < visits.length; i++) ...[
+                  if (i > 0) ...[
                     const Divider(color: AppColors.secondary200, height: 1),
-                  if (i > 0) const SizedBox(height: AppSpacing.sm),
-                  _AlertRow(
-                    alert: alerts[i],
-                    portrait: portraits[alerts[i].pet?.petId],
-                    onTap: onAlertTap,
-                  ),
-                  if (i < alerts.length - 1)
                     const SizedBox(height: AppSpacing.sm),
+                  ],
+                  _VisitRow(
+                    entry: visits[i],
+                    portrait: portraits[visits[i].pet.petId],
+                    onTap: onVisitTap,
+                    now: now,
+                  ),
+                  if (i < visits.length - 1) const SizedBox(height: AppSpacing.sm),
                 ],
-
-              /// The way in stays reachable once the list is filled.
               const SizedBox(height: AppSpacing.md),
               ButtonWidget(
-                label: 'Ajouter un vaccin à venir',
+                label: 'Ajouter une visite à venir',
                 type: ButtonType.secondary,
                 icon: Icons.add,
                 iconPosition: ButtonIcon.left,
@@ -88,19 +78,28 @@ class HomeHealthCardWidget extends StatelessWidget {
   }
 }
 
-class _AlertRow extends StatelessWidget {
-  final VaccineAlert alert;
+class _VisitRow extends StatelessWidget {
+  final UpcomingVetVisit entry;
   final PetPortrait? portrait;
   final void Function(String petId)? onTap;
+  final DateTime? now;
 
-  const _AlertRow({required this.alert, this.portrait, this.onTap});
+  const _VisitRow({
+    required this.entry,
+    this.portrait,
+    this.onTap,
+    this.now,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final pet = alert.pet;
+    final visit = entry.visit;
+    final vetName = visit.vetName;
+    final clinicName = visit.clinicName;
+    final visitDate = DateFormatter.date(visit.visitedAt);
 
     return InkWell(
-      onTap: pet == null || onTap == null ? null : () => onTap!(pet.petId),
+      onTap: onTap == null ? null : () => onTap!(entry.pet.petId),
       child: Row(
         children: [
           SizedBox.square(
@@ -118,22 +117,33 @@ class _AlertRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  alert.vaccine.vaccineName,
+                  visit.title,
                   style: AppTextStyles.textBold,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                Text(
-                  DateFormatter.date(alert.vaccine.nextDate),
-                  style: AppTextStyles.textSmall.copyWith(
-                    color: AppColors.textSecondary,
+                if (vetName != null)
+                  Text(
+                    vetName,
+                    style: AppTextStyles.textSmall.copyWith(color: AppColors.textSecondary),
+                    maxLines: 2,
                   ),
+                if (clinicName != null)
+                  Text(
+                    clinicName,
+                    style: AppTextStyles.textSmall.copyWith(color: AppColors.textSecondary),
+                    maxLines: 2,
+                  ),
+                Text(
+                  visitDate,
+                  style: AppTextStyles.textSmall.copyWith(color: AppColors.textSecondary),
+                  maxLines: 2,
                 ),
               ],
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
-          VaccineStatusBadgeWidget(nextDate: alert.vaccine.nextDate),
+          DayCountBadgeWidget(date: visit.visitedAt, now: now),
         ],
       ),
     );
