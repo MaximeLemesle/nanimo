@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nanimo/core/isar/cache/schemas/article_cache.dart';
-import 'package:nanimo/core/isar/cache/schemas/article_sync_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_image_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_type_cache.dart';
@@ -308,9 +307,8 @@ void main() {
     });
   });
 
-  // NAN-094: the pull is guarded by a locally stored timestamp.
+  // NAN-094: pulled on every launch, like the rest of the service.
   group('syncArticles', () {
-    final now = DateTime(2026, 9, 16, 12);
 
     List<Map<String, dynamic>> rows() => [
           {
@@ -321,16 +319,10 @@ void main() {
           },
         ];
 
-    Future<void> seedLastSync(DateTime at) async {
-      await harness.isar.writeTxn(() async {
-        await harness.isar.articleSyncCaches.put(ArticleSyncCache.at(at));
-      });
-    }
-
     test('pulls and caches the articles on a first launch', () async {
       stubSelect(supabase, 'articles', resolver: rows);
 
-      await syncService.syncArticles(now: now);
+      await syncService.syncArticles();
 
       final cached = await harness.isar.articleCaches.getByArticleId('a1');
       expect(cached, isNotNull);
@@ -338,40 +330,32 @@ void main() {
       expect(cached.paragraphs, ['Un paragraphe']);
     });
 
-    test('records when it last pulled', () async {
+    /// Unpublishing a tip must reach the device on the next launch, not a
+    /// day later.
+    test('asks again on every call', () async {
+      var calls = 0;
+      stubSelect(supabase, 'articles', resolver: () {
+        calls++;
+        return rows();
+      });
+
+      await syncService.syncArticles();
+      await syncService.syncArticles();
+
+      expect(calls, 2);
+    });
+
+    /// A row dropped in the database leaves the cache with it.
+    test('drops a cached article the database no longer returns', () async {
       stubSelect(supabase, 'articles', resolver: rows);
+      await syncService.syncArticles();
+      expect(await harness.isar.articleCaches.count(), 1);
 
-      await syncService.syncArticles(now: now);
+      stubSelect(supabase, 'articles',
+          resolver: () => <Map<String, dynamic>>[]);
+      await syncService.syncArticles();
 
-      final stamp =
-          await harness.isar.articleSyncCaches.get(ArticleSyncCache.singletonId);
-      expect(stamp!.syncedAt, now);
-    });
-
-    test('asks for nothing again within the day', () async {
-      await seedLastSync(now.subtract(const Duration(hours: 3)));
-      var calls = 0;
-      stubSelect(supabase, 'articles', resolver: () {
-        calls++;
-        return rows();
-      });
-
-      await syncService.syncArticles(now: now);
-
-      expect(calls, 0);
-    });
-
-    test('asks again once the day has passed', () async {
-      await seedLastSync(now.subtract(const Duration(hours: 25)));
-      var calls = 0;
-      stubSelect(supabase, 'articles', resolver: () {
-        calls++;
-        return rows();
-      });
-
-      await syncService.syncArticles(now: now);
-
-      expect(calls, 1);
+      expect(await harness.isar.articleCaches.count(), 0);
     });
 
     /// Editing the text in the database must reach the app without a release.
@@ -387,7 +371,7 @@ void main() {
       });
       stubSelect(supabase, 'articles', resolver: rows);
 
-      await syncService.syncArticles(now: now);
+      await syncService.syncArticles();
 
       final cached = await harness.isar.articleCaches.getByArticleId('a1');
       expect(cached!.title, 'Le conseil courant');
@@ -396,13 +380,9 @@ void main() {
     test('leaves the cache alone when the network fails', () async {
       stubSelect(supabase, 'articles', resolver: () => throw Exception('x'));
 
-      await syncService.syncArticles(now: now);
+      await syncService.syncArticles();
 
       expect(await harness.isar.articleCaches.count(), 0);
-      expect(
-        await harness.isar.articleSyncCaches.get(ArticleSyncCache.singletonId),
-        isNull,
-      );
     });
   });
 }

@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:nanimo/core/isar/cache/schemas/article_cache.dart';
-import 'package:nanimo/core/isar/cache/schemas/article_sync_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_image_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_type_cache.dart';
@@ -45,20 +44,14 @@ class SyncService {
     });
   }
 
-  /// How long a pulled set of articles is trusted before asking again.
-  static const articleFreshness = Duration(hours: 24);
-
-  /// The home tips, pulled at most once a day. The RLS policy has already
-  /// dropped the drafts and the scheduled rows, hence the plain select.
-  Future<void> syncArticles({DateTime? now}) async {
+  /// The home tips. Pulled on every launch like the thirteen other tables:
+  /// it is the only bounded query of the service, so rationing it saved the
+  /// cheapest request while events and images went out whole.
+  ///
+  /// The RLS policy has already dropped the drafts and the scheduled rows,
+  /// hence the plain select.
+  Future<void> syncArticles() async {
     try {
-      final reference = now ?? DateTime.now();
-      final lastSync = await _isar.articleSyncCaches.get(ArticleSyncCache.singletonId);
-      if (lastSync != null &&
-          reference.difference(lastSync.syncedAt) < articleFreshness) {
-        return;
-      }
-
       final data = await _supabase
           .from('articles')
           .select()
@@ -69,7 +62,6 @@ class SyncService {
       await _isar.writeTxn(() async {
         await _isar.articleCaches.clear();
         await _isar.articleCaches.putAllByArticleId(articles);
-        await _isar.articleSyncCaches.put(ArticleSyncCache.at(reference));
       });
     } catch (e, st) {
       developer.log('syncArticles failed', name: 'sync', error: e, stackTrace: st);

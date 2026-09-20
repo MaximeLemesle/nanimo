@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:isar/isar.dart';
 import 'package:nanimo/core/isar/cache/schemas/article_cache.dart';
-import 'package:nanimo/core/isar/cache/schemas/article_sync_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/event_image_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_cache.dart';
@@ -47,7 +46,6 @@ class IsarTestHarness {
         VetVisitCacheSchema,
         NotificationPrefsCacheSchema,
         ArticleCacheSchema,
-        ArticleSyncCacheSchema,
       ],
       directory: _tempDir.path,
       maxSizeMiB: 16,
