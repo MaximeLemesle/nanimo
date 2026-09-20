@@ -88,18 +88,15 @@ void main() {
   });
 
   group('with a booked appointment', () {
-    testWidgets('shows the title, the vet, the clinic, the date and the count',
-        (tester) async {
+    testWidgets('shows the title, the vet, the clinic, the date and the count', (tester) async {
       await pumpCard(tester, [
-        _entry('v1', 'Rappel annuel', 24,
-            vetName: 'Dr.Martin', clinicName: 'Clinique des Pins'),
+        _entry('v1', 'Rappel annuel', 24, vetName: 'Dr.Martin', clinicName: 'Clinique des Pins'),
       ]);
 
       expect(find.text('Rappel annuel'), findsOneWidget);
-      expect(
-        find.text('Dr.Martin · Clinique des Pins · 10/10/2026'),
-        findsOneWidget,
-      );
+      expect(find.text('Dr.Martin'), findsOneWidget);
+      expect(find.text('Clinique des Pins'), findsOneWidget);
+      expect(find.text('10/10/2026'), findsOneWidget);
       expect(find.text('Dans 24 j'), findsOneWidget);
     });
 
