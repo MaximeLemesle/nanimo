@@ -10,7 +10,6 @@ import 'package:nanimo/core/widgets/pet_avatar_widget.dart';
 import 'package:nanimo/core/widgets/rounded_border_widget.dart';
 import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
 
-/// The one place the information serves the owner *before* the visit.
 class HomeVetVisitCardWidget extends StatelessWidget {
   final List<UpcomingVetVisit> visits;
   final Map<String, PetPortrait> portraits;
@@ -60,11 +59,8 @@ class HomeVetVisitCardWidget extends StatelessWidget {
                     onTap: onVisitTap,
                     now: now,
                   ),
-                  if (i < visits.length - 1)
-                    const SizedBox(height: AppSpacing.sm),
+                  if (i < visits.length - 1) const SizedBox(height: AppSpacing.sm),
                 ],
-
-              /// The way in stays reachable once the list is filled.
               const SizedBox(height: AppSpacing.md),
               ButtonWidget(
                 label: 'Ajouter une visite à venir',
@@ -98,11 +94,9 @@ class _VisitRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final visit = entry.visit;
-    final subtitle = [
-      if (visit.vetName != null) visit.vetName!,
-      if (visit.clinicName != null) visit.clinicName!,
-      DateFormatter.date(visit.visitedAt),
-    ].join(' · ');
+    final vetName = visit.vetName;
+    final clinicName = visit.clinicName;
+    final visitDate = DateFormatter.date(visit.visitedAt);
 
     return InkWell(
       onTap: onTap == null ? null : () => onTap!(entry.pet.petId),
@@ -128,10 +122,21 @@ class _VisitRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                if (vetName != null)
+                  Text(
+                    vetName,
+                    style: AppTextStyles.textSmall.copyWith(color: AppColors.textSecondary),
+                    maxLines: 2,
+                  ),
+                if (clinicName != null)
+                  Text(
+                    clinicName,
+                    style: AppTextStyles.textSmall.copyWith(color: AppColors.textSecondary),
+                    maxLines: 2,
+                  ),
                 Text(
-                  subtitle,
-                  style: AppTextStyles.textSmall
-                      .copyWith(color: AppColors.textSecondary),
+                  visitDate,
+                  style: AppTextStyles.textSmall.copyWith(color: AppColors.textSecondary),
                   maxLines: 2,
                 ),
               ],
