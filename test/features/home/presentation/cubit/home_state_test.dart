@@ -36,7 +36,7 @@ EventModel _event(String id, DateTime entryDate) => EventModel(
       eventTypeId: 't1',
     );
 
-HealthDiaryVaccineModel _vaccine(String id, DateTime nextDate,
+HealthDiaryVaccineModel _vaccine(String id, DateTime? nextDate,
         {String diaryId = 'd1'}) =>
     HealthDiaryVaccineModel(
       healthDiaryVaccineId: id,
@@ -142,6 +142,21 @@ void main() {
       expect(alerts.first.pet?.petName, 'Milo');
       expect(alerts.last.status, VaccineStatus.soon);
       expect(alerts.last.pet?.petName, 'Nala');
+    });
+
+    /// NAN-096: "je ne sais pas" leaves the booster empty.
+    test('a vaccine without a next booster raises no alert and no status', () {
+      final state = HomeState(
+        pets: [_milo],
+        diaries: diaries,
+        vaccines: [
+          _vaccine('unknown', null),
+          _vaccine('late', _now.subtract(const Duration(days: 2))),
+        ],
+      );
+
+      expect(state.vaccineAlerts(now: _now).map((a) => a.vaccine.healthDiaryVaccineId), ['late']);
+      expect(state.vaccineStatusByPet(now: _now)['p1'], VaccineStatus.overdue);
     });
 
     test('vaccineStatusByPet keeps the worst status per pet', () {

@@ -3,7 +3,8 @@ class HealthDiaryVaccineModel {
   final String vaccineName;
   /// Null when the booster was never given, or is not known.
   final DateTime? lastDate;
-  final DateTime nextDate;
+  /// Null when the owner does not know when the next booster is due.
+  final DateTime? nextDate;
   final int recurrence;
   final int doseNumber;
   final int totalDoseNumber;
@@ -13,7 +14,7 @@ class HealthDiaryVaccineModel {
     required this.healthDiaryVaccineId,
     required this.vaccineName,
     this.lastDate,
-    required this.nextDate,
+    this.nextDate,
     required this.recurrence,
     required this.doseNumber,
     required this.totalDoseNumber,
@@ -27,7 +28,9 @@ class HealthDiaryVaccineModel {
       lastDate: json['last_date'] == null
           ? null
           : DateTime.parse(json['last_date'] as String),
-      nextDate: DateTime.parse(json['next_date'] as String),
+      nextDate: json['next_date'] == null
+          ? null
+          : DateTime.parse(json['next_date'] as String),
       recurrence: json['recurrence'],
       doseNumber: json['dose_number'],
       totalDoseNumber: json['total_dose_number'],
@@ -39,7 +42,7 @@ class HealthDiaryVaccineModel {
         'id_health_diary_vaccine': healthDiaryVaccineId,
         'vaccine_name': vaccineName,
         'last_date': lastDate?.toIso8601String(),
-        'next_date': nextDate.toIso8601String(),
+        'next_date': nextDate?.toIso8601String(),
         'recurrence': recurrence,
         'dose_number': doseNumber,
         'total_dose_number': totalDoseNumber,

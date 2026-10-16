@@ -8,12 +8,15 @@ import 'package:nanimo/core/widgets/rounded_border_widget.dart';
 export 'package:nanimo/core/utils/vaccine_status.dart';
 
 class VaccineStatusBadgeWidget extends StatelessWidget {
-  final DateTime nextDate;
+  /// Null hides the badge: a booster not scheduled has no status yet.
+  final DateTime? nextDate;
 
   const VaccineStatusBadgeWidget({super.key, required this.nextDate});
 
   @override
   Widget build(BuildContext context) {
+    final nextDate = this.nextDate;
+    if (nextDate == null) return const SizedBox.shrink();
     final status = vaccineStatusFor(nextDate);
 
     late final String label;

@@ -219,7 +219,9 @@ class PetPage extends StatelessWidget {
                               : state.vaccines
                                   .map(
                                     (vaccine) => PetCardItemWidget(
-                                      label: 'Prochain rappel : ${DateFormatter.date(vaccine.nextDate)}',
+                                      label: vaccine.nextDate == null
+                                          ? 'Rappel à programmer'
+                                          : 'Prochain rappel : ${DateFormatter.date(vaccine.nextDate!)}',
                                       value: vaccine.vaccineName,
                                     ),
                                   )

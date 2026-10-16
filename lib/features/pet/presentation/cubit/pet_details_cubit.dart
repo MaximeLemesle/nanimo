@@ -95,7 +95,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     bool? isChipped,
     String? chipNumber,
     DateTime? lastDeworming,
-    List<({String name, DateTime lastDate, DateTime nextDate, int recurrence})>
+    List<({String name, DateTime? lastDate, DateTime? nextDate, int recurrence})>
         vaccines = const [],
     List<
             ({
@@ -224,7 +224,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
   Future<void> addVaccine({
     required String vaccineName,
     DateTime? lastDate,
-    required DateTime nextDate,
+    DateTime? nextDate,
     int recurrence = 0,
     int doseNumber = 1,
     int totalDoseNumber = 1,
