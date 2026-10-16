@@ -20,6 +20,9 @@ class AnalyticsEvents {
 
   static const paywallOpened = 'paywall_opened';
   static const paywallOfferSelected = 'paywall_offer_selected';
+
+  /// Tells a deliberate "Non merci" apart from the close button.
+  static const paywallDismissed = 'paywall_dismissed';
   static const purchaseStarted = 'purchase_started';
   static const purchaseCompleted = 'purchase_completed';
   static const purchaseCancelled = 'purchase_cancelled';

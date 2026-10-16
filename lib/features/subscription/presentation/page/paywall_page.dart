@@ -6,6 +6,8 @@ import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
+import 'package:nanimo/core/analytics/analytics.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/features/subscription/data/models/paywall_offer_model.dart';
 import 'package:nanimo/features/subscription/presentation/pending_premium_intent.dart';
@@ -107,8 +109,12 @@ class _PaywallPageState extends State<PaywallPage> {
 
   /// In preview the paywall was pushed over the onboarding, which the owner is
   /// leaving either way: dismissing it means "not now", not "go back a step".
-  void _close(BuildContext context) {
+  void _close(BuildContext context, {String reason = 'close'}) {
     if (_isPreview) {
+      analytics.capture(AnalyticsEvents.paywallDismissed, properties: {
+        AnalyticsProperties.reason: reason,
+        AnalyticsProperties.trigger: PaywallTrigger.onboarding,
+      });
       pendingPremiumIntent.clear();
       context.go(RouteNames.signup);
       return;
@@ -219,15 +225,16 @@ class _PaywallPageState extends State<PaywallPage> {
     );
   }
 
-  /// Apple wants the restore reachable from any screen that sells. Without an
-  /// account there is nothing to restore onto yet, so it leads to the login.
+  /// Guideline 3.1.1 asks for a restore mechanism, not one per screen: it lives
+  /// in the settings and on the in-app paywall. Before the account exists, the
+  /// only useful way out is a clear refusal (NAN-099).
   Widget _restoreLink(BuildContext context, PaywallState state) {
     if (_isPreview) {
       return TextButton(
-        onPressed: () => context.go(RouteNames.login),
+        onPressed: () => _close(context, reason: 'no_thanks'),
         child: Text(
-          'J\'ai déjà un abonnement',
-          style: AppTextStyles.textSmall.copyWith(color: AppColors.textSecondary),
+          'Non merci',
+          style: AppTextStyles.textBold.copyWith(color: AppColors.textSecondary),
         ),
       );
     }

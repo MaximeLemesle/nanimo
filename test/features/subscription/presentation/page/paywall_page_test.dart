@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nanimo/core/analytics/analytics.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
+import 'package:nanimo/core/analytics/analytics_service.dart';
 import 'package:nanimo/features/subscription/presentation/pending_premium_intent.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
@@ -16,6 +19,8 @@ import 'package:nanimo/features/subscription/presentation/page/paywall_page.dart
 import 'package:nanimo/features/subscription/presentation/page/premium_welcome_page.dart';
 import 'package:nanimo/features/subscription/presentation/widgets/paywall_confirming_widget.dart';
 import 'package:nanimo/features/subscription/presentation/paywall_content.dart';
+
+import '../../../../core/analytics/recording_analytics_service.dart';
 
 class _MockPurchaseRepository extends Mock implements PurchaseRepository {}
 
@@ -426,16 +431,33 @@ void main() {
       expect(pendingPremiumIntent.isPending, isFalse);
     });
 
-    /// Apple wants the restore reachable from any screen that sells, and there
-    /// is nothing to restore onto until the owner is back in their account.
-    testWidgets('sends an existing subscriber to the login', (tester) async {
+    /// NAN-099: a clear refusal instead of a restore that has no account to land on.
+    testWidgets('"Non merci" goes on to the signup, told apart from the close button', (tester) async {
+      final recorder = RecordingAnalyticsService();
+      analytics = recorder;
+      addTearDown(() => analytics = const NoopAnalyticsService());
       await pumpPaywall(tester, isPreview: true);
 
-      await tester.tap(find.text('J\'ai déjà un abonnement'));
+      expect(find.text('J\'ai déjà un abonnement'), findsNothing);
+      await tester.tap(find.text('Non merci'));
       await settle(tester);
 
-      verifyNever(() => purchaseRepository.restore());
-      expect(find.text('login-stub'), findsOneWidget);
+      verifyNever(() => purchaseRepository.purchase(any()));
+      expect(find.text('signup-stub'), findsOneWidget);
+      expect(pendingPremiumIntent.isPending, isFalse);
+      expect(recorder.lastOf(AnalyticsEvents.paywallDismissed)!.properties[AnalyticsProperties.reason], 'no_thanks');
+    });
+
+    testWidgets('the close button is reported as a close', (tester) async {
+      final recorder = RecordingAnalyticsService();
+      analytics = recorder;
+      addTearDown(() => analytics = const NoopAnalyticsService());
+      await pumpPaywall(tester, isPreview: true);
+
+      await tester.tap(find.byTooltip('Fermer'));
+      await settle(tester);
+
+      expect(recorder.lastOf(AnalyticsEvents.paywallDismissed)!.properties[AnalyticsProperties.reason], 'close');
     });
   });
 }
