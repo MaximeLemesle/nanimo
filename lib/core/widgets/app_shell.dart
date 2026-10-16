@@ -15,7 +15,10 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_bottom_
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:nanimo/features/subscription/presentation/quota_upsell.dart';
 import 'package:nanimo/features/subscription/presentation/pending_premium_intent.dart';
+import 'package:nanimo/core/analytics/analytics.dart';
 import 'package:nanimo/core/analytics/analytics_events.dart';
+import 'package:nanimo/core/notifications/notifications.dart';
+import 'package:nanimo/core/notifications/reminder_planner.dart';
 
 class AppShell extends StatefulWidget {
   final Widget child;
@@ -39,12 +42,30 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    pendingNotificationTap.addListener(_openTappedReminder);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _openTappedReminder());
   }
 
   @override
   void dispose() {
+    pendingNotificationTap.removeListener(_openTappedReminder);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  /// A reminder opens the animal it is about.
+  void _openTappedReminder() {
+    final payload = pendingNotificationTap.value;
+    if (payload == null || !mounted) return;
+    pendingNotificationTap.value = null;
+    final reminder = parseReminderPayload(payload);
+    if (reminder == null) return;
+    analytics.capture(
+      AnalyticsEvents.notificationOpened,
+      properties: {AnalyticsProperties.kind: reminder.kind.name},
+    );
+    context.read<PetDetailsCubit>().selectPet(reminder.petId);
+    context.go(RouteNames.pet);
   }
 
   @override
