@@ -6,6 +6,7 @@ import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
 import 'package:nanimo/features/home/presentation/widgets/home_article_card_widget.dart';
+import 'package:nanimo/features/home/presentation/widgets/home_first_steps_card_widget.dart';
 import 'package:nanimo/features/home/presentation/widgets/home_header_widget.dart';
 import 'package:nanimo/features/home/presentation/widgets/home_health_card_widget.dart';
 import 'package:nanimo/features/home/presentation/widgets/home_memory_polaroid_widget.dart';
@@ -55,6 +56,13 @@ class HomePage extends StatelessWidget {
                   onSettingsTap: () => context.push(RouteNames.settings),
                 ),
                 const SizedBox(height: AppSpacing.xl),
+
+                HomeFirstStepsCardWidget(
+                  hasVaccine: state.hasAnyVaccine,
+                  hasMemory: state.events.isNotEmpty,
+                  onAddVaccine: () => _addVaccine(context, state),
+                  onAddMemory: () => context.push(RouteNames.createEvent),
+                ),
 
                 /// Display the last memory or the remember "X years ago"
                 if (memory != null) ...[
