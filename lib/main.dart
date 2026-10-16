@@ -14,6 +14,7 @@ import 'package:nanimo/core/analytics/analytics.dart';
 import 'package:nanimo/core/analytics/analytics_factory.dart';
 import 'package:nanimo/core/monitoring/error_reporter.dart';
 import 'package:nanimo/core/notifications/local_notification_client.dart';
+import 'package:nanimo/core/notifications/notification_priming.dart';
 import 'package:nanimo/core/notifications/notifications.dart';
 import 'package:nanimo/core/notifications/reminder_scheduler.dart';
 import 'package:nanimo/core/monitoring/monitoring_factory.dart';
@@ -136,6 +137,10 @@ void main() async {
   );
 
   await _initNotifications();
+  notificationPriming = NotificationPriming(
+    client: () => notifications,
+    store: SharedPreferencesPrimingStore(),
+  );
   ReminderScheduler(
     client: notifications,
     petRepository: petRepository,

@@ -17,6 +17,7 @@ import 'package:nanimo/features/subscription/presentation/quota_upsell.dart';
 import 'package:nanimo/features/subscription/presentation/pending_premium_intent.dart';
 import 'package:nanimo/core/analytics/analytics.dart';
 import 'package:nanimo/core/analytics/analytics_events.dart';
+import 'package:nanimo/core/notifications/notification_priming_sheet.dart';
 import 'package:nanimo/core/notifications/notifications.dart';
 import 'package:nanimo/core/notifications/reminder_planner.dart';
 
@@ -43,14 +44,28 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     pendingNotificationTap.addListener(_openTappedReminder);
+    notificationPriming.offer.addListener(_showPriming);
     WidgetsBinding.instance.addPostFrameCallback((_) => _openTappedReminder());
   }
 
   @override
   void dispose() {
     pendingNotificationTap.removeListener(_openTappedReminder);
+    notificationPriming.offer.removeListener(_showPriming);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  /// Waits for the add sheet to close before opening its own.
+  Future<void> _showPriming() async {
+    final offer = notificationPriming.offer.value;
+    if (offer == null || !mounted) return;
+    final accepted = await BottomSheetWidget.show<bool>(context, NotificationPrimingSheet(offer: offer));
+    if (accepted == true) {
+      await notificationPriming.accept();
+    } else {
+      await notificationPriming.postpone();
+    }
   }
 
   /// A reminder opens the animal it is about.
