@@ -8,9 +8,9 @@ import 'package:nanimo/core/widgets/bottom_bar_widget/bottom_bar_menu_widget.dar
 import 'package:nanimo/core/widgets/bottom_bar_widget/bottom_bar_widget.dart';
 import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
-import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
+import 'package:nanimo/features/pet/presentation/pet_creation_flow.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_bottom_sheet/add_weight_bottom_sheet_widget.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:nanimo/features/subscription/presentation/quota_upsell.dart';
@@ -123,9 +123,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       return;
     }
 
-    /// Start the create-pet flow from a clean step 1
-    context.read<OnboardingCubit>().reset();
-    context.push(RouteNames.createPet);
+    PetCreationFlow.open(context);
   }
 
   @override

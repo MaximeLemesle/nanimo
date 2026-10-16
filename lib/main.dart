@@ -141,6 +141,14 @@ void main() async {
     petRepository: petRepository,
   );
 
+  /// NAN-100: once the onboarding pet is in, its answers must not prefill
+  /// the next creation. Lives here because the shell mounts after the insert.
+  petCreationCubit.stream.listen((creation) {
+    if (creation.status == PetCreationStatus.success && creation.createdDuringOnboarding) {
+      onboardingCubit.reset();
+    }
+  });
+
   /// Account id only, never the e-mail.
   authCubit.stream.listen((auth) {
     final userId = authRepository.currentUserId;
