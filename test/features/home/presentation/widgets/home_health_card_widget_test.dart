@@ -59,6 +59,7 @@ void main() {
       WidgetTester tester,
       List<VaccineAlert> alerts, {
       VoidCallback? onAddPressed,
+      bool hasVaccines = true,
     }) async {
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(
@@ -66,6 +67,7 @@ void main() {
             alerts: alerts,
             portraits: const {},
             onAddPressed: onAddPressed,
+            hasVaccines: hasVaccines,
           ),
         ),
       ));
@@ -82,6 +84,27 @@ void main() {
       await tester.tap(find.text('Ajouter un vaccin à venir'));
       await tester.pumpAndSettle();
       expect(tapped, isTrue);
+    });
+
+    testWidgets('invites to add a first vaccine when none is recorded', (tester) async {
+      var tapped = false;
+      await pumpCard(tester, const [], hasVaccines: false, onAddPressed: () => tapped = true);
+
+      expect(find.text('Tout est à jour !'), findsNothing);
+      expect(find.text('Ajoute son dernier vaccin, on te rappellera le prochain'), findsOneWidget);
+
+      await tester.tap(find.text('Ajouter un vaccin'));
+      await tester.pumpAndSettle();
+      expect(tapped, isTrue);
+    });
+
+    testWidgets('the empty state fits the narrowest phone', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(320, 568));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await pumpCard(tester, const [], hasVaccines: false);
+
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('still shows once a booster is listed', (tester) async {

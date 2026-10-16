@@ -156,7 +156,7 @@ void main() {
     await cubit.close();
   });
 
-  testWidgets('shows the masthead, the pets strip and an all-clear health', (tester) async {
+  testWidgets('shows the masthead, the pets strip and a first-vaccine invite', (tester) async {
     // Tall phone viewport so the health card below the pets strip is built.
     tester.view.physicalSize = const Size(1080, 2340);
     tester.view.devicePixelRatio = 2.0;
@@ -171,7 +171,8 @@ void main() {
     expect(find.text('Board de Maxime'), findsOneWidget);
     expect(find.text('Milo'), findsOneWidget);
     expect(find.text('Vaccins à venir'), findsOneWidget);
-    expect(find.text('Tout est à jour !'), findsOneWidget);
+    expect(find.text('Tout est à jour !'), findsNothing);
+    expect(find.text('Ajoute son dernier vaccin, on te rappellera le prochain'), findsOneWidget);
     await cubit.close();
   });
 
@@ -280,6 +281,41 @@ void main() {
     expect(find.text('Modifier'), findsOneWidget);
     expect(find.text('Supprimer'), findsOneWidget);
     await journalCubit.close();
+    await cubit.close();
+  });
+
+  testWidgets('keeps the all-clear once a vaccine is recorded and nothing is due', (tester) async {
+    tester.view.physicalSize = const Size(1080, 2340);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.reset);
+    when(() => healthRepo.watchAllDiaries()).thenAnswer(
+      (_) => Stream.value(
+        const [HealthDiaryModel(healthDiaryId: 'd1', petId: 'p1')],
+      ),
+    );
+    when(() => healthRepo.watchAllVaccines()).thenAnswer(
+      (_) => Stream.value([
+        HealthDiaryVaccineModel(
+          healthDiaryVaccineId: 'v1',
+          vaccineName: 'Rage',
+          lastDate: DateTime.now().subtract(const Duration(days: 30)),
+          nextDate: DateTime.now().add(const Duration(days: 300)),
+          recurrence: 365,
+          doseNumber: 1,
+          totalDoseNumber: 1,
+          healthDiaryId: 'd1',
+        ),
+      ]),
+    );
+
+    final cubit = buildCubit();
+    await tester.pumpWidget(buildPage(cubit));
+
+    petsController.add([_milo]);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Tout est à jour !'), findsOneWidget);
+    expect(find.text('Ajoute son dernier vaccin, on te rappellera le prochain'), findsNothing);
     await cubit.close();
   });
 
