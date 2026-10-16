@@ -5,6 +5,8 @@ import 'dart:async';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nanimo/core/analytics/analytics.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
 import 'package:nanimo/core/utils/vaccine_status.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
@@ -77,6 +79,7 @@ class HomeCubit extends Cubit<HomeState> {
   /// Refreshes the pet list on change
   void _onPetsChanged(List<PetModel> pets) {
     emit(state.copyWith(status: HomeStatus.loaded, pets: pets));
+    _syncPersonProperties();
   }
 
   void _onEventsChanged(List<EventModel> events) {
@@ -97,6 +100,26 @@ class HomeCubit extends Cubit<HomeState> {
 
   void _onVaccinesChanged(List<HealthDiaryVaccineModel> vaccines) {
     emit(state.copyWith(vaccines: vaccines));
+    _syncPersonProperties();
+  }
+
+  Map<String, Object>? _lastPersonProperties;
+
+  /// Sent only when a value changes: every stream tick would flood PostHog.
+  void _syncPersonProperties() {
+    if (state.status != HomeStatus.loaded) return;
+    final properties = <String, Object>{
+      AnalyticsProperties.petCount: state.pets.length,
+      AnalyticsProperties.hasVaccine: state.vaccines.isNotEmpty,
+    };
+    final last = _lastPersonProperties;
+    if (last != null &&
+        last[AnalyticsProperties.petCount] == properties[AnalyticsProperties.petCount] &&
+        last[AnalyticsProperties.hasVaccine] == properties[AnalyticsProperties.hasVaccine]) {
+      return;
+    }
+    _lastPersonProperties = properties;
+    analytics.setPersonProperties(properties);
   }
 
   void _onArticleChanged(ArticleModel? article) {
