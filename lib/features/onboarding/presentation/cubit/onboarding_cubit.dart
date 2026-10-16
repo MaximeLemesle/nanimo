@@ -73,6 +73,16 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     }
   }
 
+  /// Called once per opening of the creation flow, not on each species fetch.
+  void trackStarted({required bool inApp}) {
+    analytics.capture(
+      AnalyticsEvents.onboardingStarted,
+      properties: {
+        AnalyticsProperties.source: inApp ? OnboardingSource.addPet : OnboardingSource.onboarding,
+      },
+    );
+  }
+
   void reset() {
     emit(const OnboardingState());
   }
@@ -82,7 +92,6 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     if (state.speciesStatus == ReferentialStatus.loading || state.speciesStatus == ReferentialStatus.loaded) {
       return;
     }
-    analytics.capture(AnalyticsEvents.onboardingStarted);
     emit(state.copyWith(
       speciesStatus: ReferentialStatus.loading,
       clearSpeciesError: true,

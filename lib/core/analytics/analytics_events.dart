@@ -11,6 +11,13 @@ class AnalyticsEvents {
   static const petCreationFailed = 'pet_creation_failed';
   static const memoryCreated = 'memory_created';
 
+  static const vaccineCreated = 'vaccine_created';
+  static const vetVisitCreated = 'vet_visit_created';
+  static const reminderScheduled = 'reminder_scheduled';
+  static const notificationOpened = 'notification_opened';
+  static const notificationPermission = 'notification_permission';
+  static const checklistItemCompleted = 'checklist_item_completed';
+
   static const paywallOpened = 'paywall_opened';
   static const paywallOfferSelected = 'paywall_offer_selected';
   static const purchaseStarted = 'purchase_started';
@@ -39,6 +46,32 @@ class AnalyticsProperties {
   static const confirmed = 'confirmed';
   static const restored = 'restored';
   static const source = 'source';
+  static const upcoming = 'upcoming';
+  static const item = 'item';
+  static const result = 'result';
+  static const kind = 'kind';
+  static const skipped = 'skipped';
+
+  /// Person properties, set on the profile rather than on one event.
+  static const hasVaccine = 'has_vaccine';
+  static const isPremium = 'is_premium';
+}
+
+/// Tells a first onboarding apart from an animal added later from the app.
+class OnboardingSource {
+  const OnboardingSource._();
+
+  static const onboarding = 'onboarding';
+  static const addPet = 'add_pet';
+}
+
+/// Where a health entry was written from.
+class HealthEntrySource {
+  const HealthEntrySource._();
+
+  static const healthDiary = 'health_diary';
+  static const diaryCreation = 'diary_creation';
+  static const onboarding = 'onboarding';
 }
 
 /// What blocked the user right before the paywall opened. This is the property

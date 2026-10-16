@@ -16,6 +16,7 @@ class RecordingAnalyticsService implements AnalyticsService {
   final List<CapturedEvent> events = [];
   final List<String> screens = [];
   final List<String> identified = [];
+  final Map<String, Object> personProperties = {};
   int forgetCount = 0;
   bool? lastEnabled;
 
@@ -45,6 +46,10 @@ class RecordingAnalyticsService implements AnalyticsService {
 
   @override
   Future<void> forgetUser() async => forgetCount++;
+
+  @override
+  Future<void> setPersonProperties(Map<String, Object> properties) async =>
+      personProperties.addAll(properties);
 
   @override
   Future<void> setEnabled(bool enabled) async => lastEnabled = enabled;

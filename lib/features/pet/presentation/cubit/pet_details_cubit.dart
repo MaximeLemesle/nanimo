@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nanimo/core/analytics/analytics.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
 import 'package:nanimo/core/utils/pet_icon_resolver.dart';
 import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:nanimo/data/models/referential/pet_icon_model.dart';
@@ -143,6 +145,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
             healthDiaryId: healthDiaryId,
           ),
         );
+        _trackVaccineCreated(HealthEntrySource.diaryCreation);
       }
 
       for (final visit in vetVisits) {
@@ -156,6 +159,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
             petId: petId,
           ),
         );
+        _trackVetVisitCreated(visit.visitedAt, HealthEntrySource.diaryCreation);
       }
     } catch (err) {
       if (isClosed) return;
@@ -242,6 +246,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
         healthDiaryId: healthDiaryId,
       );
       await _healthRepository.addVaccine(vaccine);
+      _trackVaccineCreated(HealthEntrySource.healthDiary);
     } catch (err) {
       if (isClosed) return;
       emit(state.copyWith(error: err.toString()));
@@ -286,10 +291,28 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
         petId: targetId,
       );
       await _healthRepository.addVetVisit(visit);
+      _trackVetVisitCreated(visitedAt, HealthEntrySource.healthDiary);
     } catch (err) {
       if (isClosed) return;
       emit(state.copyWith(error: err.toString()));
     }
+  }
+
+  void _trackVaccineCreated(String source) {
+    analytics.capture(
+      AnalyticsEvents.vaccineCreated,
+      properties: {AnalyticsProperties.source: source},
+    );
+  }
+
+  void _trackVetVisitCreated(DateTime visitedAt, String source) {
+    analytics.capture(
+      AnalyticsEvents.vetVisitCreated,
+      properties: {
+        AnalyticsProperties.source: source,
+        AnalyticsProperties.upcoming: visitedAt.isAfter(DateTime.now()),
+      },
+    );
   }
 
   Future<void> deleteVaccine(String healthDiaryVaccineId) async {

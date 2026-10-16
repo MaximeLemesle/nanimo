@@ -9,6 +9,9 @@ abstract class AnalyticsService {
 
   Future<void> forgetUser();
 
+  /// Updates the identified person's profile without sending a visible event.
+  Future<void> setPersonProperties(Map<String, Object> properties);
+
   /// Opt-out must survive a restart, so the SDK owns the flag, not the caller.
   Future<void> setEnabled(bool enabled);
 }
@@ -31,6 +34,9 @@ class NoopAnalyticsService implements AnalyticsService {
 
   @override
   Future<void> forgetUser() async {}
+
+  @override
+  Future<void> setPersonProperties(Map<String, Object> properties) async {}
 
   @override
   Future<void> setEnabled(bool enabled) async {}

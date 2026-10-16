@@ -1,4 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nanimo/core/analytics/analytics.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
+import 'package:nanimo/core/analytics/analytics_service.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nanimo/data/models/referential/pet_race_model.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
@@ -12,6 +15,8 @@ import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
+
+import '../../../../core/analytics/recording_analytics_service.dart';
 
 class _MockPetRepository extends Mock implements PetRepository {}
 
@@ -255,6 +260,19 @@ void main() {
     expect(captured.vaccineName, 'Rage');
     expect(captured.healthDiaryId, 'd1');
 
+    await cubit.close();
+  });
+
+  test('addVaccine reports vaccine_created from the health diary', () async {
+    final recorder = RecordingAnalyticsService();
+    analytics = recorder;
+    addTearDown(() => analytics = const NoopAnalyticsService());
+    final cubit = createCubit();
+    await settle();
+
+    await cubit.addVaccine(vaccineName: 'Rage', nextDate: DateTime(2027, 1, 1));
+
+    expect(recorder.lastOf(AnalyticsEvents.vaccineCreated)!.properties[AnalyticsProperties.source], HealthEntrySource.healthDiary);
     await cubit.close();
   });
 

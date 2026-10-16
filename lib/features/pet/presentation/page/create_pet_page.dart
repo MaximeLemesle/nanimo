@@ -28,8 +28,11 @@ class _CreatePetPageState extends State<CreatePetPage> {
   @override
   void initState() {
     super.initState();
-    final initialStep = context.read<OnboardingCubit>().state.currentStep;
-    _pageController = PageController(initialPage: initialStep - 1);
+    final onboarding = context.read<OnboardingCubit>();
+    _pageController = PageController(initialPage: onboarding.state.currentStep - 1);
+    if (onboarding.state.currentStep == 1) {
+      onboarding.trackStarted(inApp: _isInApp(context));
+    }
   }
 
   @override
