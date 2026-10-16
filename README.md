@@ -28,6 +28,24 @@ cp .env.example .env
 > Ne mettez que des valeurs **publiques** dans `.env` : il est embarqué dans les
 > assets et donc présent en clair dans l'app livrée.
 
+### Environnement de développement
+
+Un build sans option parle à la production via `.env`. Pour travailler sur le
+projet Supabase de développement (`nanimo-dev`) :
+
+```bash
+cp env/dev.env.example env/dev.env   # puis remplir avec les clés de nanimo-dev
+flutter run --dart-define=ENV=dev
+```
+
+Un bandeau « DEV » s'affiche alors sur tous les écrans, et Sentry comme PostHog
+reçoivent `environment: development`. `env/dev.env` est gitignoré.
+
+Mise en place du projet de dev, une seule fois : créer le projet Supabase,
+appliquer les migrations de `supabase/migrations` dessus (`supabase link` sur
+le projet **de dev**, jamais `supabase db push` sur la prod), recréer les
+buckets de stockage avec les mêmes règles, puis remplir `env/dev.env`.
+
 ## Lancer l'app
 
 ```bash

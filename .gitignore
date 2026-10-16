@@ -48,6 +48,7 @@ app.*.map.json
 .fvm/
 
 .env
+env/*.env
 
 # Clés de signature Apple
 *.p8

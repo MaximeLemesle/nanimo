@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:nanimo/config/app_environment.dart';
 import 'package:nanimo/config/router/app_router.dart';
 import 'package:nanimo/config/theme/app_theme.dart';
 import 'package:nanimo/core/analytics/analytics.dart';
@@ -15,6 +16,7 @@ import 'package:nanimo/core/monitoring/error_reporter.dart';
 import 'package:nanimo/core/monitoring/monitoring_factory.dart';
 import 'package:nanimo/core/isar/database/isar_service.dart';
 import 'package:nanimo/core/isar/database/sync_service.dart';
+import 'package:nanimo/core/widgets/environment_banner.dart';
 import 'package:nanimo/core/widgets/keyboard_dismiss_wrapper.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
@@ -36,7 +38,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await dotenv.load(fileName: ".env");
+  final environment = AppEnvironment.current;
+  try {
+    await dotenv.load(fileName: environment.dotenvFile);
+  } catch (_) {
+    throw Exception('Missing ${environment.dotenvFile}: copy its .example next to it and fill it in');
+  }
   final String? url = dotenv.env['SUPABASE_URL'];
   final String? anonKey = dotenv.env['SUPABASE_ANON_KEY'];
   final String? iosClientId = dotenv.env['GOOGLE_IOS_CLIENT_ID'];
@@ -58,6 +65,7 @@ void main() async {
     dsn: dotenv.env['SENTRY_DSN'],
     appVersion: '${packageInfo.version}+${packageInfo.buildNumber}',
     isReleaseBuild: kReleaseMode,
+    environment: environment.reportingName,
   );
 
   /// Lets the repository layer and the router reach the reporter without
@@ -68,6 +76,7 @@ void main() async {
     apiKey: dotenv.env['POSTHOG_API_KEY'],
     host: dotenv.env['POSTHOG_HOST'],
     isReleaseBuild: kReleaseMode,
+    environment: environment.reportingName,
   );
 
   await Supabase.initialize(url: url, anonKey: anonKey);
@@ -262,8 +271,11 @@ class _MyAppState extends State<MyApp> {
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: const [Locale('fr')],
-        builder: (context, child) => KeyboardDismissWrapper(
-          child: child ?? const SizedBox.shrink(),
+        builder: (context, child) => EnvironmentBanner(
+          environment: AppEnvironment.current,
+          child: KeyboardDismissWrapper(
+            child: child ?? const SizedBox.shrink(),
+          ),
         ),
         routerConfig: createRouter(
           widget.authCubit,

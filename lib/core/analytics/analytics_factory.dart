@@ -9,6 +9,7 @@ Future<AnalyticsService> createAnalyticsService({
   required String? apiKey,
   required String? host,
   required bool isReleaseBuild,
+  String environment = 'production',
 }) async {
   if (apiKey == null || apiKey.isEmpty || !isReleaseBuild) {
     return const NoopAnalyticsService();
@@ -17,6 +18,7 @@ Future<AnalyticsService> createAnalyticsService({
   await PostHogAnalyticsService.configure(
     apiKey: apiKey,
     host: (host == null || host.isEmpty) ? defaultPostHogHost : host,
+    environment: environment,
   );
   return PostHogAnalyticsService();
 }
