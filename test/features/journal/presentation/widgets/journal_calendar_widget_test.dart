@@ -137,7 +137,8 @@ void main() {
     when(() => eventRepo.watchPetEvents()).thenAnswer((_) => Stream.value({}));
     final cubit = await pumpCalendar(tester);
 
-    expect(find.text(JournalEmptyStateWidget.message), findsOneWidget);
+    expect(find.text(JournalEmptyStateWidget.guidedMessage), findsOneWidget);
+    expect(find.text('Ajouter un souvenir'), findsOneWidget);
     expect(find.text(_calendarEndMessage), findsNothing);
 
     await cubit.close();
@@ -160,6 +161,7 @@ void main() {
     );
 
     expect(find.text(JournalEmptyStateWidget.message), findsOneWidget);
+    expect(find.text('Ajouter un souvenir'), findsNothing);
     expect(find.text(_calendarEndMessage), findsNothing);
   });
 

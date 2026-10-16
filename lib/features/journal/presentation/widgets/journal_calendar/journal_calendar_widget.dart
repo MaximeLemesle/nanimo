@@ -85,7 +85,9 @@ class _JournalCalendarWidgetState extends State<JournalCalendarWidget> {
   @override
   Widget build(BuildContext context) {
     if (widget.state.calendarEventsByDay.isEmpty) {
-      return const JournalEmptyStateWidget();
+      return JournalEmptyStateWidget(
+        onAdd: widget.state.events.isEmpty ? () => context.push(RouteNames.createEvent) : null,
+      );
     }
 
     final todayKey = JournalState.calendarDayKey(widget.today ?? DateTime.now());

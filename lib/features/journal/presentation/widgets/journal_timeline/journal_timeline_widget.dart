@@ -19,7 +19,12 @@ class JournalTimelineWidget extends StatelessWidget {
     final events = state.filteredEvents;
 
     if (events.isEmpty) {
-      return RefreshIndicator(onRefresh: () => context.read<AuthCubit>().resync(), child: const JournalEmptyStateWidget());
+      return RefreshIndicator(
+        onRefresh: () => context.read<AuthCubit>().resync(),
+        child: JournalEmptyStateWidget(
+          onAdd: state.events.isEmpty ? () => context.push(RouteNames.createEvent) : null,
+        ),
+      );
     }
 
     final cubit = context.read<JournalCubit>();

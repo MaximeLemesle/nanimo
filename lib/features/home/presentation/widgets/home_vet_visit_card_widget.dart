@@ -11,6 +11,8 @@ import 'package:nanimo/core/widgets/rounded_border_widget.dart';
 import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
 
 class HomeVetVisitCardWidget extends StatelessWidget {
+  static const emptyMessage = 'Prévois sa prochaine visite, on te la rappellera la veille';
+
   final List<UpcomingVetVisit> visits;
   final Map<String, PetPortrait> portraits;
   final void Function(String petId)? onVisitTap;
@@ -44,7 +46,7 @@ class HomeVetVisitCardWidget extends StatelessWidget {
             children: [
               if (visits.isEmpty)
                 Text(
-                  'Aucune visite chez le vétérinaire de prévue',
+                  HomeVetVisitCardWidget.emptyMessage,
                   style: AppTextStyles.textBold,
                 )
               else
@@ -63,7 +65,7 @@ class HomeVetVisitCardWidget extends StatelessWidget {
                 ],
               const SizedBox(height: AppSpacing.md),
               ButtonWidget(
-                label: 'Ajouter une visite à venir',
+                label: visits.isEmpty ? 'Prévoir une visite' : 'Ajouter une visite à venir',
                 type: ButtonType.secondary,
                 icon: Icons.add,
                 iconPosition: ButtonIcon.left,

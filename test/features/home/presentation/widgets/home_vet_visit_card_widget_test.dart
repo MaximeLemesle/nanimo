@@ -74,14 +74,11 @@ void main() {
       var tapped = false;
       await pumpCard(tester, const [], onAddPressed: () => tapped = true);
 
-      expect(
-        find.text('Aucune visite chez le vétérinaire de prévue'),
-        findsOneWidget,
-      );
-      expect(find.text('Ajouter une visite à venir'), findsOneWidget);
+      expect(find.text(HomeVetVisitCardWidget.emptyMessage), findsOneWidget);
+      expect(find.text('Prévoir une visite'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
-      await tester.tap(find.text('Ajouter une visite à venir'));
+      await tester.tap(find.text('Prévoir une visite'));
       await tester.pumpAndSettle();
       expect(tapped, isTrue);
     });
