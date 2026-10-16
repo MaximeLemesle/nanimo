@@ -49,11 +49,12 @@ void main() {
     );
   }
 
-  testWidgets('renders the empty state with a pull-to-refresh', (tester) async {
+  testWidgets('a truly empty journal guides to a first memory, with a pull-to-refresh', (tester) async {
     final auth = _FakeAuthCubit();
     await tester.pumpWidget(wrap(const JournalState(), auth));
 
-    expect(find.text(JournalEmptyStateWidget.message), findsOneWidget);
+    expect(find.text(JournalEmptyStateWidget.guidedMessage), findsOneWidget);
+    expect(find.text('Ajouter un souvenir'), findsOneWidget);
     expect(find.byType(RefreshIndicator), findsOneWidget);
   });
 

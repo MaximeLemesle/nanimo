@@ -78,7 +78,7 @@ class _PetVaccineDiaryCardWidgetState extends State<PetVaccineDiaryCardWidget> {
                 onTap: _isSelecting ? () => _editVaccine(context, vaccine) : null,
               ),
           ],
-          emptyLabel: 'Aucun vaccin enregistré pour le moment.',
+          emptyLabel: 'Note ses vaccins ici, on te préviendra avant chaque rappel.',
         ),
         if (!widget.readOnly) ...[
           const SizedBox(height: AppSpacing.md),
