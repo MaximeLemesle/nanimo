@@ -37,6 +37,7 @@ import 'package:nanimo/features/subscription/data/subscription_repository.dart';
 import 'package:nanimo/features/subscription/data/subscription_reconciler.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:nanimo/features/home/data/article_repository.dart';
+import 'package:nanimo/features/home/presentation/widgets/home_first_steps_card_widget.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
@@ -137,6 +138,7 @@ void main() async {
   );
 
   await _initNotifications();
+  firstStepsStore = SharedPreferencesFirstStepsStore();
   notificationPriming = NotificationPriming(
     client: () => notifications,
     store: SharedPreferencesPrimingStore(),
