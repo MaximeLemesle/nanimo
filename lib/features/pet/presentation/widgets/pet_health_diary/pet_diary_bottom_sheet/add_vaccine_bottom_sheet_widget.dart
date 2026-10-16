@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
+import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
+import 'package:nanimo/core/widgets/chip_widget.dart';
 import 'package:nanimo/core/widgets/date_field_widget.dart';
 import 'package:nanimo/features/health/data/models/health_diary_vaccine_model.dart';
+import 'package:nanimo/core/utils/date_formatter.dart';
 import 'package:nanimo/core/utils/diary_date_bounds.dart';
+import 'package:nanimo/core/utils/vaccine_schedule.dart';
 import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_picker_widget.dart';
@@ -15,15 +19,18 @@ import 'package:nanimo/core/widgets/confirm_deletion_dialog.dart';
 typedef VaccineSubmit = void Function({
   required String vaccineName,
   DateTime? lastDate,
-  required DateTime nextDate,
+  DateTime? nextDate,
+  required int recurrence,
   String? petId,
 });
 
+/// One date field, the same everywhere (NAN-096). A future date is the
+/// booster to come; a past one asks when the next is due.
 class AddVaccineBottomSheetWidget extends StatefulWidget {
   final VaccineSubmit onSubmit;
   final HealthDiaryVaccineModel? initial;
 
-  /// Floor of both date pickers. Ignored when [pets] carries the animal.
+  /// Floor of the date picker. Ignored when [pets] carries the animal.
   final DateTime birthdate;
 
   /// Opt-in animal selector, same contract as [AddVetVisitBottomSheetWidget].
@@ -34,10 +41,6 @@ class AddVaccineBottomSheetWidget extends StatefulWidget {
   /// Offered in edit mode only, behind a confirmation.
   final VoidCallback? onDelete;
 
-  /// Books ahead: the next booster floors at today, and the last one is
-  /// neither asked for nor required. The animal may never have had one.
-  final bool upcomingOnly;
-
   const AddVaccineBottomSheetWidget({
     super.key,
     required this.onSubmit,
@@ -47,7 +50,6 @@ class AddVaccineBottomSheetWidget extends StatefulWidget {
     this.portraits = const {},
     this.initialPetId,
     this.onDelete,
-    this.upcomingOnly = false,
   });
 
   @override
@@ -56,15 +58,20 @@ class AddVaccineBottomSheetWidget extends StatefulWidget {
 
 class _AddVaccineBottomSheetWidgetState extends State<AddVaccineBottomSheetWidget> {
   late final TextEditingController _nameController;
-  DateTime? _lastDate;
-  DateTime? _nextDate;
+  DateTime? _date;
+  int? _months;
+  bool _unknown = false;
+
+  /// A saved booster whose date matches none of the offered intervals.
+  DateTime? _keptNextDate;
+
   late String? _petId = widget.initialPetId ??
       (widget.pets.isNotEmpty ? widget.pets.first.petId : null);
 
   /// An existing vaccine already belongs to a diary, nothing left to pick.
   bool get _showPetPicker => widget.initial == null && widget.pets.length > 1;
 
-  /// The picker may change the animal under the date fields.
+  /// The picker may change the animal under the date field.
   DateTime get _birthdate {
     for (final pet in widget.pets) {
       if (pet.petId == _petId) return pet.birthdate;
@@ -72,23 +79,40 @@ class _AddVaccineBottomSheetWidgetState extends State<AddVaccineBottomSheetWidge
     return widget.birthdate;
   }
 
-  /// Booking ahead, a booster already gone is not a booster to come.
-  DateTime get _nextFirstDate =>
-      widget.upcomingOnly ? DiaryDateBounds.today() : _birthdate;
+  bool get _asksNext => _date != null && !VaccineSchedule.isUpcoming(_date!);
+
+  bool get _nextChosen => _months != null || _unknown || _keptNextDate != null;
 
   @override
   void initState() {
     super.initState();
     final initial = widget.initial;
     _nameController = TextEditingController(text: initial?.vaccineName ?? '');
-    _lastDate = initial?.lastDate;
-    _nextDate = initial?.nextDate;
+    if (initial == null) return;
+
+    final last = initial.lastDate;
+    final next = initial.nextDate;
+    if (last == null) {
+      _date = next;
+      return;
+    }
+    _date = last;
+    if (next == null) {
+      _unknown = true;
+      return;
+    }
+    final months = VaccineSchedule.monthsFromRecurrence(initial.recurrence);
+    if (months != null && VaccineSchedule.addMonths(last, months) == DateTime(next.year, next.month, next.day)) {
+      _months = months;
+    } else {
+      _keptNextDate = next;
+    }
   }
 
   bool get _isValid =>
       _nameController.text.trim().isNotEmpty &&
-      (widget.upcomingOnly || _lastDate != null) &&
-      _nextDate != null &&
+      _date != null &&
+      (!_asksNext || _nextChosen) &&
       (!_showPetPicker || _petId != null);
 
   @override
@@ -97,12 +121,25 @@ class _AddVaccineBottomSheetWidgetState extends State<AddVaccineBottomSheetWidge
     super.dispose();
   }
 
+  void _choose({int? months, bool unknown = false}) {
+    setState(() {
+      _months = months;
+      _unknown = unknown;
+      _keptNextDate = null;
+    });
+  }
+
   void _submit() {
     if (!_isValid) return;
+    final kept = _keptNextDate;
+    final resolved = _asksNext && kept != null
+        ? (lastDate: _date, nextDate: kept, recurrence: widget.initial?.recurrence ?? 0)
+        : VaccineSchedule.resolve(date: _date!, monthsUntilNext: _unknown ? null : _months);
     widget.onSubmit(
       vaccineName: _nameController.text.trim(),
-      lastDate: _lastDate,
-      nextDate: _nextDate!,
+      lastDate: resolved.lastDate,
+      nextDate: resolved.nextDate,
+      recurrence: resolved.recurrence,
       petId: _petId,
     );
     Navigator.of(context).pop();
@@ -166,23 +203,38 @@ class _AddVaccineBottomSheetWidgetState extends State<AddVaccineBottomSheetWidge
             ),
           ),
         ),
-        if (!widget.upcomingOnly) ...[
+        const SizedBox(height: AppSpacing.md),
+        DateFieldWidget(
+          label: 'Date du vaccin',
+          value: _date,
+          firstDate: _birthdate,
+          lastDate: DiaryDateBounds.openEnd(),
+          onChanged: (date) => setState(() => _date = date),
+        ),
+        if (_asksNext) ...[
           const SizedBox(height: AppSpacing.md),
-          DateFieldWidget(
-            label: 'Dernier rappel',
-            value: _lastDate,
-            firstDate: _birthdate,
-            onChanged: (date) => setState(() => _lastDate = date),
+          Text('Quand est le prochain rappel ?', style: AppTextStyles.textBold),
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              if (_keptNextDate case final kept?)
+                ChipWidget(label: 'Le ${DateFormatter.date(kept)}', isSelected: true),
+              for (final months in VaccineSchedule.intervals)
+                ChipWidget(
+                  label: 'Dans $months mois',
+                  isSelected: _months == months && !_unknown,
+                  onTap: () => _choose(months: months),
+                ),
+              ChipWidget(
+                label: 'Je ne sais pas',
+                isSelected: _unknown,
+                onTap: () => _choose(unknown: true),
+              ),
+            ],
           ),
         ],
-        const SizedBox(height: AppSpacing.sm),
-        DateFieldWidget(
-          label: 'Prochain rappel',
-          value: _nextDate,
-          firstDate: _nextFirstDate,
-          lastDate: DiaryDateBounds.openEnd(),
-          onChanged: (date) => setState(() => _nextDate = date),
-        ),
       ],
     );
   }

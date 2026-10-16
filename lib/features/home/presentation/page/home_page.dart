@@ -133,17 +133,18 @@ class HomePage extends StatelessWidget {
         portraits: state.portraits,
         initialPetId: petDetails.state.selectedPetId ?? state.pets.first.petId,
         birthdate: state.pets.first.birthdate,
-        upcomingOnly: true,
         onSubmit: ({
           required String vaccineName,
           DateTime? lastDate,
-          required DateTime nextDate,
+          DateTime? nextDate,
+          required int recurrence,
           String? petId,
         }) {
           petDetails.addVaccine(
             vaccineName: vaccineName,
             lastDate: lastDate,
             nextDate: nextDate,
+            recurrence: recurrence,
             petId: petId,
           );
         },

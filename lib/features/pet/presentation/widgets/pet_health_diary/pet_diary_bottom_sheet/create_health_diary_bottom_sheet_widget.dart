@@ -15,10 +15,11 @@ import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/core/utils/gender_formatter.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/chip_number_field_widget.dart';
 
+/// Same contract as the vaccine sheet (NAN-096): either date may be missing.
 typedef VaccineEntry = ({
   String name,
-  DateTime lastDate,
-  DateTime nextDate,
+  DateTime? lastDate,
+  DateTime? nextDate,
   int recurrence,
 });
 

@@ -93,11 +93,12 @@ class _PetVaccineDiaryCardWidgetState extends State<PetVaccineDiaryCardWidget> {
                 context,
                 AddVaccineBottomSheetWidget(
                   birthdate: widget.birthdate,
-                  onSubmit: ({required String vaccineName, DateTime? lastDate, required DateTime nextDate, String? petId}) {
+                  onSubmit: ({required String vaccineName, DateTime? lastDate, DateTime? nextDate, required int recurrence, String? petId}) {
                     context.read<PetDetailsCubit>().addVaccine(
                           vaccineName: vaccineName,
                           lastDate: lastDate,
                           nextDate: nextDate,
+                          recurrence: recurrence,
                         );
                   },
                 ),
@@ -111,8 +112,10 @@ class _PetVaccineDiaryCardWidgetState extends State<PetVaccineDiaryCardWidget> {
 
   /// A booster booked from the home carries no past date to show.
   String _subtitle(HealthDiaryVaccineModel vaccine) {
-    if (vaccineStatusFor(vaccine.nextDate) != VaccineStatus.done) {
-      return 'Prochain rappel le ${DateFormatter.date(vaccine.nextDate)}';
+    final next = vaccine.nextDate;
+    if (next == null) return 'Rappel à programmer';
+    if (vaccineStatusFor(next) != VaccineStatus.done) {
+      return 'Prochain rappel le ${DateFormatter.date(next)}';
     }
     final last = vaccine.lastDate;
     if (last == null) return 'Rappel fait';
@@ -128,14 +131,14 @@ class _PetVaccineDiaryCardWidgetState extends State<PetVaccineDiaryCardWidget> {
         birthdate: widget.birthdate,
         initial: vaccine,
         onDelete: () => cubit.deleteVaccine(vaccine.healthDiaryVaccineId),
-        onSubmit: ({required String vaccineName, DateTime? lastDate, required DateTime nextDate, String? petId}) {
+        onSubmit: ({required String vaccineName, DateTime? lastDate, DateTime? nextDate, required int recurrence, String? petId}) {
           cubit.updateVaccine(
             HealthDiaryVaccineModel(
               healthDiaryVaccineId: vaccine.healthDiaryVaccineId,
               vaccineName: vaccineName,
               lastDate: lastDate,
               nextDate: nextDate,
-              recurrence: vaccine.recurrence,
+              recurrence: recurrence,
               doseNumber: vaccine.doseNumber,
               totalDoseNumber: vaccine.totalDoseNumber,
               healthDiaryId: vaccine.healthDiaryId,

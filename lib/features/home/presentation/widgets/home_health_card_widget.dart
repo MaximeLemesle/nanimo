@@ -146,7 +146,7 @@ class _AlertRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  DateFormatter.date(alert.vaccine.nextDate),
+                  DateFormatter.date(alert.vaccine.nextDate!),
                   style: AppTextStyles.textSmall.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -155,7 +155,7 @@ class _AlertRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
-          VaccineStatusBadgeWidget(nextDate: alert.vaccine.nextDate),
+          VaccineStatusBadgeWidget(nextDate: alert.vaccine.nextDate!),
         ],
       ),
     );

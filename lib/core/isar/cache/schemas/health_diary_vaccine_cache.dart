@@ -57,12 +57,11 @@ class HealthDiaryVaccineCache {
 
   /// Converts this cache row into the domain [HealthDiaryVaccineModel]
   HealthDiaryVaccineModel toModel() {
-    final epoch = DateTime.fromMillisecondsSinceEpoch(0);
     return HealthDiaryVaccineModel(
       healthDiaryVaccineId: healthDiaryVaccineId,
       vaccineName: vaccineName,
       lastDate: lastDate,
-      nextDate: nextDate ?? epoch,
+      nextDate: nextDate,
       recurrence: recurrence ?? 0,
       doseNumber: doseNumber ?? 0,
       totalDoseNumber: totalDoseNumber ?? 0,

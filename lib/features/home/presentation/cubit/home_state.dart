@@ -112,6 +112,7 @@ class HomeState extends Equatable {
     final petIdByDiary = _petIdByDiaryId;
     final alerts = <VaccineAlert>[
       for (final vaccine in vaccines)
+        if (vaccine.nextDate != null)
         if (vaccineStatusFor(vaccine.nextDate, now: now) != VaccineStatus.done)
           if (_petById(petIdByDiary[vaccine.healthDiaryId]) case final pet?)
             (
@@ -120,7 +121,7 @@ class HomeState extends Equatable {
               status: vaccineStatusFor(vaccine.nextDate, now: now),
             ),
     ];
-    alerts.sort((a, b) => a.vaccine.nextDate.compareTo(b.vaccine.nextDate));
+    alerts.sort((a, b) => a.vaccine.nextDate!.compareTo(b.vaccine.nextDate!));
     return alerts;
   }
 
