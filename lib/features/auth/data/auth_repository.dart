@@ -96,8 +96,18 @@ class AuthRepository {
     }
   }
 
-  /// Signs in with Google
-  Future<void> signInWithGoogle() async {
+  /// Supabase has no "new user" flag on an id-token sign-in. A first sign-in
+  /// is the one where the account was created moments before.
+  static bool isFirstSignIn(User? user, {Duration tolerance = const Duration(seconds: 60)}) {
+    if (user == null) return false;
+    final created = DateTime.tryParse(user.createdAt);
+    final lastSignIn = user.lastSignInAt == null ? null : DateTime.tryParse(user.lastSignInAt!);
+    if (created == null || lastSignIn == null) return false;
+    return lastSignIn.difference(created).abs() <= tolerance;
+  }
+
+  /// Signs in with Google. Returns true when the account was just created.
+  Future<bool> signInWithGoogle() async {
     if (_googleIosClientId == null || _googleWebClientId == null) {
       throw const RepositoryNetworkException(
         'Configuration Google manquante.',
@@ -116,11 +126,12 @@ class AuthRepository {
       if (idToken == null) {
         throw const RepositoryNetworkException('Token Google introuvable.');
       }
-      await _supabase.auth.signInWithIdToken(
+      final response = await _supabase.auth.signInWithIdToken(
         provider: OAuthProvider.google,
         idToken: idToken,
         nonce: rawNonce,
       );
+      return isFirstSignIn(response.user);
     } on GoogleSignInException catch (error) {
       if (error.code == GoogleSignInExceptionCode.canceled) {
         throw const RepositoryNetworkException('Connexion Google annulée.');
@@ -138,8 +149,8 @@ class AuthRepository {
     }
   }
 
-  /// Signs in with Apple
-  Future<void> signInWithApple() async {
+  /// Signs in with Apple. Returns true when the account was just created.
+  Future<bool> signInWithApple() async {
     try {
       final rawNonce = _supabase.auth.generateRawNonce();
       final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
@@ -154,11 +165,12 @@ class AuthRepository {
       if (idToken == null) {
         throw const RepositoryNetworkException('Token Apple introuvable.');
       }
-      await _supabase.auth.signInWithIdToken(
+      final response = await _supabase.auth.signInWithIdToken(
         provider: OAuthProvider.apple,
         idToken: idToken,
         nonce: rawNonce,
       );
+      return isFirstSignIn(response.user);
     } on SignInWithAppleAuthorizationException catch (error) {
       if (error.code == AuthorizationErrorCode.canceled) {
         throw const RepositoryNetworkException('Connexion Apple annulée.');

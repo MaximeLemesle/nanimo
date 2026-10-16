@@ -88,7 +88,8 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> loginWithGoogle() async {
     emit(state.copyWith(isSubmitting: true, clearError: true));
     try {
-      await _repository.signInWithGoogle();
+      final isNewAccount = await _repository.signInWithGoogle();
+      if (isNewAccount) _trackAuth(AnalyticsEvents.accountCreated, AuthMethod.google);
       _trackAuth(AnalyticsEvents.authCompleted, AuthMethod.google);
     } catch (e) {
       emit(state.copyWith(
@@ -102,7 +103,8 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> loginWithApple() async {
     emit(state.copyWith(isSubmitting: true, clearError: true));
     try {
-      await _repository.signInWithApple();
+      final isNewAccount = await _repository.signInWithApple();
+      if (isNewAccount) _trackAuth(AnalyticsEvents.accountCreated, AuthMethod.apple);
       _trackAuth(AnalyticsEvents.authCompleted, AuthMethod.apple);
     } catch (e) {
       emit(state.copyWith(

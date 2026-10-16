@@ -36,6 +36,10 @@ class PostHogAnalyticsService implements AnalyticsService {
       _guard('identify', () => _posthog.identify(userId: userId, userProperties: properties));
 
   @override
+  Future<void> setPersonProperties(Map<String, Object> properties) => _guard(
+      'set person', () => _posthog.capture(eventName: r'$set', userProperties: properties));
+
+  @override
   Future<void> forgetUser() => _guard('reset', () => _posthog.reset());
 
   @override
