@@ -179,7 +179,7 @@ GoRouter createRouter(
                       eventRepository: eventRepository,
                       referentialRepository: referentialRepository,
                       petRepository: petRepository,
-                    )..load(),
+                    )..load(initialPetId: state.uri.queryParameters['petId']),
                     child: const CreateEventPage(),
                   ),
                 ),

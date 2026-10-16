@@ -65,6 +65,10 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       properties: {AnalyticsProperties.kind: reminder.kind.name},
     );
     context.read<PetDetailsCubit>().selectPet(reminder.petId);
+    if (reminder.kind == ReminderKind.birthday) {
+      context.push(Uri(path: RouteNames.createEvent, queryParameters: {'petId': reminder.petId}).toString());
+      return;
+    }
     context.go(RouteNames.pet);
   }
 

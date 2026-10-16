@@ -110,7 +110,36 @@ abstract final class ReminderPlanner {
       }
     }
 
+    if (prefs.anniversaryReminders) {
+      for (final pet in pets) {
+        final when = nextBirthday(pet.birthdate, now: now);
+        final age = when.year - pet.birthdate.year;
+        if (age < 1) continue;
+        planned.add(PlannedReminder(
+          key: 'birthday:${pet.petId}:${when.year}',
+          kind: ReminderKind.birthday,
+          when: when,
+          title: 'Joyeux anniversaire 🎂',
+          body: '${pet.petName} a $age ${age == 1 ? 'an' : 'ans'} aujourd\'hui. Un souvenir pour marquer le jour ?',
+          petId: pet.petId,
+        ));
+      }
+    }
+
     return nearest(planned, now: now);
+  }
+
+  /// Next anniversary at [hour], today included if the hour is still ahead.
+  /// A 29 February falls on the 28th in common years.
+  static DateTime nextBirthday(DateTime birthdate, {required DateTime now}) {
+    DateTime on(int year) {
+      final lastDay = DateTime(year, birthdate.month + 1, 0).day;
+      final day = birthdate.day > lastDay ? lastDay : birthdate.day;
+      return DateTime(year, birthdate.month, day, hour);
+    }
+
+    final thisYear = on(now.year);
+    return thisYear.isAfter(now) ? thisYear : on(now.year + 1);
   }
 
   /// Drops what is already past and keeps the [maxPending] nearest.
