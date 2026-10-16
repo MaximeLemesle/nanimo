@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nanimo/core/analytics/analytics.dart';
 import 'package:nanimo/core/analytics/analytics_events.dart';
 import 'package:nanimo/core/analytics/analytics_service.dart';
+import 'package:nanimo/core/notifications/notification_priming.dart';
+import 'package:nanimo/core/notifications/notifications.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nanimo/data/models/referential/pet_race_model.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
@@ -17,6 +19,7 @@ import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 
 import '../../../../core/analytics/recording_analytics_service.dart';
+import '../../../../core/notifications/fake_notification_client.dart';
 
 class _MockPetRepository extends Mock implements PetRepository {}
 
@@ -260,6 +263,22 @@ void main() {
     expect(captured.vaccineName, 'Rage');
     expect(captured.healthDiaryId, 'd1');
 
+    await cubit.close();
+  });
+
+  /// NAN-107: a booster ahead is the moment to offer notifications.
+  test('addVaccine with a booster ahead offers the reminders', () async {
+    final previous = notificationPriming;
+    notificationPriming = NotificationPriming(client: () => FakeNotificationClient(), store: MemoryPrimingStore());
+    addTearDown(() => notificationPriming = previous);
+    final cubit = createCubit();
+    await settle();
+
+    await cubit.addVaccine(vaccineName: 'Rage', nextDate: DateTime.now().add(const Duration(days: 30)));
+    await pumpEventQueue();
+
+    expect(notificationPriming.offer.value?.isVetVisit, isFalse);
+    expect(notificationPriming.offer.value?.petName, isNotEmpty);
     await cubit.close();
   });
 

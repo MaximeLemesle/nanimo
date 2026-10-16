@@ -3,9 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:nanimo/core/notifications/notification_priming.dart';
+import 'package:nanimo/core/notifications/notifications.dart';
 import 'package:nanimo/features/settings/data/models/notification_prefs_model.dart';
 import 'package:nanimo/features/settings/presentation/cubit/settings_cubit.dart';
 import 'package:nanimo/features/settings/presentation/widgets/settings_notification_section_widget.dart';
+
+import '../../../../core/notifications/fake_notification_client.dart';
 
 class _MockSettingsCubit extends Mock implements SettingsCubit {}
 
@@ -73,5 +77,42 @@ void main() {
     await pumpSection(tester, prefs: _allEnabled.copyWith(pushEnabled: false));
 
     expect(switches(tester).skip(1).every((s) => s.onChanged == null), isTrue);
+  });
+
+  group('blocked by the system', () {
+    late NotificationPriming previous;
+    late FakeNotificationClient client;
+    late MemoryPrimingStore store;
+
+    setUp(() {
+      previous = notificationPriming;
+      client = FakeNotificationClient();
+      store = MemoryPrimingStore();
+      notificationPriming = NotificationPriming(client: () => client, store: store);
+    });
+
+    tearDown(() => notificationPriming = previous);
+
+    testWidgets('after a refusal, offers the way to the phone settings', (tester) async {
+      store.shown = true;
+      await pumpSection(tester);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Notifications bloquées sur ce téléphone'), findsOneWidget);
+      await tester.tap(find.text('Ouvrir les réglages du téléphone'));
+      expect(client.openSettingsCount, 1);
+    });
+
+    testWidgets('never asked, or granted: no such line', (tester) async {
+      await pumpSection(tester);
+      await tester.pumpAndSettle();
+      expect(find.text('Notifications bloquées sur ce téléphone'), findsNothing);
+
+      client.granted = true;
+      store.shown = true;
+      await pumpSection(tester);
+      await tester.pumpAndSettle();
+      expect(find.text('Notifications bloquées sur ce téléphone'), findsNothing);
+    });
   });
 }

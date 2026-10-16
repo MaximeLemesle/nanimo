@@ -4,6 +4,8 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nanimo/core/analytics/analytics.dart';
 import 'package:nanimo/core/analytics/analytics_events.dart';
+import 'package:nanimo/core/notifications/notification_priming.dart';
+import 'package:nanimo/core/notifications/notifications.dart';
 import 'package:nanimo/core/utils/pet_icon_resolver.dart';
 import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:nanimo/data/models/referential/pet_icon_model.dart';
@@ -247,6 +249,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
       );
       await _healthRepository.addVaccine(vaccine);
       _trackVaccineCreated(HealthEntrySource.healthDiary);
+      _offerReminders(targetId, nextDate);
     } catch (err) {
       if (isClosed) return;
       emit(state.copyWith(error: err.toString()));
@@ -292,10 +295,22 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
       );
       await _healthRepository.addVetVisit(visit);
       _trackVetVisitCreated(visitedAt, HealthEntrySource.healthDiary);
+      _offerReminders(targetId, visitedAt, isVetVisit: true);
     } catch (err) {
       if (isClosed) return;
       emit(state.copyWith(error: err.toString()));
     }
+  }
+
+  /// A booster or a visit ahead is the moment to ask for notifications.
+  void _offerReminders(String petId, DateTime? dueDate, {bool isVetVisit = false}) {
+    if (dueDate == null) return;
+    String? petName;
+    for (final pet in state.pets) {
+      if (pet.petId == petId) petName = pet.petName;
+    }
+    if (petName == null) return;
+    notificationPriming.offerFor(PrimingOffer(petName: petName, dueDate: dueDate, isVetVisit: isVetVisit));
   }
 
   void _trackVaccineCreated(String source) {
