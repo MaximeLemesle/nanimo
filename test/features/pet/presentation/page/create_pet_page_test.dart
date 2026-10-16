@@ -52,9 +52,10 @@ void main() {
     return cubit;
   }
 
-  Widget buildPage(OnboardingCubit cubit) {
+  Widget buildPage(OnboardingCubit cubit, {bool inApp = false}) {
     final authCubit = _MockAuthCubit();
-    when(() => authCubit.state).thenReturn(const AuthState.unauthenticated());
+    when(() => authCubit.state)
+        .thenReturn(inApp ? const AuthState.authenticated() : const AuthState.unauthenticated());
     when(() => authCubit.stream)
         .thenAnswer((_) => const Stream<AuthState>.empty());
 
@@ -85,8 +86,23 @@ void main() {
     expect(cubit.state.currentStep, 3);
     expect(find.byType(PetCreationStepThreeWidget), findsOneWidget);
     expect(find.text('Félicitations !'), findsOneWidget);
-    expect(find.text('Créer mon compte'), findsOneWidget);
+    // NAN-105: before signup a vaccine step follows the celebration.
+    expect(find.text('Continuer'), findsOneWidget);
 
+    await cubit.close();
+  });
+
+  /// NAN-105: the vaccine step is for the first onboarding only.
+  testWidgets('adding a pet from the app keeps three steps and no vaccine step', (tester) async {
+    final cubit = await seededCubitOnStepTwo();
+    await tester.pumpWidget(buildPage(cubit, inApp: true));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Continuer'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Créer'), findsOneWidget);
+    expect(find.text('Où en sont ses vaccins ?'), findsNothing);
     await cubit.close();
   });
 
