@@ -9,10 +9,8 @@ import 'package:nanimo/features/settings/data/models/notification_prefs_model.da
 import 'package:nanimo/features/settings/presentation/cubit/settings_cubit.dart';
 import 'package:nanimo/features/settings/presentation/widgets/settings_tile_widget.dart';
 
-/// NAN-070 temporary guard: nothing sends notifications yet, so the toggles
-/// promise a feature that does not exist. Flip to true with the V2 FCM wiring,
-/// it is the only change needed to give the section back its behaviour.
-const bool kNotificationsWired = false;
+/// NAN-070 guard, lifted by the local reminders of NAN-106.
+const bool kNotificationsWired = true;
 
 class SettingsNotificationSectionWidget extends StatelessWidget {
   static const String comingSoonMessage = 'Ça arrive bientôt';
@@ -44,7 +42,7 @@ class SettingsNotificationSectionWidget extends StatelessWidget {
         ),
         _toggleTile(
           context,
-          title: 'Notifications push',
+          title: 'Tous les rappels',
           value: kNotificationsWired
               ? 'Rappels santé et anniversaires'
               : 'Rappels santé et anniversaires, on y travaille',
@@ -65,14 +63,6 @@ class SettingsNotificationSectionWidget extends StatelessWidget {
           title: 'Visites vétérinaires',
           isOn: prefs.vetReminders,
           update: (enabled) => prefs.copyWith(vetReminders: enabled),
-          requiresPush: true,
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        _toggleTile(
-          context,
-          title: 'Vermifuges',
-          isOn: prefs.dewormingReminders,
-          update: (enabled) => prefs.copyWith(dewormingReminders: enabled),
           requiresPush: true,
         ),
         const SizedBox(height: AppSpacing.sm),

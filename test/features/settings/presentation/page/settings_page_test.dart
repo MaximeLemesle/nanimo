@@ -100,7 +100,7 @@ void main() {
     expect(find.text('Abonnement'), findsOneWidget);
     expect(find.text('Freemium'), findsOneWidget);
     expect(find.text('Notifications'), findsOneWidget);
-    expect(find.byType(CupertinoSwitch), findsNWidgets(5));
+    expect(find.byType(CupertinoSwitch), findsNWidgets(4));
     expect(find.text('Se déconnecter'), findsOneWidget);
     expect(find.text('Supprimer mon compte'), findsOneWidget);
     expect(find.text('Version 1.0.0'), findsOneWidget);
@@ -125,20 +125,15 @@ void main() {
     expect(find.text('Jusqu\'au 31/12/2026'), findsOneWidget);
   });
 
-  testWidgets('notification switches stay off and announce the V2 wiring', (tester) async {
+  testWidgets('notification switches are live and write the prefs', (tester) async {
     await pumpPage(tester);
-
-    final beforeTap = tester.widgetList<CupertinoSwitch>(find.byType(CupertinoSwitch));
-    expect(beforeTap.every((s) => s.value == false), isTrue);
 
     /// Second switch is the vaccine reminders one
     await tester.tap(find.byType(CupertinoSwitch).at(1));
     await tester.pump();
 
-    expect(find.text(SettingsNotificationSectionWidget.comingSoonMessage), findsOneWidget);
-    final afterTap = tester.widgetList<CupertinoSwitch>(find.byType(CupertinoSwitch));
-    expect(afterTap.every((s) => s.value == false), isTrue);
-    verifyNever(() => settingsCubit.updateNotificationPrefs(any()));
+    expect(find.text(SettingsNotificationSectionWidget.comingSoonMessage), findsNothing);
+    verify(() => settingsCubit.updateNotificationPrefs(any())).called(1);
   });
 
   testWidgets('logout button calls AuthCubit.logout', (tester) async {

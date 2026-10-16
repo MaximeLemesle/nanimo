@@ -13,6 +13,9 @@ import 'package:nanimo/config/theme/app_theme.dart';
 import 'package:nanimo/core/analytics/analytics.dart';
 import 'package:nanimo/core/analytics/analytics_factory.dart';
 import 'package:nanimo/core/monitoring/error_reporter.dart';
+import 'package:nanimo/core/notifications/local_notification_client.dart';
+import 'package:nanimo/core/notifications/notifications.dart';
+import 'package:nanimo/core/notifications/reminder_scheduler.dart';
 import 'package:nanimo/core/monitoring/monitoring_factory.dart';
 import 'package:nanimo/core/isar/database/isar_service.dart';
 import 'package:nanimo/core/isar/database/sync_service.dart';
@@ -132,6 +135,14 @@ void main() async {
     subscriptionRepository: subscriptionRepository,
   );
 
+  await _initNotifications();
+  ReminderScheduler(
+    client: notifications,
+    petRepository: petRepository,
+    healthRepository: healthRepository,
+    settingsRepository: settingsRepository,
+  ).bind(authCubit);
+
   final onboardingCubit = OnboardingCubit(
     referentialRepository: referentialRepository,
   );
@@ -168,6 +179,19 @@ void main() async {
         purchaseRepository: purchaseRepository,
         subscriptionReconciler: subscriptionReconciler,
       )));
+}
+
+/// Local reminders (NAN-106). A plugin failure leaves the app without
+/// reminders, never without a start.
+Future<void> _initNotifications() async {
+  final client = FlutterLocalNotificationClient();
+  try {
+    await client.initialize(onTap: (payload) => pendingNotificationTap.value = payload);
+    notifications = client;
+    pendingNotificationTap.value ??= await client.launchPayload();
+  } catch (e, st) {
+    developer.log('local notifications unavailable', name: 'notifications', error: e, stackTrace: st);
+  }
 }
 
 /// Boots RevenueCat when a key is available for the current platform.
