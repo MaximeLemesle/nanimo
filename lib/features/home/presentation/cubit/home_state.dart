@@ -98,6 +98,13 @@ class HomeState extends Equatable {
     return null;
   }
 
+  /// False until a vaccine of one of the account's pets is recorded: an empty
+  /// alert list then means "unknown", not "up to date".
+  bool get hasAnyVaccine {
+    final petIdByDiary = _petIdByDiaryId;
+    return vaccines.any((vaccine) => _petById(petIdByDiary[vaccine.healthDiaryId]) != null);
+  }
+
   /// Vaccines overdue or due within 30 days, most urgent first.
   /// Vaccines whose diary resolves to no pet of the account are dropped: they
   /// belong to another user and would render an alert without any icon.

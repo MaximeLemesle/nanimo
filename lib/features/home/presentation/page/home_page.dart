@@ -103,6 +103,7 @@ class HomePage extends StatelessWidget {
                 /// List of vaccine alerts for the user's pets
                 HomeHealthCardWidget(
                   alerts: state.vaccineAlerts(now: now),
+                  hasVaccines: state.hasAnyVaccine,
                   portraits: state.portraits,
                   onAlertTap: (petId) {
                     context.read<PetDetailsCubit>().selectPet(petId);

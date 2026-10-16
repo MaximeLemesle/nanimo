@@ -16,17 +16,22 @@ class HomeHealthCardWidget extends StatelessWidget {
   final void Function(String petId)? onAlertTap;
   final VoidCallback? onAddPressed;
 
+  /// Without any vaccine recorded, nothing can be called up to date.
+  final bool hasVaccines;
+
   const HomeHealthCardWidget({
     super.key,
     required this.alerts,
     required this.portraits,
     this.onAlertTap,
     this.onAddPressed,
+    this.hasVaccines = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    final allClear = alerts.isEmpty;
+    final noVaccineYet = !hasVaccines && alerts.isEmpty;
+    final allClear = hasVaccines && alerts.isEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -41,7 +46,24 @@ class HomeHealthCardWidget extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (allClear)
+              if (noVaccineYet)
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.vaccines_outlined,
+                      color: AppColors.primary600,
+                      size: 24,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        'Ajoute son dernier vaccin, on te rappellera le prochain',
+                        style: AppTextStyles.textBold,
+                      ),
+                    ),
+                  ],
+                )
+              else if (allClear)
                 Row(
                   children: [
                     const Icon(
@@ -73,7 +95,7 @@ class HomeHealthCardWidget extends StatelessWidget {
               /// The way in stays reachable once the list is filled.
               const SizedBox(height: AppSpacing.md),
               ButtonWidget(
-                label: 'Ajouter un vaccin à venir',
+                label: noVaccineYet ? 'Ajouter un vaccin' : 'Ajouter un vaccin à venir',
                 type: ButtonType.secondary,
                 icon: Icons.add,
                 iconPosition: ButtonIcon.left,
