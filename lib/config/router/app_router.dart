@@ -24,6 +24,7 @@ import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
 import 'package:nanimo/features/event/presentation/page/edit_event_page.dart';
 import 'package:nanimo/features/journal/presentation/cubit/journal_cubit.dart';
 import 'package:nanimo/features/journal/presentation/page/journal_page.dart';
+import 'package:nanimo/features/pet/presentation/pet_creation_flow.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/pet/presentation/cubit/edit_pet_cubit.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
@@ -272,7 +273,7 @@ GoRouter createRouter(
         pageBuilder: (context, state) => _fadePage(
           state,
           PremiumWelcomePage(
-            onPrimary: () => context.pushReplacement(RouteNames.createPet),
+            onPrimary: () => PetCreationFlow.open(context, replace: true),
             onSecondary: () => context.go(RouteNames.home),
           ),
         ),
