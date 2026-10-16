@@ -14,6 +14,7 @@ class PostHogAnalyticsService implements AnalyticsService {
   static Future<void> configure({
     required String apiKey,
     required String host,
+    String environment = 'production',
   }) async {
     final config = PostHogConfig(apiKey)
       ..host = host
@@ -21,6 +22,7 @@ class PostHogAnalyticsService implements AnalyticsService {
       ..personProfiles = PostHogPersonProfiles.identifiedOnly;
 
     await Posthog().setup(config);
+    await Posthog().register('environment', environment);
   }
 
   @override

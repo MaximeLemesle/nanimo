@@ -7,6 +7,7 @@ MonitoringService createMonitoringService({
   required String? dsn,
   required String appVersion,
   required bool isReleaseBuild,
+  String environment = 'production',
 }) {
   if (dsn == null || dsn.isEmpty || !isReleaseBuild) {
     return const NoopMonitoringService();
@@ -16,6 +17,6 @@ MonitoringService createMonitoringService({
     dsn: dsn,
     // Must match the release used when uploading debug symbols.
     release: 'nanimo@$appVersion',
-    environment: 'production',
+    environment: environment,
   );
 }
