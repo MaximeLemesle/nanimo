@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nanimo/features/health/data/models/health_diary_vaccine_model.dart';
+import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/subscription/presentation/page/paywall_page.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
@@ -168,6 +170,15 @@ void main() {
   }
 
   setUpAll(() {
+    registerFallbackValue(const HealthDiaryModel(healthDiaryId: 'fallback', petId: 'fallback'));
+    registerFallbackValue(const HealthDiaryVaccineModel(
+      healthDiaryVaccineId: 'fallback',
+      vaccineName: 'fallback',
+      recurrence: 0,
+      doseNumber: 1,
+      totalDoseNumber: 1,
+      healthDiaryId: 'fallback',
+    ));
     registerFallbackValue(
       PetModel(
         petId: 'fallback',
@@ -208,6 +219,9 @@ void main() {
     when(() => healthRepo.getVetVisitsForPet(any())).thenAnswer((_) => Stream.value(const <VetVisitModel>[]));
 
     when(() => referentialRepo.fetchSpecies()).thenAnswer((_) async => [_chat, _chien]);
+    when(() => referentialRepo.fetchRecommendedVaccinesBySpecies(any())).thenAnswer((_) async => const []);
+    when(() => healthRepo.upsertDiary(any())).thenAnswer((_) async {});
+    when(() => healthRepo.addVaccine(any())).thenAnswer((_) async {});
     when(() => referentialRepo.fetchIcons()).thenAnswer((_) async => [_maineCoonIcon]);
     when(() => referentialRepo.fetchRacesBySpecies(_chat.petSpeciesId)).thenAnswer((_) async => [_maineCoon]);
     when(() => referentialRepo.fetchRacesBySpecies(_chien.petSpeciesId)).thenAnswer((_) async => [_berger]);
@@ -254,6 +268,7 @@ void main() {
     petCreationCubit = PetCreationCubit(
       authCubit: authCubit,
       petRepository: petRepo,
+      healthRepository: healthRepo,
     );
     homeCubit = HomeCubit(
       petRepository: petRepo,
@@ -296,7 +311,7 @@ void main() {
   }
 
   /// Cold start → welcome → 3 steps → lands on the signup page.
-  Future<void> goThroughOnboarding(WidgetTester tester, {String? expectedAvatarAsset}) async {
+  Future<void> goThroughOnboarding(WidgetTester tester, {String? expectedAvatarAsset, bool withVaccine = false}) async {
     await pumpApp(tester);
     expect(find.byKey(const Key('splash_page')), findsOneWidget);
 
@@ -350,7 +365,23 @@ void main() {
       expectedAvatarAsset ?? _maineCoonIcon.assetPath,
     );
 
-    await tester.tap(find.text('Créer mon compte'));
+    await tester.tap(find.text('Continuer'));
+    await tester.pumpAndSettle();
+
+    // Step 4 (NAN-105): the vaccine, skippable in one tap.
+    expect(find.text('Où en sont ses vaccins ?'), findsOneWidget);
+    if (withVaccine) {
+      await tester.enterText(find.byType(TextField).last, 'Typhus');
+      await tester.tap(find.text('Sélectionner une date'));
+      await tester.pumpAndSettle();
+      await tester.tapAt(const Offset(20, 20)); // today, kept on dismiss
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Dans 6 mois'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Créer mon compte'));
+    } else {
+      await tester.tap(find.text('Je ne sais pas encore'));
+    }
     await tester.pumpAndSettle();
 
     /// NAN-093: the offer is shown before the account is asked for. Dismissing
@@ -379,6 +410,39 @@ void main() {
       expect((created.single as PetModel).petName, 'Milo');
       expect(find.byType(BottomBarWidget), findsOneWidget);
       expect(find.text('Milo'), findsOneWidget);
+    });
+
+    /// NAN-105: the owner leaves the onboarding with a first booster booked.
+    testWidgets('a vaccine given in the onboarding is created with the pet', (tester) async {
+      await goThroughOnboarding(tester, withVaccine: true);
+
+      await tester.enterText(_textFieldWithLabel('Prénom'), 'Maxime');
+      await tester.enterText(_textFieldWithLabel('Email'), 'milo@nanimo.fr');
+      await tester.enterText(_textFieldWithLabel('Mot de passe'), 'azerty1');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Créer mon compte'));
+      await tester.pumpAndSettle();
+
+      verify(() => petRepo.createPet(any())).called(1);
+      final vaccine = verify(() => healthRepo.addVaccine(captureAny())).captured.single as HealthDiaryVaccineModel;
+      expect(vaccine.vaccineName, 'Typhus');
+      expect(vaccine.lastDate, isNotNull);
+      expect(vaccine.nextDate, isNotNull);
+      expect(vaccine.recurrence, 180);
+    });
+
+    testWidgets('skipping the vaccine creates the pet alone', (tester) async {
+      await goThroughOnboarding(tester);
+
+      await tester.enterText(_textFieldWithLabel('Prénom'), 'Maxime');
+      await tester.enterText(_textFieldWithLabel('Email'), 'milo@nanimo.fr');
+      await tester.enterText(_textFieldWithLabel('Mot de passe'), 'azerty1');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Créer mon compte'));
+      await tester.pumpAndSettle();
+
+      verify(() => petRepo.createPet(any())).called(1);
+      verifyNever(() => healthRepo.addVaccine(any()));
     });
 
     testWidgets('failed post-signup insert shows a retry banner that re-inserts the pet', (tester) async {

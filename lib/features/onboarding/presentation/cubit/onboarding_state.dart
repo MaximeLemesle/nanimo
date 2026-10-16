@@ -20,6 +20,13 @@ class OnboardingState extends Equatable {
   final String? racesError;
   final List<PetIconModel> icons;
 
+  /// Optional vaccine step, onboarding only (NAN-105).
+  final String vaccineName;
+  final DateTime? vaccineDate;
+  final int? vaccineMonths;
+  final bool vaccineNextUnknown;
+  final List<String> vaccineSuggestions;
+
   const OnboardingState({
     this.currentStep = 1,
     this.petName = '',
@@ -34,6 +41,11 @@ class OnboardingState extends Equatable {
     this.races = const [],
     this.racesError,
     this.icons = const [],
+    this.vaccineName = '',
+    this.vaccineDate,
+    this.vaccineMonths,
+    this.vaccineNextUnknown = false,
+    this.vaccineSuggestions = const [],
   });
 
   OnboardingState copyWith({
@@ -50,6 +62,12 @@ class OnboardingState extends Equatable {
     List<PetRaceModel>? races,
     String? racesError,
     List<PetIconModel>? icons,
+    String? vaccineName,
+    DateTime? vaccineDate,
+    int? vaccineMonths,
+    bool? vaccineNextUnknown,
+    List<String>? vaccineSuggestions,
+    bool clearVaccineMonths = false,
     bool clearRaceId = false,
     bool clearSpeciesError = false,
     bool clearRacesError = false,
@@ -69,6 +87,11 @@ class OnboardingState extends Equatable {
       races: races ?? this.races,
       racesError: clearRacesError ? null : (racesError ?? this.racesError),
       icons: icons ?? this.icons,
+      vaccineName: vaccineName ?? this.vaccineName,
+      vaccineDate: vaccineDate ?? this.vaccineDate,
+      vaccineMonths: clearVaccineMonths ? null : (vaccineMonths ?? this.vaccineMonths),
+      vaccineNextUnknown: vaccineNextUnknown ?? this.vaccineNextUnknown,
+      vaccineSuggestions: vaccineSuggestions ?? this.vaccineSuggestions,
     );
   }
 
@@ -84,6 +107,29 @@ class OnboardingState extends Equatable {
 
   /// Step 3 → Signup
   bool get canFinish => canGoToStep2 && canGoToStep3;
+
+  /// A past date needs to know when the next booster is due.
+  bool get vaccineAsksNext => vaccineDate != null && !VaccineSchedule.isUpcoming(vaccineDate!);
+
+  bool get isVaccineComplete =>
+      vaccineName.trim().isNotEmpty &&
+      vaccineDate != null &&
+      (!vaccineAsksNext || vaccineMonths != null || vaccineNextUnknown);
+
+  /// The vaccine to create with the pet, null while incomplete.
+  PendingVaccine? get pendingVaccine {
+    if (!isVaccineComplete) return null;
+    final resolved = VaccineSchedule.resolve(
+      date: vaccineDate!,
+      monthsUntilNext: vaccineNextUnknown ? null : vaccineMonths,
+    );
+    return (
+      name: vaccineName.trim(),
+      lastDate: resolved.lastDate,
+      nextDate: resolved.nextDate,
+      recurrence: resolved.recurrence,
+    );
+  }
 
   /// What the pet being created looks like: the icon drawn for its breed when
   /// the catalogue has one, its species icon otherwise. Null until a species
@@ -125,5 +171,10 @@ class OnboardingState extends Equatable {
         races,
         racesError,
         icons,
+        vaccineName,
+        vaccineDate,
+        vaccineMonths,
+        vaccineNextUnknown,
+        vaccineSuggestions,
       ];
 }
