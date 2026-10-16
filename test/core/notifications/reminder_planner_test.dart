@@ -36,7 +36,7 @@ VetVisitModel _visit(String id, DateTime at, {String petId = 'p1'}) =>
 List<PlannedReminder> _plan({
   List<HealthDiaryVaccineModel> vaccines = const [],
   List<VetVisitModel> visits = const [],
-  NotificationPrefsModel prefs = NotificationPrefsModel.defaults,
+  NotificationPrefsModel prefs = const NotificationPrefsModel(anniversaryReminders: false),
 }) =>
     ReminderPlanner.plan(
       pets: [_saiko],
@@ -90,10 +90,12 @@ void main() {
     expect(_plan(vaccines: vaccines, visits: visits, prefs: const NotificationPrefsModel(pushEnabled: false)), isEmpty);
     expect(
       _plan(vaccines: vaccines, visits: visits, prefs: const NotificationPrefsModel(vaccineReminders: false)).map((r) => r.kind).toSet(),
-      {ReminderKind.vetVisit},
+      {ReminderKind.vetVisit, ReminderKind.birthday},
     );
     expect(
-      _plan(vaccines: vaccines, visits: visits, prefs: const NotificationPrefsModel(vetReminders: false)).map((r) => r.kind).toSet(),
+      _plan(vaccines: vaccines, visits: visits, prefs: const NotificationPrefsModel(vetReminders: false, anniversaryReminders: false))
+          .map((r) => r.kind)
+          .toSet(),
       {ReminderKind.vaccine},
     );
   });
@@ -113,5 +115,61 @@ void main() {
     expect(reminder.id, greaterThanOrEqualTo(0));
     expect(parseReminderPayload(reminder.payload), (kind: ReminderKind.vaccine, petId: 'p1'));
     expect(parseReminderPayload('garbage'), isNull);
+  });
+
+  group('birthdays (NAN-007)', () {
+    test('rings on the next birthday at 10:00 with the age', () {
+      final plan = _plan(prefs: NotificationPrefsModel.defaults);
+
+      expect(plan.single.kind, ReminderKind.birthday);
+      expect(plan.single.when, DateTime(2027, 3, 2, 10));
+      expect(plan.single.body, "Saïko a 4 ans aujourd'hui. Un souvenir pour marquer le jour ?");
+      expect(parseReminderPayload(plan.single.payload)!.kind, ReminderKind.birthday);
+    });
+
+    test('later today still counts, earlier today moves to next year', () {
+      final birthdate = DateTime(2020, 10, 16);
+      expect(ReminderPlanner.nextBirthday(birthdate, now: DateTime(2026, 10, 16, 8)), DateTime(2026, 10, 16, 10));
+      expect(ReminderPlanner.nextBirthday(birthdate, now: DateTime(2026, 10, 16, 11)), DateTime(2027, 10, 16, 10));
+    });
+
+    test('a 29 February is celebrated on the 28th in common years', () {
+      expect(ReminderPlanner.nextBirthday(DateTime(2024, 2, 29), now: _now), DateTime(2027, 2, 28, 10));
+    });
+
+    test('says "1 an" and skips an animal not one year old yet', () {
+      final baby = PetModel(
+        petId: 'p2',
+        petName: 'Nala',
+        birthdate: DateTime(2026, 9, 1),
+        gender: Gender.female,
+        createdAt: DateTime(2026, 9, 2),
+        petRaceId: 'r1',
+        petSpeciesId: 's1',
+      );
+      final plan = ReminderPlanner.plan(
+        pets: [baby],
+        diaries: const [],
+        vaccines: const [],
+        vetVisits: const [],
+        prefs: NotificationPrefsModel.defaults,
+        now: _now,
+      );
+      expect(plan.single.body, startsWith('Nala a 1 an aujourd'));
+
+      final newborn = ReminderPlanner.plan(
+        pets: [baby],
+        diaries: const [],
+        vaccines: const [],
+        vetVisits: const [],
+        prefs: NotificationPrefsModel.defaults,
+        now: DateTime(2026, 9, 1, 8),
+      );
+      expect(newborn, isEmpty);
+    });
+
+    test('the anniversaries switch turns them off', () {
+      expect(_plan(prefs: const NotificationPrefsModel(anniversaryReminders: false)), isEmpty);
+    });
   });
 }

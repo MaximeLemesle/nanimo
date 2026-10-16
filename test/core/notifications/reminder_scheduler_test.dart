@@ -109,13 +109,13 @@ void main() {
     await settle();
     expect(client.pending, isEmpty, reason: 'prefs not loaded yet');
 
-    prefs.add(NotificationPrefsModel.defaults);
+    prefs.add(const NotificationPrefsModel(anniversaryReminders: false));
     await settle();
     expect(client.pending.map((r) => r.key), ['vaccine:v1:7', 'vaccine:v1:1']);
   });
 
   test('editing or deleting a vaccine reschedules it', () async {
-    prefs.add(NotificationPrefsModel.defaults);
+    prefs.add(const NotificationPrefsModel(anniversaryReminders: false));
     vaccines.add([_vaccine('v1', DateTime(2026, 11, 12))]);
     await settle();
 
@@ -129,7 +129,7 @@ void main() {
   });
 
   test('turning reminders off in the settings cancels them', () async {
-    prefs.add(NotificationPrefsModel.defaults);
+    prefs.add(const NotificationPrefsModel(anniversaryReminders: false));
     vaccines.add([_vaccine('v1', DateTime(2026, 11, 12))]);
     await settle();
 
@@ -139,7 +139,7 @@ void main() {
   });
 
   test('logging out cancels everything', () async {
-    prefs.add(NotificationPrefsModel.defaults);
+    prefs.add(const NotificationPrefsModel(anniversaryReminders: false));
     vaccines.add([_vaccine('v1', DateTime(2026, 11, 12))]);
     await settle();
 
@@ -150,7 +150,7 @@ void main() {
   });
 
   test('reports a reminder only when it is new, not the baseline', () async {
-    prefs.add(NotificationPrefsModel.defaults);
+    prefs.add(const NotificationPrefsModel(anniversaryReminders: false));
     vaccines.add([_vaccine('v1', DateTime(2026, 11, 12))]);
     await settle();
     expect(recorder.names, isNot(contains(AnalyticsEvents.reminderScheduled)));
