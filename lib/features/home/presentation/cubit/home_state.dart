@@ -5,6 +5,9 @@ enum HomeStatus { loading, loaded }
 /// A booked vet appointment, resolved to its pet.
 typedef UpcomingVetVisit = ({VetVisitModel visit, PetModel pet});
 
+/// The latest past visit or vaccine of a pet, for when nothing is booked.
+typedef LastHealthEntry = ({PetModel pet, DateTime at});
+
 /// A vaccine needing attention, resolved to its pet.
 typedef VaccineAlert = ({
   HealthDiaryVaccineModel vaccine,
@@ -105,7 +108,8 @@ class HomeState extends Equatable {
     return vaccines.any((vaccine) => _petById(petIdByDiary[vaccine.healthDiaryId]) != null);
   }
 
-  /// Vaccines overdue or due within 30 days, most urgent first.
+  /// Every booster ahead or overdue, however far (NAN-115): the owner sees
+  /// where the pet stands, not only what is urgent. Most urgent first.
   /// Vaccines whose diary resolves to no pet of the account are dropped: they
   /// belong to another user and would render an alert without any icon.
   List<VaccineAlert> vaccineAlerts({DateTime? now}) {
@@ -113,7 +117,6 @@ class HomeState extends Equatable {
     final alerts = <VaccineAlert>[
       for (final vaccine in vaccines)
         if (vaccine.nextDate != null)
-        if (vaccineStatusFor(vaccine.nextDate, now: now) != VaccineStatus.done)
           if (_petById(petIdByDiary[vaccine.healthDiaryId]) case final pet?)
             (
               vaccine: vaccine,
@@ -137,6 +140,41 @@ class HomeState extends Equatable {
     ];
     upcoming.sort((a, b) => a.visit.visitedAt.compareTo(b.visit.visitedAt));
     return upcoming;
+  }
+
+  /// Latest visit already past, one per pet, in the order of the pets.
+  List<LastHealthEntry> lastVetVisits({DateTime? now}) {
+    final reference = now ?? DateTime.now();
+    final today = DateTime(reference.year, reference.month, reference.day);
+    return _latestPerPet([
+      for (final visit in vetVisits)
+        if (visit.visitedAt.isBefore(today)) (petId: visit.petId, at: visit.visitedAt),
+    ]);
+  }
+
+  /// Latest vaccine given, one per pet, in the order of the pets.
+  List<LastHealthEntry> lastVaccinations({DateTime? now}) {
+    final reference = now ?? DateTime.now();
+    final petIdByDiary = _petIdByDiaryId;
+    return _latestPerPet([
+      for (final vaccine in vaccines)
+        if (vaccine.lastDate case final given? when !given.isAfter(reference))
+          (petId: petIdByDiary[vaccine.healthDiaryId], at: given),
+    ]);
+  }
+
+  List<LastHealthEntry> _latestPerPet(List<({String? petId, DateTime at})> entries) {
+    final latest = <String, DateTime>{};
+    for (final entry in entries) {
+      final petId = entry.petId;
+      if (petId == null) continue;
+      final known = latest[petId];
+      if (known == null || entry.at.isAfter(known)) latest[petId] = entry.at;
+    }
+    return [
+      for (final pet in pets)
+        if (latest[pet.petId] case final at?) (pet: pet, at: at),
+    ];
   }
 
   /// Worst vaccine status per pet id (overdue > soon > done).

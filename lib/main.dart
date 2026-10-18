@@ -162,7 +162,6 @@ void main() async {
   final petCreationCubit = PetCreationCubit(
     authCubit: authCubit,
     petRepository: petRepository,
-    healthRepository: healthRepository,
   );
 
   /// NAN-100: once the onboarding pet is in, its answers must not prefill

@@ -8,7 +8,6 @@ class PetCreationState extends Equatable {
   final PetModel? pendingPet;
 
   /// Created right after the pet when the onboarding asked for it (NAN-105).
-  final PendingVaccine? pendingVaccine;
 
   /// True for the pet inserted right after the signup, false for an in-app one.
   final bool createdDuringOnboarding;
@@ -17,7 +16,6 @@ class PetCreationState extends Equatable {
     this.status = PetCreationStatus.idle,
     this.error,
     this.pendingPet,
-    this.pendingVaccine,
     this.createdDuringOnboarding = false,
   });
 
@@ -33,7 +31,6 @@ class PetCreationState extends Equatable {
       status: status ?? this.status,
       error: clearError ? null : (error ?? this.error),
       pendingPet: clearPendingPet ? null : (pendingPet ?? this.pendingPet),
-      pendingVaccine: clearPendingPet ? null : pendingVaccine,
       createdDuringOnboarding:
           createdDuringOnboarding ?? this.createdDuringOnboarding,
     );
@@ -41,5 +38,5 @@ class PetCreationState extends Equatable {
 
   @override
   List<Object?> get props =>
-      [status, error, pendingPet, pendingVaccine, createdDuringOnboarding];
+      [status, error, pendingPet, createdDuringOnboarding];
 }

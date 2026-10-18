@@ -86,14 +86,13 @@ void main() {
     expect(cubit.state.currentStep, 3);
     expect(find.byType(PetCreationStepThreeWidget), findsOneWidget);
     expect(find.text('Félicitations !'), findsOneWidget);
-    // NAN-105: before signup a vaccine step follows the celebration.
-    expect(find.text('Continuer'), findsOneWidget);
+    // NAN-114: the celebration is the last step, the account comes next.
+    expect(find.text('Créer mon compte'), findsOneWidget);
 
     await cubit.close();
   });
 
-  /// NAN-105: the vaccine step is for the first onboarding only.
-  testWidgets('adding a pet from the app keeps three steps and no vaccine step', (tester) async {
+  testWidgets('adding a pet from the app ends on « Créer »', (tester) async {
     final cubit = await seededCubitOnStepTwo();
     await tester.pumpWidget(buildPage(cubit, inApp: true));
     await tester.pumpAndSettle();
@@ -102,7 +101,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Créer'), findsOneWidget);
-    expect(find.text('Où en sont ses vaccins ?'), findsNothing);
     await cubit.close();
   });
 
