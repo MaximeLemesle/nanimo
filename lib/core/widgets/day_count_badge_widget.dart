@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
+import 'package:nanimo/core/utils/calendar_days.dart';
 import 'package:nanimo/core/widgets/rounded_border_widget.dart';
 
 /// Counts the days left before [date]. Unlike [VaccineStatusBadgeWidget], it
@@ -15,7 +16,7 @@ class DayCountBadgeWidget extends StatelessWidget {
 
   static String labelFor(DateTime date, {DateTime? now}) {
     final reference = now ?? DateTime.now();
-    final days = date.difference(reference).inDays;
+    final days = calendarDaysBetween(reference, date);
     if (days <= 0) return "Aujourd'hui";
     if (days == 1) return 'Demain';
     return 'Dans $days j';
