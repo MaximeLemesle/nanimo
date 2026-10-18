@@ -14,4 +14,6 @@ class RouteNames {
   static const settings = '/home/settings';
   static const paywall = '/paywall';
   static const premiumWelcome = '/premium/bienvenue';
+  static const trialIntro = '/premium/essai';
+  static const trialReminder = '/premium/rappel';
 }

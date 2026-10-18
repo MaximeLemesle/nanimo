@@ -1,3 +1,5 @@
+import 'package:nanimo/features/subscription/data/models/paywall_offer_model.dart';
+
 class PaywallBenefit {
   final String subtitle;
   final String title;
@@ -26,8 +28,20 @@ const String termsUrl = 'https://plain-ant-39c.notion.site/Conditions-g-n-rales-
 
 const String privacyUrl = 'https://plain-ant-39c.notion.site/Politique-de-confidentialit-de-Nanimo-d308fef1b0fc82aeab2181cb868647b3';
 
-const String paywallLegalNotice =
-    'Ton abonnement est renouvelé automatiquement à chaque échéance. Tu peux le résilier à tout moment depuis les réglages de ton compte App Store ou Google Play, au plus tard 24 h avant la fin de la période en cours.';
+const String _cancellationNotice =
+    'Renouvelé automatiquement, résiliable à tout moment depuis les réglages de ton compte App Store ou Google Play, au plus tard 24 h avant la fin de la période en cours.';
+
+/// What the selected plan will charge and when, as the stores require it.
+String paywallLegalNotice(PaywallOfferModel? offer) {
+  if (offer == null) return _cancellationNotice;
+  final price = '${offer.priceLabel} ${offer.periodLabel}'.trim();
+  if (offer.hasTrial) return '${offer.trialDays} jours gratuits, puis $price. $_cancellationNotice';
+  return '$price. $_cancellationNotice';
+}
+
+/// The CTA promises nothing the card does not already say.
+const String paywallCta = 'Continuer';
+const String paywallNoThanks = 'Non merci';
 
 /// Shown while the webhook makes its way to Supabase
 const String premiumConfirmingTitle = 'On active ton abonnement';

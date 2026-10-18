@@ -33,6 +33,7 @@ import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
 import 'package:nanimo/features/settings/data/settings_repository.dart';
 import 'package:nanimo/features/subscription/data/purchase_client.dart';
 import 'package:nanimo/features/subscription/data/purchase_repository.dart';
+import 'package:nanimo/features/subscription/data/trial_end_watcher.dart';
 import 'package:nanimo/features/subscription/data/subscription_repository.dart';
 import 'package:nanimo/features/subscription/data/subscription_reconciler.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
@@ -116,7 +117,7 @@ void main() async {
   authCubit.stream.listen((auth) {
     final userId = authRepository.currentUserId;
     if (auth.isAuthenticated && userId != null) {
-      purchaseRepository.identify(userId);
+      purchaseRepository.identify(userId).then((_) => trialEndWatcher.refresh());
     } else if (auth.isUnauthenticated) {
       purchaseRepository.forget();
     }
@@ -143,8 +144,10 @@ void main() async {
     client: () => notifications,
     store: SharedPreferencesPrimingStore(),
   );
+  trialEndWatcher = TrialEndWatcher(purchaseRepository.trialEndsAt);
   ReminderScheduler(
     client: notifications,
+    trialEnd: trialEndWatcher.watch,
     petRepository: petRepository,
     healthRepository: healthRepository,
     settingsRepository: settingsRepository,

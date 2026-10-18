@@ -54,6 +54,7 @@ void main() {
   late StreamController<List<HealthDiaryVaccineModel>> vaccines;
   late StreamController<NotificationPrefsModel> prefs;
   late StreamController<AuthState> auth;
+  late StreamController<DateTime?> trial;
   late _MockAuthCubit authCubit;
   late RecordingAnalyticsService recorder;
   late ReminderScheduler scheduler;
@@ -63,6 +64,7 @@ void main() {
     vaccines = StreamController.broadcast();
     prefs = StreamController.broadcast();
     auth = StreamController.broadcast();
+    trial = StreamController.broadcast();
     recorder = RecordingAnalyticsService();
     analytics = recorder;
 
@@ -87,7 +89,9 @@ void main() {
       settingsRepository: settingsRepository,
       now: () => _now,
       debounce: Duration.zero,
+      trialEnd: () => trial.stream,
     )..bind(authCubit);
+    trial.add(null);
   });
 
   tearDown(() async {
@@ -96,6 +100,7 @@ void main() {
     await vaccines.close();
     await prefs.close();
     await auth.close();
+    await trial.close();
   });
 
   Future<void> settle() async {
@@ -160,5 +165,21 @@ void main() {
     final scheduled = recorder.events.where((e) => e.name == AnalyticsEvents.reminderScheduled).toList();
     expect(scheduled, hasLength(2));
     expect(scheduled.first.properties[AnalyticsProperties.kind], 'vaccine');
+  });
+
+  // NAN-113: a trial that starts, then is cancelled from the App Store.
+  test('follows the trial end: scheduled when it starts, dropped when cancelled', () async {
+    prefs.add(const NotificationPrefsModel(anniversaryReminders: false));
+    vaccines.add(const []);
+    await settle();
+    expect(client.pending, isEmpty);
+
+    trial.add(DateTime(2026, 10, 30, 9));
+    await settle();
+    expect(client.pending.single.when, DateTime(2026, 10, 28, 10));
+
+    trial.add(null);
+    await settle();
+    expect(client.pending, isEmpty);
   });
 }

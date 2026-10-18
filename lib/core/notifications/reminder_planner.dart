@@ -4,7 +4,7 @@ import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/settings/data/models/notification_prefs_model.dart';
 
-enum ReminderKind { vaccine, vetVisit, birthday, adoption }
+enum ReminderKind { vaccine, vetVisit, birthday, adoption, trialEnd }
 
 /// One local notification to schedule. [key] is stable across runs, so the
 /// same reminder always gets the same platform id.
@@ -62,6 +62,9 @@ abstract final class ReminderPlanner {
   static const vaccineLeadDays = [7, 1];
   static const vetVisitLeadDays = [1];
 
+  /// Promised on the trial screen: two days before the first charge.
+  static const trialEndLeadDays = 2;
+  static const trialPayloadId = 'trial';
   /// Same-day call before the appointment, never before [earliestSameDay].
   static const vetVisitSameDayLead = Duration(hours: 2);
   static const earliestSameDay = 7;
@@ -73,6 +76,7 @@ abstract final class ReminderPlanner {
     required List<VetVisitModel> vetVisits,
     required NotificationPrefsModel prefs,
     required DateTime now,
+    DateTime? trialEndsAt,
   }) {
     if (!prefs.pushEnabled) return const [];
     final petsById = {for (final pet in pets) pet.petId: pet};
@@ -138,8 +142,23 @@ abstract final class ReminderPlanner {
       }
     }
 
+    if (trialEndsAt != null) {
+      final end = trialEndsAt.toLocal();
+      planned.add(PlannedReminder(
+        key: 'trial:${end.toIso8601String()}',
+        kind: ReminderKind.trialEnd,
+        when: _at(end, trialEndLeadDays),
+        title: 'Ton essai se termine dans 2 jours',
+        body: 'Ton abonnement Nanimo Premium démarre le ${_dayMonth(end)}. Tu peux le résilier d\'ici là depuis les réglages.',
+        petId: trialPayloadId,
+      ));
+    }
+
     return nearest(planned, now: now);
   }
+
+  static String _dayMonth(DateTime day) =>
+      '${day.day.toString().padLeft(2, '0')}/${day.month.toString().padLeft(2, '0')}';
 
   /// Next anniversary at [hour], today included if the hour is still ahead.
   /// A 29 February falls on the 28th in common years.

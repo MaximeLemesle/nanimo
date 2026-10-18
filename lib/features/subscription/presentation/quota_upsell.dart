@@ -80,13 +80,13 @@ class QuotaUpsell {
   static void openPaywall(
     BuildContext context,
     String trigger, {
-    bool preview = false,
+    bool onboarding = false,
   }) {
     analytics.capture(
       AnalyticsEvents.paywallOpened,
       properties: {AnalyticsProperties.trigger: trigger},
     );
-    GoRouter.of(context).push(_paywallLocation(preview));
+    GoRouter.of(context).push(_paywallLocation(onboarding));
   }
 
   static void openPaywallWith(GoRouter router, String trigger) {
@@ -97,10 +97,10 @@ class QuotaUpsell {
     router.push(RouteNames.paywall);
   }
 
-  /// The preview cannot charge, so it is a different destination, not a flag
-  /// the page has to infer from whatever provider happens to be in scope.
-  static String _paywallLocation(bool preview) =>
-      preview ? '${RouteNames.paywall}?preview=1' : RouteNames.paywall;
+  /// The onboarding paywall leaves to the app, not back to what opened it, so
+  /// it is a different destination rather than a flag inferred from context.
+  static String _paywallLocation(bool onboarding) =>
+      onboarding ? '${RouteNames.paywall}?onboarding=1' : RouteNames.paywall;
 
   static void _showMessage(BuildContext context, String message) {
     ScaffoldMessenger.of(context)

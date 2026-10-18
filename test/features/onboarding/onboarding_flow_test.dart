@@ -384,12 +384,8 @@ void main() {
     }
     await tester.pumpAndSettle();
 
-    /// NAN-093: the offer is shown before the account is asked for. Dismissing
-    /// it is the "not now" path and lands on the signup all the same.
-    expect(find.byType(PaywallPage), findsOneWidget);
-    await tester.tap(find.byTooltip('Fermer'));
-    await tester.pumpAndSettle();
-
+    /// NAN-113: the account comes first, the trial is offered after it.
+    expect(find.byType(PaywallPage), findsNothing);
     expect(find.text('Inscription'), findsOneWidget);
   }
 
