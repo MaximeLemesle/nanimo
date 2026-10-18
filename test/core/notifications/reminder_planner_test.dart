@@ -58,11 +58,40 @@ void main() {
     expect(plan.first.petId, 'p1');
   });
 
-  test('a vet visit rings the day before at 10:00', () {
+  test('a vet visit rings the day before at 10:00 and two hours before', () {
     final plan = _plan(visits: [_visit('w1', DateTime(2026, 10, 20, 17, 30))]);
 
-    expect(plan.single.when, DateTime(2026, 10, 19, 10));
-    expect(plan.single.body, 'Contrôle annuel pour Saïko demain');
+    expect(plan.map((r) => r.when), [DateTime(2026, 10, 19, 10), DateTime(2026, 10, 20, 15, 30)]);
+    expect(plan.first.body, 'Contrôle annuel pour Saïko demain');
+    expect(plan.last.body, "Contrôle annuel pour Saïko aujourd'hui à 17h30");
+  });
+
+  // NAN-112: booked in the evening for tomorrow, the eve call is already past.
+  test('a visit booked after 10:00 for tomorrow is still called on the day', () {
+    final plan = ReminderPlanner.plan(
+      pets: [_saiko],
+      diaries: const [_diary],
+      vaccines: const [],
+      vetVisits: [_visit('w1', DateTime(2026, 10, 17, 10))],
+      prefs: const NotificationPrefsModel(anniversaryReminders: false),
+      now: DateTime(2026, 10, 16, 19, 32),
+    );
+
+    expect(plan.single.when, DateTime(2026, 10, 17, 8));
+    expect(plan.single.key, 'vet:w1:0');
+  });
+
+  test('the same-day call never rings before 7:00, and at 8:00 without a time', () {
+    expect(ReminderPlanner.sameDayCall(DateTime(2026, 10, 20, 8)), DateTime(2026, 10, 20, 7));
+    expect(ReminderPlanner.sameDayCall(DateTime(2026, 10, 20)), DateTime(2026, 10, 20, 8));
+    expect(ReminderPlanner.plan(
+      pets: [_saiko],
+      diaries: const [_diary],
+      vaccines: const [],
+      vetVisits: [_visit('w1', DateTime(2026, 10, 20))],
+      prefs: const NotificationPrefsModel(anniversaryReminders: false),
+      now: _now,
+    ).last.body, "Contrôle annuel pour Saïko aujourd'hui");
   });
 
   test('nothing is planned in the past', () {
