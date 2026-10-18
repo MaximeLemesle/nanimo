@@ -6,7 +6,6 @@ import 'package:nanimo/core/monitoring/error_reporter.dart';
 import 'package:nanimo/core/analytics/analytics_events.dart';
 import 'package:nanimo/core/utils/pet_icon_resolver.dart';
 import 'package:nanimo/core/utils/pet_portrait.dart';
-import 'package:nanimo/core/utils/vaccine_schedule.dart';
 import 'package:nanimo/data/models/referential/pet_icon_model.dart';
 import 'package:nanimo/data/models/referential/pet_race_model.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
@@ -15,7 +14,6 @@ import 'package:nanimo/features/pet/data/models/pet_model.dart';
 
 part 'onboarding_state.dart';
 
-typedef PendingVaccine = ({String name, DateTime? lastDate, DateTime? nextDate, int recurrence});
 
 class OnboardingCubit extends Cubit<OnboardingState> {
   final ReferentialRepository _referentialRepository;
@@ -61,9 +59,8 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       _trackStepCompleted(2);
       emit(state.copyWith(currentStep: 3));
     } else if (state.currentStep == 3 && state.canFinish) {
+      /// Last step: counted here, the page then hands the pet to the signup.
       _trackStepCompleted(3);
-      emit(state.copyWith(currentStep: 4));
-      _loadVaccineSuggestions();
     }
   }
 
@@ -72,37 +69,6 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       AnalyticsEvents.onboardingStepCompleted,
       properties: {AnalyticsProperties.step: step},
     );
-  }
-
-  void setVaccineName(String name) => emit(state.copyWith(vaccineName: name));
-
-  void setVaccineDate(DateTime date) => emit(state.copyWith(vaccineDate: date));
-
-  void setVaccineNext({int? months}) => emit(state.copyWith(
-        vaccineMonths: months,
-        clearVaccineMonths: months == null,
-        vaccineNextUnknown: months == null,
-      ));
-
-  /// Closes the vaccine step: with the vaccine to create, or skipped.
-  PendingVaccine? finishVaccineStep({required bool skip}) {
-    final vaccine = skip ? null : state.pendingVaccine;
-    analytics.capture(
-      AnalyticsEvents.onboardingStepCompleted,
-      properties: {AnalyticsProperties.step: 'vaccine', AnalyticsProperties.skipped: vaccine == null},
-    );
-    return vaccine;
-  }
-
-  /// Suggestions only: the field stays free when the list cannot load.
-  Future<void> _loadVaccineSuggestions() async {
-    final speciesId = state.petSpeciesId;
-    if (speciesId == null || state.vaccineSuggestions.isNotEmpty) return;
-    try {
-      final vaccines = await _referentialRepository.fetchRecommendedVaccinesBySpecies(speciesId);
-      if (isClosed) return;
-      emit(state.copyWith(vaccineSuggestions: [for (final v in vaccines) v.name]));
-    } catch (_) {}
   }
 
   void previousStep() {

@@ -268,7 +268,6 @@ void main() {
     petCreationCubit = PetCreationCubit(
       authCubit: authCubit,
       petRepository: petRepo,
-      healthRepository: healthRepo,
     );
     homeCubit = HomeCubit(
       petRepository: petRepo,
@@ -311,15 +310,21 @@ void main() {
   }
 
   /// Cold start → welcome → 3 steps → lands on the signup page.
-  Future<void> goThroughOnboarding(WidgetTester tester, {String? expectedAvatarAsset, bool withVaccine = false}) async {
+  Future<void> goThroughOnboarding(WidgetTester tester, {String? expectedAvatarAsset}) async {
     await pumpApp(tester);
     expect(find.byKey(const Key('splash_page')), findsOneWidget);
 
     authCubit.sessionNotFound();
     await tester.pump(const Duration(seconds: 2));
     await tester.pumpAndSettle();
-    expect(find.text('Commencer'), findsOneWidget);
+    expect(find.text('Découvrir'), findsOneWidget);
 
+    /// NAN-114: four slides before the pet. The last one animates for ever,
+    /// so these pumps are bounded.
+    for (final label in ['Découvrir', 'Continuer', 'Continuer', 'Continuer']) {
+      await tester.tap(find.text(label));
+      await tester.pump(const Duration(milliseconds: 400));
+    }
     await tester.tap(find.text('Commencer'));
     await tester.pumpAndSettle();
 
@@ -365,23 +370,8 @@ void main() {
       expectedAvatarAsset ?? _maineCoonIcon.assetPath,
     );
 
-    await tester.tap(find.text('Continuer'));
-    await tester.pumpAndSettle();
-
-    // Step 4 (NAN-105): the vaccine, skippable in one tap.
-    expect(find.text('Où en sont ses vaccins ?'), findsOneWidget);
-    if (withVaccine) {
-      await tester.enterText(find.byType(TextField).last, 'Typhus');
-      await tester.tap(find.text('Sélectionner une date'));
-      await tester.pumpAndSettle();
-      await tester.tapAt(const Offset(20, 20)); // today, kept on dismiss
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Dans 6 mois'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Créer mon compte'));
-    } else {
-      await tester.tap(find.text('Je ne sais pas encore'));
-    }
+    /// NAN-114: no vaccine step any more, the account is asked right away.
+    await tester.tap(find.text('Créer mon compte'));
     await tester.pumpAndSettle();
 
     /// NAN-113: the account comes first, the trial is offered after it.
@@ -408,26 +398,7 @@ void main() {
       expect(find.text('Milo'), findsOneWidget);
     });
 
-    /// NAN-105: the owner leaves the onboarding with a first booster booked.
-    testWidgets('a vaccine given in the onboarding is created with the pet', (tester) async {
-      await goThroughOnboarding(tester, withVaccine: true);
-
-      await tester.enterText(_textFieldWithLabel('Prénom'), 'Maxime');
-      await tester.enterText(_textFieldWithLabel('Email'), 'milo@nanimo.fr');
-      await tester.enterText(_textFieldWithLabel('Mot de passe'), 'azerty1');
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Créer mon compte'));
-      await tester.pumpAndSettle();
-
-      verify(() => petRepo.createPet(any())).called(1);
-      final vaccine = verify(() => healthRepo.addVaccine(captureAny())).captured.single as HealthDiaryVaccineModel;
-      expect(vaccine.vaccineName, 'Typhus');
-      expect(vaccine.lastDate, isNotNull);
-      expect(vaccine.nextDate, isNotNull);
-      expect(vaccine.recurrence, 180);
-    });
-
-    testWidgets('skipping the vaccine creates the pet alone', (tester) async {
+    testWidgets('the onboarding creates the pet and no health entry', (tester) async {
       await goThroughOnboarding(tester);
 
       await tester.enterText(_textFieldWithLabel('Prénom'), 'Maxime');
@@ -499,6 +470,10 @@ void main() {
       authCubit.sessionNotFound();
       await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
+      for (final label in ['Découvrir', 'Continuer', 'Continuer', 'Continuer']) {
+        await tester.tap(find.text(label));
+        await tester.pump(const Duration(milliseconds: 400));
+      }
       await tester.tap(find.text('Commencer'));
       await tester.pumpAndSettle();
 

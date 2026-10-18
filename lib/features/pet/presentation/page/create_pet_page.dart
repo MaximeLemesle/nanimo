@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
-import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/step_indicator_widget.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
@@ -13,7 +12,6 @@ import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_creation/pet_creation_step_one_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_creation/pet_creation_step_three_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_creation/pet_creation_step_two_widget.dart';
-import 'package:nanimo/features/pet/presentation/widgets/pet_creation/pet_creation_vaccine_step_widget.dart';
 
 class CreatePetPage extends StatefulWidget {
   const CreatePetPage({super.key});
@@ -43,8 +41,7 @@ class _CreatePetPageState extends State<CreatePetPage> {
 
   bool _isInApp(BuildContext context) => context.read<AuthCubit>().state.status == AuthStatus.authenticated;
 
-  /// The vaccine step belongs to the first onboarding only (NAN-105).
-  int _lastStep(BuildContext context) => _isInApp(context) ? 3 : 4;
+  static const _lastStep = 3;
 
   void _handleBack(BuildContext context, OnboardingState state) {
     if (state.currentStep == 1) {
@@ -60,13 +57,13 @@ class _CreatePetPageState extends State<CreatePetPage> {
   }
 
   /// Go to the next step or the signup page if it's the last step
-  void _handleNext(BuildContext context, OnboardingState state, {bool skipVaccine = false}) {
-    if (state.currentStep < _lastStep(context)) {
+  void _handleNext(BuildContext context, OnboardingState state) {
+    if (state.currentStep < _lastStep) {
       context.read<OnboardingCubit>().nextStep();
       return;
     }
 
-    final vaccine = _isInApp(context) ? null : context.read<OnboardingCubit>().finishVaccineStep(skip: skipVaccine);
+    if (!_isInApp(context)) context.read<OnboardingCubit>().nextStep();
     context.read<PetCreationCubit>().prepare(
           petName: state.petName.trim(),
           petSpeciesId: state.petSpeciesId!,
@@ -74,7 +71,6 @@ class _CreatePetPageState extends State<CreatePetPage> {
           gender: state.gender!,
           birthdate: state.birthdate!,
           petIconId: state.petIconId,
-          vaccine: vaccine,
         );
     if (_isInApp(context)) {
       context.read<OnboardingCubit>().reset();
@@ -95,8 +91,6 @@ class _CreatePetPageState extends State<CreatePetPage> {
         return state.canGoToStep3;
       case 3:
         return state.canFinish;
-      case 4:
-        return state.canFinish && state.isVaccineComplete;
       default:
         return false;
     }
@@ -137,7 +131,7 @@ class _CreatePetPageState extends State<CreatePetPage> {
                       Expanded(
                         child: StepIndicatorWidget(
                           currentStep: state.currentStep,
-                          totalSteps: _lastStep(context),
+                          totalSteps: _lastStep,
                         ),
                       ),
                       const SizedBox(width: 48),
@@ -151,7 +145,6 @@ class _CreatePetPageState extends State<CreatePetPage> {
                         const PetCreationStepOneWidget(),
                         const PetCreationStepTwoWidget(),
                         const PetCreationStepThreeWidget(),
-                        if (!_isInApp(context)) const PetCreationVaccineStepWidget(),
                       ],
                     ),
                   ),
@@ -162,21 +155,13 @@ class _CreatePetPageState extends State<CreatePetPage> {
                     child: Column(
                       children: [
                         ButtonWidget(
-                          label: state.currentStep == _lastStep(context)
+                          label: state.currentStep == _lastStep
                               ? (_isInApp(context) ? 'Créer' : 'Créer mon compte')
                               : 'Continuer',
                           onPressed: _isNextEnabled(state) ? () => _handleNext(context, state) : null,
                           state: _isNextEnabled(state) ? ButtonState.normal : ButtonState.disabled,
                           fullWidth: true,
                         ),
-                        if (state.currentStep == 4)
-                          TextButton(
-                            onPressed: () => _handleNext(context, state, skipVaccine: true),
-                            child: Text(
-                              'Je ne sais pas encore',
-                              style: AppTextStyles.text.copyWith(color: AppColors.textSecondary),
-                            ),
-                          ),
                       ],
                     ),
                   ),
