@@ -171,8 +171,7 @@ void main() {
     expect(find.text('Board de Maxime'), findsOneWidget);
     expect(find.text('Milo'), findsOneWidget);
     expect(find.text('Vaccins à venir'), findsOneWidget);
-    expect(find.text('Tout est à jour !'), findsNothing);
-    expect(find.text('Ajoute son dernier vaccin, on te rappellera le prochain'), findsOneWidget);
+    expect(find.text('Aucun vaccin de prévu'), findsOneWidget);
     await cubit.close();
   });
 
@@ -284,7 +283,8 @@ void main() {
     await cubit.close();
   });
 
-  testWidgets('keeps the all-clear once a vaccine is recorded and nothing is due', (tester) async {
+  /// NAN-115: a booster ten months away is listed, not hidden behind an all-clear.
+  testWidgets('lists a booster months away', (tester) async {
     tester.view.physicalSize = const Size(1080, 2340);
     tester.view.devicePixelRatio = 2.0;
     addTearDown(tester.view.reset);
@@ -314,8 +314,8 @@ void main() {
     petsController.add([_milo]);
     await tester.pumpAndSettle();
 
-    expect(find.text('Tout est à jour !'), findsOneWidget);
-    expect(find.text('Ajoute son dernier vaccin, on te rappellera le prochain'), findsNothing);
+    expect(find.text('Rage'), findsOneWidget);
+    expect(find.text('Aucun vaccin de prévu'), findsNothing);
     await cubit.close();
   });
 
