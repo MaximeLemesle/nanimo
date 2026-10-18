@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 
 import 'package:nanimo/core/analytics/analytics.dart';
 import 'package:nanimo/core/analytics/analytics_events.dart';
+import 'package:nanimo/core/notifications/diary_follow_up_store.dart';
 import 'package:nanimo/core/notifications/local_notification_client.dart';
 import 'package:nanimo/core/notifications/reminder_planner.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
@@ -26,6 +27,7 @@ class ReminderScheduler {
   final DateTime Function() _now;
   final Duration _debounce;
   final Stream<DateTime?> Function()? _trialEnd;
+  final Stream<List<DiaryFollowUp>> Function()? _followUps;
 
   final List<StreamSubscription<Object?>> _subscriptions = [];
   StreamSubscription<AuthState>? _authSubscription;
@@ -38,6 +40,7 @@ class ReminderScheduler {
   NotificationPrefsModel? _prefs;
   DateTime? _trialEndsAt;
   bool _trialLoaded = false;
+  List<DiaryFollowUp> _followUpList = const [];
 
   /// Null until the first sync of a session: that one is a baseline, not news.
   Set<String>? _scheduledKeys;
@@ -50,7 +53,9 @@ class ReminderScheduler {
     DateTime Function()? now,
     Duration debounce = const Duration(milliseconds: 400),
     Stream<DateTime?> Function()? trialEnd,
+    Stream<List<DiaryFollowUp>> Function()? followUps,
   })  : _trialEnd = trialEnd,
+        _followUps = followUps,
         _client = client,
         _petRepository = petRepository,
         _healthRepository = healthRepository,
@@ -78,6 +83,10 @@ class ReminderScheduler {
       _healthRepository.watchAllVetVisits().listen((v) => _update(() => _vetVisits = v)),
       _settingsRepository.watchNotificationPrefs().listen((v) => _update(() => _prefs = v)),
     ]);
+    final followUps = _followUps;
+    if (followUps != null) {
+      _subscriptions.add(followUps().listen((v) => _update(() => _followUpList = v)));
+    }
     final trialEnd = _trialEnd;
     if (trialEnd == null) {
       _trialLoaded = true;
@@ -123,6 +132,7 @@ class ReminderScheduler {
       prefs: _prefs!,
       now: _now(),
       trialEndsAt: _trialEndsAt,
+      followUps: _followUpList,
     );
 
     await _guard('cancel pending', _client.cancelPending);

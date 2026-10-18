@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nanimo/core/notifications/diary_follow_up_store.dart';
 import 'package:nanimo/core/notifications/reminder_planner.dart';
 import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/health/data/models/health_diary_vaccine_model.dart';
@@ -197,5 +198,25 @@ void main() {
       expect(planTrial(null), isEmpty);
       expect(planTrial(DateTime(2026, 10, 30), push: false), isEmpty);
     });
+  });
+
+  // NAN-116: « Me le rappeler plus tard » rings at the time the owner chose.
+  test('a diary follow-up rings at the chosen time and names the pet', () {
+    final plan = ReminderPlanner.plan(
+      pets: [_saiko],
+      diaries: const [],
+      vaccines: const [],
+      vetVisits: const [],
+      prefs: const NotificationPrefsModel(anniversaryReminders: false, vaccineReminders: false, vetReminders: false),
+      now: _now,
+      followUps: [
+        DiaryFollowUp(petId: 'p1', topic: DiaryFollowUpTopic.vaccines, at: DateTime(2026, 10, 20, 18, 30)),
+        DiaryFollowUp(petId: 'unknown', topic: DiaryFollowUpTopic.vetVisits, at: DateTime(2026, 10, 20)),
+      ],
+    );
+
+    expect(plan.single.kind, ReminderKind.diaryFollowUp);
+    expect(plan.single.when, DateTime(2026, 10, 20, 18, 30));
+    expect(plan.single.title, 'Complète le carnet de Saïko');
   });
 }

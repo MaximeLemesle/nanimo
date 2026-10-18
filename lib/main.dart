@@ -34,6 +34,7 @@ import 'package:nanimo/features/settings/data/settings_repository.dart';
 import 'package:nanimo/features/subscription/data/purchase_client.dart';
 import 'package:nanimo/features/subscription/data/purchase_repository.dart';
 import 'package:nanimo/features/subscription/data/trial_end_watcher.dart';
+import 'package:nanimo/core/notifications/diary_follow_up_store.dart';
 import 'package:nanimo/features/subscription/data/subscription_repository.dart';
 import 'package:nanimo/features/subscription/data/subscription_reconciler.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
@@ -148,6 +149,7 @@ void main() async {
   ReminderScheduler(
     client: notifications,
     trialEnd: trialEndWatcher.watch,
+    followUps: diaryFollowUpStore.watch,
     petRepository: petRepository,
     healthRepository: healthRepository,
     settingsRepository: settingsRepository,

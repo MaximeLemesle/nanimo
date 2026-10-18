@@ -11,6 +11,7 @@ class HealthDiaryCache {
   late String healthDiaryId;
 
   bool? isSterilized;
+  DateTime? sterilizedAt;
   bool? isChipped;
   String? chipNumber;
   DateTime? lastDeworming;
@@ -26,6 +27,7 @@ class HealthDiaryCache {
     return HealthDiaryCache()
       ..healthDiaryId = json['id_health_diary'] as String
       ..isSterilized = json['is_sterilized'] as bool?
+      ..sterilizedAt = json['sterilized_at'] != null ? DateTime.parse(json['sterilized_at'] as String) : null
       ..isChipped = json['is_chipped'] as bool?
       ..chipNumber = json['chip_number'] as String?
       ..lastDeworming = json['last_deworming_at'] != null
@@ -42,6 +44,7 @@ class HealthDiaryCache {
     return HealthDiaryCache()
       ..healthDiaryId = model.healthDiaryId
       ..isSterilized = model.isSterilized
+      ..sterilizedAt = model.sterilizedAt
       ..isChipped = model.isChipped
       ..chipNumber = model.chipNumber
       ..lastDeworming = model.lastDeworming
@@ -54,6 +57,7 @@ class HealthDiaryCache {
     return HealthDiaryModel(
       healthDiaryId: healthDiaryId,
       isSterilized: isSterilized,
+      sterilizedAt: sterilizedAt,
       isChipped: isChipped,
       chipNumber: chipNumber,
       lastDeworming: lastDeworming,

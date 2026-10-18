@@ -37,13 +37,14 @@ void main() {
     analytics = const NoopAnalyticsService();
   });
 
-  Widget card({bool hasVaccine = false, bool hasMemory = false, VoidCallback? onAddVaccine, VoidCallback? onAddMemory}) =>
+  Widget card({bool hasDiary = false, bool hasMemory = false, VoidCallback? onCompleteDiary, VoidCallback? onAddMemory}) =>
       MaterialApp(
         home: Scaffold(
           body: HomeFirstStepsCardWidget(
-            hasVaccine: hasVaccine,
+            petName: 'Dobby',
+            hasDiary: hasDiary,
             hasMemory: hasMemory,
-            onAddVaccine: onAddVaccine ?? () {},
+            onCompleteDiary: onCompleteDiary ?? () {},
             onAddMemory: onAddMemory ?? () {},
           ),
         ),
@@ -55,24 +56,25 @@ void main() {
     await tester.pumpWidget(card());
     await tester.pumpAndSettle();
 
-    for (final label in HomeFirstStepsCardWidget.labels.values) {
+    // NAN-116: the first two steps speak of the animal.
+    for (final label in ['Premier Nanimo ajouté', 'Compléter le carnet de Dobby', 'Activer les rappels', 'Ajouter un premier souvenir']) {
       expect(find.text(label), findsOneWidget);
     }
     expect(progress(tester), 0.25);
   });
 
   testWidgets('each open step leads to its screen', (tester) async {
-    var vaccine = false;
+    var diary = false;
     var memory = false;
-    await tester.pumpWidget(card(onAddVaccine: () => vaccine = true, onAddMemory: () => memory = true));
+    await tester.pumpWidget(card(onCompleteDiary: () => diary = true, onAddMemory: () => memory = true));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Ajouter un vaccin'));
+    await tester.tap(find.text('Compléter le carnet de Dobby'));
     await tester.tap(find.text('Ajouter un premier souvenir'));
     await tester.tap(find.text('Activer les rappels'));
     await tester.pumpAndSettle();
 
-    expect(vaccine, isTrue);
+    expect(diary, isTrue);
     expect(memory, isTrue);
     expect(client.requestCount, 1);
     expect(progress(tester), 0.5);
@@ -95,16 +97,16 @@ void main() {
     await tester.pumpAndSettle();
     await tester.pump(const Duration(seconds: 2));
 
-    await tester.pumpWidget(card(hasVaccine: true));
+    await tester.pumpWidget(card(hasDiary: true));
     await tester.pumpAndSettle();
 
     expect(progress(tester), 0.5);
-    expect(recorder.lastOf(AnalyticsEvents.checklistItemCompleted)!.properties[AnalyticsProperties.item], 'vaccine');
+    expect(recorder.lastOf(AnalyticsEvents.checklistItemCompleted)!.properties[AnalyticsProperties.item], 'diary');
   });
 
   testWidgets('all four done: the card leaves for good', (tester) async {
     client.granted = true;
-    await tester.pumpWidget(card(hasVaccine: true, hasMemory: true));
+    await tester.pumpWidget(card(hasDiary: true, hasMemory: true));
     await tester.pumpAndSettle();
 
     expect(find.text('Premiers pas'), findsNothing);
