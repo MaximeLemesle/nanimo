@@ -51,6 +51,11 @@ const HealthDiaryCacheSchema = CollectionSchema(
       id: 6,
       name: r'petId',
       type: IsarType.string,
+    ),
+    r'sterilizedAt': PropertySchema(
+      id: 7,
+      name: r'sterilizedAt',
+      type: IsarType.dateTime,
     )
   },
   estimateSize: _healthDiaryCacheEstimateSize,
@@ -124,6 +129,7 @@ void _healthDiaryCacheSerialize(
   writer.writeDateTime(offsets[4], object.lastDeworming);
   writer.writeDateTime(offsets[5], object.lastVetAppointment);
   writer.writeString(offsets[6], object.petId);
+  writer.writeDateTime(offsets[7], object.sterilizedAt);
 }
 
 HealthDiaryCache _healthDiaryCacheDeserialize(
@@ -141,6 +147,7 @@ HealthDiaryCache _healthDiaryCacheDeserialize(
   object.lastDeworming = reader.readDateTimeOrNull(offsets[4]);
   object.lastVetAppointment = reader.readDateTimeOrNull(offsets[5]);
   object.petId = reader.readString(offsets[6]);
+  object.sterilizedAt = reader.readDateTimeOrNull(offsets[7]);
   return object;
 }
 
@@ -165,6 +172,8 @@ P _healthDiaryCacheDeserializeProp<P>(
       return (reader.readDateTimeOrNull(offset)) as P;
     case 6:
       return (reader.readString(offset)) as P;
+    case 7:
+      return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -1149,6 +1158,80 @@ extension HealthDiaryCacheQueryFilter
       ));
     });
   }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      sterilizedAtIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'sterilizedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      sterilizedAtIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'sterilizedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      sterilizedAtEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'sterilizedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      sterilizedAtGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'sterilizedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      sterilizedAtLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'sterilizedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      sterilizedAtBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'sterilizedAt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension HealthDiaryCacheQueryObject
@@ -1253,6 +1336,20 @@ extension HealthDiaryCacheQuerySortBy
       sortByPetIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'petId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy>
+      sortBySterilizedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sterilizedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy>
+      sortBySterilizedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sterilizedAt', Sort.desc);
     });
   }
 }
@@ -1368,6 +1465,20 @@ extension HealthDiaryCacheQuerySortThenBy
       return query.addSortBy(r'petId', Sort.desc);
     });
   }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy>
+      thenBySterilizedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sterilizedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy>
+      thenBySterilizedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sterilizedAt', Sort.desc);
+    });
+  }
 }
 
 extension HealthDiaryCacheQueryWhereDistinct
@@ -1419,6 +1530,13 @@ extension HealthDiaryCacheQueryWhereDistinct
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'petId', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QDistinct>
+      distinctBySterilizedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'sterilizedAt');
     });
   }
 }
@@ -1475,6 +1593,13 @@ extension HealthDiaryCacheQueryProperty
   QueryBuilder<HealthDiaryCache, String, QQueryOperations> petIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'petId');
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, DateTime?, QQueryOperations>
+      sterilizedAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'sterilizedAt');
     });
   }
 }

@@ -57,12 +57,14 @@ class HomePage extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.xl),
 
-                HomeFirstStepsCardWidget(
-                  hasVaccine: state.hasAnyVaccine,
-                  hasMemory: state.events.isNotEmpty,
-                  onAddVaccine: () => _addVaccine(context, state),
-                  onAddMemory: () => context.push(RouteNames.createEvent),
-                ),
+                if (state.pets.isNotEmpty)
+                  HomeFirstStepsCardWidget(
+                    petName: state.pets.first.petName,
+                    hasDiary: state.diaries.any((diary) => diary.petId == state.pets.first.petId),
+                    hasMemory: state.events.isNotEmpty,
+                    onCompleteDiary: () => _completeDiary(context, state.pets.first.petId),
+                    onAddMemory: () => context.push(RouteNames.createEvent),
+                  ),
 
                 /// Display the last memory or the remember "X years ago"
                 if (memory != null) ...[
@@ -134,6 +136,14 @@ class HomePage extends StatelessWidget {
   }
 
   /// The home is a multi-animal screen, so the sheet carries its own selector.
+  /// NAN-116: the guided diary, then the diary it filled.
+  Future<void> _completeDiary(BuildContext context, String petId) async {
+    final created = await context.push<bool>('${RouteNames.healthDiaryWizard}/$petId');
+    if (created != true || !context.mounted) return;
+    context.read<PetDetailsCubit>().selectPet(petId);
+    context.push(RouteNames.healthDiary);
+  }
+
   void _addVaccine(BuildContext context, HomeState state) {
     final petDetails = context.read<PetDetailsCubit>();
     BottomSheetWidget.show<void>(

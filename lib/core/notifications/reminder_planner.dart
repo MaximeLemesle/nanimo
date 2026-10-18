@@ -1,10 +1,11 @@
+import 'package:nanimo/core/notifications/diary_follow_up_store.dart';
 import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/health/data/models/health_diary_vaccine_model.dart';
 import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/settings/data/models/notification_prefs_model.dart';
 
-enum ReminderKind { vaccine, vetVisit, birthday, adoption, trialEnd }
+enum ReminderKind { vaccine, vetVisit, birthday, adoption, trialEnd, diaryFollowUp }
 
 /// One local notification to schedule. [key] is stable across runs, so the
 /// same reminder always gets the same platform id.
@@ -77,6 +78,7 @@ abstract final class ReminderPlanner {
     required NotificationPrefsModel prefs,
     required DateTime now,
     DateTime? trialEndsAt,
+    List<DiaryFollowUp> followUps = const [],
   }) {
     if (!prefs.pushEnabled) return const [];
     final petsById = {for (final pet in pets) pet.petId: pet};
@@ -140,6 +142,23 @@ abstract final class ReminderPlanner {
           petId: pet.petId,
         ));
       }
+    }
+
+    /// Asked for explicitly: only the master switch can silence it.
+    for (final followUp in followUps) {
+      final pet = petsById[followUp.petId];
+      if (pet == null) continue;
+      planned.add(PlannedReminder(
+        key: 'diary:${pet.petId}:${followUp.topic.name}',
+        kind: ReminderKind.diaryFollowUp,
+        when: followUp.at,
+        title: 'Complète le carnet de ${pet.petName}',
+        body: switch (followUp.topic) {
+          DiaryFollowUpTopic.vaccines => 'Ses vaccins et ses vermifuges t\'attendent, deux minutes suffisent.',
+          DiaryFollowUpTopic.vetVisits => 'Ses visites chez le vétérinaire t\'attendent, deux minutes suffisent.',
+        },
+        petId: pet.petId,
+      ));
     }
 
     if (trialEndsAt != null) {

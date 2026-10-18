@@ -13,7 +13,6 @@ import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card_widget/pet_card_item_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card_widget/pet_card_widget.dart';
-import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/create_health_diary_bottom_sheet_widget.dart';
 import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/edit_health_info_bottom_sheet_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card/pet_health_info_card_widget.dart';
@@ -146,38 +145,10 @@ class PetPage extends StatelessWidget {
 
                         /// Display onboarding card if no health data
                         PetHealthOnboardingCardWidget(
-                          onFillPressed: () {
-                            BottomSheetWidget.show<void>(
-                              context,
-                              CreateHealthDiaryBottomSheetWidget(
-                                petName: pet.petName,
-                                gender: pet.gender,
-                                birthdate: pet.birthdate,
-                                recommendedVaccines: state.recommendedVaccines,
-                                onSubmit: ({
-                                  double? birthWeight,
-                                  DateTime? birthWeightDate,
-                                  bool? isSterilized,
-                                  bool? isChipped,
-                                  String? chipNumber,
-                                  DateTime? lastDeworming,
-                                  required List<VaccineEntry> vaccines,
-                                  required List<VetVisitEntry> vetVisits,
-                                }) {
-                                  context.read<PetDetailsCubit>().createHealthDiary(
-                                        birthWeight: birthWeight,
-                                        birthWeightDate: birthWeightDate,
-                                        isSterilized: isSterilized,
-                                        isChipped: isChipped,
-                                        chipNumber: chipNumber,
-                                        lastDeworming: lastDeworming,
-                                        vaccines: vaccines,
-                                        vetVisits: vetVisits,
-                                      );
-                                  context.push(RouteNames.healthDiary);
-                                },
-                              ),
-                            );
+                          /// NAN-116: the guided diary, then straight to what was filled in.
+                          onFillPressed: () async {
+                            final created = await context.push<bool>('${RouteNames.healthDiaryWizard}/${pet.petId}');
+                            if (created == true && context.mounted) context.push(RouteNames.healthDiary);
                           },
                         )
                       else ...[

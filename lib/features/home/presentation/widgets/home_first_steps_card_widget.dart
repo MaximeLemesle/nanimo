@@ -45,30 +45,33 @@ class MemoryFirstStepsStore implements FirstStepsStore {
 /// their tests, are left as they were.
 FirstStepsStore firstStepsStore = MemoryFirstStepsStore(dismissed: true);
 
-enum FirstStep { profile, vaccine, reminders, memory }
+enum FirstStep { profile, diary, reminders, memory }
 
 /// "Premiers pas" (NAN-108): four steps, the first already ticked so the bar
 /// never starts empty. Kept short on purpose, checklists average 19 % completion.
 class HomeFirstStepsCardWidget extends StatefulWidget {
-  final bool hasVaccine;
+  /// The first animal, whose diary the second step fills (NAN-116).
+  final String petName;
+  final bool hasDiary;
   final bool hasMemory;
-  final VoidCallback onAddVaccine;
+  final VoidCallback onCompleteDiary;
   final VoidCallback onAddMemory;
 
   const HomeFirstStepsCardWidget({
     super.key,
-    required this.hasVaccine,
+    required this.petName,
+    required this.hasDiary,
     required this.hasMemory,
-    required this.onAddVaccine,
+    required this.onCompleteDiary,
     required this.onAddMemory,
   });
 
-  static const labels = {
-    FirstStep.profile: 'Profil créé',
-    FirstStep.vaccine: 'Ajouter un vaccin',
-    FirstStep.reminders: 'Activer les rappels',
-    FirstStep.memory: 'Ajouter un premier souvenir',
-  };
+  static String labelFor(FirstStep step, String petName) => switch (step) {
+        FirstStep.profile => 'Premier Nanimo ajouté',
+        FirstStep.diary => 'Compléter le carnet de $petName',
+        FirstStep.reminders => 'Activer les rappels',
+        FirstStep.memory => 'Ajouter un premier souvenir',
+      };
 
   @override
   State<HomeFirstStepsCardWidget> createState() => _HomeFirstStepsCardWidgetState();
@@ -131,7 +134,7 @@ class _HomeFirstStepsCardWidgetState extends State<HomeFirstStepsCardWidget> wit
 
   Set<FirstStep> get _done => {
         FirstStep.profile,
-        if (widget.hasVaccine) FirstStep.vaccine,
+        if (widget.hasDiary) FirstStep.diary,
         if (_permission == NotificationPermissionState.granted) FirstStep.reminders,
         if (widget.hasMemory) FirstStep.memory,
       };
@@ -167,7 +170,7 @@ class _HomeFirstStepsCardWidgetState extends State<HomeFirstStepsCardWidget> wit
 
   VoidCallback? _actionFor(FirstStep step) => switch (step) {
         FirstStep.profile => null,
-        FirstStep.vaccine => widget.onAddVaccine,
+        FirstStep.diary => widget.onCompleteDiary,
         FirstStep.reminders => _onReminders,
         FirstStep.memory => widget.onAddMemory,
       };
@@ -207,7 +210,7 @@ class _HomeFirstStepsCardWidgetState extends State<HomeFirstStepsCardWidget> wit
             const SizedBox(height: AppSpacing.sm),
             for (final step in FirstStep.values)
               _StepRow(
-                label: HomeFirstStepsCardWidget.labels[step]!,
+                label: HomeFirstStepsCardWidget.labelFor(step, widget.petName),
                 isDone: done.contains(step),
                 onTap: done.contains(step) ? null : _actionFor(step),
               ),
