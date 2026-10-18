@@ -24,6 +24,14 @@ void main() {
       );
     });
 
+    // NAN-111: 14 h ahead is tomorrow once midnight lies in between.
+    test('counts calendar days, not 24-hour spans', () {
+      final evening = DateTime(2026, 10, 18, 19, 32);
+      expect(DayCountBadgeWidget.labelFor(DateTime(2026, 10, 19, 10), now: evening), 'Demain');
+      expect(DayCountBadgeWidget.labelFor(DateTime(2026, 10, 20, 8), now: evening), 'Dans 2 j');
+      expect(DayCountBadgeWidget.labelFor(DateTime(2026, 10, 18, 23), now: evening), "Aujourd'hui");
+    });
+
     // NAN-090: VaccineStatusBadgeWidget would read "Terminé" past thirty days.
     test('keeps counting beyond thirty days', () {
       expect(

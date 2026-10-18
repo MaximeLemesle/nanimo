@@ -121,8 +121,6 @@ class _VisitRow extends StatelessWidget {
                 Text(
                   visit.title,
                   style: AppTextStyles.textBold,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
                 if (vetName != null)
                   Text(

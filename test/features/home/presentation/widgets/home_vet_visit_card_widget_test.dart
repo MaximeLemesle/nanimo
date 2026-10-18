@@ -114,6 +114,17 @@ void main() {
       expect(tapped, isTrue);
     });
 
+    // NAN-111: the reason for the visit is what the owner reads first.
+    testWidgets('wraps a long title instead of cutting it', (tester) async {
+      const title = 'Dobby au contrôle annuel et rappel de vaccin';
+      await pumpCard(tester, [_entry('v1', title, 1)]);
+
+      final text = tester.widget<Text>(find.text(title));
+      expect(text.maxLines, isNull);
+      expect(text.overflow, isNot(TextOverflow.ellipsis));
+      expect(tester.getSize(find.text(title)).height, greaterThan(30));
+    });
+
     testWidgets('drops the missing fields from the subtitle', (tester) async {
       await pumpCard(tester, [_entry('v1', 'Contrôle', 3)]);
 
