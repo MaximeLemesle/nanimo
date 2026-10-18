@@ -25,6 +25,7 @@ class ReminderScheduler {
   final SettingsRepository _settingsRepository;
   final DateTime Function() _now;
   final Duration _debounce;
+  final Stream<DateTime?> Function()? _trialEnd;
 
   final List<StreamSubscription<Object?>> _subscriptions = [];
   StreamSubscription<AuthState>? _authSubscription;
@@ -35,6 +36,8 @@ class ReminderScheduler {
   List<HealthDiaryVaccineModel>? _vaccines;
   List<VetVisitModel>? _vetVisits;
   NotificationPrefsModel? _prefs;
+  DateTime? _trialEndsAt;
+  bool _trialLoaded = false;
 
   /// Null until the first sync of a session: that one is a baseline, not news.
   Set<String>? _scheduledKeys;
@@ -46,7 +49,9 @@ class ReminderScheduler {
     required SettingsRepository settingsRepository,
     DateTime Function()? now,
     Duration debounce = const Duration(milliseconds: 400),
-  })  : _client = client,
+    Stream<DateTime?> Function()? trialEnd,
+  })  : _trialEnd = trialEnd,
+        _client = client,
         _petRepository = petRepository,
         _healthRepository = healthRepository,
         _settingsRepository = settingsRepository,
@@ -73,6 +78,15 @@ class ReminderScheduler {
       _healthRepository.watchAllVetVisits().listen((v) => _update(() => _vetVisits = v)),
       _settingsRepository.watchNotificationPrefs().listen((v) => _update(() => _prefs = v)),
     ]);
+    final trialEnd = _trialEnd;
+    if (trialEnd == null) {
+      _trialLoaded = true;
+    } else {
+      _subscriptions.add(trialEnd().listen((v) => _update(() {
+            _trialEndsAt = v;
+            _trialLoaded = true;
+          })));
+    }
   }
 
   Future<void> _stop() async {
@@ -83,6 +97,8 @@ class ReminderScheduler {
     _subscriptions.clear();
     _pets = _diaries = _vaccines = _vetVisits = null;
     _prefs = null;
+    _trialEndsAt = null;
+    _trialLoaded = false;
     _scheduledKeys = null;
     await _guard('cancel all', _client.cancelAll);
   }
@@ -94,7 +110,7 @@ class ReminderScheduler {
   }
 
   bool get _ready =>
-      _pets != null && _diaries != null && _vaccines != null && _vetVisits != null && _prefs != null;
+      _pets != null && _diaries != null && _vaccines != null && _vetVisits != null && _prefs != null && _trialLoaded;
 
   /// Public for tests; normally driven by the streams.
   Future<void> sync() async {
@@ -106,6 +122,7 @@ class ReminderScheduler {
       vetVisits: _vetVisits!,
       prefs: _prefs!,
       now: _now(),
+      trialEndsAt: _trialEndsAt,
     );
 
     await _guard('cancel pending', _client.cancelPending);

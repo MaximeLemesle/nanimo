@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nanimo/features/subscription/presentation/pending_premium_intent.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/core/widgets/app_shell.dart';
@@ -95,8 +94,8 @@ void main() {
           ],
         ),
         GoRoute(
-          path: RouteNames.paywall,
-          builder: (_, __) => const Scaffold(body: Text('paywall-stub')),
+          path: RouteNames.trialIntro,
+          builder: (_, __) => const Scaffold(body: Text('trial-stub')),
         ),
       ],
     );
@@ -116,32 +115,15 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  /// NAN-093: the offer is shown before the signup now, so landing the pet no
-  /// longer opens it. Only an owner who asked to subscribe back there comes
-  /// through, and the paywall reopens to finish the purchase they started.
-  testWidgets('reopens to finish a purchase started before the signup',
+  /// NAN-113: the trial is offered once the account and the first pet exist.
+  testWidgets('opens the trial flow once the onboarding pet lands',
       (tester) async {
-    pendingPremiumIntent.remember('annual');
-    addTearDown(pendingPremiumIntent.clear);
-
     await pumpShell(tester, subscriptionState: _plan('freemium'));
 
     petCreation.created(duringOnboarding: true);
     await tester.pumpAndSettle();
 
-    expect(find.text('paywall-stub'), findsOneWidget);
-  });
-
-  testWidgets('asks nothing again of someone who declined before the signup',
-      (tester) async {
-    pendingPremiumIntent.clear();
-
-    await pumpShell(tester, subscriptionState: _plan('freemium'));
-
-    petCreation.created(duringOnboarding: true);
-    await tester.pumpAndSettle();
-
-    expect(find.text('paywall-stub'), findsNothing);
+    expect(find.text('trial-stub'), findsOneWidget);
   });
 
   testWidgets('stays away from an in-app pet creation', (tester) async {
@@ -150,26 +132,20 @@ void main() {
     petCreation.created(duringOnboarding: false);
     await tester.pumpAndSettle();
 
-    expect(find.text('paywall-stub'), findsNothing);
+    expect(find.text('trial-stub'), findsNothing);
   });
 
   testWidgets('never opens for someone who already pays', (tester) async {
-    pendingPremiumIntent.remember('annual');
-    addTearDown(pendingPremiumIntent.clear);
-
     await pumpShell(tester, subscriptionState: _plan('premium'));
 
     petCreation.created(duringOnboarding: true);
     await tester.pumpAndSettle();
 
-    expect(find.text('paywall-stub'), findsNothing);
+    expect(find.text('trial-stub'), findsNothing);
   });
 
   /// The plan may land after the pet on a slow network.
   testWidgets('waits for the plan, then opens', (tester) async {
-    pendingPremiumIntent.remember('annual');
-    addTearDown(pendingPremiumIntent.clear);
-
     await pumpShell(
       tester,
       subscriptionState: const SubscriptionState.unknown(),
@@ -177,19 +153,16 @@ void main() {
 
     petCreation.created(duringOnboarding: true);
     await tester.pumpAndSettle();
-    expect(find.text('paywall-stub'), findsNothing);
+    expect(find.text('trial-stub'), findsNothing);
 
     subscription.load(_plan('freemium'));
     await tester.pumpAndSettle();
 
-    expect(find.text('paywall-stub'), findsOneWidget);
+    expect(find.text('trial-stub'), findsOneWidget);
   });
 
   testWidgets('a plan landing late on a premium account opens nothing',
       (tester) async {
-    pendingPremiumIntent.remember('annual');
-    addTearDown(pendingPremiumIntent.clear);
-
     await pumpShell(
       tester,
       subscriptionState: const SubscriptionState.unknown(),
@@ -200,6 +173,6 @@ void main() {
     subscription.load(_plan('premium'));
     await tester.pumpAndSettle();
 
-    expect(find.text('paywall-stub'), findsNothing);
+    expect(find.text('trial-stub'), findsNothing);
   });
 }

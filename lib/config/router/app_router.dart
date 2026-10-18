@@ -37,6 +37,8 @@ import 'package:nanimo/features/subscription/data/purchase_repository.dart';
 import 'package:nanimo/features/subscription/data/subscription_restorer.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/paywall_cubit.dart';
 import 'package:nanimo/features/subscription/presentation/page/paywall_page.dart';
+import 'package:nanimo/features/subscription/presentation/page/trial_intro_page.dart';
+import 'package:nanimo/features/subscription/presentation/page/trial_reminder_page.dart';
 import 'package:nanimo/features/subscription/presentation/page/premium_welcome_page.dart';
 import 'package:nanimo/features/onboarding/presentation/page/onboarding_page.dart';
 import 'package:nanimo/features/onboarding/presentation/page/splash_page.dart';
@@ -260,10 +262,18 @@ GoRouter createRouter(
               authRepository: authRepository,
             )..loadOffers(),
             child: PaywallPage(
-              isPreview: state.uri.queryParameters['preview'] == '1',
+              isOnboarding: state.uri.queryParameters['onboarding'] == '1',
             ),
           ),
         ),
+      ),
+      GoRoute(
+        path: RouteNames.trialIntro,
+        pageBuilder: (_, state) => _fadePage(state, const TrialIntroPage()),
+      ),
+      GoRoute(
+        path: RouteNames.trialReminder,
+        pageBuilder: (_, state) => _fadePage(state, const TrialReminderPage()),
       ),
 
       /// Reached by `pushReplacement` from the paywall, so it takes the

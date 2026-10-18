@@ -14,7 +14,6 @@ import 'package:nanimo/features/pet/presentation/pet_creation_flow.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_bottom_sheet/add_weight_bottom_sheet_widget.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:nanimo/features/subscription/presentation/quota_upsell.dart';
-import 'package:nanimo/features/subscription/presentation/pending_premium_intent.dart';
 import 'package:nanimo/core/analytics/analytics.dart';
 import 'package:nanimo/core/analytics/analytics_events.dart';
 import 'package:nanimo/core/notifications/notification_priming_sheet.dart';
@@ -209,25 +208,18 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       );
   }
 
-  /// Pushed once, right after the onboarding pet lands. No persistence: the
-  /// onboarding runs once, so nothing can call this a second time.
+  /// The trial flow, pushed once right after the onboarding pet lands
+  /// (NAN-113). No persistence: the onboarding runs once.
   void _showOnboardingPaywall(BuildContext context) {
     if (!_onboardingPaywallPending) return;
-    if (!pendingPremiumIntent.isPending) {
-      _onboardingPaywallPending = false;
-      return;
-    }
 
     final subscription = context.read<SubscriptionCubit>().state;
     if (!subscription.isLoaded) return;
 
     _onboardingPaywallPending = false;
-    if (subscription.isPremium) {
-      pendingPremiumIntent.clear();
-      return;
-    }
+    if (subscription.isPremium) return;
 
-    QuotaUpsell.openPaywall(context, PaywallTrigger.onboarding);
+    GoRouter.of(context).push(RouteNames.trialIntro);
   }
 
   /// Only a free user whose plan is known and already full gets the marker:

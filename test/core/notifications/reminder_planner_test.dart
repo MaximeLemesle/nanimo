@@ -172,4 +172,30 @@ void main() {
       expect(_plan(prefs: const NotificationPrefsModel(anniversaryReminders: false)), isEmpty);
     });
   });
+
+  // NAN-113: the trial screen promises a warning two days before the charge.
+  group('trial end', () {
+    List<PlannedReminder> planTrial(DateTime? end, {bool push = true}) => ReminderPlanner.plan(
+          pets: const [],
+          diaries: const [],
+          vaccines: const [],
+          vetVisits: const [],
+          prefs: NotificationPrefsModel(pushEnabled: push, anniversaryReminders: false),
+          now: _now,
+          trialEndsAt: end,
+        );
+
+    test('rings two days before the end at 10:00', () {
+      final plan = planTrial(DateTime(2026, 10, 30, 18));
+
+      expect(plan.single.kind, ReminderKind.trialEnd);
+      expect(plan.single.when, DateTime(2026, 10, 28, 10));
+      expect(plan.single.body, contains('30/10'));
+    });
+
+    test('nothing without a running trial, or with notifications off', () {
+      expect(planTrial(null), isEmpty);
+      expect(planTrial(DateTime(2026, 10, 30), push: false), isEmpty);
+    });
+  });
 }

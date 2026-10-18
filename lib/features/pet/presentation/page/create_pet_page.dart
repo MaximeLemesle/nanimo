@@ -7,8 +7,6 @@ import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/step_indicator_widget.dart';
-import 'package:nanimo/core/analytics/analytics_events.dart';
-import 'package:nanimo/features/subscription/presentation/quota_upsell.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
@@ -84,8 +82,9 @@ class _CreatePetPageState extends State<CreatePetPage> {
       return;
     }
 
-    /// The offer is shown before the account is asked for
-    QuotaUpsell.openPaywall(context, PaywallTrigger.onboarding, preview: true);
+    /// The trial is offered once the account exists (NAN-113): a purchase on
+    /// an anonymous RevenueCat id would never reach the webhook.
+    context.go(RouteNames.signup);
   }
 
   bool _isNextEnabled(OnboardingState state) {

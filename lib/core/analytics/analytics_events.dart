@@ -18,6 +18,10 @@ class AnalyticsEvents {
   static const notificationPermission = 'notification_permission';
   static const checklistItemCompleted = 'checklist_item_completed';
 
+  /// The two screens before the onboarding paywall (NAN-113).
+  static const trialIntroViewed = 'trial_intro_viewed';
+  static const trialReminderViewed = 'trial_reminder_viewed';
+
   static const paywallOpened = 'paywall_opened';
   static const paywallOfferSelected = 'paywall_offer_selected';
 

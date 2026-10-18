@@ -29,10 +29,12 @@ Package _package({
   required String id,
   required PackageType type,
   required String priceString,
+  double price = 0,
   IntroductoryPrice? intro,
 }) {
   final product = _MockStoreProduct();
   when(() => product.priceString).thenReturn(priceString);
+  when(() => product.price).thenReturn(price);
   when(() => product.introductoryPrice).thenReturn(intro);
 
   final package = _MockPackage();
@@ -84,6 +86,7 @@ void main() {
     id: '\$rc_annual',
     type: PackageType.annual,
     priceString: '39,99 €',
+    price: 39.99,
   );
 
   setUpAll(() {
@@ -108,6 +111,7 @@ void main() {
           [PaywallPeriod.monthly, PaywallPeriod.annual]);
       expect(offers.first.priceLabel, '4,99 €');
       expect(offers.first.packageId, '\$rc_monthly');
+      expect(offers.last.price, 39.99);
     });
 
     /// The rejection risk of NAN-069: a misconfigured key used to read as an
@@ -281,6 +285,43 @@ void main() {
           .thenAnswer((_) async => _customerInfo(premium: false));
 
       expect(await repository.restore(), isFalse);
+    });
+  });
+
+  group('trialEndsAt', () {
+    CustomerInfo trialing({PeriodType type = PeriodType.trial, bool willRenew = true}) {
+      final entitlement = _MockEntitlementInfo();
+      when(() => entitlement.periodType).thenReturn(type);
+      when(() => entitlement.willRenew).thenReturn(willRenew);
+      when(() => entitlement.expirationDate).thenReturn('2026-11-01T09:00:00Z');
+      final entitlements = _MockEntitlementInfos();
+      when(() => entitlements.active).thenReturn({'premium': entitlement});
+      final info = _MockCustomerInfo();
+      when(() => info.entitlements).thenReturn(entitlements);
+      return info;
+    }
+
+    test('reads the end of a running trial', () async {
+      when(() => client.getCustomerInfo()).thenAnswer((_) async => trialing());
+
+      expect(await repository.trialEndsAt(), DateTime.utc(2026, 11, 1, 9).toLocal());
+    });
+
+    test('is null once the trial is cancelled, paid for, or absent', () async {
+      when(() => client.getCustomerInfo()).thenAnswer((_) async => trialing(willRenew: false));
+      expect(await repository.trialEndsAt(), isNull);
+
+      when(() => client.getCustomerInfo()).thenAnswer((_) async => trialing(type: PeriodType.normal));
+      expect(await repository.trialEndsAt(), isNull);
+
+      when(() => client.getCustomerInfo()).thenAnswer((_) async => _customerInfo(premium: false));
+      expect(await repository.trialEndsAt(), isNull);
+    });
+
+    test('a store failure reads as no trial', () async {
+      when(() => client.getCustomerInfo()).thenThrow(Exception('offline'));
+
+      expect(await repository.trialEndsAt(), isNull);
     });
   });
 
