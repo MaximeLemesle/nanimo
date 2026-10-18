@@ -5,6 +5,9 @@ class AnalyticsEvents {
 
   static const onboardingStarted = 'onboarding_started';
   static const onboardingStepCompleted = 'onboarding_step_completed';
+
+  /// One of the explainer slides before the pet creation (NAN-114).
+  static const onboardingSlideViewed = 'onboarding_slide_viewed';
   static const accountCreated = 'account_created';
   static const authCompleted = 'auth_completed';
   static const petCreated = 'pet_created';
