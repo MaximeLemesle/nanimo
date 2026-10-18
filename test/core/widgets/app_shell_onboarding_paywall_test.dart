@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nanimo/config/router/route_names.dart';
+import 'package:nanimo/core/notifications/notifications.dart';
+import 'package:nanimo/core/notifications/reminder_planner.dart';
 import 'package:nanimo/core/widgets/app_shell.dart';
 import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
@@ -97,6 +99,10 @@ void main() {
           path: RouteNames.trialIntro,
           builder: (_, __) => const Scaffold(body: Text('trial-stub')),
         ),
+        GoRoute(
+          path: RouteNames.settings,
+          builder: (_, __) => const Scaffold(body: Text('settings-stub')),
+        ),
       ],
     );
     addTearDown(router.dispose);
@@ -174,5 +180,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('trial-stub'), findsNothing);
+  });
+
+  testWidgets('a tap on the trial-end warning opens the settings', (tester) async {
+    await pumpShell(tester, subscriptionState: _plan('premium'));
+
+    pendingNotificationTap.value = 'trialEnd|${ReminderPlanner.trialPayloadId}';
+    await tester.pumpAndSettle();
+
+    expect(find.text('settings-stub'), findsOneWidget);
   });
 }

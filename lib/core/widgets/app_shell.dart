@@ -78,6 +78,11 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       AnalyticsEvents.notificationOpened,
       properties: {AnalyticsProperties.kind: reminder.kind.name},
     );
+    /// The trial warning is about the subscription, managed from the settings.
+    if (reminder.kind == ReminderKind.trialEnd) {
+      context.go(RouteNames.settings);
+      return;
+    }
     context.read<PetDetailsCubit>().selectPet(reminder.petId);
     if (reminder.kind == ReminderKind.birthday) {
       context.push(Uri(path: RouteNames.createEvent, queryParameters: {'petId': reminder.petId}).toString());
