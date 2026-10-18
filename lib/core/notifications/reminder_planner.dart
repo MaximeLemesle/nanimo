@@ -65,6 +65,9 @@ abstract final class ReminderPlanner {
   /// Promised on the trial screen: two days before the first charge.
   static const trialEndLeadDays = 2;
   static const trialPayloadId = 'trial';
+  /// Same-day call before the appointment, never before [earliestSameDay].
+  static const vetVisitSameDayLead = Duration(hours: 2);
+  static const earliestSameDay = 7;
 
   static List<PlannedReminder> plan({
     required List<PetModel> pets,
@@ -112,6 +115,14 @@ abstract final class ReminderPlanner {
             petId: pet.petId,
           ));
         }
+        planned.add(PlannedReminder(
+          key: 'vet:${visit.vetVisitId}:0',
+          kind: ReminderKind.vetVisit,
+          when: sameDayCall(visit.visitedAt),
+          title: 'Visite chez le vétérinaire',
+          body: '${visit.title} pour ${pet.petName} ${_todayAt(visit.visitedAt)}',
+          petId: pet.petId,
+        ));
       }
     }
 
@@ -167,6 +178,23 @@ abstract final class ReminderPlanner {
     final upcoming = planned.where((r) => r.when.isAfter(now)).toList()
       ..sort((a, b) => a.when.compareTo(b.when));
     return upcoming.length > maxPending ? upcoming.sublist(0, maxPending) : upcoming;
+  }
+
+  /// A visit saved without a time (midnight) is called at 8:00.
+  static DateTime sameDayCall(DateTime visit) {
+    final local = visit.toLocal();
+    if (_hasNoTime(local)) return DateTime(local.year, local.month, local.day, 8);
+    final earliest = DateTime(local.year, local.month, local.day, earliestSameDay);
+    final call = local.subtract(vetVisitSameDayLead);
+    return call.isBefore(earliest) ? earliest : call;
+  }
+
+  static bool _hasNoTime(DateTime local) => local.hour == 0 && local.minute == 0;
+
+  static String _todayAt(DateTime visit) {
+    final local = visit.toLocal();
+    if (_hasNoTime(local)) return "aujourd'hui";
+    return "aujourd'hui à ${local.hour}h${local.minute.toString().padLeft(2, '0')}";
   }
 
   static DateTime _at(DateTime day, int leadDays) =>

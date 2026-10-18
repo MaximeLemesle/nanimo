@@ -98,6 +98,7 @@ class HomePage extends StatelessWidget {
                 /// Booked vet appointments
                 HomeVetVisitCardWidget(
                   visits: state.upcomingVetVisits(now: now),
+                  lastVisits: state.lastVetVisits(now: now),
                   portraits: state.portraits,
                   now: now,
                   onVisitTap: (petId) {
@@ -111,8 +112,9 @@ class HomePage extends StatelessWidget {
                 /// List of vaccine alerts for the user's pets
                 HomeHealthCardWidget(
                   alerts: state.vaccineAlerts(now: now),
-                  hasVaccines: state.hasAnyVaccine,
+                  lastVaccinations: state.lastVaccinations(now: now),
                   portraits: state.portraits,
+                  now: now,
                   onAlertTap: (petId) {
                     context.read<PetDetailsCubit>().selectPet(petId);
                     context.push(RouteNames.healthDiary);

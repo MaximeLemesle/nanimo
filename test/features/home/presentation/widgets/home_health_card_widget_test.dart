@@ -59,7 +59,7 @@ void main() {
       WidgetTester tester,
       List<VaccineAlert> alerts, {
       VoidCallback? onAddPressed,
-      bool hasVaccines = true,
+      List<LastHealthEntry> lastVaccinations = const [],
     }) async {
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(
@@ -67,42 +67,54 @@ void main() {
             alerts: alerts,
             portraits: const {},
             onAddPressed: onAddPressed,
-            hasVaccines: hasVaccines,
+            lastVaccinations: lastVaccinations,
+            now: DateTime(2026, 10, 18, 19),
           ),
         ),
       ));
       await tester.pumpAndSettle();
     }
 
-    testWidgets('shows with nothing due', (tester) async {
+    /// NAN-115: the same words as the visits, and no icon in the text.
+    testWidgets('says nothing is planned when nothing is recorded', (tester) async {
       var tapped = false;
       await pumpCard(tester, const [], onAddPressed: () => tapped = true);
 
-      expect(find.text('Tout est à jour !'), findsOneWidget);
-      expect(find.text('Ajouter un vaccin à venir'), findsOneWidget);
-
-      await tester.tap(find.text('Ajouter un vaccin à venir'));
-      await tester.pumpAndSettle();
-      expect(tapped, isTrue);
-    });
-
-    testWidgets('invites to add a first vaccine when none is recorded', (tester) async {
-      var tapped = false;
-      await pumpCard(tester, const [], hasVaccines: false, onAddPressed: () => tapped = true);
-
-      expect(find.text('Tout est à jour !'), findsNothing);
-      expect(find.text('Ajoute son dernier vaccin, on te rappellera le prochain'), findsOneWidget);
+      expect(find.text(HomeHealthCardWidget.emptyMessage), findsOneWidget);
+      expect(find.byIcon(Icons.vaccines_outlined), findsNothing);
 
       await tester.tap(find.text('Ajouter un vaccin'));
       await tester.pumpAndSettle();
       expect(tapped, isTrue);
     });
 
+    testWidgets('without a booster ahead, tells when each pet was last vaccinated', (tester) async {
+      await pumpCard(tester, const [], lastVaccinations: [
+        (pet: _alert().pet!, at: DateTime(2026, 7, 10)),
+        (
+          pet: PetModel(
+            petId: 'pet-2',
+            petName: 'Dobby',
+            birthdate: DateTime(2024, 1, 1),
+            gender: Gender.male,
+            createdAt: DateTime(2026, 6, 10),
+            petRaceId: 'race-1',
+            petSpeciesId: 'species-1',
+          ),
+          at: DateTime(2026, 10, 6),
+        ),
+      ]);
+
+      expect(_spoken('Dernier vaccin pour Milo il y a 3 mois'), findsOneWidget);
+      expect(_spoken('Dernier vaccin pour Dobby il y a 12 jours'), findsOneWidget);
+      expect(find.text(HomeHealthCardWidget.emptyMessage), findsNothing);
+    });
+
     testWidgets('the empty state fits the narrowest phone', (tester) async {
       await tester.binding.setSurfaceSize(const Size(320, 568));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      await pumpCard(tester, const [], hasVaccines: false);
+      await pumpCard(tester, const []);
 
       expect(tester.takeException(), isNull);
     });
@@ -111,6 +123,27 @@ void main() {
       await pumpCard(tester, [_alert()]);
 
       expect(find.text('Ajouter un vaccin à venir'), findsOneWidget);
+    });
+
+    testWidgets('a booster months away counts down instead of reading « Terminé »', (tester) async {
+      await pumpCard(tester, [
+        (
+          vaccine: HealthDiaryVaccineModel(
+            healthDiaryVaccineId: 'far',
+            vaccineName: 'Rage',
+            nextDate: DateTime(2027, 2, 1),
+            recurrence: 365,
+            doseNumber: 1,
+            totalDoseNumber: 1,
+            healthDiaryId: 'diary-1',
+          ),
+          pet: _alert().pet,
+          status: VaccineStatus.done,
+        ),
+      ]);
+
+      expect(find.text('Terminé'), findsNothing);
+      expect(find.textContaining('Dans '), findsOneWidget);
     });
   });
 }
@@ -136,4 +169,9 @@ VaccineAlert _alert() => (
         petSpeciesId: 'species-1',
       ),
       status: VaccineStatus.soon,
+    );
+
+/// Matches a label whose spaces may be non-breaking.
+Finder _spoken(String text) => find.byWidgetPredicate(
+      (widget) => widget is Text && widget.data?.replaceAll('\u00A0', ' ') == text,
     );

@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 
 import 'package:nanimo/core/analytics/analytics.dart';
 import 'package:nanimo/core/analytics/analytics_events.dart';
+import 'package:nanimo/core/monitoring/error_reporter.dart';
 import 'package:nanimo/core/notifications/local_notification_client.dart';
 import 'package:nanimo/core/notifications/reminder_planner.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
@@ -141,6 +142,7 @@ class ReminderScheduler {
       }
     }
     _scheduledKeys = {for (final reminder in planned) reminder.key};
+    errorReporter.addBreadcrumb('${planned.length} reminders scheduled', category: 'notifications');
   }
 
   Future<void> dispose() async {
@@ -157,6 +159,8 @@ class ReminderScheduler {
       await body();
     } catch (e, st) {
       developer.log('notifications $action failed', name: 'notifications', error: e, stackTrace: st);
+      // NAN-112: a silent failure here is a reminder the owner never gets.
+      errorReporter.captureException(e, stackTrace: st, hint: 'notifications $action failed');
     }
   }
 }

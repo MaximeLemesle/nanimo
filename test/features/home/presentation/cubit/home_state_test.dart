@@ -123,7 +123,9 @@ void main() {
       const HealthDiaryModel(healthDiaryId: 'd2', petId: 'p2'),
     ];
 
-    test('keeps overdue and soon vaccines sorted by urgency', () {
+    /// NAN-115: a booster months away is listed too, so the owner sees where
+    /// the pet stands.
+    test('lists every booster ahead or overdue, sorted by urgency', () {
       final state = HomeState(
         pets: [_milo, _nala],
         diaries: diaries,
@@ -137,11 +139,12 @@ void main() {
       final alerts = state.vaccineAlerts(now: _now);
 
       expect(alerts.map((a) => a.vaccine.healthDiaryVaccineId),
-          ['late', 'soon']);
+          ['late', 'soon', 'ok']);
       expect(alerts.first.status, VaccineStatus.overdue);
       expect(alerts.first.pet?.petName, 'Milo');
-      expect(alerts.last.status, VaccineStatus.soon);
-      expect(alerts.last.pet?.petName, 'Nala');
+      expect(alerts[1].status, VaccineStatus.soon);
+      expect(alerts[1].pet?.petName, 'Nala');
+      expect(alerts.last.status, VaccineStatus.done);
     });
 
     /// NAN-096: "je ne sais pas" leaves the booster empty.
@@ -275,6 +278,52 @@ void main() {
         state.upcomingVetVisits(now: visitedAt.add(const Duration(days: 1))),
         isEmpty,
       );
+    });
+  });
+
+  /// NAN-115: with nothing booked, the card tells when each pet was last seen.
+  group('last entries', () {
+    final diaries = [
+      HealthDiaryModel(healthDiaryId: 'd1', petId: _milo.petId),
+      HealthDiaryModel(healthDiaryId: 'd2', petId: _nala.petId),
+    ];
+
+    test('keeps the latest past visit of each pet, in the order of the pets', () {
+      final state = HomeState(pets: [_milo, _nala], vetVisits: [
+        VetVisitModel(vetVisitId: 'a', title: 'A', visitedAt: DateTime(2026, 3, 1), petId: _nala.petId),
+        VetVisitModel(vetVisitId: 'b', title: 'B', visitedAt: DateTime(2026, 6, 1), petId: _nala.petId),
+        VetVisitModel(vetVisitId: 'c', title: 'C', visitedAt: DateTime(2026, 5, 1), petId: _milo.petId),
+        VetVisitModel(vetVisitId: 'd', title: 'D', visitedAt: DateTime(2026, 9, 1), petId: _milo.petId),
+      ]);
+
+      final last = state.lastVetVisits(now: _now);
+
+      expect(last.map((e) => (e.pet.petName, e.at)), [
+        ('Milo', DateTime(2026, 5, 1)),
+        ('Nala', DateTime(2026, 6, 1)),
+      ]);
+    });
+
+    test('keeps the latest vaccine given of each pet', () {
+      final state = HomeState(pets: [_milo, _nala], diaries: diaries, vaccines: [
+        _vaccine('m', null),
+        HealthDiaryVaccineModel(
+          healthDiaryVaccineId: 'n',
+          vaccineName: 'Rage',
+          lastDate: DateTime(2026, 6, 20),
+          recurrence: 0,
+          doseNumber: 1,
+          totalDoseNumber: 1,
+          healthDiaryId: 'd2',
+        ),
+      ]);
+
+      final last = state.lastVaccinations(now: _now);
+
+      expect(last.map((e) => (e.pet.petName, e.at)), [
+        ('Milo', DateTime(2025, 1, 1)),
+        ('Nala', DateTime(2026, 6, 20)),
+      ]);
     });
   });
 }
