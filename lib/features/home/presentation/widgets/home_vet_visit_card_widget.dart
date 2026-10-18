@@ -9,11 +9,15 @@ import 'package:nanimo/core/widgets/day_count_badge_widget.dart';
 import 'package:nanimo/core/widgets/pet_avatar_widget.dart';
 import 'package:nanimo/core/widgets/rounded_border_widget.dart';
 import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
+import 'package:nanimo/features/home/presentation/widgets/home_last_entry_row_widget.dart';
 
 class HomeVetVisitCardWidget extends StatelessWidget {
-  static const emptyMessage = 'Prévois sa prochaine visite, on te la rappellera la veille';
+  static const emptyMessage = 'Aucune visite de prévue';
 
   final List<UpcomingVetVisit> visits;
+
+  /// Shown, one line per pet, when nothing is booked.
+  final List<LastHealthEntry> lastVisits;
   final Map<String, PetPortrait> portraits;
   final void Function(String petId)? onVisitTap;
   final VoidCallback? onAddPressed;
@@ -24,6 +28,7 @@ class HomeVetVisitCardWidget extends StatelessWidget {
     super.key,
     required this.visits,
     required this.portraits,
+    this.lastVisits = const [],
     this.onVisitTap,
     this.onAddPressed,
     this.now,
@@ -44,11 +49,22 @@ class HomeVetVisitCardWidget extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (visits.isEmpty)
+              if (visits.isEmpty && lastVisits.isEmpty)
                 Text(
                   HomeVetVisitCardWidget.emptyMessage,
                   style: AppTextStyles.textBold,
                 )
+              else if (visits.isEmpty)
+                for (var i = 0; i < lastVisits.length; i++) ...[
+                  if (i > 0) const SizedBox(height: AppSpacing.sm),
+                  HomeLastEntryRowWidget(
+                    entry: lastVisits[i],
+                    lead: 'Dernière visite',
+                    portrait: portraits[lastVisits[i].pet.petId],
+                    onTap: onVisitTap,
+                    now: now,
+                  ),
+                ]
               else
                 for (var i = 0; i < visits.length; i++) ...[
                   if (i > 0) ...[
@@ -65,7 +81,7 @@ class HomeVetVisitCardWidget extends StatelessWidget {
                 ],
               const SizedBox(height: AppSpacing.md),
               ButtonWidget(
-                label: visits.isEmpty ? 'Prévoir une visite' : 'Ajouter une visite à venir',
+                label: visits.isEmpty ? 'Ajouter une visite' : 'Ajouter une visite à venir',
                 type: ButtonType.secondary,
                 icon: Icons.add,
                 iconPosition: ButtonIcon.left,

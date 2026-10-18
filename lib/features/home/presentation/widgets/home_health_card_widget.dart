@@ -7,32 +7,36 @@ import 'package:nanimo/core/utils/date_formatter.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/pet_avatar_widget.dart';
 import 'package:nanimo/core/widgets/rounded_border_widget.dart';
+import 'package:nanimo/core/widgets/day_count_badge_widget.dart';
 import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
+import 'package:nanimo/features/home/presentation/widgets/home_last_entry_row_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/vaccine_status_badge_widget.dart';
 
 class HomeHealthCardWidget extends StatelessWidget {
+  static const emptyMessage = 'Aucun vaccin de prévu';
+
   final List<VaccineAlert> alerts;
   final Map<String, PetPortrait> portraits;
   final void Function(String petId)? onAlertTap;
   final VoidCallback? onAddPressed;
 
-  /// Without any vaccine recorded, nothing can be called up to date.
-  final bool hasVaccines;
+  /// Shown, one line per pet, when no booster is ahead.
+  final List<LastHealthEntry> lastVaccinations;
+
+  final DateTime? now;
 
   const HomeHealthCardWidget({
     super.key,
     required this.alerts,
     required this.portraits,
+    this.lastVaccinations = const [],
     this.onAlertTap,
     this.onAddPressed,
-    this.hasVaccines = true,
+    this.now,
   });
 
   @override
   Widget build(BuildContext context) {
-    final noVaccineYet = !hasVaccines && alerts.isEmpty;
-    final allClear = hasVaccines && alerts.isEmpty;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: AppSpacing.sm,
@@ -46,38 +50,19 @@ class HomeHealthCardWidget extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (noVaccineYet)
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.vaccines_outlined,
-                      color: AppColors.primary600,
-                      size: 24,
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Text(
-                        'Ajoute son dernier vaccin, on te rappellera le prochain',
-                        style: AppTextStyles.textBold,
-                      ),
-                    ),
-                  ],
-                )
-              else if (allClear)
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.check_circle_outline,
-                      color: AppColors.primary600,
-                      size: 24,
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Text('Tout est à jour !',
-                          style: AppTextStyles.textBold),
-                    ),
-                  ],
-                )
+              if (alerts.isEmpty && lastVaccinations.isEmpty)
+                Text(emptyMessage, style: AppTextStyles.textBold)
+              else if (alerts.isEmpty)
+                for (var i = 0; i < lastVaccinations.length; i++) ...[
+                  if (i > 0) const SizedBox(height: AppSpacing.sm),
+                  HomeLastEntryRowWidget(
+                    entry: lastVaccinations[i],
+                    lead: 'Dernier vaccin',
+                    portrait: portraits[lastVaccinations[i].pet.petId],
+                    onTap: onAlertTap,
+                    now: now,
+                  ),
+                ]
               else
                 for (var i = 0; i < alerts.length; i++) ...[
                   if (i > 0)
@@ -87,6 +72,7 @@ class HomeHealthCardWidget extends StatelessWidget {
                     alert: alerts[i],
                     portrait: portraits[alerts[i].pet?.petId],
                     onTap: onAlertTap,
+                    now: now,
                   ),
                   if (i < alerts.length - 1)
                     const SizedBox(height: AppSpacing.sm),
@@ -95,7 +81,7 @@ class HomeHealthCardWidget extends StatelessWidget {
               /// The way in stays reachable once the list is filled.
               const SizedBox(height: AppSpacing.md),
               ButtonWidget(
-                label: noVaccineYet ? 'Ajouter un vaccin' : 'Ajouter un vaccin à venir',
+                label: alerts.isEmpty ? 'Ajouter un vaccin' : 'Ajouter un vaccin à venir',
                 type: ButtonType.secondary,
                 icon: Icons.add,
                 iconPosition: ButtonIcon.left,
@@ -114,8 +100,9 @@ class _AlertRow extends StatelessWidget {
   final VaccineAlert alert;
   final PetPortrait? portrait;
   final void Function(String petId)? onTap;
+  final DateTime? now;
 
-  const _AlertRow({required this.alert, this.portrait, this.onTap});
+  const _AlertRow({required this.alert, this.portrait, this.onTap, this.now});
 
   @override
   Widget build(BuildContext context) {
@@ -155,7 +142,11 @@ class _AlertRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
-          VaccineStatusBadgeWidget(nextDate: alert.vaccine.nextDate!),
+          /// Far boosters count down instead of reading « Terminé ».
+          if (alert.status == VaccineStatus.overdue)
+            VaccineStatusBadgeWidget(nextDate: alert.vaccine.nextDate!)
+          else
+            DayCountBadgeWidget(date: alert.vaccine.nextDate!, now: now),
         ],
       ),
     );
