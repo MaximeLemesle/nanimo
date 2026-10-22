@@ -22,38 +22,43 @@ const HealthDiaryCacheSchema = CollectionSchema(
       name: r'chipNumber',
       type: IsarType.string,
     ),
-    r'healthDiaryId': PropertySchema(
+    r'dewormingIntervalMonths': PropertySchema(
       id: 1,
+      name: r'dewormingIntervalMonths',
+      type: IsarType.long,
+    ),
+    r'healthDiaryId': PropertySchema(
+      id: 2,
       name: r'healthDiaryId',
       type: IsarType.string,
     ),
     r'isChipped': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'isChipped',
       type: IsarType.bool,
     ),
     r'isSterilized': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'isSterilized',
       type: IsarType.bool,
     ),
     r'lastDeworming': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'lastDeworming',
       type: IsarType.dateTime,
     ),
     r'lastVetAppointment': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'lastVetAppointment',
       type: IsarType.dateTime,
     ),
     r'petId': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'petId',
       type: IsarType.string,
     ),
     r'sterilizedAt': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'sterilizedAt',
       type: IsarType.dateTime,
     )
@@ -123,13 +128,14 @@ void _healthDiaryCacheSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeString(offsets[0], object.chipNumber);
-  writer.writeString(offsets[1], object.healthDiaryId);
-  writer.writeBool(offsets[2], object.isChipped);
-  writer.writeBool(offsets[3], object.isSterilized);
-  writer.writeDateTime(offsets[4], object.lastDeworming);
-  writer.writeDateTime(offsets[5], object.lastVetAppointment);
-  writer.writeString(offsets[6], object.petId);
-  writer.writeDateTime(offsets[7], object.sterilizedAt);
+  writer.writeLong(offsets[1], object.dewormingIntervalMonths);
+  writer.writeString(offsets[2], object.healthDiaryId);
+  writer.writeBool(offsets[3], object.isChipped);
+  writer.writeBool(offsets[4], object.isSterilized);
+  writer.writeDateTime(offsets[5], object.lastDeworming);
+  writer.writeDateTime(offsets[6], object.lastVetAppointment);
+  writer.writeString(offsets[7], object.petId);
+  writer.writeDateTime(offsets[8], object.sterilizedAt);
 }
 
 HealthDiaryCache _healthDiaryCacheDeserialize(
@@ -140,14 +146,15 @@ HealthDiaryCache _healthDiaryCacheDeserialize(
 ) {
   final object = HealthDiaryCache();
   object.chipNumber = reader.readStringOrNull(offsets[0]);
-  object.healthDiaryId = reader.readString(offsets[1]);
+  object.dewormingIntervalMonths = reader.readLongOrNull(offsets[1]);
+  object.healthDiaryId = reader.readString(offsets[2]);
   object.id = id;
-  object.isChipped = reader.readBoolOrNull(offsets[2]);
-  object.isSterilized = reader.readBoolOrNull(offsets[3]);
-  object.lastDeworming = reader.readDateTimeOrNull(offsets[4]);
-  object.lastVetAppointment = reader.readDateTimeOrNull(offsets[5]);
-  object.petId = reader.readString(offsets[6]);
-  object.sterilizedAt = reader.readDateTimeOrNull(offsets[7]);
+  object.isChipped = reader.readBoolOrNull(offsets[3]);
+  object.isSterilized = reader.readBoolOrNull(offsets[4]);
+  object.lastDeworming = reader.readDateTimeOrNull(offsets[5]);
+  object.lastVetAppointment = reader.readDateTimeOrNull(offsets[6]);
+  object.petId = reader.readString(offsets[7]);
+  object.sterilizedAt = reader.readDateTimeOrNull(offsets[8]);
   return object;
 }
 
@@ -161,18 +168,20 @@ P _healthDiaryCacheDeserializeProp<P>(
     case 0:
       return (reader.readStringOrNull(offset)) as P;
     case 1:
-      return (reader.readString(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 2:
-      return (reader.readBoolOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 3:
       return (reader.readBoolOrNull(offset)) as P;
     case 4:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readBoolOrNull(offset)) as P;
     case 5:
       return (reader.readDateTimeOrNull(offset)) as P;
     case 6:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 7:
+      return (reader.readString(offset)) as P;
+    case 8:
       return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -623,6 +632,80 @@ extension HealthDiaryCacheQueryFilter
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'chipNumber',
         value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      dewormingIntervalMonthsIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'dewormingIntervalMonths',
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      dewormingIntervalMonthsIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'dewormingIntervalMonths',
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      dewormingIntervalMonthsEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'dewormingIntervalMonths',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      dewormingIntervalMonthsGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'dewormingIntervalMonths',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      dewormingIntervalMonthsLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'dewormingIntervalMonths',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterFilterCondition>
+      dewormingIntervalMonthsBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'dewormingIntervalMonths',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
       ));
     });
   }
@@ -1257,6 +1340,20 @@ extension HealthDiaryCacheQuerySortBy
   }
 
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy>
+      sortByDewormingIntervalMonths() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'dewormingIntervalMonths', Sort.asc);
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy>
+      sortByDewormingIntervalMonthsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'dewormingIntervalMonths', Sort.desc);
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy>
       sortByHealthDiaryId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'healthDiaryId', Sort.asc);
@@ -1367,6 +1464,20 @@ extension HealthDiaryCacheQuerySortThenBy
       thenByChipNumberDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'chipNumber', Sort.desc);
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy>
+      thenByDewormingIntervalMonths() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'dewormingIntervalMonths', Sort.asc);
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QAfterSortBy>
+      thenByDewormingIntervalMonthsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'dewormingIntervalMonths', Sort.desc);
     });
   }
 
@@ -1491,6 +1602,13 @@ extension HealthDiaryCacheQueryWhereDistinct
   }
 
   QueryBuilder<HealthDiaryCache, HealthDiaryCache, QDistinct>
+      distinctByDewormingIntervalMonths() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'dewormingIntervalMonths');
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, HealthDiaryCache, QDistinct>
       distinctByHealthDiaryId({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'healthDiaryId',
@@ -1553,6 +1671,13 @@ extension HealthDiaryCacheQueryProperty
       chipNumberProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'chipNumber');
+    });
+  }
+
+  QueryBuilder<HealthDiaryCache, int?, QQueryOperations>
+      dewormingIntervalMonthsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'dewormingIntervalMonths');
     });
   }
 

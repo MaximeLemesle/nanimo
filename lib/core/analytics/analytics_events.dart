@@ -97,8 +97,9 @@ class PaywallTrigger {
   /// An animal kept from a premium plan that has lapsed.
   static const lockedPet = 'locked_pet';
 
-  /// The only entry that is not a limit reached.
+  /// The entries that are not a limit reached.
   static const onboarding = 'onboarding';
+  static const firstSteps = 'first_steps';
   static const notifications = 'notifications';
   static const unknown = 'unknown';
 }

@@ -542,9 +542,33 @@ void main() {
       expect(state.hasHealthData, isTrue);
     });
 
+    test('is true once a diary exists, even with every answer skipped', () {
+      const state = PetDetailsState(
+        diary: HealthDiaryModel(healthDiaryId: 'd1', petId: 'p1'),
+      );
+      expect(state.hasHealthData, isTrue);
+    });
+
     test('is true when weight logs exist', () {
       final state = PetDetailsState(weightLogs: _weightLogs);
       expect(state.hasHealthData, isTrue);
     });
+  });
+  test('recordDeworming keeps the rest of another animal\'s diary', () async {
+    final other = HealthDiaryModel(
+        healthDiaryId: 'd2', petId: 'p2', isChipped: true, chipNumber: '999', lastDeworming: DateTime(2026, 1, 1), dewormingIntervalMonths: 6);
+    when(() => healthRepo.getDiaryForPet('p2')).thenAnswer((_) async => other);
+
+    final cubit = createCubit();
+    await settle();
+
+    final previous = await cubit.recordDeworming('p2', lastDeworming: DateTime(2026, 10, 22));
+
+    final saved = verify(() => healthRepo.upsertDiary(captureAny())).captured.last as HealthDiaryModel;
+    expect(saved.healthDiaryId, 'd2');
+    expect(saved.chipNumber, '999');
+    expect(saved.lastDeworming, DateTime(2026, 10, 22));
+    expect(saved.dewormingIntervalMonths, 6);
+    expect(previous?.lastDeworming, DateTime(2026, 1, 1));
   });
 }

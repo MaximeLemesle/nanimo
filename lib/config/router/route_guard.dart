@@ -20,8 +20,8 @@ String? handleRedirect(
   /// Keep the splash visible for its minimum duration even when ready
   if (location == RouteNames.splash && !splashElapsed) return null;
 
-  /// Protect the routes if the user is not authenticated
-  if (!isAuthenticated && isProtected) return RouteNames.login;
+  /// Protect the routes: a signed-out user restarts from the welcome screen
+  if (!isAuthenticated && isProtected) return RouteNames.onboarding;
 
   /// Avoid login if user is already authenticated
   if (isAuthenticated && isPublicRoute) return RouteNames.home;

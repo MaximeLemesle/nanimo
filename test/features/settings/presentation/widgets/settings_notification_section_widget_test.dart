@@ -54,7 +54,7 @@ void main() {
     expect(find.text('Bientôt'), findsNothing);
     expect(find.text('Notifications'), findsOneWidget);
     expect(find.text('Tous les rappels'), findsOneWidget);
-    expect(find.text('Vaccins'), findsOneWidget);
+    expect(find.text('Vaccins et vermifuges'), findsOneWidget);
     expect(find.text('Visites vétérinaires'), findsOneWidget);
     expect(find.text('Anniversaires'), findsOneWidget);
     expect(find.text('Vermifuges'), findsNothing);

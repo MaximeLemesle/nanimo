@@ -99,11 +99,14 @@ flutter:
     - env/
     - assets/fonts/
     - assets/google_logo.svg
+    - assets/notifications.png
     - assets/parc.png
     - assets/icons/species/
     - assets/icons/event_types/
     - assets/icons/ui/
     - assets/animation/
+    - assets/onboarding/
+    - assets/health_diary/
 
   fonts:
     - family: Comfortaa

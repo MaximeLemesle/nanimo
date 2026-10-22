@@ -15,6 +15,15 @@ typedef VaccineAlert = ({
   VaccineStatus status,
 });
 
+/// A pet's next deworming, from its last one and its interval.
+typedef DewormingAlert = ({
+  PetModel pet,
+  DateTime nextDate,
+  DateTime lastDate,
+  int intervalMonths,
+  VaccineStatus status,
+});
+
 class HomeState extends Equatable {
   final HomeStatus status;
   final List<PetModel> pets;
@@ -126,6 +135,33 @@ class HomeState extends Equatable {
     ];
     alerts.sort((a, b) => a.vaccine.nextDate!.compareTo(b.vaccine.nextDate!));
     return alerts;
+  }
+
+  /// One per pet with a recorded deworming, nearest first.
+  List<DewormingAlert> dewormingAlerts({DateTime? now}) {
+    final alerts = <DewormingAlert>[
+      for (final diary in diaries)
+        if ((diary.lastDeworming, diary.nextDeworming) case (final last?, final next?))
+          if (_petById(diary.petId) case final pet?)
+            (
+              pet: pet,
+              nextDate: next,
+              lastDate: last,
+              intervalMonths: diary.dewormingInterval,
+              status: vaccineStatusFor(next, now: now),
+            ),
+    ];
+    alerts.sort((a, b) => a.nextDate.compareTo(b.nextDate));
+    return alerts;
+  }
+
+  /// Pets whose last deworming is unknown, in the order of the pets.
+  List<PetModel> get petsWithoutDeworming {
+    final known = {
+      for (final diary in diaries)
+        if (diary.lastDeworming != null) diary.petId,
+    };
+    return [for (final pet in pets) if (!known.contains(pet.petId)) pet];
   }
 
   /// Appointments still ahead, nearest first. Derived from the date alone,

@@ -172,6 +172,7 @@ class EditPetCubit extends Cubit<EditPetState> {
       chipNumber: isChipped && trimmed != null && trimmed.isNotEmpty ? trimmed : null,
       lastDeworming: current?.lastDeworming,
       lastVetAppointment: current?.lastVetAppointment,
+      dewormingIntervalMonths: current?.dewormingIntervalMonths,
     );
 
     await _healthRepository.upsertDiary(diary);

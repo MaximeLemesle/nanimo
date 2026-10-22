@@ -13,7 +13,8 @@ class PrimingOffer {
   final DateTime dueDate;
   final bool isVetVisit;
 
-  const PrimingOffer({required this.petName, required this.dueDate, this.isVetVisit = false});
+  const PrimingOffer(
+      {required this.petName, required this.dueDate, this.isVetVisit = false});
 }
 
 /// What the priming needs to remember across launches.
@@ -38,13 +39,15 @@ class SharedPreferencesPrimingStore implements PrimingStore {
 
   @override
   Future<DateTime?> postponedAt() async {
-    final millis = (await SharedPreferences.getInstance()).getInt(_postponedKey);
+    final millis =
+        (await SharedPreferences.getInstance()).getInt(_postponedKey);
     return millis == null ? null : DateTime.fromMillisecondsSinceEpoch(millis);
   }
 
   @override
   Future<void> markPostponed(DateTime at) async =>
-      (await SharedPreferences.getInstance()).setInt(_postponedKey, at.millisecondsSinceEpoch);
+      (await SharedPreferences.getInstance())
+          .setInt(_postponedKey, at.millisecondsSinceEpoch);
 }
 
 class MemoryPrimingStore implements PrimingStore {
@@ -72,6 +75,11 @@ class NotificationPriming {
   final LocalNotificationClient Function() _client;
   final PrimingStore _store;
   final DateTime Function() _now;
+  final Future<void> Function()? _onGranted;
+
+  /// Shared by every permission entry point, including the diary wizard.
+  final ValueNotifier<NotificationPermissionState> permission =
+      ValueNotifier(NotificationPermissionState.undetermined);
 
   /// Set when the sheet should open; the shell shows it and clears it.
   final ValueNotifier<PrimingOffer?> offer = ValueNotifier(null);
@@ -80,29 +88,45 @@ class NotificationPriming {
     required LocalNotificationClient Function() client,
     required PrimingStore store,
     DateTime Function()? now,
-  })  : _client = client,
+    Future<void> Function()? onGranted,
+  })  : _onGranted = onGranted,
+        _client = client,
         _store = store,
         _now = now ?? DateTime.now;
 
   Future<NotificationPermissionState> permissionState() async {
-    if (await _client().isPermissionGranted()) return NotificationPermissionState.granted;
-    if (await _store.systemPromptShown()) return NotificationPermissionState.denied;
-    return NotificationPermissionState.undetermined;
+    final granted = await _client().isPermissionGranted();
+    final state = granted
+        ? NotificationPermissionState.granted
+        : await _store.systemPromptShown()
+            ? NotificationPermissionState.denied
+            : NotificationPermissionState.undetermined;
+    permission.value = state;
+    return state;
   }
 
   /// Called right after an upcoming booster or visit is saved.
   Future<void> offerFor(PrimingOffer candidate) async {
     if (!candidate.dueDate.isAfter(_now())) return;
-    if (await permissionState() != NotificationPermissionState.undetermined) return;
+    if (await permissionState() != NotificationPermissionState.undetermined) {
+      return;
+    }
     final postponed = await _store.postponedAt();
     if (postponed != null && _now().difference(postponed) < snooze) return;
     offer.value = candidate;
   }
 
+  /// Enables the in-app master switch after an explicit reminder request.
+  Future<void> enableReminders() async => _onGranted?.call();
+
   Future<bool> accept() async {
     offer.value = null;
     final granted = await _client().requestPermission();
     await _store.markSystemPromptShown();
+    if (granted) await _onGranted?.call();
+    permission.value = granted
+        ? NotificationPermissionState.granted
+        : NotificationPermissionState.denied;
     _track(granted ? 'granted' : 'denied');
     return granted;
   }

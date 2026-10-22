@@ -59,7 +59,7 @@ SubscriptionState _plan(String planName) =>
       maxPets: planName == 'premium' ? 10 : 1,
     ));
 
-/// NAN-093 lot 1: the paywall is placed at the end of the onboarding.
+/// The shell opens no paywall on signup, and routes the trial-end warning.
 void main() {
   late _FakeSubscriptionCubit subscription;
   late _FakePetCreationCubit petCreation;
@@ -96,8 +96,8 @@ void main() {
           ],
         ),
         GoRoute(
-          path: RouteNames.trialIntro,
-          builder: (_, __) => const Scaffold(body: Text('trial-stub')),
+          path: RouteNames.paywall,
+          builder: (_, __) => const Scaffold(body: Text('paywall-stub')),
         ),
         GoRoute(
           path: RouteNames.settings,
@@ -121,68 +121,19 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  /// NAN-113: the trial is offered once the account and the first pet exist.
-  testWidgets('opens the trial flow once the onboarding pet lands',
+  /// The trial is offered once the first steps are done, not on signup.
+  testWidgets('opens no paywall when the onboarding pet lands',
       (tester) async {
     await pumpShell(tester, subscriptionState: _plan('freemium'));
 
     petCreation.created(duringOnboarding: true);
     await tester.pumpAndSettle();
 
-    expect(find.text('trial-stub'), findsOneWidget);
+    expect(find.text('paywall-stub'), findsNothing);
   });
 
-  testWidgets('stays away from an in-app pet creation', (tester) async {
-    await pumpShell(tester, subscriptionState: _plan('freemium'));
-
-    petCreation.created(duringOnboarding: false);
-    await tester.pumpAndSettle();
-
-    expect(find.text('trial-stub'), findsNothing);
-  });
-
-  testWidgets('never opens for someone who already pays', (tester) async {
-    await pumpShell(tester, subscriptionState: _plan('premium'));
-
-    petCreation.created(duringOnboarding: true);
-    await tester.pumpAndSettle();
-
-    expect(find.text('trial-stub'), findsNothing);
-  });
-
-  /// The plan may land after the pet on a slow network.
-  testWidgets('waits for the plan, then opens', (tester) async {
-    await pumpShell(
-      tester,
-      subscriptionState: const SubscriptionState.unknown(),
-    );
-
-    petCreation.created(duringOnboarding: true);
-    await tester.pumpAndSettle();
-    expect(find.text('trial-stub'), findsNothing);
-
-    subscription.load(_plan('freemium'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('trial-stub'), findsOneWidget);
-  });
-
-  testWidgets('a plan landing late on a premium account opens nothing',
+  testWidgets('a tap on the trial-end warning opens the settings',
       (tester) async {
-    await pumpShell(
-      tester,
-      subscriptionState: const SubscriptionState.unknown(),
-    );
-
-    petCreation.created(duringOnboarding: true);
-    await tester.pumpAndSettle();
-    subscription.load(_plan('premium'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('trial-stub'), findsNothing);
-  });
-
-  testWidgets('a tap on the trial-end warning opens the settings', (tester) async {
     await pumpShell(tester, subscriptionState: _plan('premium'));
 
     pendingNotificationTap.value = 'trialEnd|${ReminderPlanner.trialPayloadId}';

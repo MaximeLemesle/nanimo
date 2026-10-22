@@ -21,6 +21,7 @@ import 'package:nanimo/features/home/presentation/widgets/home_memory_polaroid_w
 import 'package:nanimo/features/journal/presentation/cubit/journal_cubit.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
+import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/vaccine_status_badge_widget.dart';
 import 'package:nanimo/features/home/data/article_repository.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart'
@@ -62,6 +63,20 @@ const _maxime = UserModel(
   mail: 'maxime@nanimo.fr',
   subscriptionStatus: SubscriptionStatus.freemium,
 );
+
+class _FakePetCreationCubit extends Cubit<PetCreationState>
+    implements PetCreationCubit {
+  _FakePetCreationCubit(super.initialState);
+
+  void created(String petId) => emit(PetCreationState(
+      status: PetCreationStatus.success, awaitedPetId: petId));
+
+  @override
+  void petShown() => emit(state.copyWith(clearAwaitedPet: true));
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 class _FakeSubscriptionCubit extends Cubit<SubscriptionState>
     implements SubscriptionCubit {
@@ -121,12 +136,14 @@ void main() {
     );
   }
 
-  Widget buildPage(HomeCubit cubit) {
+  Widget buildPage(HomeCubit cubit, {PetCreationCubit? petCreation}) {
     return MaterialApp(
       home: Scaffold(
         body: MultiBlocProvider(
           providers: [
             BlocProvider<HomeCubit>.value(value: cubit),
+            if (petCreation != null)
+              BlocProvider<PetCreationCubit>.value(value: petCreation),
             BlocProvider<SubscriptionCubit>.value(
               value: _FakeSubscriptionCubit(),
             ),
@@ -156,6 +173,34 @@ void main() {
     await cubit.close();
   });
 
+  testWidgets('keeps the loader while the signup pet is being written', (tester) async {
+    final cubit = buildCubit();
+    final petCreation = _FakePetCreationCubit(
+      PetCreationState(pendingPet: _milo, status: PetCreationStatus.creating),
+    );
+    await tester.pumpWidget(buildPage(cubit, petCreation: petCreation));
+
+    petsController.add(const []);
+    await tester.pump();
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('Aucun animal pour le moment'), findsNothing);
+
+    /// Written, but the cache has not shown it yet: still no empty state.
+    petCreation.created('p1');
+    await tester.pump();
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('Aucun animal pour le moment'), findsNothing);
+
+    petsController.add([_milo]);
+    await tester.pump();
+
+    expect(find.text('Aucun animal pour le moment'), findsNothing);
+    expect(petCreation.state.awaitedPetId, isNull);
+    await petCreation.close();
+    await cubit.close();
+  });
+
   testWidgets('shows the masthead, the pets strip and a first-vaccine invite', (tester) async {
     // Tall phone viewport so the health card below the pets strip is built.
     tester.view.physicalSize = const Size(1080, 2340);
@@ -168,10 +213,11 @@ void main() {
     petsController.add([_milo]);
     await tester.pumpAndSettle();
 
-    expect(find.text('Board de Maxime'), findsOneWidget);
+    expect(find.text('Carnet de Maxime'), findsOneWidget);
     expect(find.text('Milo'), findsOneWidget);
-    expect(find.text('Vaccins à venir'), findsOneWidget);
-    expect(find.text('Aucun vaccin de prévu'), findsOneWidget);
+    expect(find.text('Soins à venir'), findsOneWidget);
+    expect(find.text('Quand était le dernier ?'), findsOneWidget);
+    expect(find.text('Ajouter un vaccin'), findsOneWidget);
     await cubit.close();
   });
 
@@ -347,7 +393,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Rage'), findsOneWidget);
-    expect(find.text('Pas fait'), findsOneWidget);
+    expect(find.text('En retard'), findsOneWidget);
     expect(find.text('Tout est à jour !'), findsNothing);
     await cubit.close();
   });
@@ -361,7 +407,7 @@ void main() {
 
     when(() => healthRepo.watchAllDiaries()).thenAnswer(
       (_) => Stream.value(
-        const [HealthDiaryModel(healthDiaryId: 'd1', petId: 'p1')],
+        [HealthDiaryModel(healthDiaryId: 'd1', petId: 'p1', lastDeworming: DateTime.now())],
       ),
     );
     when(() => healthRepo.watchAllVaccines()).thenAnswer(
@@ -405,8 +451,10 @@ void main() {
       matching: find.byType(PetAvatarWidget),
     );
 
-    expect(icons, findsNWidgets(rows.evaluate().length));
+    // The overdue booster and Milo's deworming, each with its pet.
+    expect(icons, findsNWidgets(2));
     expect(rows, findsOneWidget);
+    expect(find.text('Vermifuge'), findsOneWidget);
     expect(find.text('Leucose'), findsNothing);
     await cubit.close();
   });

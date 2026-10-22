@@ -8,13 +8,9 @@ import 'package:nanimo/core/analytics/analytics.dart';
 import 'package:nanimo/core/analytics/analytics_events.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/step_indicator_widget.dart';
-import 'package:nanimo/features/onboarding/presentation/widgets/showcase/health_showcase_widget.dart';
-import 'package:nanimo/features/onboarding/presentation/widgets/showcase/memories_showcase_widget.dart';
-import 'package:nanimo/features/onboarding/presentation/widgets/showcase/reminders_showcase_widget.dart';
-import 'package:nanimo/features/subscription/presentation/widgets/paywall_memories_widget.dart';
 
 /// The welcome screen, then what Nanimo does before anything is typed
-/// (NAN-114): health diary, memories, reminders, and the first pet.
+/// (NAN-114): swipe through health, multiple pets, memories and reminders.
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
 
@@ -37,21 +33,22 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   void _goTo(int stage) {
-    setState(() => _stage = stage);
-    if (stage == 0) return;
-    analytics.capture(AnalyticsEvents.onboardingSlideViewed, properties: {AnalyticsProperties.step: stage});
-    if (_pages.hasClients) {
+    if (stage == 0) {
+      setState(() => _stage = 0);
+      return;
+    }
+    if (_stage == 0) {
+      setState(() => _stage = 1);
+      _trackSlide(1);
+    } else {
       _pages.animateToPage(stage - 1, duration: const Duration(milliseconds: 280), curve: Curves.easeInOut);
     }
   }
 
-  void _next() {
-    if (_stage < OnboardingPage.slideCount) {
-      _goTo(_stage + 1);
-      return;
-    }
-    context.go(RouteNames.createPet);
-  }
+  void _trackSlide(int stage) => analytics.capture(
+        AnalyticsEvents.onboardingSlideViewed,
+        properties: {AnalyticsProperties.step: stage},
+      );
 
   void _back() => _goTo(_stage - 1);
 
@@ -103,7 +100,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   Widget _slides() {
-    final last = _stage == OnboardingPage.slideCount;
     return Column(
       children: [
         Row(
@@ -121,36 +117,30 @@ class _OnboardingPageState extends State<OnboardingPage> {
         Expanded(
           child: PageView(
             controller: _pages,
-            physics: const NeverScrollableScrollPhysics(),
+            onPageChanged: (index) {
+              setState(() => _stage = index + 1);
+              _trackSlide(index + 1);
+            },
             children: const [
-              _Slide(
-                title: Text('Le carnet de santé de ton animal, enfin complet et tout le temps avec toi !'),
-                isLongTitle: true,
-                visual: HealthShowcaseWidget(),
-              ),
-              _Slide(
-                title: Text('Leur histoire mérite d\'être gardée.'),
-                subtitle: 'Photos, moments, petites manies : tout reste rangé dans le temps.',
-                visual: MemoriesShowcaseWidget(),
-              ),
-              _Slide(
-                title: Text('Ne manque plus rien.'),
-                subtitle: 'Nanimo te rappelle ses vaccins, ses rendez-vous et ce qui compte.',
-                visual: RemindersShowcaseWidget(),
-              ),
-              _Slide(
-                title: Text.rich(TextSpan(
-                  text: 'Maintenant, ajoute ton premier ',
-                  children: [TextSpan(text: 'Nanimo', style: TextStyle(color: AppColors.primary))],
-                )),
-                visual: PaywallMemoriesWidget(isAnimated: true),
-              ),
+              _Slide(title: Text('Le carnet de santé de ton animal !'), visual: _SlideImage('health')),
+              _Slide(title: Text('Tout tes animaux au même endroit !'), visual: _SlideImage('multi_pet', scale: 1.10)),
+              _Slide(title: Text('Ajoute tous tes souvenirs.'), visual: _SlideImage('memories', scale: 1.20)),
+              _Slide(title: Text("N'oublie plus rien !"), visual: _SlideImage('reminders')),
             ],
           ),
         ),
         Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
-          child: ButtonWidget(label: last ? 'Commencer' : 'Continuer', onPressed: _next, fullWidth: true),
+          child: SizedBox(
+              height: 52,
+              child: _stage == OnboardingPage.slideCount
+                  ? ButtonWidget(label: 'Continuer', fullWidth: true, onPressed: () => context.go(RouteNames.createPet))
+                  : ButtonWidget(
+                      label: 'Suivant',
+                      type: ButtonType.secondary,
+                      fullWidth: true,
+                      onPressed: () => _goTo(_stage + 1),
+                    )),
         ),
       ],
     );
@@ -159,13 +149,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
 class _Slide extends StatelessWidget {
   final Widget title;
-  final String? subtitle;
   final Widget visual;
 
-  /// Steps down one title size so the visual keeps its room on an iPhone SE.
-  final bool isLongTitle;
-
-  const _Slide({required this.title, required this.visual, this.subtitle, this.isLongTitle = false});
+  const _Slide({required this.title, required this.visual});
 
   @override
   Widget build(BuildContext context) {
@@ -177,16 +163,34 @@ class _Slide extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           DefaultTextStyle.merge(
             textAlign: TextAlign.center,
-            style: isLongTitle ? AppTextStyles.title03 : AppTextStyles.title02,
+            style: AppTextStyles.title02,
             child: title,
           ),
-          if (subtitle != null) ...[
-            const SizedBox(height: AppSpacing.sm),
-            Text(subtitle!, textAlign: TextAlign.center, style: AppTextStyles.text.copyWith(color: AppColors.textSecondary)),
-          ],
           const SizedBox(height: AppSpacing.lg),
           Expanded(child: Center(child: visual)),
         ],
+      ),
+    );
+  }
+}
+
+/// Fits the supplied artwork in full within the space left by the title.
+class _SlideImage extends StatelessWidget {
+  final String name;
+
+  /// Above 1 the artwork spills past the side margins. Anchored a little low
+  /// so it grows into the gap under the title, not past the page bottom.
+  final double scale;
+
+  const _SlideImage(this.name, {this.scale = 1});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.expand(
+      child: Transform.scale(
+        scale: scale,
+        alignment: const Alignment(0, 0.1),
+        child: Image.asset('assets/onboarding/$name.png', fit: BoxFit.contain),
       ),
     );
   }

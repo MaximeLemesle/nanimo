@@ -4,22 +4,22 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_confetti/flutter_confetti.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/notifications/diary_follow_up_store.dart';
-import 'package:nanimo/core/notifications/notification_priming.dart';
-import 'package:nanimo/core/notifications/notifications.dart';
+import 'package:nanimo/core/notifications/notification_permission_dialog.dart';
+import 'package:nanimo/core/utils/chip_number.dart';
 import 'package:nanimo/core/utils/date_formatter.dart';
 import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:nanimo/core/utils/weight_formatter.dart';
 import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
-import 'package:nanimo/core/widgets/chip_widget.dart';
 import 'package:nanimo/core/widgets/date_field_widget.dart';
 import 'package:nanimo/core/widgets/date_time_field_widget.dart';
-import 'package:nanimo/core/widgets/pet_avatar_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/health_diary_book_widget.dart';
 import 'package:nanimo/core/widgets/step_indicator_widget.dart';
 import 'package:nanimo/core/widgets/text_field_widget.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
@@ -28,8 +28,18 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_di
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/add_vet_visit_bottom_sheet_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/chip_number_field_widget.dart';
 
-typedef _Vaccine = ({String name, DateTime? lastDate, DateTime? nextDate, int recurrence});
-typedef _Visit = ({String title, DateTime visitedAt, String? vetName, String? clinicName});
+typedef _Vaccine = ({
+  String name,
+  DateTime? lastDate,
+  DateTime? nextDate,
+  int recurrence
+});
+typedef _Visit = ({
+  String title,
+  DateTime visitedAt,
+  String? vetName,
+  String? clinicName
+});
 
 /// The health diary filled the way a pet is created (NAN-116): one question
 /// per screen, nothing saved until « Valider le carnet », then a celebration.
@@ -62,16 +72,29 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
   void initState() {
     super.initState();
     context.read<PetDetailsCubit>().selectPet(widget.petId);
+    _weight.addListener(_onWeightChanged);
   }
+
+  void _onWeightChanged() => setState(() {});
+
+  /// The first two screens wait for their answer before letting the user on.
+  bool get _canContinue => switch (_step) {
+        1 => WeightFormatter.parseWeight(_weight.text) != null,
+        2 => _isSterilized != null &&
+            _isChipped != null &&
+            (_isSterilized == false || _sterilizedAt != null) &&
+            (_isChipped == false || ChipNumber.isComplete(_chip.text)),
+        _ => true,
+      };
 
   @override
   void dispose() {
     _pages.dispose();
+    _weight.removeListener(_onWeightChanged);
     _weight.dispose();
     _chip.dispose();
     super.dispose();
   }
-
 
   PetModel? _petOf(List<PetModel> pets) {
     for (final pet in pets) {
@@ -82,7 +105,8 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
 
   void _goTo(int step) {
     setState(() => _step = step);
-    _pages.animateToPage(step - 1, duration: const Duration(milliseconds: 280), curve: Curves.easeInOut);
+    _pages.animateToPage(step - 1,
+        duration: const Duration(milliseconds: 280), curve: Curves.easeInOut);
   }
 
   void _back() {
@@ -96,14 +120,17 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
   Future<void> _validate() async {
     setState(() => _saving = true);
     final dewormings = [..._dewormings]..sort();
-    final birthdate = _petOf(context.read<PetDetailsCubit>().state.pets)?.birthdate;
+    final birthdate =
+        _petOf(context.read<PetDetailsCubit>().state.pets)?.birthdate;
     await context.read<PetDetailsCubit>().createHealthDiary(
           birthWeight: WeightFormatter.parseWeight(_weight.text),
           birthWeightDate: birthdate,
           isSterilized: _isSterilized,
           sterilizedAt: _sterilizedAt,
           isChipped: _isChipped,
-          chipNumber: _isChipped == true && _chip.text.trim().isNotEmpty ? _chip.text.trim() : null,
+          chipNumber: _isChipped == true && _chip.text.trim().isNotEmpty
+              ? _chip.text.trim()
+              : null,
           lastDeworming: dewormings.isEmpty ? null : dewormings.last,
           vaccines: _vaccines,
           vetVisits: _visits,
@@ -118,18 +145,19 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
     final now = DateTime.now();
     final at = await BottomSheetWidget.show<DateTime>(
       context,
-      _RemindLaterSheet(initial: DateTime(now.year, now.month, now.day + 1, 18)),
+      _RemindLaterSheet(
+          initial: DateTime(now.year, now.month, now.day + 1, 18)),
     );
     if (at == null || !mounted) return;
-    if (await notificationPriming.permissionState() == NotificationPermissionState.undetermined) {
-      await notificationPriming.accept();
-    }
-    await diaryFollowUpStore.add(DiaryFollowUp(petId: widget.petId, topic: topic, at: at));
+    if (!mounted || !await ensureReminderPermission(context)) return;
+    await diaryFollowUpStore
+        .add(DiaryFollowUp(petId: widget.petId, topic: topic, at: at));
     if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..clearSnackBars()
       ..showSnackBar(SnackBar(
-        content: Text('On te le rappellera le ${DateFormatter.date(at)} à ${DateFormatter.time(at)}.'),
+        content: Text(
+            'On te le rappellera le ${DateFormatter.date(at)} à ${DateFormatter.time(at)}.'),
       ));
     if (topic == DiaryFollowUpTopic.vaccines) {
       _goTo(4);
@@ -144,8 +172,18 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
       context,
       AddVaccineBottomSheetWidget(
         birthdate: birthdate,
-        onSubmit: ({required String vaccineName, DateTime? lastDate, DateTime? nextDate, required int recurrence, String? petId}) {
-          created = (name: vaccineName, lastDate: lastDate, nextDate: nextDate, recurrence: recurrence);
+        onSubmit: (
+            {required String vaccineName,
+            DateTime? lastDate,
+            DateTime? nextDate,
+            required int recurrence,
+            String? petId}) {
+          created = (
+            name: vaccineName,
+            lastDate: lastDate,
+            nextDate: nextDate,
+            recurrence: recurrence
+          );
         },
       ),
     );
@@ -154,13 +192,10 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
   }
 
   Future<void> _addDeworming(DateTime birthdate) async {
-    final now = DateTime.now();
-    final date = await showDatePicker(
-      context: context,
-      initialDate: now,
+    final date = await DateFieldWidget.pick(
+      context,
       firstDate: birthdate,
-      lastDate: now,
-      helpText: 'Date du vermifuge',
+      lastDate: DateTime.now(),
     );
     if (date != null && mounted) setState(() => _dewormings.add(date));
   }
@@ -171,8 +206,18 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
       context,
       AddVetVisitBottomSheetWidget(
         birthdate: birthdate,
-        onSubmit: ({required String title, required DateTime visitedAt, String? vetName, String? clinicName, String? petId}) {
-          created = (title: title, visitedAt: visitedAt, vetName: vetName, clinicName: clinicName);
+        onSubmit: (
+            {required String title,
+            required DateTime visitedAt,
+            String? vetName,
+            String? clinicName,
+            String? petId}) {
+          created = (
+            title: title,
+            visitedAt: visitedAt,
+            vetName: vetName,
+            clinicName: clinicName
+          );
         },
       ),
     );
@@ -183,7 +228,9 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
   @override
   Widget build(BuildContext context) {
     final pet = _petOf(context.watch<PetDetailsCubit>().state.pets);
-    if (pet == null) return const Scaffold(backgroundColor: AppColors.background);
+    if (pet == null) {
+      return const Scaffold(backgroundColor: AppColors.background);
+    }
     final celebrating = _step > HealthDiaryWizardPage.questionSteps;
 
     return PopScope(
@@ -206,7 +253,9 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
                       color: AppColors.textPrimary,
                     ),
                     Expanded(
-                      child: StepIndicatorWidget(currentStep: _step, totalSteps: HealthDiaryWizardPage.questionSteps),
+                      child: StepIndicatorWidget(
+                          currentStep: _step,
+                          totalSteps: HealthDiaryWizardPage.questionSteps),
                     ),
                     const SizedBox(width: 48),
                   ],
@@ -222,8 +271,12 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
                     _visitsStep(pet),
                     _DiaryCreated(
                       pet: pet,
-                      portrait: context.read<PetDetailsCubit>().state.portraits[pet.petId],
+                      portrait: context
+                          .read<PetDetailsCubit>()
+                          .state
+                          .portraits[pet.petId],
                       isShown: celebrating,
+                      highlights: _highlights(pet),
                     ),
                   ],
                 ),
@@ -232,6 +285,20 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
                 padding: const EdgeInsets.all(AppSpacing.lg),
                 child: Column(
                   children: [
+                    if (_step == 1)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                        child: ButtonWidget(
+                          label: 'Je ne sais pas',
+                          type: ButtonType.secondary,
+                          fullWidth: true,
+                          onPressed: () {
+                            _weight.clear();
+                            FocusScope.of(context).unfocus();
+                            _goTo(2);
+                          },
+                        ),
+                      ),
                     if (_step == 3 || _step == 4)
                       Padding(
                         padding: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -242,19 +309,26 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
                           iconPosition: ButtonIcon.left,
                           fullWidth: true,
                           onPressed: () => _remindLater(
-                            _step == 3 ? DiaryFollowUpTopic.vaccines : DiaryFollowUpTopic.vetVisits,
+                            _step == 3
+                                ? DiaryFollowUpTopic.vaccines
+                                : DiaryFollowUpTopic.vetVisits,
                           ),
                         ),
                       ),
                     ButtonWidget(
                       label: switch (_step) {
                         4 => 'Valider le carnet',
-                        5 => 'Voir le carnet',
+                        5 => 'Terminer',
                         _ => 'Continuer',
                       },
                       fullWidth: true,
                       isLoading: _saving,
-                      onPressed: _saving ? null : () => _onPrimary(pet),
+                      state: _canContinue
+                          ? ButtonState.normal
+                          : ButtonState.disabled,
+                      onPressed: _saving || !_canContinue
+                          ? null
+                          : () => _onPrimary(pet),
                     ),
                   ],
                 ),
@@ -271,10 +345,50 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
       case 4:
         _validate();
       case 5:
-        /// The caller, inside the shell, opens the diary it owns.
-        context.pop(true);
+        context.go(RouteNames.home);
       default:
         _goTo(_step + 1);
+    }
+  }
+
+  /// What the diary now holds, shown as chips on the last screen.
+  List<String> _highlights(PetModel pet) {
+    final female = pet.gender == Gender.female;
+    final weight = WeightFormatter.parseWeight(_weight.text);
+    String count(int n, String word) => '$n $word${n > 1 ? 's' : ''}';
+    return [
+      if (weight != null) '${_weight.text.trim()} kg à la naissance',
+      if (_isSterilized == true)
+        switch (pet.gender) {
+          Gender.male => 'Castré',
+          Gender.female => 'Stérilisée',
+          Gender.unknown => 'Stérilisé',
+        },
+      if (_isChipped == true) female ? 'Pucée' : 'Pucé',
+      if (_vaccines.isNotEmpty) count(_vaccines.length, 'vaccin'),
+      if (_dewormings.isNotEmpty) count(_dewormings.length, 'vermifuge'),
+      if (_visits.isNotEmpty) count(_visits.length, 'visite'),
+    ];
+  }
+
+  Future<void> _editBirthdate(PetModel pet) async {
+    final now = DateTime.now();
+    final birthdate = await DateFieldWidget.pick(
+      context,
+      value: pet.birthdate.isAfter(now) ? now : pet.birthdate,
+      firstDate: DateTime(1900),
+      lastDate: now,
+    );
+    if (birthdate == null || !mounted) return;
+    final saved =
+        await context.read<PetDetailsCubit>().updateBirthdate(birthdate);
+    if (!mounted) return;
+    if (!saved) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content:
+                Text('Impossible de modifier la date de naissance. Réessaie.')),
+      );
     }
   }
 
@@ -283,7 +397,8 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
     return _Question(
       title: 'Poids de ${pet.petName} à sa naissance',
       children: [
-        Text('Le ${DateFormatter.date(pet.birthdate)}, $weighed :', style: AppTextStyles.textBold),
+        Text('Le ${DateFormatter.date(pet.birthdate)}, $weighed :',
+            style: AppTextStyles.textBold),
         const SizedBox(height: AppSpacing.sm),
         TextFieldWidget(
           controller: _weight,
@@ -291,7 +406,18 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
           hint: '0,0',
           suffixText: 'kg',
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        ButtonWidget(
+          label: 'Modifier la date de naissance',
+          type: ButtonType.secondary,
+          icon: Icons.edit_calendar_rounded,
+          iconPosition: ButtonIcon.left,
+          fullWidth: true,
+          onPressed: () => _editBirthdate(pet),
         ),
       ],
     );
@@ -303,15 +429,20 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
       Gender.female => 'stérilisée',
       Gender.unknown => 'stérilisé',
     };
-    final chipped = pet.gender == Gender.female ? 'est-elle pucée' : 'est-il pucé';
+    final chipped =
+        pet.gender == Gender.female ? 'Est-elle pucée ?' : 'Est-il pucé ?';
     return _Question(
       title: 'Est-ce que ${pet.petName} est $neutered ?',
       children: [
-        _YesNo(value: _isSterilized, onChanged: (v) => setState(() => _isSterilized = v)),
+        _YesNo(
+            value: _isSterilized,
+            onChanged: (v) => setState(() => _isSterilized = v)),
         if (_isSterilized == true) ...[
           const SizedBox(height: AppSpacing.md),
           DateFieldWidget(
-            label: pet.gender == Gender.male ? 'Date de la castration' : 'Date de la stérilisation',
+            label: pet.gender == Gender.male
+                ? 'Date de la castration'
+                : 'Date de la stérilisation',
             value: _sterilizedAt,
             firstDate: pet.birthdate,
             lastDate: DateTime.now(),
@@ -319,12 +450,15 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
           ),
         ],
         const SizedBox(height: AppSpacing.xl),
-        Text('Et ${pet.petName}, $chipped ?', style: AppTextStyles.title03),
+        Text(chipped, style: AppTextStyles.title02),
         const SizedBox(height: AppSpacing.md),
-        _YesNo(value: _isChipped, onChanged: (v) => setState(() => _isChipped = v)),
+        _YesNo(
+            value: _isChipped,
+            onChanged: (v) => setState(() => _isChipped = v)),
         if (_isChipped == true) ...[
           const SizedBox(height: AppSpacing.md),
-          ChipNumberFieldWidget(controller: _chip, onChanged: () => setState(() {})),
+          ChipNumberFieldWidget(
+              controller: _chip, onChanged: () => setState(() {})),
         ],
       ],
     );
@@ -346,7 +480,9 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
                     : null,
             onRemove: () => setState(() => _vaccines.remove(vaccine)),
           ),
-        _AddButton(label: 'Ajouter un vaccin', onPressed: () => _addVaccine(pet.birthdate)),
+        _AddButton(
+            label: 'Ajouter un vaccin',
+            onPressed: () => _addVaccine(pet.birthdate)),
         const SizedBox(height: AppSpacing.lg),
         Text('Vermifuges', style: AppTextStyles.textBold),
         for (final date in _dewormings)
@@ -355,7 +491,9 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
             detail: 'Le ${DateFormatter.date(date)}',
             onRemove: () => setState(() => _dewormings.remove(date)),
           ),
-        _AddButton(label: 'Ajouter un vermifuge', onPressed: () => _addDeworming(pet.birthdate)),
+        _AddButton(
+            label: 'Ajouter un vermifuge',
+            onPressed: () => _addDeworming(pet.birthdate)),
       ],
     );
   }
@@ -371,7 +509,9 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
             detail: DateFormatter.date(visit.visitedAt),
             onRemove: () => setState(() => _visits.remove(visit)),
           ),
-        _AddButton(label: 'Ajouter une visite', onPressed: () => _addVisit(pet.birthdate)),
+        _AddButton(
+            label: 'Ajouter une visite',
+            onPressed: () => _addVisit(pet.birthdate)),
       ],
     );
   }
@@ -394,7 +534,9 @@ class _Question extends StatelessWidget {
           Text(title, style: AppTextStyles.title02),
           if (subtitle != null) ...[
             const SizedBox(height: AppSpacing.xs),
-            Text(subtitle!, style: AppTextStyles.text.copyWith(color: AppColors.textSecondary)),
+            Text(subtitle!,
+                style: AppTextStyles.text
+                    .copyWith(color: AppColors.textSecondary)),
           ],
           const SizedBox(height: AppSpacing.lg),
           ...children,
@@ -412,11 +554,36 @@ class _YesNo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: AppSpacing.sm,
+    return Row(
       children: [
-        ChipWidget(label: 'Oui', isSelected: value == true, onTap: () => onChanged(true)),
-        ChipWidget(label: 'Non', isSelected: value == false, onTap: () => onChanged(false)),
+        for (final option in [true, false]) ...[
+          if (!option) const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Semantics(
+              selected: value == option,
+              child: DecoratedBox(
+                position: DecorationPosition.foreground,
+                decoration: ShapeDecoration(
+                  shape: ContinuousRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md * 2),
+                    side: BorderSide(
+                        color: value == option
+                            ? AppColors.primary
+                            : AppColors.backgroundStroke),
+                  ),
+                ),
+                child: ButtonWidget(
+                  label: option ? 'Oui' : 'Non',
+                  type: value == option
+                      ? ButtonType.primary
+                      : ButtonType.secondary,
+                  fullWidth: true,
+                  onPressed: () => onChanged(option),
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -435,7 +602,8 @@ class _Entry extends StatelessWidget {
       padding: const EdgeInsets.only(top: AppSpacing.sm),
       child: Row(
         children: [
-          const Icon(Icons.check_circle_rounded, color: AppColors.primary600, size: 20),
+          const Icon(Icons.check_circle_rounded,
+              color: AppColors.primary600, size: 20),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -443,7 +611,9 @@ class _Entry extends StatelessWidget {
               children: [
                 Text(label, style: AppTextStyles.text),
                 if (detail != null)
-                  Text(detail!, style: AppTextStyles.textSmall.copyWith(color: AppColors.textSecondary)),
+                  Text(detail!,
+                      style: AppTextStyles.textSmall
+                          .copyWith(color: AppColors.textSecondary)),
               ],
             ),
           ),
@@ -471,7 +641,8 @@ class _AddButton extends StatelessWidget {
       child: TextButton.icon(
         onPressed: onPressed,
         icon: const Icon(Icons.add, color: AppColors.primary),
-        label: Text(label, style: AppTextStyles.textBold.copyWith(color: AppColors.primary)),
+        label: Text(label,
+            style: AppTextStyles.textBold.copyWith(color: AppColors.primary)),
       ),
     );
   }
@@ -498,35 +669,50 @@ class _RemindLaterSheetState extends State<_RemindLaterSheet> {
       action: ButtonWidget(
         label: 'Programmer le rappel',
         fullWidth: true,
-        onPressed: _at.isAfter(now) ? () => Navigator.of(context).pop(_at) : null,
+        onPressed:
+            _at.isAfter(now) ? () => Navigator.of(context).pop(_at) : null,
       ),
       children: [
         DateTimeFieldWidget(
           value: _at,
           firstDate: now,
           lastDate: now.add(const Duration(days: 365)),
-          onDateChanged: (date) => setState(() => _at = DateTime(date.year, date.month, date.day, _at.hour, _at.minute)),
-          onTimeChanged: (time) => setState(() => _at = DateTime(_at.year, _at.month, _at.day, time.hour, time.minute)),
+          onDateChanged: (date) => setState(() => _at =
+              DateTime(date.year, date.month, date.day, _at.hour, _at.minute)),
+          onTimeChanged: (time) => setState(() => _at =
+              DateTime(_at.year, _at.month, _at.day, time.hour, time.minute)),
         ),
       ],
     );
   }
 }
 
-/// Last screen: the diary drawn as a booklet with the pet on its cover.
+/// Last screen: the diary drawn as a booklet with the pet on its cover,
+/// lifted in on a soft halo, with what it now holds.
 class _DiaryCreated extends StatefulWidget {
   final PetModel pet;
   final PetPortrait? portrait;
   final bool isShown;
+  final List<String> highlights;
 
-  const _DiaryCreated({required this.pet, required this.portrait, required this.isShown});
+  const _DiaryCreated(
+      {required this.pet,
+      required this.portrait,
+      required this.isShown,
+      required this.highlights});
 
   @override
   State<_DiaryCreated> createState() => _DiaryCreatedState();
 }
 
 class _DiaryCreatedState extends State<_DiaryCreated> {
-  static const _colors = [AppColors.primary, AppColors.secondary, AppColors.tertiary, AppColors.primary300];
+  static const _colors = [
+    AppColors.primary,
+    AppColors.secondary,
+    AppColors.tertiary,
+    AppColors.primary300
+  ];
+  static const _entrance = Duration(milliseconds: 600);
   bool _celebrated = false;
 
   @override
@@ -539,7 +725,13 @@ class _DiaryCreatedState extends State<_DiaryCreated> {
         for (final (angle, x) in const [(60.0, 0.0), (120.0, 1.0)]) {
           Confetti.launch(
             context,
-            options: ConfettiOptions(particleCount: 60, angle: angle, spread: 55, x: x, y: 0.7, colors: _colors),
+            options: ConfettiOptions(
+                particleCount: 60,
+                angle: angle,
+                spread: 55,
+                x: x,
+                y: 0.7,
+                colors: _colors),
           );
         }
       });
@@ -548,84 +740,96 @@ class _DiaryCreatedState extends State<_DiaryCreated> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final shown = widget.isShown;
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _Booklet(portrait: widget.portrait, petName: widget.pet.petName),
-          const SizedBox(height: AppSpacing.xl),
-          Text('Le carnet de ${widget.pet.petName} est créé !', textAlign: TextAlign.center, style: AppTextStyles.title02),
+          const SizedBox(height: AppSpacing.lg),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              Container(
+                width: 300,
+                height: 300,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(colors: [
+                    AppColors.primary100,
+                    Color(0x00D5F2ED),
+                  ]),
+                ),
+              ),
+              AnimatedScale(
+                scale: shown ? 1 : 0.8,
+                duration: _entrance,
+                curve: Curves.easeOutBack,
+                child: AnimatedOpacity(
+                  opacity: shown ? 1 : 0,
+                  duration: _entrance,
+                  child: HealthDiaryBookWidget(
+                      portrait: widget.portrait, petName: widget.pet.petName),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Text.rich(
+            TextSpan(text: 'Le carnet de ', children: [
+              TextSpan(
+                  text: widget.pet.petName,
+                  style: const TextStyle(color: AppColors.primary)),
+              const TextSpan(text: ' est créé !'),
+            ]),
+            textAlign: TextAlign.center,
+            style: AppTextStyles.title02,
+          ),
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Tout ce qui compte pour sa santé est maintenant au même endroit.',
             textAlign: TextAlign.center,
             style: AppTextStyles.text.copyWith(color: AppColors.textSecondary),
           ),
+          if (widget.highlights.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.lg),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: [
+                for (final highlight in widget.highlights)
+                  _HighlightChip(label: highlight),
+              ],
+            ),
+          ],
         ],
       ),
     );
   }
 }
 
-class _Booklet extends StatelessWidget {
-  final PetPortrait? portrait;
-  final String petName;
+class _HighlightChip extends StatelessWidget {
+  final String label;
 
-  const _Booklet({required this.portrait, required this.petName});
+  const _HighlightChip({required this.label});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 180,
-      height: 232,
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md, vertical: AppSpacing.xs),
       decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(AppRadius.sm),
-          bottomLeft: Radius.circular(AppRadius.sm),
-          topRight: Radius.circular(AppRadius.lg),
-          bottomRight: Radius.circular(AppRadius.lg),
-        ),
-        boxShadow: const [BoxShadow(color: AppColors.shadow, blurRadius: 24, offset: Offset(0, 12))],
+        color: AppColors.backgroundPrimary,
+        borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 18,
-            decoration: const BoxDecoration(
-              color: AppColors.primary700,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(AppRadius.sm),
-                bottomLeft: Radius.circular(AppRadius.sm),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(AppSpacing.sm),
-                  decoration: const BoxDecoration(color: AppColors.backgroundSurface, shape: BoxShape.circle),
-                  child: SizedBox.square(
-                    dimension: PetAvatarSize.medium.dimension,
-                    child: portrait == null
-                        ? const Icon(Icons.pets_rounded, color: AppColors.primary, size: 48)
-                        : PetAvatarWidget(portrait: portrait!, size: PetAvatarSize.medium),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Text('Carnet de santé', style: AppTextStyles.textSmallBold.copyWith(color: AppColors.textInvert)),
-                Text(
-                  petName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.title03.copyWith(color: AppColors.textInvert),
-                ),
-              ],
-            ),
-          ),
+          const Icon(Icons.check_rounded, size: 16, color: AppColors.primary600),
+          const SizedBox(width: AppSpacing.xs),
+          Text(label,
+              style:
+                  AppTextStyles.textSmallBold.copyWith(color: AppColors.primary800)),
         ],
       ),
     );

@@ -12,12 +12,21 @@ class PetCreationState extends Equatable {
   /// True for the pet inserted right after the signup, false for an in-app one.
   final bool createdDuringOnboarding;
 
+  /// The onboarding pet is written but the home has not shown it yet.
+  final String? awaitedPetId;
+
   const PetCreationState({
     this.status = PetCreationStatus.idle,
     this.error,
     this.pendingPet,
     this.createdDuringOnboarding = false,
+    this.awaitedPetId,
   });
+
+  /// The home keeps its loader instead of saying it has no animal.
+  bool get isPetOnItsWay =>
+      (pendingPet != null && status != PetCreationStatus.error) ||
+      awaitedPetId != null;
 
   PetCreationState copyWith({
     PetCreationStatus? status,
@@ -25,7 +34,9 @@ class PetCreationState extends Equatable {
     PetModel? pendingPet,
     bool? createdDuringOnboarding,
     bool clearError = false,
+    String? awaitedPetId,
     bool clearPendingPet = false,
+    bool clearAwaitedPet = false,
   }) {
     return PetCreationState(
       status: status ?? this.status,
@@ -33,10 +44,12 @@ class PetCreationState extends Equatable {
       pendingPet: clearPendingPet ? null : (pendingPet ?? this.pendingPet),
       createdDuringOnboarding:
           createdDuringOnboarding ?? this.createdDuringOnboarding,
+      awaitedPetId:
+          clearAwaitedPet ? null : (awaitedPetId ?? this.awaitedPetId),
     );
   }
 
   @override
   List<Object?> get props =>
-      [status, error, pendingPet, createdDuringOnboarding];
+      [status, error, pendingPet, createdDuringOnboarding, awaitedPetId];
 }

@@ -20,8 +20,7 @@ import 'package:nanimo/features/subscription/presentation/widgets/paywall_offer_
 class PaywallPage extends StatefulWidget {
   final Future<bool> Function(Uri url)? onOpenLegalLink;
 
-  /// Last screen of the onboarding trial flow (NAN-113): it steps back to the
-  /// reminder screen, and "Non merci" goes on to the app.
+  /// At the end of onboarding, closing the standard paywall reaches the home.
   final bool isOnboarding;
 
   const PaywallPage({
@@ -74,9 +73,7 @@ class _PaywallPageState extends State<PaywallPage> {
           child: Scaffold(
             backgroundColor: AppColors.background,
             body: SafeArea(
-              child: state.isCompletingPurchase
-                  ? const PaywallConfirmingWidget()
-                  : _body(context, state),
+              child: state.isCompletingPurchase ? const PaywallConfirmingWidget() : _body(context, state),
             ),
           ),
         );
@@ -102,24 +99,13 @@ class _PaywallPageState extends State<PaywallPage> {
     _leave(context);
   }
 
-  Widget _topButton(BuildContext context) {
-    if (_isOnboarding) {
-      return IconButton(
+  Widget _topButton(BuildContext context) => IconButton(
         padding: EdgeInsets.zero,
-        icon: const Icon(Icons.arrow_back_rounded),
+        icon: const Icon(Icons.close_rounded),
         color: AppColors.textPrimary,
-        tooltip: 'Retour',
-        onPressed: () => Navigator.of(context).maybePop(),
+        tooltip: 'Fermer',
+        onPressed: () => _dismiss(context, 'close'),
       );
-    }
-    return IconButton(
-      padding: EdgeInsets.zero,
-      icon: const Icon(Icons.close_rounded),
-      color: AppColors.textPrimary,
-      tooltip: 'Fermer',
-      onPressed: () => _dismiss(context, 'close'),
-    );
-  }
 
   Widget _body(BuildContext context, PaywallState state) {
     if (state.status == PaywallStatus.loading) {
@@ -129,9 +115,6 @@ class _PaywallPageState extends State<PaywallPage> {
     if (state.status == PaywallStatus.error) {
       return _errorView(context, state);
     }
-
-    final monthly = _offerOf(state, PaywallPeriod.monthly);
-    final offers = [...state.offers]..sort((a, b) => _rank(a).compareTo(_rank(b)));
 
     return LayoutBuilder(
       builder: (context, constraints) => SingleChildScrollView(
@@ -149,49 +132,59 @@ class _PaywallPageState extends State<PaywallPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Align(alignment: Alignment.centerLeft, child: _topButton(context)),
+                  Align(alignment: Alignment.centerRight, child: _topButton(context)),
                   const PaywallMemoriesWidget(isAnimated: true),
-                  const SizedBox(height: AppSpacing.lg),
                   const Spacer(),
-                  _title(_offerOf(state, PaywallPeriod.annual)),
+                  _title(state.offers),
                   const SizedBox(height: AppSpacing.md),
-                  ...offers.map(
+                  for (final line in [
+                    ...paywallLines,
+                    if (state.offers.any((offer) => offer.hasTrial)) paywallTrialReminder,
+                  ])
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(line.icon, style: AppTextStyles.text),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Text.rich(TextSpan(
+                              text: line.text,
+                              style: AppTextStyles.text,
+                              children: [
+                                TextSpan(text: line.bold, style: AppTextStyles.textBold),
+                              ],
+                            )),
+                          ),
+                        ],
+                      ),
+                    ),
+                  const Spacer(),
+                  const SizedBox(height: AppSpacing.md),
+                  ..._annualFirst(state.offers).map(
                     (offer) => Padding(
                       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                       child: PaywallOfferCardWidget(
                         offer: offer,
+                        monthly: _monthly(state.offers),
                         isSelected: offer.packageId == state.selectedPackageId,
-                        savingsPercent: offer.savingsAgainst(monthly),
                         onTap: () => context.read<PaywallCubit>().selectOffer(offer.packageId),
                       ),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   ButtonWidget(
-                    label: paywallCta,
+                    label: _ctaLabel(state.selectedOffer),
                     fullWidth: true,
                     isLoading: state.isPurchasing,
                     state: state.isBusy ? ButtonState.disabled : ButtonState.normal,
                     onPressed: state.isBusy ? null : () => context.read<PaywallCubit>().purchase(),
                   ),
-                  if (_isOnboarding)
-                    TextButton(
-                      onPressed: () => _dismiss(context, 'no_thanks'),
-                      child: Text(
-                        paywallNoThanks,
-                        style: AppTextStyles.textBold.copyWith(color: AppColors.textSecondary),
-                      ),
-                    )
-                  else
-                    const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    paywallLegalNotice(state.selectedOffer),
-                    textAlign: TextAlign.center,
-                    style: AppTextStyles.textSmall.copyWith(
-                      fontSize: 10,
-                      height: 1.35,
-                      color: AppColors.textSecondary,
-                    ),
+                  const SizedBox(height: AppSpacing.md),
+                  SizedBox(
+                    height: _legalHeight(context, state.offers, constraints.maxWidth - AppSpacing.lg * 2),
+                    child: _legalNotice(state.selectedOffer),
                   ),
                   if (state.isRestoring)
                     const Padding(
@@ -214,20 +207,17 @@ class _PaywallPageState extends State<PaywallPage> {
     );
   }
 
-  /// "Commence tes 14 jours gratuits", the trial in the brand colour. Without
-  /// a trial on the annual plan, the plain product name.
-  Widget _title(PaywallOfferModel? annual) {
-    if (annual == null || !annual.hasTrial) {
-      return Text(paywallTitle, textAlign: TextAlign.center, style: AppTextStyles.title02);
-    }
+  Widget _title(List<PaywallOfferModel> offers) {
+    final trial = offers.where((offer) => offer.hasTrial).firstOrNull;
     return Text.rich(
       TextSpan(
-        text: 'Commence tes ',
+        text: trial == null ? paywallTitle : paywallTrialTitleStart,
         children: [
-          TextSpan(
-            text: '${annual.trialDays} jours gratuits',
-            style: const TextStyle(color: AppColors.primary),
-          ),
+          if (trial != null)
+            TextSpan(
+              text: paywallTrialTitleDays(trial.trialDays),
+              style: const TextStyle(color: AppColors.primary),
+            ),
         ],
       ),
       textAlign: TextAlign.center,
@@ -235,25 +225,48 @@ class _PaywallPageState extends State<PaywallPage> {
     );
   }
 
-  /// Annual first: it is the plan that carries the trial.
-  static int _rank(PaywallOfferModel offer) => switch (offer.period) {
-        PaywallPeriod.annual => 0,
-        PaywallPeriod.monthly => 1,
-        PaywallPeriod.other => 2,
-      };
+  List<PaywallOfferModel> _annualFirst(List<PaywallOfferModel> offers) => [
+        ...offers.where((offer) => offer.period == PaywallPeriod.annual),
+        ...offers.where((offer) => offer.period != PaywallPeriod.annual),
+      ];
 
-  static PaywallOfferModel? _offerOf(PaywallState state, PaywallPeriod period) {
-    for (final offer in state.offers) {
-      if (offer.period == period) return offer;
+  PaywallOfferModel? _monthly(List<PaywallOfferModel> offers) {
+    for (final offer in offers) {
+      if (offer.period == PaywallPeriod.monthly) return offer;
     }
     return null;
   }
+
+  double _legalHeight(BuildContext context, List<PaywallOfferModel> offers, double width) {
+    var height = 0.0;
+    for (final offer in offers) {
+      final painter = TextPainter(
+        text: TextSpan(text: paywallLegalNotice(offer), style: _legalStyle),
+        textDirection: Directionality.of(context),
+        textScaler: MediaQuery.textScalerOf(context),
+      )..layout(maxWidth: width);
+      if (painter.height > height) height = painter.height;
+      painter.dispose();
+    }
+    return height.ceilToDouble() + 2;
+  }
+
+  TextStyle get _legalStyle => AppTextStyles.textSmall.copyWith(fontSize: 10, height: 1.35, color: AppColors.textSecondary);
+
+  Widget _legalNotice(PaywallOfferModel? offer) => Text(
+        paywallLegalNotice(offer),
+        textAlign: TextAlign.center,
+        style: _legalStyle,
+      );
+
+  String _ctaLabel(PaywallOfferModel? offer) =>
+      offer?.hasTrial == true ? 'Essayer ${offer!.trialDays} jours gratuitement' : 'Passer premium';
 
   Widget _errorView(BuildContext context, PaywallState state) {
     return Stack(
       children: [
         Align(
-          alignment: Alignment.topLeft,
+          alignment: Alignment.topRight,
           child: IconButton(
             icon: const Icon(Icons.close_rounded),
             color: AppColors.textPrimary,

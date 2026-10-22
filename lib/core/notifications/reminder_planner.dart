@@ -5,7 +5,7 @@ import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/settings/data/models/notification_prefs_model.dart';
 
-enum ReminderKind { vaccine, vetVisit, birthday, adoption, trialEnd, diaryFollowUp }
+enum ReminderKind { vaccine, vetVisit, birthday, adoption, trialEnd, diaryFollowUp, deworming }
 
 /// One local notification to schedule. [key] is stable across runs, so the
 /// same reminder always gets the same platform id.
@@ -66,6 +66,7 @@ abstract final class ReminderPlanner {
   /// Promised on the trial screen: two days before the first charge.
   static const trialEndLeadDays = 2;
   static const trialPayloadId = 'trial';
+
   /// Same-day call before the appointment, never before [earliestSameDay].
   static const vetVisitSameDayLead = Duration(hours: 2);
   static const earliestSameDay = 7;
@@ -95,8 +96,26 @@ abstract final class ReminderPlanner {
             key: 'vaccine:${vaccine.healthDiaryVaccineId}:$lead',
             kind: ReminderKind.vaccine,
             when: _at(due, lead),
-            title: 'Rappel de vaccin',
+            title: '💉 Rappel de vaccin',
             body: 'Rappel ${vaccine.vaccineName} de ${pet.petName} ${_inDays(lead)}',
+            petId: pet.petId,
+          ));
+        }
+      }
+    }
+
+    if (prefs.vaccineReminders) {
+      for (final diary in diaries) {
+        final due = diary.nextDeworming;
+        final pet = petsById[diary.petId];
+        if (due == null || pet == null) continue;
+        for (final lead in vaccineLeadDays) {
+          planned.add(PlannedReminder(
+            key: 'deworming:${pet.petId}:${due.toIso8601String()}:$lead',
+            kind: ReminderKind.deworming,
+            when: _at(due, lead),
+            title: '💊 Rappel de vermifuge',
+            body: 'Vermifuge de ${pet.petName} ${_inDays(lead)}',
             petId: pet.petId,
           ));
         }
@@ -112,7 +131,7 @@ abstract final class ReminderPlanner {
             key: 'vet:${visit.vetVisitId}:$lead',
             kind: ReminderKind.vetVisit,
             when: _at(visit.visitedAt, lead),
-            title: 'Visite chez le vétérinaire',
+            title: '🩺 Visite chez le vétérinaire',
             body: '${visit.title} pour ${pet.petName} ${_inDays(lead)}',
             petId: pet.petId,
           ));
@@ -121,7 +140,7 @@ abstract final class ReminderPlanner {
           key: 'vet:${visit.vetVisitId}:0',
           kind: ReminderKind.vetVisit,
           when: sameDayCall(visit.visitedAt),
-          title: 'Visite chez le vétérinaire',
+          title: '🩺 Visite chez le vétérinaire',
           body: '${visit.title} pour ${pet.petName} ${_todayAt(visit.visitedAt)}',
           petId: pet.petId,
         ));
@@ -137,7 +156,7 @@ abstract final class ReminderPlanner {
           key: 'birthday:${pet.petId}:${when.year}',
           kind: ReminderKind.birthday,
           when: when,
-          title: 'Joyeux anniversaire 🎂',
+          title: '🎂 Joyeux anniversaire ${pet.petName} !',
           body: '${pet.petName} a $age ${age == 1 ? 'an' : 'ans'} aujourd\'hui. Un souvenir pour marquer le jour ?',
           petId: pet.petId,
         ));
@@ -152,10 +171,10 @@ abstract final class ReminderPlanner {
         key: 'diary:${pet.petId}:${followUp.topic.name}',
         kind: ReminderKind.diaryFollowUp,
         when: followUp.at,
-        title: 'Complète le carnet de ${pet.petName}',
+        title: '✏️ Complète le carnet de ${pet.petName}',
         body: switch (followUp.topic) {
-          DiaryFollowUpTopic.vaccines => 'Ses vaccins et ses vermifuges t\'attendent, deux minutes suffisent.',
-          DiaryFollowUpTopic.vetVisits => 'Ses visites chez le vétérinaire t\'attendent, deux minutes suffisent.',
+          DiaryFollowUpTopic.vaccines => 'Ses vaccins et vermifuges t\'attendent !',
+          DiaryFollowUpTopic.vetVisits => 'Ses visites chez le vétérinaire t\'attendent !',
         },
         petId: pet.petId,
       ));
@@ -167,8 +186,8 @@ abstract final class ReminderPlanner {
         key: 'trial:${end.toIso8601String()}',
         kind: ReminderKind.trialEnd,
         when: _at(end, trialEndLeadDays),
-        title: 'Ton essai se termine dans 2 jours',
-        body: 'Ton abonnement Nanimo Premium démarre le ${_dayMonth(end)}. Tu peux le résilier d\'ici là depuis les réglages.',
+        title: '🔔 Ton essai se termine dans 2 jours',
+        body: 'Ton essaie de 14 jours se termine le ${_dayMonth(end)}. Tu peux le résilier à tout moment dans les réglages.',
         petId: trialPayloadId,
       ));
     }
@@ -176,8 +195,7 @@ abstract final class ReminderPlanner {
     return nearest(planned, now: now);
   }
 
-  static String _dayMonth(DateTime day) =>
-      '${day.day.toString().padLeft(2, '0')}/${day.month.toString().padLeft(2, '0')}';
+  static String _dayMonth(DateTime day) => '${day.day.toString().padLeft(2, '0')}/${day.month.toString().padLeft(2, '0')}';
 
   /// Next anniversary at [hour], today included if the hour is still ahead.
   /// A 29 February falls on the 28th in common years.
@@ -194,8 +212,7 @@ abstract final class ReminderPlanner {
 
   /// Drops what is already past and keeps the [maxPending] nearest.
   static List<PlannedReminder> nearest(List<PlannedReminder> planned, {required DateTime now}) {
-    final upcoming = planned.where((r) => r.when.isAfter(now)).toList()
-      ..sort((a, b) => a.when.compareTo(b.when));
+    final upcoming = planned.where((r) => r.when.isAfter(now)).toList()..sort((a, b) => a.when.compareTo(b.when));
     return upcoming.length > maxPending ? upcoming.sublist(0, maxPending) : upcoming;
   }
 
@@ -216,8 +233,7 @@ abstract final class ReminderPlanner {
     return "aujourd'hui à ${local.hour}h${local.minute.toString().padLeft(2, '0')}";
   }
 
-  static DateTime _at(DateTime day, int leadDays) =>
-      DateTime(day.year, day.month, day.day - leadDays, hour);
+  static DateTime _at(DateTime day, int leadDays) => DateTime(day.year, day.month, day.day - leadDays, hour);
 
   static String _inDays(int lead) => lead == 1 ? 'demain' : 'dans $lead jours';
 }

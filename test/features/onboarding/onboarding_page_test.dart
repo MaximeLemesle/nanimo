@@ -52,31 +52,43 @@ void main() {
     expect(find.text('J\'ai déjà un compte'), findsOneWidget);
   });
 
-  testWidgets('walks the four slides, then starts the pet creation', (tester) async {
+  testWidgets('the secondary button moves to the next slide', (tester) async {
     await pumpOnboarding(tester);
-
     await next(tester, 'Découvrir');
-    expect(find.textContaining('Le carnet de santé de ton animal'), findsOneWidget);
-    await next(tester, 'Continuer');
-    expect(find.text('Leur histoire mérite d\'être gardée.'), findsOneWidget);
-    await next(tester, 'Continuer');
-    expect(find.text('Ne manque plus rien.'), findsOneWidget);
-    await next(tester, 'Continuer');
-    expect(find.textContaining('ajoute ton premier', findRichText: true), findsOneWidget);
-    expect(tester.takeException(), isNull, reason: 'every slide fits an iPhone SE');
+    await next(tester, 'Suivant');
+    expect(find.text('Tout tes animaux au même endroit !'), findsOneWidget);
+  });
 
-    await next(tester, 'Commencer');
+  testWidgets('swipes the four slides and only the last has a continue button', (tester) async {
+    await pumpOnboarding(tester);
+    await next(tester, 'Découvrir');
+    final titles = [
+      'Le carnet de santé de ton animal !',
+      'Tout tes animaux au même endroit !',
+      'Ajoute tous tes souvenirs.',
+      "N'oublie plus rien !",
+    ];
+    for (var index = 0; index < titles.length; index++) {
+      expect(find.text(titles[index]), findsOneWidget);
+      expect(find.text('Continuer'), index == 3 ? findsOneWidget : findsNothing);
+      expect(find.text('Suivant'), index < 3 ? findsOneWidget : findsNothing);
+      if (index < 3) {
+        await tester.drag(find.byType(PageView), const Offset(-350, 0));
+        await tester.pumpAndSettle();
+      }
+    }
+    expect(tester.takeException(), isNull);
+    await next(tester, 'Continuer');
     expect(find.text('create-pet'), findsOneWidget);
-    expect(
-      recorder.events.where((e) => e.name == AnalyticsEvents.onboardingSlideViewed).map((e) => e.properties[AnalyticsProperties.step]),
-      [1, 2, 3, 4],
-    );
+    expect(recorder.events.where((e) => e.name == AnalyticsEvents.onboardingSlideViewed).map((e) => e.properties[AnalyticsProperties.step]),
+        [1, 2, 3, 4]);
   });
 
   testWidgets('steps back through the slides to the welcome screen', (tester) async {
     await pumpOnboarding(tester);
     await next(tester, 'Découvrir');
-    await next(tester, 'Continuer');
+    await tester.drag(find.byType(PageView), const Offset(-350, 0));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.byTooltip('Retour'));
     for (var i = 0; i < 20; i++) {

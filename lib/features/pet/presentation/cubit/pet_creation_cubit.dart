@@ -87,6 +87,7 @@ class PetCreationCubit extends Cubit<PetCreationState> {
       emit(state.copyWith(
         status: PetCreationStatus.success,
         clearPendingPet: true,
+        awaitedPetId: duringOnboarding ? pet.petId : null,
       ));
     } on RepositoryException catch (e) {
       _trackCreationFailed(e is RepositoryNetworkException ? 'network' : 'server');
@@ -108,6 +109,12 @@ class PetCreationCubit extends Cubit<PetCreationState> {
       AnalyticsEvents.petCreationFailed,
       properties: {AnalyticsProperties.reason: reason},
     );
+  }
+
+  /// The home received the onboarding pet from the cache.
+  void petShown() {
+    if (state.awaitedPetId == null) return;
+    emit(state.copyWith(clearAwaitedPet: true));
   }
 
   Future<void> retry() async {

@@ -90,6 +90,25 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     }
   }
 
+  /// Corrects the birthdate without leaving the diary draft or creating a diary.
+  Future<bool> updateBirthdate(DateTime birthdate) async {
+    final pet = state.selectedPet;
+    if (pet == null) return false;
+    try {
+      final updated = pet.copyWith(birthdate: birthdate);
+      await _petRepository.updatePet(updated);
+      if (isClosed) return false;
+      emit(state.copyWith(pets: [
+        for (final current in state.pets)
+          if (current.petId == pet.petId) updated else current,
+      ]));
+      return true;
+    } catch (err) {
+      if (!isClosed) emit(state.copyWith(error: err.toString()));
+      return false;
+    }
+  }
+
   Future<void> createHealthDiary({
     double? birthWeight,
     DateTime? birthWeightDate,
@@ -98,7 +117,13 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     bool? isChipped,
     String? chipNumber,
     DateTime? lastDeworming,
-    List<({String name, DateTime? lastDate, DateTime? nextDate, int recurrence})>
+    List<
+            ({
+              String name,
+              DateTime? lastDate,
+              DateTime? nextDate,
+              int recurrence
+            })>
         vaccines = const [],
     List<
             ({
@@ -122,6 +147,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
         chipNumber: chipNumber,
         lastDeworming: lastDeworming,
         lastVetAppointment: state.diary?.lastVetAppointment,
+        dewormingIntervalMonths: state.diary?.dewormingIntervalMonths,
       );
       await _healthRepository.upsertDiary(diary);
 
@@ -191,6 +217,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
         chipNumber: chipNumber ?? current?.chipNumber,
         lastDeworming: lastDeworming ?? current?.lastDeworming,
         lastVetAppointment: lastVetAppointment ?? current?.lastVetAppointment,
+        dewormingIntervalMonths: current?.dewormingIntervalMonths,
       );
       await _healthRepository.upsertDiary(diary);
     } catch (err) {
@@ -204,6 +231,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     required bool isChipped,
     String? chipNumber,
     DateTime? lastDeworming,
+    int? dewormingIntervalMonths,
   }) async {
     final petId = state.selectedPetId;
     if (petId == null) return;
@@ -218,11 +246,40 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
         chipNumber: isChipped ? chipNumber : null,
         lastDeworming: lastDeworming,
         lastVetAppointment: current?.lastVetAppointment,
+        dewormingIntervalMonths: dewormingIntervalMonths ?? current?.dewormingIntervalMonths,
       );
       await _healthRepository.upsertDiary(diary);
     } catch (err) {
       if (isClosed) return;
       emit(state.copyWith(error: err.toString()));
+    }
+  }
+
+  /// Records a deworming for any animal, the home being multi-animal.
+  /// Returns the diary as it was, for an undo, or null on failure.
+  Future<HealthDiaryModel?> recordDeworming(
+    String petId, {
+    required DateTime? lastDeworming,
+    int? intervalMonths,
+  }) async {
+    try {
+      final current = petId == state.selectedPetId ? state.diary : await _healthRepository.getDiaryForPet(petId);
+      final previous = current ?? HealthDiaryModel(healthDiaryId: const Uuid().v4(), petId: petId);
+      await _healthRepository.upsertDiary(HealthDiaryModel(
+        healthDiaryId: previous.healthDiaryId,
+        petId: petId,
+        isSterilized: previous.isSterilized,
+        sterilizedAt: previous.sterilizedAt,
+        isChipped: previous.isChipped,
+        chipNumber: previous.chipNumber,
+        lastDeworming: lastDeworming,
+        lastVetAppointment: previous.lastVetAppointment,
+        dewormingIntervalMonths: intervalMonths ?? previous.dewormingIntervalMonths,
+      ));
+      return previous;
+    } catch (err) {
+      if (!isClosed) emit(state.copyWith(error: err.toString()));
+      return null;
     }
   }
 
@@ -307,14 +364,16 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
   }
 
   /// A booster or a visit ahead is the moment to ask for notifications.
-  void _offerReminders(String petId, DateTime? dueDate, {bool isVetVisit = false}) {
+  void _offerReminders(String petId, DateTime? dueDate,
+      {bool isVetVisit = false}) {
     if (dueDate == null) return;
     String? petName;
     for (final pet in state.pets) {
       if (pet.petId == petId) petName = pet.petName;
     }
     if (petName == null) return;
-    notificationPriming.offerFor(PrimingOffer(petName: petName, dueDate: dueDate, isVetVisit: isVetVisit));
+    notificationPriming.offerFor(PrimingOffer(
+        petName: petName, dueDate: dueDate, isVetVisit: isVetVisit));
   }
 
   void _trackVaccineCreated(String source) {
@@ -468,7 +527,6 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
       emit(state.copyWith(icons: icons));
     } catch (_) {}
   }
-
 
   Future<void> _loadRaceName(String petId) async {
     PetModel? pet;

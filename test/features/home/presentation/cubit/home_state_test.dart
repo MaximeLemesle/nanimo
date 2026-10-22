@@ -326,4 +326,29 @@ void main() {
       ]);
     });
   });
+
+  group('dewormings', () {
+    final state = HomeState(
+      pets: [_milo, _nala],
+      diaries: [
+        HealthDiaryModel(healthDiaryId: 'd1', petId: 'p1', lastDeworming: DateTime(2026, 6, 1), dewormingIntervalMonths: 1),
+        const HealthDiaryModel(healthDiaryId: 'd2', petId: 'p2'),
+        HealthDiaryModel(healthDiaryId: 'd3', petId: 'someone-else', lastDeworming: DateTime(2026, 6, 1)),
+      ],
+    );
+
+    test('a pet with a last deworming gets its next one, with a status', () {
+      final alerts = state.dewormingAlerts(now: _now);
+      expect(alerts.single.pet, _milo);
+      expect(alerts.single.nextDate, DateTime(2026, 7, 1));
+      expect(alerts.single.status, VaccineStatus.overdue);
+      expect(alerts.single.intervalMonths, 1);
+    });
+
+    test('a pet without one, diary or not, is asked for it', () {
+      expect(state.petsWithoutDeworming, [_nala]);
+      expect(HomeState(pets: [_milo]).petsWithoutDeworming, [_milo]);
+    });
+  });
+
 }

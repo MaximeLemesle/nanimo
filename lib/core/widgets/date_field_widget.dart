@@ -8,7 +8,7 @@ import 'package:nanimo/core/utils/date_formatter.dart';
 import 'package:nanimo/core/widgets/field_variant.dart';
 import 'package:nanimo/core/widgets/pill_field_widget.dart';
 
-class DateFieldWidget extends StatelessWidget {
+class DateFieldWidget extends StatefulWidget {
   final String label;
   final DateTime? value;
   final ValueChanged<DateTime> onChanged;
@@ -34,14 +34,28 @@ class DateFieldWidget extends StatelessWidget {
     this.showPillBorder = true,
   });
 
-  Future<void> _pick(BuildContext context) async {
+  @override
+  State<DateFieldWidget> createState() => _DateFieldWidgetState();
+
+  static ({DateTime min, DateTime max, DateTime initial}) _bounds(
+      DateTime? value, DateTime? firstDate, DateTime? lastDate) {
     final now = DateTime.now();
     final min = firstDate ?? DateTime(now.year - 30);
     final max = lastDate ?? now;
-
     var initial = value ?? now;
     if (initial.isBefore(min)) initial = min;
     if (initial.isAfter(max)) initial = max;
+    return (min: min, max: max, initial: initial);
+  }
+
+  /// Opens the same wheel calendar from both a field and an action button.
+  static Future<DateTime?> pick(
+    BuildContext context, {
+    DateTime? value,
+    DateTime? firstDate,
+    DateTime? lastDate,
+  }) async {
+    final (:min, :max, :initial) = _bounds(value, firstDate, lastDate);
     var picked = initial;
 
     await showModalBottomSheet<void>(
@@ -65,45 +79,111 @@ class DateFieldWidget extends StatelessWidget {
       },
     );
 
-    if (!context.mounted) return;
-    onChanged(picked);
+    return context.mounted ? picked : null;
+  }
+
+}
+
+class _DateFieldWidgetState extends State<DateFieldWidget> {
+  /// The field variant unfolds its wheel in place: opened from a sheet, a
+  /// second sheet stacked on the first and left it peeking out behind.
+  bool _isOpen = false;
+  static const _duration = Duration(milliseconds: 250);
+
+  Future<void> _pick() async {
+    final picked = await DateFieldWidget.pick(context,
+        value: widget.value,
+        firstDate: widget.firstDate,
+        lastDate: widget.lastDate);
+    if (picked != null && mounted) widget.onChanged(picked);
+  }
+
+  void _toggle() {
+    FocusScope.of(context).unfocus();
+    final opening = !_isOpen;
+    setState(() => _isOpen = opening);
+    if (!opening) return;
+    if (widget.value == null) {
+      widget.onChanged(DateFieldWidget._bounds(
+              null, widget.firstDate, widget.lastDate)
+          .initial);
+    }
+    Future<void>.delayed(_duration, () {
+      if (mounted) Scrollable.ensureVisible(context, duration: _duration);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final value = widget.value;
+    final textStyle = widget.textStyle;
     final baseStyle = textStyle ?? AppTextStyles.text;
     final dateText = Text(
-      value == null ? placeholder : DateFormatter.date(value!),
-      textAlign: textAlign,
+      value == null ? widget.placeholder : DateFormatter.date(value),
+      textAlign: widget.textAlign,
       style: baseStyle.copyWith(
-        color: value == null ? AppColors.textSecondary : (textStyle?.color ?? AppColors.textPrimary),
+        color: value == null
+            ? AppColors.textSecondary
+            : (textStyle?.color ?? AppColors.textPrimary),
       ),
     );
 
-    if (variant == FieldVariant.pill) {
+    if (widget.variant == FieldVariant.pill) {
       return PillFieldWidget(
-        semanticLabel: label,
-        onTap: () => _pick(context),
-        showBorder: showPillBorder,
+        semanticLabel: widget.label,
+        onTap: _pick,
+        showBorder: widget.showPillBorder,
         child: dateText,
       );
     }
 
-    return InkWell(
-      onTap: () => _pick(context),
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          filled: true,
-          fillColor: AppColors.background,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            borderSide: const BorderSide(color: AppColors.backgroundStroke),
+    final bounds =
+        DateFieldWidget._bounds(value, widget.firstDate, widget.lastDate);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        InkWell(
+          onTap: _toggle,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          child: InputDecorator(
+            isFocused: _isOpen,
+            decoration: InputDecoration(
+              labelText: widget.label,
+              filled: true,
+              fillColor: AppColors.background,
+              suffixIcon: AnimatedRotation(
+                turns: _isOpen ? 0.5 : 0,
+                duration: _duration,
+                child: const Icon(Icons.keyboard_arrow_down_rounded,
+                    color: AppColors.textSecondary),
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderSide: const BorderSide(color: AppColors.backgroundStroke),
+              ),
+            ),
+            child: dateText,
           ),
         ),
-        child: dateText,
-      ),
+        AnimatedSize(
+          duration: _duration,
+          curve: Curves.easeInOut,
+          alignment: Alignment.topCenter,
+          child: _isOpen
+              ? SizedBox(
+                  height: 200,
+                  child: CupertinoDatePicker(
+                    mode: CupertinoDatePickerMode.date,
+                    dateOrder: DatePickerDateOrder.dmy,
+                    initialDateTime: bounds.initial,
+                    minimumDate: bounds.min,
+                    maximumDate: bounds.max,
+                    onDateTimeChanged: widget.onChanged,
+                  ),
+                )
+              : const SizedBox(width: double.infinity),
+        ),
+      ],
     );
   }
 }

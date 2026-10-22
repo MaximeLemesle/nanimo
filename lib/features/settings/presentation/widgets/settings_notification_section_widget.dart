@@ -55,7 +55,7 @@ class SettingsNotificationSectionWidget extends StatelessWidget {
         const SizedBox(height: AppSpacing.sm),
         _toggleTile(
           context,
-          title: 'Vaccins',
+          title: 'Vaccins et vermifuges',
           isOn: prefs.vaccineReminders,
           update: (enabled) => prefs.copyWith(vaccineReminders: enabled),
           requiresPush: true,

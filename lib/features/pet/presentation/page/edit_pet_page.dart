@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nanimo/core/utils/capitalize_first_letter_formatter.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_radius.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
@@ -208,6 +209,7 @@ class _EditPetPageState extends State<EditPetPage> {
                 label: 'Son nom',
                 hint: 'Saïko...',
                 textInputAction: TextInputAction.done,
+                inputFormatters: const [CapitalizeFirstLetterFormatter()],
               ),
               const SizedBox(height: AppSpacing.lg),
               _FieldLabel('Sa race'),

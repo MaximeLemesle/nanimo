@@ -49,7 +49,8 @@ void main() async {
   try {
     await dotenv.load(fileName: environment.dotenvFile);
   } catch (_) {
-    throw Exception('Missing ${environment.dotenvFile}: copy its .example next to it and fill it in');
+    throw Exception(
+        'Missing ${environment.dotenvFile}: copy its .example next to it and fill it in');
   }
   final String? url = dotenv.env['SUPABASE_URL'];
   final String? anonKey = dotenv.env['SUPABASE_ANON_KEY'];
@@ -118,7 +119,9 @@ void main() async {
   authCubit.stream.listen((auth) {
     final userId = authRepository.currentUserId;
     if (auth.isAuthenticated && userId != null) {
-      purchaseRepository.identify(userId).then((_) => trialEndWatcher.refresh());
+      purchaseRepository
+          .identify(userId)
+          .then((_) => trialEndWatcher.refresh());
     } else if (auth.isUnauthenticated) {
       purchaseRepository.forget();
     }
@@ -140,10 +143,18 @@ void main() async {
   );
 
   await _initNotifications();
-  firstStepsStore = SharedPreferencesFirstStepsStore();
+  firstStepsStore = SharedPreferencesFirstStepsStore(
+      userId: () => authRepository.currentUserId);
   notificationPriming = NotificationPriming(
     client: () => notifications,
     store: SharedPreferencesPrimingStore(),
+    onGranted: () async {
+      final prefs = await settingsRepository.watchNotificationPrefs().first;
+      if (!prefs.pushEnabled) {
+        await settingsRepository
+            .saveNotificationPrefs(prefs.copyWith(pushEnabled: true));
+      }
+    },
   );
   trialEndWatcher = TrialEndWatcher(purchaseRepository.trialEndsAt);
   ReminderScheduler(
@@ -167,7 +178,8 @@ void main() async {
   /// NAN-100: once the onboarding pet is in, its answers must not prefill
   /// the next creation. Lives here because the shell mounts after the insert.
   petCreationCubit.stream.listen((creation) {
-    if (creation.status == PetCreationStatus.success && creation.createdDuringOnboarding) {
+    if (creation.status == PetCreationStatus.success &&
+        creation.createdDuringOnboarding) {
       onboardingCubit.reset();
     }
   });
@@ -206,11 +218,13 @@ void main() async {
 Future<void> _initNotifications() async {
   final client = FlutterLocalNotificationClient();
   try {
-    await client.initialize(onTap: (payload) => pendingNotificationTap.value = payload);
+    await client.initialize(
+        onTap: (payload) => pendingNotificationTap.value = payload);
     notifications = client;
     pendingNotificationTap.value ??= await client.launchPayload();
   } catch (e, st) {
-    developer.log('local notifications unavailable', name: 'notifications', error: e, stackTrace: st);
+    developer.log('local notifications unavailable',
+        name: 'notifications', error: e, stackTrace: st);
   }
 }
 
@@ -219,7 +233,9 @@ Future<void> _initNotifications() async {
 /// A missing key is not fatal, but it must swap the client out: calling the
 /// unconfigured SDK raises a native error no Dart catch can intercept.
 Future<PurchaseRepository> _buildPurchaseRepository() async {
-  final key = Platform.isIOS ? dotenv.env['REVENUECAT_IOS_API_KEY'] : dotenv.env['REVENUECAT_ANDROID_API_KEY'];
+  final key = Platform.isIOS
+      ? dotenv.env['REVENUECAT_IOS_API_KEY']
+      : dotenv.env['REVENUECAT_ANDROID_API_KEY'];
 
   if (key == null || key.isEmpty) {
     developer.log(
@@ -234,7 +250,8 @@ Future<PurchaseRepository> _buildPurchaseRepository() async {
     await repository.configure(key);
     return repository;
   } catch (e, st) {
-    developer.log('RevenueCat setup failed, purchases are disabled', name: 'purchase', error: e, stackTrace: st);
+    developer.log('RevenueCat setup failed, purchases are disabled',
+        name: 'purchase', error: e, stackTrace: st);
     return PurchaseRepository(DisabledPurchaseClient());
   }
 }

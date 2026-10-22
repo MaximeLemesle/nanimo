@@ -146,6 +146,102 @@ void main() {
       expect(find.textContaining('Dans '), findsOneWidget);
     });
   });
+  group('dewormings', () {
+    final milo = PetModel(
+      petId: 'pet-1',
+      petName: 'Milo',
+      birthdate: DateTime(2022, 6, 15),
+      gender: Gender.male,
+      createdAt: DateTime(2026, 6, 10),
+      petRaceId: 'race-1',
+      petSpeciesId: 'species-1',
+    );
+    final now = DateTime(2026, 10, 22, 9);
+    DewormingAlert deworming(DateTime next) => (
+          pet: milo,
+          nextDate: next,
+          lastDate: DateTime(2026, 7, 1),
+          intervalMonths: 3,
+          status: vaccineStatusFor(next, now: now),
+        );
+    final VaccineAlert booster = (
+      vaccine: HealthDiaryVaccineModel(
+        healthDiaryVaccineId: 'vaccine-1',
+        vaccineName: 'Rage',
+        nextDate: DateTime(2026, 11, 10),
+        recurrence: 365,
+        doseNumber: 1,
+        totalDoseNumber: 1,
+        healthDiaryId: 'diary-1',
+      ),
+      pet: milo,
+      status: VaccineStatus.soon,
+    );
+
+    Future<List<String>> pump(WidgetTester tester, HomeHealthCardWidget card) async {
+      await tester.pumpWidget(MaterialApp(home: Scaffold(body: SingleChildScrollView(child: card))));
+      return tester.widgetList<Text>(find.byType(Text)).map((text) => text.data ?? '').toList();
+    }
+
+    testWidgets('sit among the boosters, by date', (tester) async {
+      final texts = await pump(
+        tester,
+        HomeHealthCardWidget(
+          alerts: [booster],
+          dewormings: [deworming(DateTime(2026, 11, 1))],
+          portraits: const {},
+          now: now,
+        ),
+      );
+      expect(find.text('Soins à venir'), findsOneWidget);
+      expect(texts.indexOf('Vermifuge'), lessThan(texts.indexOf('Rage')));
+      expect(find.text('01/11/2026'), findsOneWidget);
+    });
+
+    testWidgets('can be ticked once due within the month, not before', (tester) async {
+      String? done;
+      await pump(
+        tester,
+        HomeHealthCardWidget(
+          alerts: const [],
+          dewormings: [deworming(DateTime(2026, 11, 1))],
+          portraits: const {},
+          onDewormingDone: (petId) => done = petId,
+          now: now,
+        ),
+      );
+      await tester.tap(find.text('C’est fait'));
+      expect(done, 'pet-1');
+
+      await pump(
+        tester,
+        HomeHealthCardWidget(
+          alerts: const [],
+          dewormings: [deworming(DateTime(2027, 1, 10))],
+          portraits: const {},
+          onDewormingDone: (_) {},
+          now: now,
+        ),
+      );
+      expect(find.text('C’est fait'), findsNothing);
+    });
+
+    testWidgets('a pet without one is invited to note it', (tester) async {
+      String? noted;
+      await pump(
+        tester,
+        HomeHealthCardWidget(
+          alerts: const [],
+          petsWithoutDeworming: [milo],
+          portraits: const {},
+          onDewormingTap: (petId) => noted = petId,
+        ),
+      );
+      expect(find.text(HomeHealthCardWidget.emptyMessage), findsNothing);
+      await tester.tap(find.text('Noter'));
+      expect(noted, 'pet-1');
+    });
+  });
 }
 
 VaccineAlert _alert() => (

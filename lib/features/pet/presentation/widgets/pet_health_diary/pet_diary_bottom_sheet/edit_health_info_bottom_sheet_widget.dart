@@ -9,12 +9,14 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_di
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/core/utils/gender_formatter.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/chip_number_field_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/deworming_interval_selector_widget.dart';
 
 typedef EditHealthInfoSubmit = void Function({
   required bool isSterilized,
   required bool isChipped,
   String? chipNumber,
   DateTime? lastDeworming,
+  int? dewormingIntervalMonths,
 });
 
 /// Edits the three facts shown on the health card: sterilisation, chip, deworming.
@@ -43,6 +45,7 @@ class _EditHealthInfoBottomSheetWidgetState
   late bool _isChipped;
   late bool _isDewormed;
   DateTime? _lastDeworming;
+  late int _dewormingInterval;
 
   @override
   void initState() {
@@ -55,6 +58,7 @@ class _EditHealthInfoBottomSheetWidgetState
     /// No dewormed flag in the model: the date is the only evidence.
     _lastDeworming = diary.lastDeworming;
     _isDewormed = diary.lastDeworming != null;
+    _dewormingInterval = diary.dewormingInterval;
   }
 
   @override
@@ -71,6 +75,7 @@ class _EditHealthInfoBottomSheetWidgetState
       isChipped: _isChipped,
       chipNumber: _isChipped && chipNumber.isNotEmpty ? chipNumber : null,
       lastDeworming: _isDewormed ? (_lastDeworming ?? DateTime.now()) : null,
+      dewormingIntervalMonths: _dewormingInterval,
     );
     Navigator.of(context).pop();
   }
@@ -96,10 +101,20 @@ class _EditHealthInfoBottomSheetWidgetState
           label: 'Vermifugé',
           value: _isDewormed,
           onChanged: (value) => setState(() => _isDewormed = value),
-          child: DateFieldWidget(
-            label: 'Dernier vermifuge',
-            value: _lastDeworming,
-            onChanged: (date) => setState(() => _lastDeworming = date),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              DateFieldWidget(
+                label: 'Dernier vermifuge',
+                value: _lastDeworming,
+                onChanged: (date) => setState(() => _lastDeworming = date),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              DewormingIntervalSelectorWidget(
+                value: _dewormingInterval,
+                onChanged: (months) => setState(() => _dewormingInterval = months),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: AppSpacing.sm),

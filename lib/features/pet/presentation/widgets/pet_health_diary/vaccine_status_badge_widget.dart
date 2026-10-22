@@ -34,7 +34,7 @@ class VaccineStatusBadgeWidget extends StatelessWidget {
         background = AppColors.tertiary100;
         foreground = AppColors.tertiary700;
       case VaccineStatus.overdue:
-        label = 'Pas fait';
+        label = 'En retard';
         background = AppColors.secondary100;
         foreground = AppColors.secondary700;
     }

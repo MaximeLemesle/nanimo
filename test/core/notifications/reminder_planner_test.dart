@@ -236,7 +236,7 @@ void main() {
       diaries: const [],
       vaccines: const [],
       vetVisits: const [],
-      prefs: const NotificationPrefsModel(anniversaryReminders: false, vaccineReminders: false, vetReminders: false),
+      prefs: const NotificationPrefsModel(anniversaryReminders: false),
       now: _now,
       followUps: [
         DiaryFollowUp(petId: 'p1', topic: DiaryFollowUpTopic.vaccines, at: DateTime(2026, 10, 20, 18, 30)),
@@ -246,6 +246,40 @@ void main() {
 
     expect(plan.single.kind, ReminderKind.diaryFollowUp);
     expect(plan.single.when, DateTime(2026, 10, 20, 18, 30));
-    expect(plan.single.title, 'Complète le carnet de Saïko');
+    expect(plan.single.title, '✏️ Complète le carnet de Saïko');
+  });
+
+  test('a diary follow-up only obeys the master switch', () {
+    List<PlannedReminder> plan(NotificationPrefsModel prefs) => ReminderPlanner.plan(
+          pets: [_saiko],
+          diaries: const [],
+          vaccines: const [],
+          vetVisits: const [],
+          prefs: prefs,
+          now: _now,
+          followUps: [
+            DiaryFollowUp(petId: 'p1', topic: DiaryFollowUpTopic.vaccines, at: DateTime(2026, 10, 20)),
+            DiaryFollowUp(petId: 'p1', topic: DiaryFollowUpTopic.vetVisits, at: DateTime(2026, 10, 21)),
+          ],
+        );
+
+    expect(plan(const NotificationPrefsModel(anniversaryReminders: false, vaccineReminders: false, vetReminders: false)), hasLength(2));
+    expect(plan(const NotificationPrefsModel(pushEnabled: false)), isEmpty);
+  });
+  test('a deworming rings 7 days and the day before its due date', () {
+    List<PlannedReminder> plan(NotificationPrefsModel prefs) => ReminderPlanner.plan(
+          pets: [_saiko],
+          diaries: [HealthDiaryModel(healthDiaryId: 'd1', petId: 'p1', lastDeworming: DateTime(2026, 9, 12), dewormingIntervalMonths: 2)],
+          vaccines: const [],
+          vetVisits: const [],
+          prefs: prefs,
+          now: _now,
+        );
+
+    final reminders = plan(const NotificationPrefsModel(anniversaryReminders: false));
+    expect(reminders.map((r) => r.when), [DateTime(2026, 11, 5, 10), DateTime(2026, 11, 11, 10)]);
+    expect(reminders.first.kind, ReminderKind.deworming);
+    expect(reminders.last.body, 'Vermifuge de Saïko demain');
+    expect(plan(const NotificationPrefsModel(anniversaryReminders: false, vaccineReminders: false)), isEmpty);
   });
 }

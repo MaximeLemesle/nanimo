@@ -6,29 +6,26 @@ import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/features/subscription/data/models/paywall_offer_model.dart';
 
-/// One plan, priced per month so the two read on the same scale. A trial
-/// gets a band above the card: it is the first thing the plan offers.
 class PaywallOfferCardWidget extends StatelessWidget {
   final PaywallOfferModel offer;
   final bool isSelected;
   final VoidCallback onTap;
 
-  /// Saved against twelve monthly payments, null when not worth saying.
-  final int? savingsPercent;
+  /// The monthly plan, against which the annual one shows its savings.
+  final PaywallOfferModel? monthly;
 
   const PaywallOfferCardWidget({
     super.key,
     required this.offer,
     required this.isSelected,
     required this.onTap,
-    this.savingsPercent,
+    this.monthly,
   });
-
-  static const _borderWidth = 2.0;
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = isSelected ? AppColors.backgroundInvert : AppColors.backgroundStroke;
+    final borderColor =
+        isSelected ? AppColors.textPrimary : AppColors.backgroundStroke;
     final radius = BorderRadius.circular(AppRadius.md);
 
     return Semantics(
@@ -41,33 +38,29 @@ class PaywallOfferCardWidget extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.backgroundSurface,
             borderRadius: radius,
-            border: Border.all(color: borderColor, width: _borderWidth),
+          ),
+          /// Drawn over the content so the selection never moves the layout.
+          foregroundDecoration: BoxDecoration(
+            borderRadius: radius,
+            border: Border.all(color: borderColor, width: isSelected ? 2 : 1),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.md - _borderWidth),
+            borderRadius: radius,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (_showsTrial)
-                  Container(
-                    color: borderColor,
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-                    child: Text(
-                      '${offer.trialDays} jours gratuits'.toUpperCase(),
-                      textAlign: TextAlign.center,
-                      style: AppTextStyles.textSmallBold.copyWith(
-                        color: isSelected ? AppColors.textInvert : AppColors.textSecondary,
-                      ),
-                    ),
-                  ),
+                if (offer.hasTrial) _banner(),
                 Padding(
                   padding: const EdgeInsets.all(AppSpacing.md),
                   child: Row(
                     children: [
                       Icon(
-                        isSelected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-                        color: isSelected ? AppColors.backgroundInvert : AppColors.backgroundStroke,
-                        size: 28,
+                        isSelected
+                            ? Icons.check_circle_rounded
+                            : Icons.radio_button_unchecked_rounded,
+                        color: isSelected
+                            ? AppColors.textPrimary
+                            : AppColors.backgroundStroke,
                       ),
                       const SizedBox(width: AppSpacing.md),
                       Expanded(
@@ -75,16 +68,17 @@ class PaywallOfferCardWidget extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(_title, style: AppTextStyles.textBold),
-                            if (_subtitle != null)
+                            if (_subtitle case final subtitle?)
                               Text(
-                                _subtitle!,
-                                style: AppTextStyles.textSmall.copyWith(color: AppColors.textSecondary),
+                                subtitle,
+                                style: AppTextStyles.textSmall
+                                    .copyWith(color: AppColors.textSecondary),
                               ),
                           ],
                         ),
                       ),
                       const SizedBox(width: AppSpacing.sm),
-                      Text('${offer.monthlyPriceLabel}/mois', style: AppTextStyles.textBold),
+                      Text(_perMonth, style: AppTextStyles.textBold),
                     ],
                   ),
                 ),
@@ -96,24 +90,39 @@ class PaywallOfferCardWidget extends StatelessWidget {
     );
   }
 
-  /// The trial is sold on the annual plan only.
-  bool get _showsTrial => offer.hasTrial && offer.period == PaywallPeriod.annual;
+  Widget _banner() => Container(
+        color: AppColors.textPrimary,
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+        child: Text(
+          '${offer.trialDays} jours gratuits'.toUpperCase(),
+          textAlign: TextAlign.center,
+          style: AppTextStyles.textSmallBold
+              .copyWith(color: AppColors.textInvert),
+        ),
+      );
 
   String get _title {
     switch (offer.period) {
       case PaywallPeriod.monthly:
         return 'Mensuel';
       case PaywallPeriod.annual:
-        return _showsTrial ? 'Commence gratuitement' : 'Annuel';
+        return 'Annuel';
       case PaywallPeriod.other:
         return 'Premium';
     }
   }
 
-  /// The saving first, then what the year actually costs.
+  /// "Économise 27 %, 34,99 € par an": the yearly charge stays in sight.
   String? get _subtitle {
     if (offer.period != PaywallPeriod.annual) return null;
-    final yearly = '${offer.priceLabel} par an';
-    return savingsPercent == null ? yearly : 'Économise $savingsPercent %, $yearly';
+    final yearly = '${offer.priceLabel} ${offer.periodLabel}';
+    final savings = offer.savingsAgainst(monthly);
+    return savings == null ? yearly : 'Économise $savings\u00a0%, $yearly';
   }
+
+  String get _perMonth => switch (offer.period) {
+        PaywallPeriod.annual => '${offer.monthlyPriceLabel}/mois',
+        PaywallPeriod.monthly => '${offer.priceLabel}/mois',
+        PaywallPeriod.other => offer.priceLabel,
+      };
 }

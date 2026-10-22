@@ -1,4 +1,11 @@
+import 'package:nanimo/core/utils/vaccine_schedule.dart';
+
 class HealthDiaryModel {
+  /// Chosen when the owner never set one: the usual advice when the pet's
+  /// exposure is unknown.
+  static const defaultDewormingIntervalMonths = 3;
+  static const dewormingIntervals = [1, 3, 6, 12];
+
   final String healthDiaryId;
   final bool? isSterilized;
   final DateTime? sterilizedAt;
@@ -6,6 +13,7 @@ class HealthDiaryModel {
   final String? chipNumber;
   final DateTime? lastDeworming;
   final DateTime? lastVetAppointment;
+  final int? dewormingIntervalMonths;
   final String petId;
 
   const HealthDiaryModel({
@@ -17,7 +25,15 @@ class HealthDiaryModel {
     this.chipNumber,
     this.lastDeworming,
     this.lastVetAppointment,
+    this.dewormingIntervalMonths,
   });
+
+  int get dewormingInterval => dewormingIntervalMonths ?? defaultDewormingIntervalMonths;
+
+  DateTime? get nextDeworming {
+    final last = lastDeworming;
+    return last == null ? null : VaccineSchedule.addMonths(last, dewormingInterval);
+  }
 
   factory HealthDiaryModel.fromJson(Map<String, dynamic> json) {
     return HealthDiaryModel(
@@ -32,6 +48,7 @@ class HealthDiaryModel {
       lastVetAppointment: json['last_vet_appointment'] != null
           ? DateTime.parse(json['last_vet_appointment'] as String)
           : null,
+      dewormingIntervalMonths: json['deworming_interval_months'] as int?,
       petId: json['pet_id'],
     );
   }
@@ -45,6 +62,7 @@ class HealthDiaryModel {
         'chip_number': chipNumber,
         'last_deworming_at': lastDeworming?.toIso8601String(),
         'last_vet_appointment': lastVetAppointment?.toIso8601String(),
+        if (dewormingIntervalMonths != null) 'deworming_interval_months': dewormingIntervalMonths,
         'pet_id': petId,
       };
 }

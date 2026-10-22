@@ -239,6 +239,10 @@ void main() {
 
       expect(cubit.state.status, PetCreationStatus.success);
       expect(cubit.state.createdDuringOnboarding, isTrue);
+      expect(cubit.state.isPetOnItsWay, isTrue);
+
+      cubit.petShown();
+      expect(cubit.state.isPetOnItsWay, isFalse);
       await cubit.close();
     });
 
@@ -253,6 +257,7 @@ void main() {
 
       expect(cubit.state.status, PetCreationStatus.success);
       expect(cubit.state.createdDuringOnboarding, isFalse);
+      expect(cubit.state.isPetOnItsWay, isFalse);
       await cubit.close();
     });
 

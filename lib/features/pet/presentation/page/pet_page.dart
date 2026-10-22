@@ -145,11 +145,8 @@ class PetPage extends StatelessWidget {
 
                         /// Display onboarding card if no health data
                         PetHealthOnboardingCardWidget(
-                          /// NAN-116: the guided diary, then straight to what was filled in.
-                          onFillPressed: () async {
-                            final created = await context.push<bool>('${RouteNames.healthDiaryWizard}/${pet.petId}');
-                            if (created == true && context.mounted) context.push(RouteNames.healthDiary);
-                          },
+                          /// NAN-116: the guided diary, which ends back on the home.
+                          onFillPressed: () => context.push('${RouteNames.healthDiaryWizard}/${pet.petId}'),
                         )
                       else ...[
                         /// Weight tracker card
@@ -228,12 +225,14 @@ class PetPage extends StatelessWidget {
           required bool isChipped,
           String? chipNumber,
           DateTime? lastDeworming,
+          int? dewormingIntervalMonths,
         }) {
           cubit.updateHealthInfo(
             isSterilized: isSterilized,
             isChipped: isChipped,
             chipNumber: chipNumber,
             lastDeworming: lastDeworming,
+            dewormingIntervalMonths: dewormingIntervalMonths,
           );
         },
       ),

@@ -54,12 +54,9 @@ class PetDetailsState extends Equatable {
 
   /// Check if pet already have a diary
   bool get hasHealthData {
-    final hasDiaryInfo = diary != null &&
-        (diary!.isSterilized != null ||
-            diary!.isChipped != null ||
-            diary!.lastDeworming != null ||
-            diary!.lastVetAppointment != null);
-    return hasDiaryInfo ||
+    /// A diary filled through the wizard counts even when every answer was
+    /// skipped: "Remplir le carnet" would ask for it a second time.
+    return diary != null ||
         vaccines.isNotEmpty ||
         vetVisits.isNotEmpty ||
         weightLogs.isNotEmpty;

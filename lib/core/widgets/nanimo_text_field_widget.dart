@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 
@@ -10,6 +11,7 @@ class NanimoTextFieldWidget extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final TextInputAction? textInputAction;
   final TextCapitalization textCapitalization;
+  final List<TextInputFormatter>? inputFormatters;
 
   const NanimoTextFieldWidget({
     super.key,
@@ -19,6 +21,7 @@ class NanimoTextFieldWidget extends StatelessWidget {
     this.onChanged,
     this.textInputAction,
     this.textCapitalization = TextCapitalization.words,
+    this.inputFormatters,
   });
 
   @override
@@ -39,6 +42,7 @@ class NanimoTextFieldWidget extends StatelessWidget {
           onChanged: onChanged,
           textInputAction: textInputAction,
           textCapitalization: textCapitalization,
+          inputFormatters: inputFormatters,
           cursorHeight: 32,
           style: textTheme.displayLarge?.copyWith(
             color: AppColors.textPrimary,

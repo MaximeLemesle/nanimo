@@ -37,8 +37,6 @@ import 'package:nanimo/features/subscription/data/purchase_repository.dart';
 import 'package:nanimo/features/subscription/data/subscription_restorer.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/paywall_cubit.dart';
 import 'package:nanimo/features/subscription/presentation/page/paywall_page.dart';
-import 'package:nanimo/features/subscription/presentation/page/trial_intro_page.dart';
-import 'package:nanimo/features/subscription/presentation/page/trial_reminder_page.dart';
 import 'package:nanimo/features/subscription/presentation/page/premium_welcome_page.dart';
 import 'package:nanimo/features/onboarding/presentation/page/onboarding_page.dart';
 import 'package:nanimo/features/pet/presentation/page/health_diary_wizard_page.dart';
@@ -89,7 +87,16 @@ GoRouter createRouter(
 }) {
   /// Flips to true after the splash display duration
   final splashElapsed = ValueNotifier(false);
-  Timer(const Duration(milliseconds: 1200), () => splashElapsed.value = true);
+  Timer? splashTimer;
+  DateTime? lastDeletion;
+  void restartSplash() {
+    splashTimer?.cancel();
+    splashElapsed.value = false;
+    splashTimer = Timer(
+        const Duration(milliseconds: 1200), () => splashElapsed.value = true);
+  }
+
+  restartSplash();
 
   final modalRouteObserver = ModalRouteObserver();
 
@@ -103,6 +110,20 @@ GoRouter createRouter(
     ]),
     debugLogDiagnostics: true,
     redirect: (context, state) {
+      final deletion = authRepository.accountDeletedAt;
+      if (deletion != null &&
+          deletion != lastDeletion &&
+          authCubit.state.isUnauthenticated) {
+        lastDeletion = deletion;
+        restartSplash();
+      }
+      if (lastDeletion != null &&
+          !splashElapsed.value &&
+          authCubit.state.isUnauthenticated) {
+        return state.matchedLocation == RouteNames.splash
+            ? null
+            : RouteNames.splash;
+      }
       return handleRedirect(
         state,
         authCubit.state.status,
@@ -131,7 +152,11 @@ GoRouter createRouter(
         pageBuilder: (_, state) => _fadePage(state, const SignupPage()),
       ),
       ShellRoute(
-        observers: [modalRouteObserver, BreadcrumbRouteObserver(), ScreenViewRouteObserver()],
+        observers: [
+          modalRouteObserver,
+          BreadcrumbRouteObserver(),
+          ScreenViewRouteObserver()
+        ],
         pageBuilder: (context, state, child) => _fadePage(
           state,
           MultiBlocProvider(
@@ -164,6 +189,7 @@ GoRouter createRouter(
             ],
             child: AppShell(
               isModalOpen: modalRouteObserver.isModalOpen,
+              closeModals: modalRouteObserver.closeAll,
               child: child,
             ),
           ),
@@ -203,7 +229,8 @@ GoRouter createRouter(
               ),
               GoRoute(
                 path: 'journal',
-                pageBuilder: (_, state) => _fadePage(state, const JournalPage()),
+                pageBuilder: (_, state) =>
+                    _fadePage(state, const JournalPage()),
               ),
               GoRoute(
                 path: 'pet',
@@ -211,7 +238,8 @@ GoRouter createRouter(
                 routes: [
                   GoRoute(
                     path: 'health-diary',
-                    pageBuilder: (_, state) => _fadePage(state, const PetHealthDiaryPage()),
+                    pageBuilder: (_, state) =>
+                        _fadePage(state, const PetHealthDiaryPage()),
                   ),
                 ],
               ),
@@ -236,12 +264,14 @@ GoRouter createRouter(
           ),
         ],
       ),
+
       /// Outside the ShellRoute so the bottom bar leaves the form alone, the
       /// same reason the paywall lives at the root.
       GoRoute(
         path: '${RouteNames.healthDiaryWizard}/:petId',
         pageBuilder: (_, state) => _fadePage(
           state,
+
           /// Its own instance: the shell's cubit is not above a root route.
           BlocProvider(
             create: (_) => PetDetailsCubit(
@@ -283,17 +313,6 @@ GoRouter createRouter(
           ),
         ),
       ),
-      GoRoute(
-        path: RouteNames.trialIntro,
-        pageBuilder: (_, state) => _fadePage(state, const TrialIntroPage()),
-      ),
-      GoRoute(
-        path: RouteNames.trialReminder,
-        pageBuilder: (_, state) => _fadePage(state, const TrialReminderPage()),
-      ),
-
-      /// Reached by `pushReplacement` from the paywall, so it takes the
-      /// paywall's slot rather than sitting on top of it.
       GoRoute(
         path: RouteNames.premiumWelcome,
         pageBuilder: (context, state) => _fadePage(

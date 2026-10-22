@@ -16,6 +16,7 @@ class HealthDiaryCache {
   String? chipNumber;
   DateTime? lastDeworming;
   DateTime? lastVetAppointment;
+  int? dewormingIntervalMonths;
 
   @Index(unique: true)
   late String petId;
@@ -36,6 +37,7 @@ class HealthDiaryCache {
       ..lastVetAppointment = json['last_vet_appointment'] != null
           ? DateTime.parse(json['last_vet_appointment'] as String)
           : null
+      ..dewormingIntervalMonths = json['deworming_interval_months'] as int?
       ..petId = json['pet_id'] as String;
   }
 
@@ -49,6 +51,7 @@ class HealthDiaryCache {
       ..chipNumber = model.chipNumber
       ..lastDeworming = model.lastDeworming
       ..lastVetAppointment = model.lastVetAppointment
+      ..dewormingIntervalMonths = model.dewormingIntervalMonths
       ..petId = model.petId;
   }
 
@@ -62,6 +65,7 @@ class HealthDiaryCache {
       chipNumber: chipNumber,
       lastDeworming: lastDeworming,
       lastVetAppointment: lastVetAppointment,
+      dewormingIntervalMonths: dewormingIntervalMonths,
       petId: petId,
     );
   }
