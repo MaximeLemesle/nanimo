@@ -8,6 +8,7 @@ import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
 import 'package:nanimo/features/home/presentation/widgets/home_article_card_widget.dart';
+import 'package:nanimo/features/home/presentation/widgets/home_birthday_card_widget.dart';
 import 'package:nanimo/features/home/presentation/widgets/home_first_steps_card_widget.dart';
 import 'package:nanimo/features/home/presentation/widgets/home_header_widget.dart';
 import 'package:nanimo/features/home/presentation/widgets/home_health_card_widget.dart';
@@ -63,6 +64,19 @@ class HomePage extends StatelessWidget {
                   onSettingsTap: () => context.push(RouteNames.settings),
                 ),
                 const SizedBox(height: AppSpacing.xl),
+
+                for (final birthday in state.birthdays(now: now))
+                  HomeBirthdayCardWidget(
+                    key: ValueKey('birthday:${birthday.pet.petId}'),
+                    petId: birthday.pet.petId,
+                    petName: birthday.pet.petName,
+                    age: birthday.age,
+                    portrait: state.portraits[birthday.pet.petId],
+                    now: now,
+                    onAddMemory: () => context.push(Uri(
+                        path: RouteNames.createEvent,
+                        queryParameters: {'petId': birthday.pet.petId}).toString()),
+                  ),
 
                 if (state.pets.isNotEmpty)
                   HomeFirstStepsCardWidget(

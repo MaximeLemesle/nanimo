@@ -24,6 +24,9 @@ typedef DewormingAlert = ({
   VaccineStatus status,
 });
 
+/// A pet whose birthday is today, with the age it turns.
+typedef PetBirthday = ({PetModel pet, int age});
+
 class HomeState extends Equatable {
   final HomeStatus status;
   final List<PetModel> pets;
@@ -153,6 +156,21 @@ class HomeState extends Equatable {
     ];
     alerts.sort((a, b) => a.nextDate.compareTo(b.nextDate));
     return alerts;
+  }
+
+  /// Pets turning one or more today. A 29 February is celebrated on the 28th
+  /// in common years, like the notification.
+  List<PetBirthday> birthdays({DateTime? now}) {
+    final reference = now ?? DateTime.now();
+    final lastDay = DateTime(reference.year, reference.month + 1, 0).day;
+    return [
+      for (final pet in pets)
+        if (pet.birthdate.month == reference.month &&
+            (pet.birthdate.day == reference.day ||
+                (pet.birthdate.day > lastDay && reference.day == lastDay)) &&
+            reference.year > pet.birthdate.year)
+          (pet: pet, age: reference.year - pet.birthdate.year),
+    ];
   }
 
   /// Pets whose last deworming is unknown, in the order of the pets.

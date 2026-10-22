@@ -351,4 +351,26 @@ void main() {
     });
   });
 
+  group('birthdays', () {
+    PetModel born(DateTime birthdate) => _milo.copyWith(birthdate: birthdate);
+
+    test('a pet born on this day a year or more ago, with its age', () {
+      final state = HomeState(pets: [born(DateTime(2023, 7, 8)), _nala]);
+      final birthdays = state.birthdays(now: _now);
+      expect(birthdays.single.pet.petId, 'p1');
+      expect(birthdays.single.age, 3);
+    });
+
+    test('not the day of birth, nor another day', () {
+      expect(HomeState(pets: [born(DateTime(2026, 7, 8))]).birthdays(now: _now), isEmpty);
+      expect(HomeState(pets: [born(DateTime(2023, 7, 9))]).birthdays(now: _now), isEmpty);
+    });
+
+    test('a 29 February is celebrated on the 28th in common years', () {
+      final state = HomeState(pets: [born(DateTime(2024, 2, 29))]);
+      expect(state.birthdays(now: DateTime(2027, 2, 28, 9)).single.age, 3);
+      expect(state.birthdays(now: DateTime(2028, 2, 28, 9)), isEmpty);
+      expect(state.birthdays(now: DateTime(2028, 2, 29, 9)).single.age, 4);
+    });
+  });
 }
