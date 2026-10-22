@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/features/settings/presentation/widgets/settings_footer_widget.dart';
 import 'package:nanimo/features/settings/presentation/widgets/settings_notification_section_widget.dart';
+import 'package:nanimo/features/settings/presentation/widgets/settings_privacy_section_widget.dart';
 import 'package:nanimo/features/settings/presentation/widgets/settings_subscription_section_widget.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
@@ -75,6 +76,8 @@ class SettingsPage extends StatelessWidget {
                     SettingsNotificationSectionWidget(prefs: state.prefs),
                     const SizedBox(height: AppSpacing.xl),
                     SettingsSubscriptionSectionWidget(state: state),
+                    const SizedBox(height: AppSpacing.xl),
+                    SettingsPrivacySectionWidget(analyticsEnabled: state.analyticsEnabled),
                     const SizedBox(height: AppSpacing.xl),
                     ButtonWidget(
                       type: ButtonType.secondary,

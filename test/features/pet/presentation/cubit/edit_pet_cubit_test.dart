@@ -1,5 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:nanimo/core/analytics/analytics.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
+import 'package:nanimo/core/analytics/analytics_service.dart';
 import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/data/models/referential/pet_icon_model.dart';
 import 'package:nanimo/data/models/referential/pet_race_model.dart';
@@ -11,6 +14,8 @@ import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/pet/presentation/cubit/edit_pet_cubit.dart';
+
+import '../../../../core/analytics/recording_analytics_service.dart';
 
 class _MockPetRepository extends Mock implements PetRepository {}
 
@@ -303,6 +308,15 @@ void main() {
   });
 
   group('delete', () {
+    late RecordingAnalyticsService recorder;
+
+    setUp(() {
+      recorder = RecordingAnalyticsService();
+      analytics = recorder;
+    });
+
+    tearDown(() => analytics = const NoopAnalyticsService());
+
     test('deletes the pet then purges its souvenirs from the cache', () async {
       when(() => petRepo.deletePet('pet-milo')).thenAnswer((_) async {});
       when(() => eventRepo.purgeLocalEventsForPet('pet-milo'))
@@ -315,6 +329,7 @@ void main() {
       verify(() => petRepo.deletePet('pet-milo')).called(1);
       verify(() => eventRepo.purgeLocalEventsForPet('pet-milo')).called(1);
       expect(cubit.state.status, EditPetStatus.deleted);
+      expect(recorder.names, [AnalyticsEvents.petDeleted]);
     });
 
     /// A failed server delete must not wipe the local souvenirs.
@@ -328,6 +343,7 @@ void main() {
       await cubit.delete();
 
       verifyNever(() => eventRepo.purgeLocalEventsForPet(any()));
+      expect(recorder.names, isEmpty);
       expect(cubit.state.status, EditPetStatus.error);
       expect(cubit.state.error, 'Pas de connexion.');
     });

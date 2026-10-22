@@ -102,7 +102,16 @@ class NotificationPriming {
             ? NotificationPermissionState.denied
             : NotificationPermissionState.undetermined;
     permission.value = state;
+    _syncPermissionProperty(state);
     return state;
+  }
+
+  NotificationPermissionState? _lastSyncedPermission;
+
+  void _syncPermissionProperty(NotificationPermissionState state) {
+    if (state == _lastSyncedPermission) return;
+    _lastSyncedPermission = state;
+    analytics.setPersonProperties({AnalyticsProperties.notificationPermission: state.name});
   }
 
   /// Called right after an upcoming booster or visit is saved.
@@ -127,6 +136,7 @@ class NotificationPriming {
     permission.value = granted
         ? NotificationPermissionState.granted
         : NotificationPermissionState.denied;
+    _syncPermissionProperty(permission.value);
     _track(granted ? 'granted' : 'denied');
     return granted;
   }

@@ -1,5 +1,6 @@
 import 'dart:developer' as developer;
 
+import 'package:flutter/widgets.dart';
 import 'package:posthog_flutter/posthog_flutter.dart';
 
 import 'package:nanimo/core/analytics/analytics_service.dart';
@@ -19,7 +20,10 @@ class PostHogAnalyticsService implements AnalyticsService {
     final config = PostHogConfig(apiKey)
       ..host = host
       ..captureApplicationLifecycleEvents = true
-      ..personProfiles = PostHogPersonProfiles.identifiedOnly;
+      ..personProfiles = PostHogPersonProfiles.identifiedOnly
+      ..sessionReplay = true
+      ..sessionReplayConfig.maskAllTexts = true
+      ..sessionReplayConfig.maskAllImages = true;
 
     await Posthog().setup(config);
     await Posthog().register('environment', environment);
@@ -48,6 +52,16 @@ class PostHogAnalyticsService implements AnalyticsService {
   Future<void> setEnabled(bool enabled) =>
       _guard('setEnabled', () => enabled ? _posthog.enable() : _posthog.disable());
 
+  @override
+  Future<bool> isEnabled() async {
+    try {
+      return !await _posthog.isOptOut();
+    } catch (e, st) {
+      developer.log('analytics isOptOut failed', name: 'analytics', error: e, stackTrace: st);
+      return true;
+    }
+  }
+
   Future<void> _guard(String action, Future<void> Function() body) async {
     try {
       await body();
@@ -55,4 +69,15 @@ class PostHogAnalyticsService implements AnalyticsService {
       developer.log('analytics $action failed', name: 'analytics', error: e, stackTrace: st);
     }
   }
+}
+
+/// Journal entries and pet photos are private: replay frames mask every text
+/// and image. Inert when the SDK was never configured (debug builds, tests).
+class AnalyticsReplayRoot extends StatelessWidget {
+  final Widget child;
+
+  const AnalyticsReplayRoot({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) => PostHogWidget(child: child);
 }

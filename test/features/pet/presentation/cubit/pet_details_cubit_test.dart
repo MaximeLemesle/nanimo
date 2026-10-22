@@ -191,6 +191,23 @@ void main() {
     await cubit.close();
   });
 
+  test('a saved weight is tracked with where it was typed', () async {
+    final recorder = RecordingAnalyticsService();
+    analytics = recorder;
+    addTearDown(() => analytics = const NoopAnalyticsService());
+    final cubit = createCubit();
+    await settle();
+
+    await cubit.addWeightLog(4.5, DateTime(2026, 6, 21));
+    await cubit.addWeightLog(4.6, DateTime(2026, 6, 22), source: WeightSource.createMenu);
+
+    expect(
+      recorder.events.map((e) => e.properties[AnalyticsProperties.source]),
+      [WeightSource.petPage, WeightSource.createMenu],
+    );
+    await cubit.close();
+  });
+
   test('addWeightLog targets petId without moving the selection', () async {
     final cubit = createCubit();
     await settle();

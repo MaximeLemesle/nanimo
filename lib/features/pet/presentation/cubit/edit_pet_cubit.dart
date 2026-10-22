@@ -1,3 +1,5 @@
+import 'package:nanimo/core/analytics/analytics.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nanimo/core/errors/repository_exception.dart';
@@ -189,6 +191,7 @@ class EditPetCubit extends Cubit<EditPetState> {
     try {
       await _petRepository.deletePet(pet.petId);
       await _eventRepository.purgeLocalEventsForPet(pet.petId);
+      analytics.capture(AnalyticsEvents.petDeleted);
       if (isClosed) return;
       emit(state.copyWith(status: EditPetStatus.deleted));
     } on RepositoryException catch (e) {

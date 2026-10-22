@@ -73,6 +73,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     double weight,
     DateTime loggedAt, {
     String? petId,
+    String source = WeightSource.petPage,
   }) async {
     final targetId = petId ?? state.selectedPetId;
     if (targetId == null) return;
@@ -84,6 +85,8 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
         petId: targetId,
       );
       await _healthRepository.addWeightLog(log);
+      analytics.capture(AnalyticsEvents.weightLogged,
+          properties: {AnalyticsProperties.source: source});
     } catch (err) {
       if (isClosed) return;
       emit(state.copyWith(error: err.toString()));

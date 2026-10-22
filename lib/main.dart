@@ -12,6 +12,7 @@ import 'package:nanimo/config/router/app_router.dart';
 import 'package:nanimo/config/theme/app_theme.dart';
 import 'package:nanimo/core/analytics/analytics.dart';
 import 'package:nanimo/core/analytics/analytics_factory.dart';
+import 'package:nanimo/core/analytics/posthog_analytics_service.dart';
 import 'package:nanimo/core/monitoring/error_reporter.dart';
 import 'package:nanimo/core/notifications/local_notification_client.dart';
 import 'package:nanimo/core/notifications/notification_priming.dart';
@@ -324,32 +325,34 @@ class _MyAppState extends State<MyApp> {
         BlocProvider.value(value: widget.subscriptionCubit),
         BlocProvider.value(value: widget.petCreationCubit),
       ],
-      child: MaterialApp.router(
-        title: 'Nanimo',
-        theme: AppTheme.light,
-        locale: const Locale('fr'),
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [Locale('fr')],
-        builder: (context, child) => EnvironmentBanner(
-          environment: AppEnvironment.current,
-          child: KeyboardDismissWrapper(
-            child: child ?? const SizedBox.shrink(),
+      child: AnalyticsReplayRoot(
+        child: MaterialApp.router(
+          title: 'Nanimo',
+          theme: AppTheme.light,
+          locale: const Locale('fr'),
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('fr')],
+          builder: (context, child) => EnvironmentBanner(
+            environment: AppEnvironment.current,
+            child: KeyboardDismissWrapper(
+              child: child ?? const SizedBox.shrink(),
+            ),
           ),
-        ),
-        routerConfig: createRouter(
-          widget.authCubit,
-          authRepository: widget.authRepository,
-          eventRepository: widget.eventRepository,
-          referentialRepository: widget.referentialRepository,
-          petRepository: widget.petRepository,
-          healthRepository: widget.healthRepository,
-          articleRepository: widget.articleRepository,
-          settingsRepository: widget.settingsRepository,
-          purchaseRepository: widget.purchaseRepository,
+          routerConfig: createRouter(
+            widget.authCubit,
+            authRepository: widget.authRepository,
+            eventRepository: widget.eventRepository,
+            referentialRepository: widget.referentialRepository,
+            petRepository: widget.petRepository,
+            healthRepository: widget.healthRepository,
+            articleRepository: widget.articleRepository,
+            settingsRepository: widget.settingsRepository,
+            purchaseRepository: widget.purchaseRepository,
+          ),
         ),
       ),
     );

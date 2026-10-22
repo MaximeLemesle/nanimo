@@ -69,6 +69,20 @@ void main() {
     verify(() => posthog.disable()).called(1);
   });
 
+  test('isEnabled mirrors the persisted SDK opt-out', () async {
+    when(() => posthog.isOptOut()).thenAnswer((_) async => true);
+    expect(await service.isEnabled(), isFalse);
+
+    when(() => posthog.isOptOut()).thenAnswer((_) async => false);
+    expect(await service.isEnabled(), isTrue);
+  });
+
+  test('an unreadable opt-out flag defaults to enabled', () async {
+    when(() => posthog.isOptOut()).thenThrow(Exception('sdk down'));
+
+    expect(await service.isEnabled(), isTrue);
+  });
+
   group('NoopAnalyticsService', () {
     test('every call is a no-op that completes', () async {
       const noop = NoopAnalyticsService();
@@ -78,6 +92,7 @@ void main() {
       await expectLater(noop.identifyUser('user-1'), completes);
       await expectLater(noop.forgetUser(), completes);
       await expectLater(noop.setEnabled(true), completes);
+      expect(await noop.isEnabled(), isTrue);
     });
   });
 }
