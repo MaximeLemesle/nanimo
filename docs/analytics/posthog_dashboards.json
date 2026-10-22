@@ -1,0 +1,1731 @@
+{
+  "version": 1,
+  "source": "Nanimo NAN-117",
+  "dashboards": [
+    {
+      "name": "Nanimo · 1. Acquisition & onboarding",
+      "description": "De l'installation au premier animal créé.",
+      "insights": [
+        {
+          "name": "Installations par OS",
+          "description": "Nouvelles installations, iOS vs Android.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "Application Installed",
+                  "name": "Application Installed",
+                  "math": "total"
+                }
+              ],
+              "interval": "day",
+              "dateRange": {
+                "date_from": "-30d"
+              },
+              "trendsFilter": {
+                "display": "ActionsLineGraph"
+              },
+              "breakdownFilter": {
+                "breakdown": "$os",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        },
+        {
+          "name": "Funnel onboarding",
+          "description": "Installation → onboarding → compte → premier animal. Fenêtre 7 jours.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "FunnelsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "Application Installed",
+                  "name": "Application Installed",
+                  "math": "total",
+                  "custom_name": "Installation"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "onboarding_started",
+                  "name": "onboarding_started",
+                  "math": "total",
+                  "custom_name": "Onboarding démarré"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "account_created",
+                  "name": "account_created",
+                  "math": "total",
+                  "custom_name": "Compte créé"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "pet_created",
+                  "name": "pet_created",
+                  "math": "total",
+                  "custom_name": "Premier animal",
+                  "properties": [
+                    {
+                      "key": "source",
+                      "value": [
+                        "onboarding"
+                      ],
+                      "operator": "exact",
+                      "type": "event"
+                    }
+                  ]
+                }
+              ],
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "funnelsFilter": {
+                "funnelWindowInterval": 7,
+                "funnelWindowIntervalUnit": "day",
+                "funnelVizType": "steps",
+                "funnelOrderType": "ordered"
+              }
+            }
+          }
+        },
+        {
+          "name": "Funnel onboarding par OS",
+          "description": "Même funnel découpé par plateforme : le SSO Apple/Google se comporte différemment.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "FunnelsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "onboarding_started",
+                  "name": "onboarding_started",
+                  "math": "total"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "account_created",
+                  "name": "account_created",
+                  "math": "total"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "pet_created",
+                  "name": "pet_created",
+                  "math": "total",
+                  "properties": [
+                    {
+                      "key": "source",
+                      "value": [
+                        "onboarding"
+                      ],
+                      "operator": "exact",
+                      "type": "event"
+                    }
+                  ]
+                }
+              ],
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "funnelsFilter": {
+                "funnelWindowInterval": 7,
+                "funnelWindowIntervalUnit": "day",
+                "funnelVizType": "steps",
+                "funnelOrderType": "ordered"
+              },
+              "breakdownFilter": {
+                "breakdown": "$os",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        },
+        {
+          "name": "Abandon par slide d'onboarding",
+          "description": "Slides explicatives vues, par étape.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "onboarding_slide_viewed",
+                  "name": "onboarding_slide_viewed",
+                  "math": "dau"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-30d"
+              },
+              "trendsFilter": {
+                "display": "ActionsBarValue"
+              },
+              "breakdownFilter": {
+                "breakdown": "step",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        },
+        {
+          "name": "Comptes créés par méthode",
+          "description": "Email, Google ou Apple.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "account_created",
+                  "name": "account_created",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-30d"
+              },
+              "trendsFilter": {
+                "display": "ActionsPie"
+              },
+              "breakdownFilter": {
+                "breakdown": "method",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        },
+        {
+          "name": "Échecs d'authentification",
+          "description": "Par méthode et raison (cancelled = feuille SSO fermée).",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "auth_failed",
+                  "name": "auth_failed",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-30d"
+              },
+              "trendsFilter": {
+                "display": "ActionsBarValue"
+              },
+              "breakdownFilter": {
+                "breakdown": "reason",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        },
+        {
+          "name": "Animaux créés par espèce",
+          "description": "Répartition des espèces à la création.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "pet_created",
+                  "name": "pet_created",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "trendsFilter": {
+                "display": "ActionsPie"
+              },
+              "breakdownFilter": {
+                "breakdown": "species",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        },
+        {
+          "name": "Échecs de création d'animal",
+          "description": "pet_creation_failed par raison.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "pet_creation_failed",
+                  "name": "pet_creation_failed",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-30d"
+              },
+              "trendsFilter": {
+                "display": "ActionsLineGraph"
+              },
+              "breakdownFilter": {
+                "breakdown": "reason",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Nanimo · 2. Activation",
+      "description": "Activé = animal créé + premier souvenir sous 7 jours.",
+      "insights": [
+        {
+          "name": "Taux d'activation (7 jours)",
+          "description": "Compte créé → animal → premier souvenir.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "FunnelsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "account_created",
+                  "name": "account_created",
+                  "math": "total",
+                  "custom_name": "Compte créé"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "pet_created",
+                  "name": "pet_created",
+                  "math": "total",
+                  "custom_name": "Animal créé"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "first_memory_created",
+                  "name": "first_memory_created",
+                  "math": "total",
+                  "custom_name": "Premier souvenir"
+                }
+              ],
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "funnelsFilter": {
+                "funnelWindowInterval": 7,
+                "funnelWindowIntervalUnit": "day",
+                "funnelVizType": "steps",
+                "funnelOrderType": "ordered"
+              }
+            }
+          }
+        },
+        {
+          "name": "Délai jusqu'au premier souvenir",
+          "description": "Distribution du temps entre la création du compte et le premier souvenir.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "FunnelsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "account_created",
+                  "name": "account_created",
+                  "math": "total"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "first_memory_created",
+                  "name": "first_memory_created",
+                  "math": "total"
+                }
+              ],
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "funnelsFilter": {
+                "funnelWindowInterval": 30,
+                "funnelWindowIntervalUnit": "day",
+                "funnelVizType": "time_to_convert",
+                "funnelOrderType": "ordered"
+              }
+            }
+          }
+        },
+        {
+          "name": "Activation par OS",
+          "description": "Même funnel, iOS vs Android.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "FunnelsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "account_created",
+                  "name": "account_created",
+                  "math": "total"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "first_memory_created",
+                  "name": "first_memory_created",
+                  "math": "total"
+                }
+              ],
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "funnelsFilter": {
+                "funnelWindowInterval": 7,
+                "funnelWindowIntervalUnit": "day",
+                "funnelVizType": "steps",
+                "funnelOrderType": "ordered"
+              },
+              "breakdownFilter": {
+                "breakdown": "$os",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        },
+        {
+          "name": "Premiers souvenirs par semaine",
+          "description": "Nouveaux utilisateurs activés.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "first_memory_created",
+                  "name": "first_memory_created",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "trendsFilter": {
+                "display": "ActionsLineGraph"
+              }
+            }
+          }
+        },
+        {
+          "name": "Premiers pas complétés",
+          "description": "Items de la checklist cochés.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "checklist_item_completed",
+                  "name": "checklist_item_completed",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-30d"
+              },
+              "trendsFilter": {
+                "display": "ActionsBarValue"
+              },
+              "breakdownFilter": {
+                "breakdown": "item",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        },
+        {
+          "name": "Type du premier souvenir",
+          "description": "Quel moment déclenche l'activation.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "first_memory_created",
+                  "name": "first_memory_created",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "trendsFilter": {
+                "display": "ActionsPie"
+              },
+              "breakdownFilter": {
+                "breakdown": "event_type",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Nanimo · 3. Engagement & rétention",
+      "description": "Habitude d'écriture, rétention et signaux de churn.",
+      "insights": [
+        {
+          "name": "North star : auteurs actifs par semaine",
+          "description": "Utilisateurs uniques ayant ajouté au moins un souvenir dans la semaine.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "memory_created",
+                  "name": "memory_created",
+                  "math": "dau",
+                  "custom_name": "Auteurs actifs"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-180d"
+              },
+              "trendsFilter": {
+                "display": "ActionsLineGraph"
+              }
+            }
+          }
+        },
+        {
+          "name": "Utilisateurs actifs (DAU/WAU)",
+          "description": "Ouvertures d'app, utilisateurs uniques.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "Application Opened",
+                  "name": "Application Opened",
+                  "math": "dau",
+                  "custom_name": "DAU"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "Application Opened",
+                  "name": "Application Opened",
+                  "math": "weekly_active",
+                  "custom_name": "WAU"
+                }
+              ],
+              "interval": "day",
+              "dateRange": {
+                "date_from": "-60d"
+              },
+              "trendsFilter": {
+                "display": "ActionsLineGraph"
+              }
+            }
+          }
+        },
+        {
+          "name": "Rétention : compte créé → souvenir",
+          "description": "% des nouveaux comptes qui écrivent encore un souvenir N semaines après.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "RetentionQuery",
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "retentionFilter": {
+                "targetEntity": {
+                  "id": "account_created",
+                  "name": "account_created",
+                  "type": "events"
+                },
+                "returningEntity": {
+                  "id": "memory_created",
+                  "name": "memory_created",
+                  "type": "events"
+                },
+                "retentionType": "retention_first_time",
+                "totalIntervals": 8,
+                "period": "Week"
+              }
+            }
+          }
+        },
+        {
+          "name": "Rétention : ouverture d'app",
+          "description": "% des nouveaux comptes qui rouvrent l'app chaque semaine.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "RetentionQuery",
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "retentionFilter": {
+                "targetEntity": {
+                  "id": "account_created",
+                  "name": "account_created",
+                  "type": "events"
+                },
+                "returningEntity": {
+                  "id": "Application Opened",
+                  "name": "Application Opened",
+                  "type": "events"
+                },
+                "retentionType": "retention_first_time",
+                "totalIntervals": 8,
+                "period": "Week"
+              }
+            }
+          }
+        },
+        {
+          "name": "Rétention premium vs gratuit",
+          "description": "Même rétention, comptes premium uniquement (comparer avec le précédent).",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "RetentionQuery",
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "retentionFilter": {
+                "targetEntity": {
+                  "id": "account_created",
+                  "name": "account_created",
+                  "type": "events"
+                },
+                "returningEntity": {
+                  "id": "memory_created",
+                  "name": "memory_created",
+                  "type": "events"
+                },
+                "retentionType": "retention_first_time",
+                "totalIntervals": 8,
+                "period": "Week"
+              },
+              "properties": [
+                {
+                  "key": "is_premium",
+                  "value": [
+                    "true"
+                  ],
+                  "operator": "exact",
+                  "type": "person"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cycle de vie des auteurs",
+          "description": "Nouveaux, revenants, réactivés, dormants.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "LifecycleQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "memory_created",
+                  "name": "memory_created",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-90d"
+              }
+            }
+          }
+        },
+        {
+          "name": "Souvenirs par type",
+          "description": "memory_created par event_type.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "memory_created",
+                  "name": "memory_created",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "trendsFilter": {
+                "display": "ActionsLineGraph"
+              },
+              "breakdownFilter": {
+                "breakdown": "event_type",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        },
+        {
+          "name": "Photos par souvenir (moyenne)",
+          "description": "Moyenne de photo_count.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "memory_created",
+                  "name": "memory_created",
+                  "math": "avg",
+                  "math_property": "photo_count"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "trendsFilter": {
+                "display": "ActionsLineGraph"
+              }
+            }
+          }
+        },
+        {
+          "name": "Signaux de churn",
+          "description": "Suppressions et déconnexions par semaine.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "memory_deleted",
+                  "name": "memory_deleted",
+                  "math": "total"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "pet_deleted",
+                  "name": "pet_deleted",
+                  "math": "total"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "signed_out",
+                  "name": "signed_out",
+                  "math": "total"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "account_deleted",
+                  "name": "account_deleted",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "trendsFilter": {
+                "display": "ActionsBar"
+              }
+            }
+          }
+        },
+        {
+          "name": "Comptes supprimés",
+          "description": "account_deleted par semaine.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "account_deleted",
+                  "name": "account_deleted",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-180d"
+              },
+              "trendsFilter": {
+                "display": "ActionsLineGraph"
+              }
+            }
+          }
+        },
+        {
+          "name": "Vue du journal choisie",
+          "description": "Bascules timeline / calendrier.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "journal_view_switched",
+                  "name": "journal_view_switched",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-30d"
+              },
+              "trendsFilter": {
+                "display": "ActionsPie"
+              },
+              "breakdownFilter": {
+                "breakdown": "view_mode",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        },
+        {
+          "name": "Cartes de l'accueil cliquées",
+          "description": "home_card_tapped par carte.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "home_card_tapped",
+                  "name": "home_card_tapped",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-30d"
+              },
+              "trendsFilter": {
+                "display": "ActionsBarValue"
+              },
+              "breakdownFilter": {
+                "breakdown": "card",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        },
+        {
+          "name": "Articles ouverts",
+          "description": "article_opened par article.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "article_opened",
+                  "name": "article_opened",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "trendsFilter": {
+                "display": "ActionsLineGraph"
+              },
+              "breakdownFilter": {
+                "breakdown": "item",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        },
+        {
+          "name": "Opt-out des statistiques",
+          "description": "analytics_opted_out par semaine.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "analytics_opted_out",
+                  "name": "analytics_opted_out",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-180d"
+              },
+              "trendsFilter": {
+                "display": "ActionsLineGraph"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Nanimo · 4. Santé",
+      "description": "Usage du carnet de santé et lien avec la rétention.",
+      "insights": [
+        {
+          "name": "Entrées santé par semaine",
+          "description": "Vaccins, visites véto, poids.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "vaccine_created",
+                  "name": "vaccine_created",
+                  "math": "total"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "vet_visit_created",
+                  "name": "vet_visit_created",
+                  "math": "total"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "weight_logged",
+                  "name": "weight_logged",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "trendsFilter": {
+                "display": "ActionsLineGraph"
+              }
+            }
+          }
+        },
+        {
+          "name": "Poids saisis par source",
+          "description": "Menu + ou page animal.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "weight_logged",
+                  "name": "weight_logged",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-30d"
+              },
+              "trendsFilter": {
+                "display": "ActionsPie"
+              },
+              "breakdownFilter": {
+                "breakdown": "source",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        },
+        {
+          "name": "Vaccins par source",
+          "description": "Carnet, création guidée, onboarding.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "vaccine_created",
+                  "name": "vaccine_created",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "trendsFilter": {
+                "display": "ActionsBarValue"
+              },
+              "breakdownFilter": {
+                "breakdown": "source",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        },
+        {
+          "name": "Visites véto à venir vs passées",
+          "description": "vet_visit_created par upcoming.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "vet_visit_created",
+                  "name": "vet_visit_created",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "trendsFilter": {
+                "display": "ActionsPie"
+              },
+              "breakdownFilter": {
+                "breakdown": "upcoming",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        },
+        {
+          "name": "Rétention avec vaccin",
+          "description": "Rétention des comptes ayant au moins un vaccin (has_vaccine = true).",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "RetentionQuery",
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "retentionFilter": {
+                "targetEntity": {
+                  "id": "account_created",
+                  "name": "account_created",
+                  "type": "events"
+                },
+                "returningEntity": {
+                  "id": "Application Opened",
+                  "name": "Application Opened",
+                  "type": "events"
+                },
+                "retentionType": "retention_first_time",
+                "totalIntervals": 8,
+                "period": "Week"
+              },
+              "properties": [
+                {
+                  "key": "has_vaccine",
+                  "value": [
+                    "true"
+                  ],
+                  "operator": "exact",
+                  "type": "person"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rétention sans vaccin",
+          "description": "Même rétention, has_vaccine = false.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "RetentionQuery",
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "retentionFilter": {
+                "targetEntity": {
+                  "id": "account_created",
+                  "name": "account_created",
+                  "type": "events"
+                },
+                "returningEntity": {
+                  "id": "Application Opened",
+                  "name": "Application Opened",
+                  "type": "events"
+                },
+                "retentionType": "retention_first_time",
+                "totalIntervals": 8,
+                "period": "Week"
+              },
+              "properties": [
+                {
+                  "key": "has_vaccine",
+                  "value": [
+                    "false"
+                  ],
+                  "operator": "exact",
+                  "type": "person"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Nanimo · 5. Notifications",
+      "description": "Permission, rappels et ouverture.",
+      "insights": [
+        {
+          "name": "Réponse à la demande de permission",
+          "description": "granted / denied / later.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "notification_permission",
+                  "name": "notification_permission",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-30d"
+              },
+              "trendsFilter": {
+                "display": "ActionsPie"
+              },
+              "breakdownFilter": {
+                "breakdown": "result",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        },
+        {
+          "name": "Rappels programmés par type",
+          "description": "reminder_scheduled par kind.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "reminder_scheduled",
+                  "name": "reminder_scheduled",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-30d"
+              },
+              "trendsFilter": {
+                "display": "ActionsBarValue"
+              },
+              "breakdownFilter": {
+                "breakdown": "kind",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        },
+        {
+          "name": "Notifications ouvertes par type",
+          "description": "notification_opened par kind.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "notification_opened",
+                  "name": "notification_opened",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "trendsFilter": {
+                "display": "ActionsLineGraph"
+              },
+              "breakdownFilter": {
+                "breakdown": "kind",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        },
+        {
+          "name": "Taux d'ouverture des rappels",
+          "description": "Ouvertures / programmations (formule A/B).",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "notification_opened",
+                  "name": "notification_opened",
+                  "math": "total"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "reminder_scheduled",
+                  "name": "reminder_scheduled",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "trendsFilter": {
+                "display": "ActionsLineGraph",
+                "formula": "A/B"
+              }
+            }
+          }
+        },
+        {
+          "name": "Rappels désactivés",
+          "description": "Catégories coupées dans les Paramètres.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "notification_preference_changed",
+                  "name": "notification_preference_changed",
+                  "math": "total",
+                  "properties": [
+                    {
+                      "key": "enabled",
+                      "value": [
+                        "false"
+                      ],
+                      "operator": "exact",
+                      "type": "event"
+                    }
+                  ]
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "trendsFilter": {
+                "display": "ActionsBarValue"
+              },
+              "breakdownFilter": {
+                "breakdown": "category",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        },
+        {
+          "name": "Rétention : permission accordée",
+          "description": "Rétention des comptes avec notification_permission = granted.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "RetentionQuery",
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "retentionFilter": {
+                "targetEntity": {
+                  "id": "account_created",
+                  "name": "account_created",
+                  "type": "events"
+                },
+                "returningEntity": {
+                  "id": "Application Opened",
+                  "name": "Application Opened",
+                  "type": "events"
+                },
+                "retentionType": "retention_first_time",
+                "totalIntervals": 8,
+                "period": "Week"
+              },
+              "properties": [
+                {
+                  "key": "notification_permission",
+                  "value": [
+                    "granted"
+                  ],
+                  "operator": "exact",
+                  "type": "person"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rétention : permission refusée",
+          "description": "Même rétention, notification_permission = denied.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "RetentionQuery",
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "retentionFilter": {
+                "targetEntity": {
+                  "id": "account_created",
+                  "name": "account_created",
+                  "type": "events"
+                },
+                "returningEntity": {
+                  "id": "Application Opened",
+                  "name": "Application Opened",
+                  "type": "events"
+                },
+                "retentionType": "retention_first_time",
+                "totalIntervals": 8,
+                "period": "Week"
+              },
+              "properties": [
+                {
+                  "key": "notification_permission",
+                  "value": [
+                    "denied"
+                  ],
+                  "operator": "exact",
+                  "type": "person"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Nanimo · 6. Monétisation",
+      "description": "Paywall in-app + cycle d'abonnement côté serveur (intégration RevenueCat → PostHog).",
+      "insights": [
+        {
+          "name": "Paywall ouvert par déclencheur",
+          "description": "Quelle limite amène au paywall.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "paywall_opened",
+                  "name": "paywall_opened",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-30d"
+              },
+              "trendsFilter": {
+                "display": "ActionsBarValue"
+              },
+              "breakdownFilter": {
+                "breakdown": "trigger",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        },
+        {
+          "name": "Funnel d'achat",
+          "description": "Paywall → offre → achat lancé → achat confirmé, par déclencheur. Fenêtre 1 jour.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "FunnelsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "paywall_opened",
+                  "name": "paywall_opened",
+                  "math": "total"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "paywall_offer_selected",
+                  "name": "paywall_offer_selected",
+                  "math": "total"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "purchase_started",
+                  "name": "purchase_started",
+                  "math": "total"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "purchase_completed",
+                  "name": "purchase_completed",
+                  "math": "total"
+                }
+              ],
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "funnelsFilter": {
+                "funnelWindowInterval": 1,
+                "funnelWindowIntervalUnit": "day",
+                "funnelVizType": "steps",
+                "funnelOrderType": "ordered"
+              },
+              "breakdownFilter": {
+                "breakdown": "trigger",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        },
+        {
+          "name": "Offre choisie",
+          "description": "Mensuel vs annuel.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "paywall_offer_selected",
+                  "name": "paywall_offer_selected",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-30d"
+              },
+              "trendsFilter": {
+                "display": "ActionsPie"
+              },
+              "breakdownFilter": {
+                "breakdown": "plan",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        },
+        {
+          "name": "Paywall refusé",
+          "description": "paywall_dismissed par raison.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "paywall_dismissed",
+                  "name": "paywall_dismissed",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-30d"
+              },
+              "trendsFilter": {
+                "display": "ActionsBarValue"
+              },
+              "breakdownFilter": {
+                "breakdown": "reason",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        },
+        {
+          "name": "Achats annulés et échoués",
+          "description": "purchase_cancelled et purchase_failed.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "purchase_cancelled",
+                  "name": "purchase_cancelled",
+                  "math": "total"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "purchase_failed",
+                  "name": "purchase_failed",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-30d"
+              },
+              "trendsFilter": {
+                "display": "ActionsLineGraph"
+              }
+            }
+          }
+        },
+        {
+          "name": "Essai → payant",
+          "description": "rc_trial_started_event → rc_trial_converted_event. Fenêtre 30 jours (RevenueCat).",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "FunnelsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "rc_trial_started_event",
+                  "name": "rc_trial_started_event",
+                  "math": "total",
+                  "custom_name": "Essai démarré"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "rc_trial_converted_event",
+                  "name": "rc_trial_converted_event",
+                  "math": "total",
+                  "custom_name": "Essai converti"
+                }
+              ],
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "funnelsFilter": {
+                "funnelWindowInterval": 30,
+                "funnelWindowIntervalUnit": "day",
+                "funnelVizType": "steps",
+                "funnelOrderType": "ordered"
+              }
+            }
+          }
+        },
+        {
+          "name": "Cycle d'abonnement",
+          "description": "Événements RevenueCat par semaine.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "rc_trial_started_event",
+                  "name": "rc_trial_started_event",
+                  "math": "total"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "rc_initial_purchase_event",
+                  "name": "rc_initial_purchase_event",
+                  "math": "total"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "rc_trial_converted_event",
+                  "name": "rc_trial_converted_event",
+                  "math": "total"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "rc_renewal_event",
+                  "name": "rc_renewal_event",
+                  "math": "total"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "rc_cancellation_event",
+                  "name": "rc_cancellation_event",
+                  "math": "total"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "rc_expiration_event",
+                  "name": "rc_expiration_event",
+                  "math": "total"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "rc_billing_issue_event",
+                  "name": "rc_billing_issue_event",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "trendsFilter": {
+                "display": "ActionsBar"
+              }
+            }
+          }
+        },
+        {
+          "name": "Revenu hebdomadaire (USD)",
+          "description": "Somme de revenue sur achats, conversions et renouvellements.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "rc_initial_purchase_event",
+                  "name": "rc_initial_purchase_event",
+                  "math": "sum",
+                  "math_property": "revenue"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "rc_trial_converted_event",
+                  "name": "rc_trial_converted_event",
+                  "math": "sum",
+                  "math_property": "revenue"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "rc_renewal_event",
+                  "name": "rc_renewal_event",
+                  "math": "sum",
+                  "math_property": "revenue"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-180d"
+              },
+              "trendsFilter": {
+                "display": "ActionsAreaGraph",
+                "formula": "A+B+C"
+              }
+            }
+          }
+        },
+        {
+          "name": "Résiliations par raison",
+          "description": "rc_cancellation_event par cancel_reason.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "rc_cancellation_event",
+                  "name": "rc_cancellation_event",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "trendsFilter": {
+                "display": "ActionsBarValue"
+              },
+              "breakdownFilter": {
+                "breakdown": "cancel_reason",
+                "breakdown_type": "event"
+              }
+            }
+          }
+        },
+        {
+          "name": "Confirmation premium en retard",
+          "description": "Délais du webhook et rattrapages.",
+          "query": {
+            "kind": "InsightVizNode",
+            "source": {
+              "kind": "TrendsQuery",
+              "series": [
+                {
+                  "kind": "EventsNode",
+                  "event": "premium_confirmation_timeout",
+                  "name": "premium_confirmation_timeout",
+                  "math": "total"
+                },
+                {
+                  "kind": "EventsNode",
+                  "event": "premium_confirmation_recovered",
+                  "name": "premium_confirmation_recovered",
+                  "math": "total"
+                }
+              ],
+              "interval": "week",
+              "dateRange": {
+                "date_from": "-90d"
+              },
+              "trendsFilter": {
+                "display": "ActionsLineGraph"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -8,6 +8,7 @@ class SettingsState extends Equatable {
   final NotificationPrefsModel prefs;
   final bool isDeleting;
   final bool isRestoring;
+  final bool analyticsEnabled;
   final RestoreResult? restoreResult;
   final String? errorMessage;
 
@@ -17,6 +18,7 @@ class SettingsState extends Equatable {
     this.prefs = NotificationPrefsModel.defaults,
     this.isDeleting = false,
     this.isRestoring = false,
+    this.analyticsEnabled = true,
     this.restoreResult,
     this.errorMessage,
   });
@@ -34,6 +36,7 @@ class SettingsState extends Equatable {
     NotificationPrefsModel? prefs,
     bool? isDeleting,
     bool? isRestoring,
+    bool? analyticsEnabled,
     RestoreResult? restoreResult,
     bool clearRestoreResult = false,
     String? errorMessage,
@@ -45,6 +48,7 @@ class SettingsState extends Equatable {
       prefs: prefs ?? this.prefs,
       isDeleting: isDeleting ?? this.isDeleting,
       isRestoring: isRestoring ?? this.isRestoring,
+      analyticsEnabled: analyticsEnabled ?? this.analyticsEnabled,
       restoreResult:
           clearRestoreResult ? null : restoreResult ?? this.restoreResult,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
@@ -58,6 +62,7 @@ class SettingsState extends Equatable {
         prefs,
         isDeleting,
         isRestoring,
+        analyticsEnabled,
         restoreResult,
         errorMessage,
       ];

@@ -74,6 +74,22 @@ class EventCreationCubit extends Cubit<EventCreationState> {
     }
   }
 
+  /// Read from the synced cache, so a reinstall does not count a second first.
+  Future<bool> _hasNoMemoryYet() async {
+    try {
+      return await _eventRepository.countEvents() == 0;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  String? _typeCode(String eventTypeId) {
+    for (final type in state.types) {
+      if (type.eventTypeId == eventTypeId) return type.code;
+    }
+    return null;
+  }
+
   void selectType(String eventTypeId) {
     emit(state.copyWith(selectedTypeId: eventTypeId));
   }
@@ -115,6 +131,7 @@ class EventCreationCubit extends Cubit<EventCreationState> {
 
     final eventId = _pendingEventId ??= const Uuid().v4();
     final trimDescription = description?.trim();
+    final isFirstMemory = await _hasNoMemoryYet();
 
     try {
       for (final image in images) {
@@ -151,10 +168,19 @@ class EventCreationCubit extends Cubit<EventCreationState> {
 
       _pendingEventId = null;
       _uploadedImages.clear();
-      analytics.capture(AnalyticsEvents.memoryCreated, properties: {
+      final properties = <String, Object>{
         AnalyticsProperties.photoCount: images.length,
         AnalyticsProperties.petCount: petIds.length,
-      });
+        AnalyticsProperties.hasDescription:
+            trimDescription != null && trimDescription.isNotEmpty,
+        if (_typeCode(eventTypeId) case final code?)
+          AnalyticsProperties.eventType: code,
+      };
+      analytics.capture(AnalyticsEvents.memoryCreated, properties: properties);
+      if (isFirstMemory) {
+        analytics.capture(AnalyticsEvents.firstMemoryCreated,
+            properties: properties);
+      }
       if (isClosed) return;
       emit(state.copyWith(status: EventCreationStatus.success));
     } on RepositoryException catch (e) {

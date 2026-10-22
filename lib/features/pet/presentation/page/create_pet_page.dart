@@ -71,6 +71,10 @@ class _CreatePetPageState extends State<CreatePetPage> {
           gender: state.gender!,
           birthdate: state.birthdate!,
           petIconId: state.petIconId,
+          speciesKey: state.species
+              .where((species) => species.petSpeciesId == state.petSpeciesId)
+              .firstOrNull
+              ?.iconKey,
         );
     if (_isInApp(context)) {
       context.read<OnboardingCubit>().reset();

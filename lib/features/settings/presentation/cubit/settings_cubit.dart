@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nanimo/core/analytics/analytics.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
 import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
 import 'package:nanimo/features/auth/data/models/user_model.dart';
@@ -37,6 +39,20 @@ class SettingsCubit extends Cubit<SettingsState> {
     _prefsSubscription = _settingsRepository.watchNotificationPrefs().listen((prefs) {
       emit(state.copyWith(prefs: prefs));
     });
+    _loadAnalyticsConsent();
+  }
+
+  Future<void> _loadAnalyticsConsent() async {
+    final enabled = await analytics.isEnabled();
+    if (isClosed) return;
+    emit(state.copyWith(analyticsEnabled: enabled));
+  }
+
+  Future<void> setAnalyticsEnabled(bool enabled) async {
+    if (enabled == state.analyticsEnabled) return;
+    emit(state.copyWith(analyticsEnabled: enabled));
+    if (!enabled) await analytics.capture(AnalyticsEvents.analyticsOptedOut);
+    await analytics.setEnabled(enabled);
   }
 
   Future<bool> updateUserName(String userName) async {
@@ -53,6 +69,7 @@ class SettingsCubit extends Cubit<SettingsState> {
   }
 
   Future<void> updateNotificationPrefs(NotificationPrefsModel prefs) async {
+    _trackPrefsChange(state.prefs, prefs);
     emit(state.copyWith(prefs: prefs));
     try {
       await _settingsRepository.saveNotificationPrefs(prefs);
@@ -81,10 +98,31 @@ class SettingsCubit extends Cubit<SettingsState> {
     }
   }
 
+  void _trackPrefsChange(NotificationPrefsModel before, NotificationPrefsModel after) {
+    final changes = {
+      'all': (before.pushEnabled, after.pushEnabled),
+      'vaccine': (before.vaccineReminders, after.vaccineReminders),
+      'vet': (before.vetReminders, after.vetReminders),
+      'deworming': (before.dewormingReminders, after.dewormingReminders),
+      'anniversary': (before.anniversaryReminders, after.anniversaryReminders),
+    };
+    for (final MapEntry(key: category, value: (was, now)) in changes.entries) {
+      if (was == now) continue;
+      analytics.capture(AnalyticsEvents.notificationPreferenceChanged, properties: {
+        AnalyticsProperties.category: category,
+        AnalyticsProperties.enabled: now,
+      });
+    }
+    if (before.pushEnabled != after.pushEnabled) {
+      analytics.setPersonProperties({AnalyticsProperties.notificationsEnabled: after.pushEnabled});
+    }
+  }
+
   Future<void> deleteAccount() async {
     emit(state.copyWith(isDeleting: true, clearError: true));
     try {
       await _authRepository.deleteAccount();
+      analytics.capture(AnalyticsEvents.accountDeleted);
     } catch (e) {
       emit(state.copyWith(isDeleting: false, errorMessage: _messageFor(e)));
     }

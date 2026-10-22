@@ -85,6 +85,8 @@ class EventRepository {
     });
   }
 
+  Future<int> countEvents() => _isar.eventCaches.count();
+
   /// How many souvenirs are linked to [petId]
   Future<int> countEventsForPet(String petId) {
     return _isar.petEventCaches.filter().petIdEqualTo(petId).count();

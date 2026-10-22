@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/deworming_bottom_sheet_widget.dart';
 import 'package:nanimo/config/router/route_names.dart';
+import 'package:nanimo/core/analytics/analytics.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
@@ -73,9 +74,12 @@ class HomePage extends StatelessWidget {
                     age: birthday.age,
                     portrait: state.portraits[birthday.pet.petId],
                     now: now,
-                    onAddMemory: () => context.push(Uri(
-                        path: RouteNames.createEvent,
-                        queryParameters: {'petId': birthday.pet.petId}).toString()),
+                    onAddMemory: () {
+                      _trackCard(HomeCard.birthday);
+                      context.push(Uri(
+                          path: RouteNames.createEvent,
+                          queryParameters: {'petId': birthday.pet.petId}).toString());
+                    },
                   ),
 
                 if (state.pets.isNotEmpty)
@@ -95,11 +99,14 @@ class HomePage extends StatelessWidget {
                     yearsAgo: anniversary == null ? null : state.yearsAgo(anniversary, now: now),
                     imagePaths: state.imagePathsByEvent[memory.eventId] ?? const [],
                     urlResolver: context.read<HomeCubit>().imageUrl,
-                    onTap: () => JournalEventDetailBottomSheetWidget.show(
-                      context,
-                      event: memory,
-                      onEdit: () => context.push('${RouteNames.editEvent}/${memory.eventId}'),
-                    ),
+                    onTap: () {
+                      _trackCard(HomeCard.memory);
+                      JournalEventDetailBottomSheetWidget.show(
+                        context,
+                        event: memory,
+                        onEdit: () => context.push('${RouteNames.editEvent}/${memory.eventId}'),
+                      );
+                    },
                   ),
                   const SizedBox(height: AppSpacing.xl),
                 ],
@@ -113,6 +120,7 @@ class HomePage extends StatelessWidget {
                     context.watch<SubscriptionCubit>().state,
                   ),
                   onPetTap: (petId) {
+                    _trackCard(HomeCard.pet);
                     context.read<PetDetailsCubit>().selectPet(petId);
                     context.push(RouteNames.pet);
                   },
@@ -126,6 +134,7 @@ class HomePage extends StatelessWidget {
                   portraits: state.portraits,
                   now: now,
                   onVisitTap: (petId) {
+                    _trackCard(HomeCard.vetVisit);
                     context.read<PetDetailsCubit>().selectPet(petId);
                     context.push(RouteNames.healthDiary);
                   },
@@ -144,6 +153,7 @@ class HomePage extends StatelessWidget {
                   portraits: state.portraits,
                   now: now,
                   onAlertTap: (petId) {
+                    _trackCard(HomeCard.health);
                     context.read<PetDetailsCubit>().selectPet(petId);
                     context.push(RouteNames.healthDiary);
                   },
@@ -183,6 +193,11 @@ class HomePage extends StatelessWidget {
       ],
       child: scaffold,
     );
+  }
+
+  void _trackCard(String card) {
+    analytics.capture(AnalyticsEvents.homeCardTapped,
+        properties: {AnalyticsProperties.card: card});
   }
 
   /// The trial is offered once the first steps are all done, after the confetti.

@@ -53,4 +53,7 @@ class RecordingAnalyticsService implements AnalyticsService {
 
   @override
   Future<void> setEnabled(bool enabled) async => lastEnabled = enabled;
+
+  @override
+  Future<bool> isEnabled() async => lastEnabled ?? true;
 }

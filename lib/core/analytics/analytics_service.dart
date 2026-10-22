@@ -14,6 +14,8 @@ abstract class AnalyticsService {
 
   /// Opt-out must survive a restart, so the SDK owns the flag, not the caller.
   Future<void> setEnabled(bool enabled);
+
+  Future<bool> isEnabled();
 }
 
 /// Used when no key is configured, in debug builds, and in tests.
@@ -40,4 +42,7 @@ class NoopAnalyticsService implements AnalyticsService {
 
   @override
   Future<void> setEnabled(bool enabled) async {}
+
+  @override
+  Future<bool> isEnabled() async => true;
 }

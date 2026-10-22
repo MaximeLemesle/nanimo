@@ -67,7 +67,10 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
     }
     final isUpgrade = _lastPlanName != null && _lastPlanName != planName;
     if (planName != _lastPlanName) {
-      analytics.setPersonProperties({AnalyticsProperties.isPremium: planName == 'premium'});
+      analytics.setPersonProperties({
+        AnalyticsProperties.isPremium: planName == 'premium',
+        AnalyticsProperties.plan: planName,
+      });
     }
     _lastPlanName = planName;
     await _load(planName, forceRefresh: isUpgrade);
