@@ -36,6 +36,7 @@ class HomeArticleCardWidget extends StatelessWidget {
     BottomSheetWidget.show<void>(
       context,
       _ArticleBottomSheet(title: _title, paragraphs: _paragraphs),
+      safeArea: false,
     );
   }
 
@@ -101,7 +102,7 @@ class _ArticleBottomSheet extends StatelessWidget {
           AppSpacing.lg,
           AppSpacing.sm,
           AppSpacing.lg,
-          AppSpacing.lg,
+          0,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,6 +121,9 @@ class _ArticleBottomSheet extends StatelessWidget {
             const SizedBox(height: AppSpacing.lg),
             Expanded(
               child: SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  bottom: AppSpacing.lg + MediaQuery.paddingOf(context).bottom,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
