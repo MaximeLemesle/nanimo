@@ -39,26 +39,26 @@ dependencies:
   go_router: ^17.2.3
   flutter_bloc: ^9.1.1
   equatable: ^2.1.0
-  supabase_flutter: ^2.12.4
+  supabase_flutter: ^2.18.3
   flutter_dotenv: ^6.0.1
   isar: ^3.1.0
   isar_flutter_libs: ^3.1.0
   path_provider: ^2.1.6
   google_sign_in: ^7.2.0
-  sign_in_with_apple: ^8.1.0
+  sign_in_with_apple: ^8.2.0
   crypto: ^3.0.7
   flutter_svg: ^2.3.0
   flutter_confetti: ^0.9.2
   uuid: ^4.6.0
   cached_network_image: ^3.4.1
   fl_chart: ^0.69.2
-  image_picker: ^1.2.3
+  image_picker: ^1.2.4
   lottie: ^3.3.3
-  package_info_plus: ^10.2.1
+  package_info_plus: ^10.2.2
   posthog_flutter: ^5.39.0
   purchases_flutter: ^8.10.1
   sentry_flutter: ^8.14.2
-  url_launcher: ^6.3.1
+  url_launcher: ^6.3.3
   flutter_local_notifications: ^22.3.2
   timezone: ^0.11.2
   flutter_timezone: ^5.1.1
@@ -78,7 +78,7 @@ dev_dependencies:
   build_runner: ^2.4.0
   mocktail: ^1.0.4
   flutter_launcher_icons: ^0.14.4
-  image_picker_platform_interface: ^2.10.0
+  image_picker_platform_interface: ^2.11.2
 
 dependency_overrides:
   path_provider_foundation: 2.5.1
