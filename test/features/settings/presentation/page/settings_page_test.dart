@@ -12,6 +12,7 @@ import 'package:nanimo/features/settings/data/models/notification_prefs_model.da
 import 'package:nanimo/features/settings/presentation/cubit/settings_cubit.dart';
 import 'package:nanimo/features/settings/presentation/page/settings_page.dart';
 import 'package:nanimo/features/settings/presentation/widgets/settings_notification_section_widget.dart';
+import 'package:nanimo/features/settings/presentation/widgets/settings_privacy_section_widget.dart';
 import 'package:nanimo/features/subscription/data/subscription_restorer.dart';
 
 class _MockSettingsCubit extends Mock implements SettingsCubit {}
@@ -59,6 +60,7 @@ void main() {
     when(() => settingsCubit.clearRestoreResult()).thenReturn(null);
     when(() => settingsCubit.updateNotificationPrefs(any())).thenAnswer((_) async {});
     when(() => settingsCubit.deleteAccount()).thenAnswer((_) async {});
+    when(() => settingsCubit.setAnalyticsEnabled(any())).thenAnswer((_) async {});
     when(() => authCubit.state).thenReturn(const AuthState.authenticated());
     when(() => authCubit.stream).thenAnswer((_) => const Stream<AuthState>.empty());
     when(() => authCubit.logout()).thenAnswer((_) async {});
@@ -100,7 +102,14 @@ void main() {
     expect(find.text('Abonnement'), findsOneWidget);
     expect(find.text('Freemium'), findsOneWidget);
     expect(find.text('Notifications'), findsOneWidget);
-    expect(find.byType(CupertinoSwitch), findsNWidgets(5));
+    expect(
+      find.descendant(
+        of: find.byType(SettingsNotificationSectionWidget),
+        matching: find.byType(CupertinoSwitch),
+      ),
+      findsNWidgets(4),
+    );
+    expect(find.text('Confidentialité'), findsOneWidget);
     expect(find.text('Se déconnecter'), findsOneWidget);
     expect(find.text('Supprimer mon compte'), findsOneWidget);
     expect(find.text('Version 1.0.0'), findsOneWidget);
@@ -125,20 +134,30 @@ void main() {
     expect(find.text('Jusqu\'au 31/12/2026'), findsOneWidget);
   });
 
-  testWidgets('notification switches stay off and announce the V2 wiring', (tester) async {
+  testWidgets('notification switches are live and write the prefs', (tester) async {
     await pumpPage(tester);
-
-    final beforeTap = tester.widgetList<CupertinoSwitch>(find.byType(CupertinoSwitch));
-    expect(beforeTap.every((s) => s.value == false), isTrue);
 
     /// Second switch is the vaccine reminders one
     await tester.tap(find.byType(CupertinoSwitch).at(1));
     await tester.pump();
 
-    expect(find.text(SettingsNotificationSectionWidget.comingSoonMessage), findsOneWidget);
-    final afterTap = tester.widgetList<CupertinoSwitch>(find.byType(CupertinoSwitch));
-    expect(afterTap.every((s) => s.value == false), isTrue);
-    verifyNever(() => settingsCubit.updateNotificationPrefs(any()));
+    expect(find.text(SettingsNotificationSectionWidget.comingSoonMessage), findsNothing);
+    verify(() => settingsCubit.updateNotificationPrefs(any())).called(1);
+  });
+
+  testWidgets('the usage statistics switch turns analytics off', (tester) async {
+    await pumpPage(tester);
+
+    final privacySwitch = find.descendant(
+      of: find.byType(SettingsPrivacySectionWidget),
+      matching: find.byType(CupertinoSwitch),
+    );
+    expect(tester.widget<CupertinoSwitch>(privacySwitch).value, isTrue);
+
+    await tester.tap(privacySwitch);
+    await tester.pump();
+
+    verify(() => settingsCubit.setAnalyticsEnabled(false)).called(1);
   });
 
   testWidgets('logout button calls AuthCubit.logout', (tester) async {

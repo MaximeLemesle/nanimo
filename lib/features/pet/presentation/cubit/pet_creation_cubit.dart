@@ -20,6 +20,7 @@ class PetCreationCubit extends Cubit<PetCreationState> {
 
   StreamSubscription<AuthState>? _authSubscription;
   AuthStatus _lastAuthStatus;
+  String? _pendingSpeciesKey;
 
   PetCreationCubit({
     required AuthCubit authCubit,
@@ -41,7 +42,9 @@ class PetCreationCubit extends Cubit<PetCreationState> {
     required Gender gender,
     required DateTime birthdate,
     String? petIconId,
+    String? speciesKey,
   }) {
+    _pendingSpeciesKey = speciesKey;
     final pet = PetModel(
       petId: _uuid.v4(),
       petName: petName,
@@ -83,10 +86,17 @@ class PetCreationCubit extends Cubit<PetCreationState> {
     ));
     try {
       await _petRepository.createPet(pet);
-      analytics.capture(AnalyticsEvents.petCreated);
+      analytics.capture(AnalyticsEvents.petCreated, properties: {
+        AnalyticsProperties.source: duringOnboarding
+            ? OnboardingSource.onboarding
+            : OnboardingSource.addPet,
+        if (_pendingSpeciesKey case final species?)
+          AnalyticsProperties.species: speciesCode(species),
+      });
       emit(state.copyWith(
         status: PetCreationStatus.success,
         clearPendingPet: true,
+        awaitedPetId: duringOnboarding ? pet.petId : null,
       ));
     } on RepositoryException catch (e) {
       _trackCreationFailed(e is RepositoryNetworkException ? 'network' : 'server');
@@ -108,6 +118,12 @@ class PetCreationCubit extends Cubit<PetCreationState> {
       AnalyticsEvents.petCreationFailed,
       properties: {AnalyticsProperties.reason: reason},
     );
+  }
+
+  /// The home received the onboarding pet from the cache.
+  void petShown() {
+    if (state.awaitedPetId == null) return;
+    emit(state.copyWith(clearAwaitedPet: true));
   }
 
   Future<void> retry() async {

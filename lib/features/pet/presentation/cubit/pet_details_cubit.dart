@@ -2,6 +2,10 @@ import 'dart:async';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nanimo/core/analytics/analytics.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
+import 'package:nanimo/core/notifications/notification_priming.dart';
+import 'package:nanimo/core/notifications/notifications.dart';
 import 'package:nanimo/core/utils/pet_icon_resolver.dart';
 import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:nanimo/data/models/referential/pet_icon_model.dart';
@@ -69,6 +73,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     double weight,
     DateTime loggedAt, {
     String? petId,
+    String source = WeightSource.petPage,
   }) async {
     final targetId = petId ?? state.selectedPetId;
     if (targetId == null) return;
@@ -80,9 +85,30 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
         petId: targetId,
       );
       await _healthRepository.addWeightLog(log);
+      analytics.capture(AnalyticsEvents.weightLogged,
+          properties: {AnalyticsProperties.source: source});
     } catch (err) {
       if (isClosed) return;
       emit(state.copyWith(error: err.toString()));
+    }
+  }
+
+  /// Corrects the birthdate without leaving the diary draft or creating a diary.
+  Future<bool> updateBirthdate(DateTime birthdate) async {
+    final pet = state.selectedPet;
+    if (pet == null) return false;
+    try {
+      final updated = pet.copyWith(birthdate: birthdate);
+      await _petRepository.updatePet(updated);
+      if (isClosed) return false;
+      emit(state.copyWith(pets: [
+        for (final current in state.pets)
+          if (current.petId == pet.petId) updated else current,
+      ]));
+      return true;
+    } catch (err) {
+      if (!isClosed) emit(state.copyWith(error: err.toString()));
+      return false;
     }
   }
 
@@ -90,10 +116,17 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     double? birthWeight,
     DateTime? birthWeightDate,
     bool? isSterilized,
+    DateTime? sterilizedAt,
     bool? isChipped,
     String? chipNumber,
     DateTime? lastDeworming,
-    List<({String name, DateTime lastDate, DateTime nextDate, int recurrence})>
+    List<
+            ({
+              String name,
+              DateTime? lastDate,
+              DateTime? nextDate,
+              int recurrence
+            })>
         vaccines = const [],
     List<
             ({
@@ -112,10 +145,12 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
         healthDiaryId: healthDiaryId,
         petId: petId,
         isSterilized: isSterilized,
+        sterilizedAt: isSterilized == true ? sterilizedAt : null,
         isChipped: isChipped,
         chipNumber: chipNumber,
         lastDeworming: lastDeworming,
         lastVetAppointment: state.diary?.lastVetAppointment,
+        dewormingIntervalMonths: state.diary?.dewormingIntervalMonths,
       );
       await _healthRepository.upsertDiary(diary);
 
@@ -143,6 +178,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
             healthDiaryId: healthDiaryId,
           ),
         );
+        _trackVaccineCreated(HealthEntrySource.diaryCreation);
       }
 
       for (final visit in vetVisits) {
@@ -156,6 +192,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
             petId: petId,
           ),
         );
+        _trackVetVisitCreated(visit.visitedAt, HealthEntrySource.diaryCreation);
       }
     } catch (err) {
       if (isClosed) return;
@@ -178,10 +215,12 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
         healthDiaryId: current?.healthDiaryId ?? const Uuid().v4(),
         petId: petId,
         isSterilized: isSterilized ?? current?.isSterilized,
+        sterilizedAt: current?.sterilizedAt,
         isChipped: isChipped ?? current?.isChipped,
         chipNumber: chipNumber ?? current?.chipNumber,
         lastDeworming: lastDeworming ?? current?.lastDeworming,
         lastVetAppointment: lastVetAppointment ?? current?.lastVetAppointment,
+        dewormingIntervalMonths: current?.dewormingIntervalMonths,
       );
       await _healthRepository.upsertDiary(diary);
     } catch (err) {
@@ -195,6 +234,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     required bool isChipped,
     String? chipNumber,
     DateTime? lastDeworming,
+    int? dewormingIntervalMonths,
   }) async {
     final petId = state.selectedPetId;
     if (petId == null) return;
@@ -204,10 +244,12 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
         healthDiaryId: current?.healthDiaryId ?? const Uuid().v4(),
         petId: petId,
         isSterilized: isSterilized,
+        sterilizedAt: isSterilized ? current?.sterilizedAt : null,
         isChipped: isChipped,
         chipNumber: isChipped ? chipNumber : null,
         lastDeworming: lastDeworming,
         lastVetAppointment: current?.lastVetAppointment,
+        dewormingIntervalMonths: dewormingIntervalMonths ?? current?.dewormingIntervalMonths,
       );
       await _healthRepository.upsertDiary(diary);
     } catch (err) {
@@ -216,11 +258,39 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     }
   }
 
+  /// Records a deworming for any animal, the home being multi-animal.
+  /// Returns the diary as it was, for an undo, or null on failure.
+  Future<HealthDiaryModel?> recordDeworming(
+    String petId, {
+    required DateTime? lastDeworming,
+    int? intervalMonths,
+  }) async {
+    try {
+      final current = petId == state.selectedPetId ? state.diary : await _healthRepository.getDiaryForPet(petId);
+      final previous = current ?? HealthDiaryModel(healthDiaryId: const Uuid().v4(), petId: petId);
+      await _healthRepository.upsertDiary(HealthDiaryModel(
+        healthDiaryId: previous.healthDiaryId,
+        petId: petId,
+        isSterilized: previous.isSterilized,
+        sterilizedAt: previous.sterilizedAt,
+        isChipped: previous.isChipped,
+        chipNumber: previous.chipNumber,
+        lastDeworming: lastDeworming,
+        lastVetAppointment: previous.lastVetAppointment,
+        dewormingIntervalMonths: intervalMonths ?? previous.dewormingIntervalMonths,
+      ));
+      return previous;
+    } catch (err) {
+      if (!isClosed) emit(state.copyWith(error: err.toString()));
+      return null;
+    }
+  }
+
   /// [petId] targets another animal without moving the global selection.
   Future<void> addVaccine({
     required String vaccineName,
     DateTime? lastDate,
-    required DateTime nextDate,
+    DateTime? nextDate,
     int recurrence = 0,
     int doseNumber = 1,
     int totalDoseNumber = 1,
@@ -242,6 +312,8 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
         healthDiaryId: healthDiaryId,
       );
       await _healthRepository.addVaccine(vaccine);
+      _trackVaccineCreated(HealthEntrySource.healthDiary);
+      _offerReminders(targetId, nextDate);
     } catch (err) {
       if (isClosed) return;
       emit(state.copyWith(error: err.toString()));
@@ -286,10 +358,42 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
         petId: targetId,
       );
       await _healthRepository.addVetVisit(visit);
+      _trackVetVisitCreated(visitedAt, HealthEntrySource.healthDiary);
+      _offerReminders(targetId, visitedAt, isVetVisit: true);
     } catch (err) {
       if (isClosed) return;
       emit(state.copyWith(error: err.toString()));
     }
+  }
+
+  /// A booster or a visit ahead is the moment to ask for notifications.
+  void _offerReminders(String petId, DateTime? dueDate,
+      {bool isVetVisit = false}) {
+    if (dueDate == null) return;
+    String? petName;
+    for (final pet in state.pets) {
+      if (pet.petId == petId) petName = pet.petName;
+    }
+    if (petName == null) return;
+    notificationPriming.offerFor(PrimingOffer(
+        petName: petName, dueDate: dueDate, isVetVisit: isVetVisit));
+  }
+
+  void _trackVaccineCreated(String source) {
+    analytics.capture(
+      AnalyticsEvents.vaccineCreated,
+      properties: {AnalyticsProperties.source: source},
+    );
+  }
+
+  void _trackVetVisitCreated(DateTime visitedAt, String source) {
+    analytics.capture(
+      AnalyticsEvents.vetVisitCreated,
+      properties: {
+        AnalyticsProperties.source: source,
+        AnalyticsProperties.upcoming: visitedAt.isAfter(DateTime.now()),
+      },
+    );
   }
 
   Future<void> deleteVaccine(String healthDiaryVaccineId) async {
@@ -426,7 +530,6 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
       emit(state.copyWith(icons: icons));
     } catch (_) {}
   }
-
 
   Future<void> _loadRaceName(String petId) async {
     PetModel? pet;

@@ -36,7 +36,7 @@ EventModel _event(String id, DateTime entryDate) => EventModel(
       eventTypeId: 't1',
     );
 
-HealthDiaryVaccineModel _vaccine(String id, DateTime nextDate,
+HealthDiaryVaccineModel _vaccine(String id, DateTime? nextDate,
         {String diaryId = 'd1'}) =>
     HealthDiaryVaccineModel(
       healthDiaryVaccineId: id,
@@ -123,7 +123,9 @@ void main() {
       const HealthDiaryModel(healthDiaryId: 'd2', petId: 'p2'),
     ];
 
-    test('keeps overdue and soon vaccines sorted by urgency', () {
+    /// NAN-115: a booster months away is listed too, so the owner sees where
+    /// the pet stands.
+    test('lists every booster ahead or overdue, sorted by urgency', () {
       final state = HomeState(
         pets: [_milo, _nala],
         diaries: diaries,
@@ -137,11 +139,27 @@ void main() {
       final alerts = state.vaccineAlerts(now: _now);
 
       expect(alerts.map((a) => a.vaccine.healthDiaryVaccineId),
-          ['late', 'soon']);
+          ['late', 'soon', 'ok']);
       expect(alerts.first.status, VaccineStatus.overdue);
       expect(alerts.first.pet?.petName, 'Milo');
-      expect(alerts.last.status, VaccineStatus.soon);
-      expect(alerts.last.pet?.petName, 'Nala');
+      expect(alerts[1].status, VaccineStatus.soon);
+      expect(alerts[1].pet?.petName, 'Nala');
+      expect(alerts.last.status, VaccineStatus.done);
+    });
+
+    /// NAN-096: "je ne sais pas" leaves the booster empty.
+    test('a vaccine without a next booster raises no alert and no status', () {
+      final state = HomeState(
+        pets: [_milo],
+        diaries: diaries,
+        vaccines: [
+          _vaccine('unknown', null),
+          _vaccine('late', _now.subtract(const Duration(days: 2))),
+        ],
+      );
+
+      expect(state.vaccineAlerts(now: _now).map((a) => a.vaccine.healthDiaryVaccineId), ['late']);
+      expect(state.vaccineStatusByPet(now: _now)['p1'], VaccineStatus.overdue);
     });
 
     test('vaccineStatusByPet keeps the worst status per pet', () {
@@ -260,6 +278,99 @@ void main() {
         state.upcomingVetVisits(now: visitedAt.add(const Duration(days: 1))),
         isEmpty,
       );
+    });
+  });
+
+  /// NAN-115: with nothing booked, the card tells when each pet was last seen.
+  group('last entries', () {
+    final diaries = [
+      HealthDiaryModel(healthDiaryId: 'd1', petId: _milo.petId),
+      HealthDiaryModel(healthDiaryId: 'd2', petId: _nala.petId),
+    ];
+
+    test('keeps the latest past visit of each pet, in the order of the pets', () {
+      final state = HomeState(pets: [_milo, _nala], vetVisits: [
+        VetVisitModel(vetVisitId: 'a', title: 'A', visitedAt: DateTime(2026, 3, 1), petId: _nala.petId),
+        VetVisitModel(vetVisitId: 'b', title: 'B', visitedAt: DateTime(2026, 6, 1), petId: _nala.petId),
+        VetVisitModel(vetVisitId: 'c', title: 'C', visitedAt: DateTime(2026, 5, 1), petId: _milo.petId),
+        VetVisitModel(vetVisitId: 'd', title: 'D', visitedAt: DateTime(2026, 9, 1), petId: _milo.petId),
+      ]);
+
+      final last = state.lastVetVisits(now: _now);
+
+      expect(last.map((e) => (e.pet.petName, e.at)), [
+        ('Milo', DateTime(2026, 5, 1)),
+        ('Nala', DateTime(2026, 6, 1)),
+      ]);
+    });
+
+    test('keeps the latest vaccine given of each pet', () {
+      final state = HomeState(pets: [_milo, _nala], diaries: diaries, vaccines: [
+        _vaccine('m', null),
+        HealthDiaryVaccineModel(
+          healthDiaryVaccineId: 'n',
+          vaccineName: 'Rage',
+          lastDate: DateTime(2026, 6, 20),
+          recurrence: 0,
+          doseNumber: 1,
+          totalDoseNumber: 1,
+          healthDiaryId: 'd2',
+        ),
+      ]);
+
+      final last = state.lastVaccinations(now: _now);
+
+      expect(last.map((e) => (e.pet.petName, e.at)), [
+        ('Milo', DateTime(2025, 1, 1)),
+        ('Nala', DateTime(2026, 6, 20)),
+      ]);
+    });
+  });
+
+  group('dewormings', () {
+    final state = HomeState(
+      pets: [_milo, _nala],
+      diaries: [
+        HealthDiaryModel(healthDiaryId: 'd1', petId: 'p1', lastDeworming: DateTime(2026, 6, 1), dewormingIntervalMonths: 1),
+        const HealthDiaryModel(healthDiaryId: 'd2', petId: 'p2'),
+        HealthDiaryModel(healthDiaryId: 'd3', petId: 'someone-else', lastDeworming: DateTime(2026, 6, 1)),
+      ],
+    );
+
+    test('a pet with a last deworming gets its next one, with a status', () {
+      final alerts = state.dewormingAlerts(now: _now);
+      expect(alerts.single.pet, _milo);
+      expect(alerts.single.nextDate, DateTime(2026, 7, 1));
+      expect(alerts.single.status, VaccineStatus.overdue);
+      expect(alerts.single.intervalMonths, 1);
+    });
+
+    test('a pet without one, diary or not, is asked for it', () {
+      expect(state.petsWithoutDeworming, [_nala]);
+      expect(HomeState(pets: [_milo]).petsWithoutDeworming, [_milo]);
+    });
+  });
+
+  group('birthdays', () {
+    PetModel born(DateTime birthdate) => _milo.copyWith(birthdate: birthdate);
+
+    test('a pet born on this day a year or more ago, with its age', () {
+      final state = HomeState(pets: [born(DateTime(2023, 7, 8)), _nala]);
+      final birthdays = state.birthdays(now: _now);
+      expect(birthdays.single.pet.petId, 'p1');
+      expect(birthdays.single.age, 3);
+    });
+
+    test('not the day of birth, nor another day', () {
+      expect(HomeState(pets: [born(DateTime(2026, 7, 8))]).birthdays(now: _now), isEmpty);
+      expect(HomeState(pets: [born(DateTime(2023, 7, 9))]).birthdays(now: _now), isEmpty);
+    });
+
+    test('a 29 February is celebrated on the 28th in common years', () {
+      final state = HomeState(pets: [born(DateTime(2024, 2, 29))]);
+      expect(state.birthdays(now: DateTime(2027, 2, 28, 9)).single.age, 3);
+      expect(state.birthdays(now: DateTime(2028, 2, 28, 9)), isEmpty);
+      expect(state.birthdays(now: DateTime(2028, 2, 29, 9)).single.age, 4);
     });
   });
 }

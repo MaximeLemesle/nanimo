@@ -4,15 +4,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
+import 'package:nanimo/core/notifications/notification_priming.dart';
+import 'package:nanimo/core/notifications/notifications.dart';
 import 'package:nanimo/core/widgets/label_widget.dart';
 import 'package:nanimo/features/settings/data/models/notification_prefs_model.dart';
 import 'package:nanimo/features/settings/presentation/cubit/settings_cubit.dart';
 import 'package:nanimo/features/settings/presentation/widgets/settings_tile_widget.dart';
 
-/// NAN-070 temporary guard: nothing sends notifications yet, so the toggles
-/// promise a feature that does not exist. Flip to true with the V2 FCM wiring,
-/// it is the only change needed to give the section back its behaviour.
-const bool kNotificationsWired = false;
+/// NAN-070 guard, lifted by the local reminders of NAN-106.
+const bool kNotificationsWired = true;
 
 class SettingsNotificationSectionWidget extends StatelessWidget {
   static const String comingSoonMessage = 'Ça arrive bientôt';
@@ -42,9 +42,10 @@ class SettingsNotificationSectionWidget extends StatelessWidget {
             ],
           ),
         ),
+        const _BlockedBySystemTile(),
         _toggleTile(
           context,
-          title: 'Notifications push',
+          title: 'Tous les rappels',
           value: kNotificationsWired
               ? 'Rappels santé et anniversaires'
               : 'Rappels santé et anniversaires, on y travaille',
@@ -54,7 +55,7 @@ class SettingsNotificationSectionWidget extends StatelessWidget {
         const SizedBox(height: AppSpacing.sm),
         _toggleTile(
           context,
-          title: 'Vaccins',
+          title: 'Vaccins et vermifuges',
           isOn: prefs.vaccineReminders,
           update: (enabled) => prefs.copyWith(vaccineReminders: enabled),
           requiresPush: true,
@@ -65,14 +66,6 @@ class SettingsNotificationSectionWidget extends StatelessWidget {
           title: 'Visites vétérinaires',
           isOn: prefs.vetReminders,
           update: (enabled) => prefs.copyWith(vetReminders: enabled),
-          requiresPush: true,
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        _toggleTile(
-          context,
-          title: 'Vermifuges',
-          isOn: prefs.dewormingReminders,
-          update: (enabled) => prefs.copyWith(dewormingReminders: enabled),
           requiresPush: true,
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -120,5 +113,32 @@ class SettingsNotificationSectionWidget extends StatelessWidget {
     ScaffoldMessenger.of(context)
       ..clearSnackBars()
       ..showSnackBar(const SnackBar(content: Text(comingSoonMessage)));
+  }
+}
+
+/// The system prompt shows once on iOS: after a "no", only the phone's
+/// settings can turn notifications back on (NAN-107).
+class _BlockedBySystemTile extends StatelessWidget {
+  static const title = 'Notifications bloquées sur ce téléphone';
+
+  const _BlockedBySystemTile();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<NotificationPermissionState>(
+      future: notificationPriming.permissionState(),
+      builder: (context, snapshot) {
+        if (snapshot.data != NotificationPermissionState.denied) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+          child: SettingsTileWidget(
+            title: title,
+            value: 'Ouvrir les réglages du téléphone',
+            onTap: notificationPriming.openSystemSettings,
+            trailing: const Icon(Icons.open_in_new, color: AppColors.textSecondary),
+          ),
+        );
+      },
+    );
   }
 }

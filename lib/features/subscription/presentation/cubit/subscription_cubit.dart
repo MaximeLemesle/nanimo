@@ -3,6 +3,8 @@ import 'dart:developer' as developer;
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nanimo/core/analytics/analytics.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
 import 'package:nanimo/features/auth/data/models/user_model.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
@@ -64,6 +66,12 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
       return;
     }
     final isUpgrade = _lastPlanName != null && _lastPlanName != planName;
+    if (planName != _lastPlanName) {
+      analytics.setPersonProperties({
+        AnalyticsProperties.isPremium: planName == 'premium',
+        AnalyticsProperties.plan: planName,
+      });
+    }
     _lastPlanName = planName;
     await _load(planName, forceRefresh: isUpgrade);
   }

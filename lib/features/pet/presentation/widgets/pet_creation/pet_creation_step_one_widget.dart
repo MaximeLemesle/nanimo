@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nanimo/core/utils/capitalize_first_letter_formatter.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/core/widgets/nanimo_text_field_widget.dart';
 import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
@@ -56,6 +57,7 @@ class _PetCreationStepOneWidgetState extends State<PetCreationStepOneWidget> {
             label: 'Quel est le nom de ton animal ?',
             hint: 'Saïko...',
             textInputAction: TextInputAction.done,
+            inputFormatters: const [CapitalizeFirstLetterFormatter()],
             onChanged: (value) =>
                 context.read<OnboardingCubit>().setPetName(value),
           ),

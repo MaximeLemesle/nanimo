@@ -6,8 +6,6 @@ import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/core/widgets/step_indicator_widget.dart';
-import 'package:nanimo/core/analytics/analytics_events.dart';
-import 'package:nanimo/features/subscription/presentation/quota_upsell.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
@@ -28,8 +26,11 @@ class _CreatePetPageState extends State<CreatePetPage> {
   @override
   void initState() {
     super.initState();
-    final initialStep = context.read<OnboardingCubit>().state.currentStep;
-    _pageController = PageController(initialPage: initialStep - 1);
+    final onboarding = context.read<OnboardingCubit>();
+    _pageController = PageController(initialPage: onboarding.state.currentStep - 1);
+    if (onboarding.state.currentStep == 1) {
+      onboarding.trackStarted(inApp: _isInApp(context));
+    }
   }
 
   @override
@@ -39,6 +40,8 @@ class _CreatePetPageState extends State<CreatePetPage> {
   }
 
   bool _isInApp(BuildContext context) => context.read<AuthCubit>().state.status == AuthStatus.authenticated;
+
+  static const _lastStep = 3;
 
   void _handleBack(BuildContext context, OnboardingState state) {
     if (state.currentStep == 1) {
@@ -55,11 +58,12 @@ class _CreatePetPageState extends State<CreatePetPage> {
 
   /// Go to the next step or the signup page if it's the last step
   void _handleNext(BuildContext context, OnboardingState state) {
-    if (state.currentStep < 3) {
+    if (state.currentStep < _lastStep) {
       context.read<OnboardingCubit>().nextStep();
       return;
     }
 
+    if (!_isInApp(context)) context.read<OnboardingCubit>().nextStep();
     context.read<PetCreationCubit>().prepare(
           petName: state.petName.trim(),
           petSpeciesId: state.petSpeciesId!,
@@ -67,6 +71,10 @@ class _CreatePetPageState extends State<CreatePetPage> {
           gender: state.gender!,
           birthdate: state.birthdate!,
           petIconId: state.petIconId,
+          speciesKey: state.species
+              .where((species) => species.petSpeciesId == state.petSpeciesId)
+              .firstOrNull
+              ?.iconKey,
         );
     if (_isInApp(context)) {
       context.read<OnboardingCubit>().reset();
@@ -74,8 +82,9 @@ class _CreatePetPageState extends State<CreatePetPage> {
       return;
     }
 
-    /// The offer is shown before the account is asked for
-    QuotaUpsell.openPaywall(context, PaywallTrigger.onboarding, preview: true);
+    /// The trial is offered once the account exists (NAN-113): a purchase on
+    /// an anonymous RevenueCat id would never reach the webhook.
+    context.go(RouteNames.signup);
   }
 
   bool _isNextEnabled(OnboardingState state) {
@@ -126,7 +135,7 @@ class _CreatePetPageState extends State<CreatePetPage> {
                       Expanded(
                         child: StepIndicatorWidget(
                           currentStep: state.currentStep,
-                          totalSteps: 3,
+                          totalSteps: _lastStep,
                         ),
                       ),
                       const SizedBox(width: 48),
@@ -136,10 +145,10 @@ class _CreatePetPageState extends State<CreatePetPage> {
                     child: PageView(
                       controller: _pageController,
                       physics: const NeverScrollableScrollPhysics(),
-                      children: const [
-                        PetCreationStepOneWidget(),
-                        PetCreationStepTwoWidget(),
-                        PetCreationStepThreeWidget(),
+                      children: [
+                        const PetCreationStepOneWidget(),
+                        const PetCreationStepTwoWidget(),
+                        const PetCreationStepThreeWidget(),
                       ],
                     ),
                   ),
@@ -147,11 +156,17 @@ class _CreatePetPageState extends State<CreatePetPage> {
                   /// Button next step
                   Padding(
                     padding: const EdgeInsets.all(AppSpacing.lg),
-                    child: ButtonWidget(
-                      label: state.currentStep == 3 ? (_isInApp(context) ? 'Créer' : 'Créer mon compte') : 'Continuer',
-                      onPressed: _isNextEnabled(state) ? () => _handleNext(context, state) : null,
-                      state: _isNextEnabled(state) ? ButtonState.normal : ButtonState.disabled,
-                      fullWidth: true,
+                    child: Column(
+                      children: [
+                        ButtonWidget(
+                          label: state.currentStep == _lastStep
+                              ? (_isInApp(context) ? 'Créer' : 'Créer mon compte')
+                              : 'Continuer',
+                          onPressed: _isNextEnabled(state) ? () => _handleNext(context, state) : null,
+                          state: _isNextEnabled(state) ? ButtonState.normal : ButtonState.disabled,
+                          fullWidth: true,
+                        ),
+                      ],
                     ),
                   ),
                 ],

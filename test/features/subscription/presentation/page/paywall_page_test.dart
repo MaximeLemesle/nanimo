@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:nanimo/core/widgets/button_widget.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nanimo/features/subscription/presentation/pending_premium_intent.dart';
+import 'package:nanimo/core/analytics/analytics.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
+import 'package:nanimo/core/analytics/analytics_service.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -17,6 +21,8 @@ import 'package:nanimo/features/subscription/presentation/page/premium_welcome_p
 import 'package:nanimo/features/subscription/presentation/widgets/paywall_confirming_widget.dart';
 import 'package:nanimo/features/subscription/presentation/paywall_content.dart';
 
+import '../../../../core/analytics/recording_analytics_service.dart';
+
 class _MockPurchaseRepository extends Mock implements PurchaseRepository {}
 
 class _MockAuthRepository extends Mock implements AuthRepository {}
@@ -25,18 +31,38 @@ const _monthly = PaywallOfferModel(
   packageId: '\$rc_monthly',
   period: PaywallPeriod.monthly,
   priceLabel: '4,99 €',
-  trialDays: 7,
+  price: 4.99,
 );
 
 const _annual = PaywallOfferModel(
   packageId: '\$rc_annual',
   period: PaywallPeriod.annual,
-  priceLabel: '39,99 €',
+  priceLabel: '34,99 €',
+  price: 34.99,
+  trialDays: 14,
 );
 
 void main() {
   late _MockPurchaseRepository purchaseRepository;
   late _MockAuthRepository authRepository;
+
+  setUpAll(() async {
+    for (final entry in {
+      'Geologica': [
+        'Geologica-Light.ttf',
+        'Geologica-Regular.ttf',
+        'Geologica-Medium.ttf'
+      ],
+      'Gluten': ['Gluten-ExtraBold.ttf'],
+      'Comfortaa': ['Comfortaa-Bold.ttf'],
+    }.entries) {
+      final loader = FontLoader(entry.key);
+      for (final file in entry.value) {
+        loader.addFont(rootBundle.load('assets/fonts/$file'));
+      }
+      await loader.load();
+    }
+  });
 
   setUp(() {
     purchaseRepository = _MockPurchaseRepository();
@@ -57,7 +83,7 @@ void main() {
   /// of a bare `maybePop`, and `GoRouter.of` throws without one.
   Future<void> pumpPaywall(WidgetTester tester,
       {Future<bool> Function(Uri)? onOpenLegalLink,
-      bool isPreview = false,
+      bool isOnboarding = false,
       Duration confirmationTimeout = const Duration(milliseconds: 30)}) async {
     tester.view.physicalSize = const Size(1000, 2400);
     tester.view.devicePixelRatio = 1.0;
@@ -77,13 +103,13 @@ void main() {
             )..loadOffers(),
             child: PaywallPage(
               onOpenLegalLink: onOpenLegalLink,
-              isPreview: isPreview,
+              isOnboarding: isOnboarding,
             ),
           ),
         ),
         GoRoute(
-          path: RouteNames.signup,
-          builder: (_, __) => const Scaffold(body: Text('signup-stub')),
+          path: RouteNames.home,
+          builder: (_, __) => const Scaffold(body: Text('home-stub')),
         ),
         GoRoute(
           path: RouteNames.login,
@@ -104,44 +130,78 @@ void main() {
     await settle(tester);
   }
 
-
-  testWidgets('lists the benefits and both plans with their store prices',
+  /// NAN-113: the annual plan leads with its trial and a price per month,
+  /// so both plans read on the same scale.
+  testWidgets('shows the trial title, its three lines and the annual plan first',
       (tester) async {
     when(() => purchaseRepository.getOffers())
         .thenAnswer((_) async => [_monthly, _annual]);
+    await pumpPaywall(tester);
+    expect(find.text('Commence tes 14 jours gratuits'), findsOneWidget);
+    for (final line in [...paywallLines, paywallTrialReminder]) {
+      expect(find.text(line.plainText), findsOneWidget);
+    }
+    expect(find.text('14 JOURS GRATUITS'), findsOneWidget);
+    expect(find.text('Annuel'), findsOneWidget);
+    expect(find.text('Économise 42\u00a0%, 34,99 € par an'), findsOneWidget);
+    expect(find.text('2,92 €/mois'), findsOneWidget);
+    expect(find.text('4,99 €/mois'), findsOneWidget);
+    expect(find.text('Essayer 14 jours gratuitement'), findsOneWidget);
+    expect(tester.getTopLeft(find.text('Annuel')).dy,
+        lessThan(tester.getTopLeft(find.text('Mensuel')).dy));
+  });
+
+  testWidgets('changing the legal notice keeps the offers and CTA anchored',
+      (tester) async {
+    const annual = PaywallOfferModel(
+        packageId: 'annual',
+        period: PaywallPeriod.annual,
+        priceLabel: '34,99 \$US',
+        price: 34.99,
+        trialDays: 14);
+    const monthly = PaywallOfferModel(
+        packageId: 'monthly',
+        period: PaywallPeriod.monthly,
+        priceLabel: '4,99 \$US',
+        price: 4.99);
+    when(() => purchaseRepository.getOffers())
+        .thenAnswer((_) async => [monthly, annual]);
+    await pumpPaywall(tester);
+    for (final width in [320.0, 375.0, 390.0, 430.0]) {
+      tester.view.physicalSize = Size(width, 932);
+      await settle(tester);
+      await tester.tap(find.text('14 JOURS GRATUITS'));
+      await settle(tester);
+      final offerBefore = tester.getTopLeft(find.text('Annuel'));
+      final ctaBefore = tester.getTopLeft(find.byType(ButtonWidget).first);
+      await tester.tap(find.text('Mensuel'));
+      await settle(tester);
+      expect(tester.getTopLeft(find.text('Annuel')), offerBefore,
+          reason: 'offer at width $width');
+      expect(tester.getTopLeft(find.byType(ButtonWidget).first), ctaBefore,
+          reason: 'CTA at width $width');
+    }
+  });
+
+  testWidgets(
+      'without a trial the annual plan says what it saves, nothing more',
+      (tester) async {
+    when(() => purchaseRepository.getOffers()).thenAnswer((_) async => [
+          _monthly,
+          const PaywallOfferModel(
+              packageId: 'a',
+              period: PaywallPeriod.annual,
+              priceLabel: '34,99 €',
+              price: 34.99),
+        ]);
 
     await pumpPaywall(tester);
 
     expect(find.text(paywallTitle), findsOneWidget);
-    expect(find.text(paywallTagline), findsOneWidget);
-    expect(
-      find.textContaining('Ne rate aucun instant avec 5 photos', findRichText: true),
-      findsOneWidget,
-    );
-    expect(
-      find.textContaining('Agrandis ta famille jusqu’à 10 animaux', findRichText: true),
-      findsOneWidget,
-    );
-    expect(find.text('Mensuel'), findsOneWidget);
     expect(find.text('Annuel'), findsOneWidget);
-    expect(find.textContaining('4,99 €'), findsOneWidget);
-    expect(find.textContaining('39,99 €'), findsOneWidget);
-  });
-
-  /// A single-pet owner is the common case, so the photo benefit sells first.
-  testWidgets('leads with the photo benefit, not the pet quota', (tester) async {
-    when(() => purchaseRepository.getOffers())
-        .thenAnswer((_) async => [_annual]);
-
-    await pumpPaywall(tester);
-
-    final photos = tester.getTopLeft(
-      find.textContaining('Ne rate aucun instant', findRichText: true),
-    );
-    final pets = tester.getTopLeft(
-      find.textContaining('Agrandis ta famille', findRichText: true),
-    );
-    expect(photos.dy, lessThan(pets.dy));
+    expect(find.text('Économise 42\u00a0%, 34,99 € par an'), findsOneWidget);
+    expect(find.text('14 JOURS GRATUITS'), findsNothing);
+    expect(find.text(paywallTrialReminder.plainText), findsNothing);
   });
 
   testWidgets('shows the auto-renewal notice required by the stores',
@@ -151,8 +211,10 @@ void main() {
 
     await pumpPaywall(tester);
 
-    expect(find.textContaining('renouvelé automatiquement '), findsOneWidget);
-    expect(find.textContaining('résilier à tout moment'), findsOneWidget);
+    expect(find.textContaining('14 jours gratuits, puis 34,99 € par an.'),
+        findsOneWidget);
+    expect(find.textContaining('Renouvelé automatiquement'), findsOneWidget);
+    expect(find.textContaining('résiliable à tout moment'), findsOneWidget);
   });
 
   /// Apple rejects a subscription screen without both links.
@@ -162,8 +224,8 @@ void main() {
 
     await pumpPaywall(tester);
 
-    expect(find.text('Conditions d’utilisation'), findsOneWidget);
-    expect(find.text('Politique de confidentialité'), findsOneWidget);
+    expect(find.text('Conditions'), findsOneWidget);
+    expect(find.text('Confidentialité'), findsOneWidget);
   });
 
   testWidgets('the legal links point at the published pages', (tester) async {
@@ -176,9 +238,9 @@ void main() {
       return true;
     });
 
-    await tester.tap(find.text('Conditions d’utilisation'));
+    await tester.tap(find.text('Conditions'));
     await settle(tester);
-    await tester.tap(find.text('Politique de confidentialité'));
+    await tester.tap(find.text('Confidentialité'));
     await settle(tester);
 
     expect(opened, hasLength(2));
@@ -195,35 +257,17 @@ void main() {
 
     await pumpPaywall(tester, onOpenLegalLink: (_) async => false);
 
-    await tester.tap(find.text('Conditions d’utilisation'));
+    await tester.tap(find.text('Conditions'));
     await settle(tester);
 
     expect(find.textContaining('Impossible d’ouvrir'), findsOneWidget);
   });
 
-  testWidgets('the call to action announces the trial when there is one',
-      (tester) async {
-    when(() => purchaseRepository.getOffers())
-        .thenAnswer((_) async => [_monthly]);
-
-    await pumpPaywall(tester);
-
-    expect(find.text('Essayer 7 jours gratuitement'), findsOneWidget);
-  });
-
-  testWidgets('the call to action stays plain without a trial', (tester) async {
-    when(() => purchaseRepository.getOffers())
-        .thenAnswer((_) async => [_annual]);
-
-    await pumpPaywall(tester);
-
-    expect(find.text('Passer premium'), findsOneWidget);
-  });
-
   testWidgets('tapping a plan selects it and buys that one', (tester) async {
     when(() => purchaseRepository.getOffers())
         .thenAnswer((_) async => [_monthly, _annual]);
-    when(() => purchaseRepository.purchase(any())).thenAnswer((_) async => true);
+    when(() => purchaseRepository.purchase(any()))
+        .thenAnswer((_) async => true);
     when(() => authRepository.refreshCurrentUser()).thenAnswer(
       (_) async => const UserModel(
         userId: 'u1',
@@ -238,7 +282,7 @@ void main() {
     // Annual is preselected, so tapping monthly must change the purchase target.
     await tester.tap(find.text('Mensuel'));
     await settle(tester);
-    await tester.tap(find.text('Essayer 7 jours gratuitement'));
+    await tester.tap(find.text('Passer premium'));
     await settle(tester);
 
     verify(() => purchaseRepository.purchase('\$rc_monthly')).called(1);
@@ -250,7 +294,8 @@ void main() {
       (tester) async {
     when(() => purchaseRepository.getOffers())
         .thenAnswer((_) async => [_annual]);
-    when(() => purchaseRepository.purchase(any())).thenAnswer((_) async => true);
+    when(() => purchaseRepository.purchase(any()))
+        .thenAnswer((_) async => true);
 
     /// Never flips, so the page stays in the confirming phase for the whole
     /// timeout and the waiting screen is observable.
@@ -264,7 +309,7 @@ void main() {
     );
 
     await pumpPaywall(tester);
-    await tester.tap(find.text('Passer premium'));
+    await tester.tap(find.text('Essayer 14 jours gratuitement'));
     await tester.pump();
 
     /// Already up on the very first frame, before `purchase()` resolves.
@@ -273,16 +318,16 @@ void main() {
     await tester.pump();
     expect(find.byType(PaywallConfirmingWidget), findsOneWidget);
     expect(find.text(premiumConfirmingTitle), findsOneWidget);
-    expect(find.text('Passer premium'), findsNothing);
+    expect(find.text('Essayer 14 jours gratuitement'), findsNothing);
 
     await settle(tester);
   });
 
-  testWidgets('a confirmed purchase lands on the welcome page',
-      (tester) async {
+  testWidgets('a confirmed purchase lands on the welcome page', (tester) async {
     when(() => purchaseRepository.getOffers())
         .thenAnswer((_) async => [_annual]);
-    when(() => purchaseRepository.purchase(any())).thenAnswer((_) async => true);
+    when(() => purchaseRepository.purchase(any()))
+        .thenAnswer((_) async => true);
     when(() => authRepository.refreshCurrentUser()).thenAnswer(
       (_) async => const UserModel(
         userId: 'u1',
@@ -293,7 +338,7 @@ void main() {
     );
 
     await pumpPaywall(tester);
-    await tester.tap(find.text('Passer premium'));
+    await tester.tap(find.text('Essayer 14 jours gratuitement'));
     await settle(tester);
 
     expect(find.byType(PremiumWelcomePage), findsOneWidget);
@@ -311,7 +356,8 @@ void main() {
       (tester) async {
     when(() => purchaseRepository.getOffers())
         .thenAnswer((_) async => [_annual]);
-    when(() => purchaseRepository.purchase(any())).thenAnswer((_) async => true);
+    when(() => purchaseRepository.purchase(any()))
+        .thenAnswer((_) async => true);
     when(() => authRepository.refreshCurrentUser()).thenAnswer(
       (_) async => const UserModel(
         userId: 'u1',
@@ -326,7 +372,7 @@ void main() {
     /// timeout here would spin against real wall time and make the test flaky.
     /// Zero exits the loop on the first check, which is the branch under test.
     await pumpPaywall(tester, confirmationTimeout: Duration.zero);
-    await tester.tap(find.text('Passer premium'));
+    await tester.tap(find.text('Essayer 14 jours gratuitement'));
     await settle(tester);
 
     expect(find.byType(PremiumWelcomePage), findsOneWidget);
@@ -349,18 +395,18 @@ void main() {
     await tester.tap(find.text('Réessayer'));
     await settle(tester);
 
-    expect(find.text('Annuel'), findsOneWidget);
+    expect(find.text('34,99 € par an'), findsOneWidget);
   });
 
   testWidgets('surfaces a failed purchase without unlocking premium',
       (tester) async {
     when(() => purchaseRepository.getOffers())
         .thenAnswer((_) async => [_annual]);
-    when(() => purchaseRepository.purchase(any()))
-        .thenThrow(const RepositoryServerException('Le store est indisponible.'));
+    when(() => purchaseRepository.purchase(any())).thenThrow(
+        const RepositoryServerException('Le store est indisponible.'));
 
     await pumpPaywall(tester);
-    await tester.tap(find.text('Passer premium'));
+    await tester.tap(find.text('Essayer 14 jours gratuitement'));
     await settle(tester);
 
     expect(find.text('Le store est indisponible.'), findsOneWidget);
@@ -374,11 +420,11 @@ void main() {
         .thenThrow(const PurchaseCancelledException());
 
     await pumpPaywall(tester);
-    await tester.tap(find.text('Passer premium'));
+    await tester.tap(find.text('Essayer 14 jours gratuitement'));
     await settle(tester);
 
     expect(find.byType(SnackBar), findsNothing);
-    expect(find.text('Passer premium'), findsOneWidget);
+    expect(find.text('Essayer 14 jours gratuitement'), findsOneWidget);
   });
 
   testWidgets('restoring with nothing to restore explains why', (tester) async {
@@ -387,55 +433,57 @@ void main() {
     when(() => purchaseRepository.restore()).thenAnswer((_) async => false);
 
     await pumpPaywall(tester);
-    await tester.tap(find.text('Restaurer mes achats'));
+    await tester.tap(find.text('Restaurer'));
     await settle(tester);
 
     expect(find.textContaining('Aucun abonnement à restaurer'), findsOneWidget);
   });
 
-  /// NAN-093: during the onboarding the offer is shown before the account
-  /// exists. RevenueCat would bill an anonymous id and the webhook drops those,
-  /// so the preview charges nothing and hands the choice to the signup.
-  group('preview, before the signup', () {
+  /// NAN-113: last screen of the trial flow, after the account exists.
+  group('onboarding', () {
     setUp(() {
       when(() => purchaseRepository.getOffers())
-          .thenAnswer((_) async => [_annual]);
+          .thenAnswer((_) async => [_monthly, _annual]);
     });
-    tearDown(pendingPremiumIntent.clear);
 
-    testWidgets('buys nothing and remembers the chosen plan', (tester) async {
-      await pumpPaywall(tester, isPreview: true);
+    testWidgets('buys for real: the account already exists', (tester) async {
+      when(() => purchaseRepository.purchase(any()))
+          .thenThrow(const PurchaseCancelledException());
+      await pumpPaywall(tester, isOnboarding: true);
 
-      await tester.tap(find.text('Passer premium'));
+      await tester.tap(find.text('Essayer 14 jours gratuitement'));
       await settle(tester);
 
-      verifyNever(() => purchaseRepository.purchase(any()));
-      expect(find.text('signup-stub'), findsOneWidget);
-      expect(pendingPremiumIntent.isPending, isTrue);
+      verify(() => purchaseRepository.purchase('\$rc_annual')).called(1);
     });
 
-    testWidgets('dismissing keeps nothing and still reaches the signup',
+    testWidgets('closing the onboarding paywall reaches the home directly',
         (tester) async {
-      await pumpPaywall(tester, isPreview: true);
-
+      final recorder = RecordingAnalyticsService();
+      analytics = recorder;
+      addTearDown(() => analytics = const NoopAnalyticsService());
+      await pumpPaywall(tester, isOnboarding: true);
+      expect(find.byTooltip('Retour'), findsNothing);
       await tester.tap(find.byTooltip('Fermer'));
       await settle(tester);
-
       verifyNever(() => purchaseRepository.purchase(any()));
-      expect(find.text('signup-stub'), findsOneWidget);
-      expect(pendingPremiumIntent.isPending, isFalse);
+      expect(find.text('home-stub'), findsOneWidget);
+      expect(
+          recorder
+              .lastOf(AnalyticsEvents.paywallDismissed)!
+              .properties[AnalyticsProperties.reason],
+          'close');
     });
+  });
 
-    /// Apple wants the restore reachable from any screen that sells, and there
-    /// is nothing to restore onto until the owner is back in their account.
-    testWidgets('sends an existing subscriber to the login', (tester) async {
-      await pumpPaywall(tester, isPreview: true);
+  testWidgets('closes from the top right only, no "Non merci"',
+      (tester) async {
+    when(() => purchaseRepository.getOffers())
+        .thenAnswer((_) async => [_annual]);
+    await pumpPaywall(tester);
 
-      await tester.tap(find.text('J\'ai déjà un abonnement'));
-      await settle(tester);
-
-      verifyNever(() => purchaseRepository.restore());
-      expect(find.text('login-stub'), findsOneWidget);
-    });
+    final width = tester.view.physicalSize.width / tester.view.devicePixelRatio;
+    expect(tester.getCenter(find.byTooltip('Fermer')).dx, greaterThan(width / 2));
+    expect(find.text(paywallNoThanks), findsNothing);
   });
 }

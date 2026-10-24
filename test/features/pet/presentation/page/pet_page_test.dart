@@ -260,8 +260,8 @@ void main() {
     await cubit.close();
   });
 
-  testWidgets('opens the onboarding modal from the empty card',
-      (tester) async {
+  /// NAN-116: the empty card opens the guided diary, a page of its own.
+  testWidgets('the empty card opens the guided health diary', (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 1600));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -275,15 +275,40 @@ void main() {
       healthRepository: healthRepo,
       referentialRepository: refRepo,
     );
-    await tester.pumpWidget(buildPage(cubit));
+    addTearDown(cubit.close);
+
+    String? pushedPath;
+    final router = GoRouter(
+      initialLocation: '/home/pet',
+      routes: [
+        GoRoute(
+          path: '/home/pet',
+          builder: (_, __) => MultiBlocProvider(
+            providers: [
+              BlocProvider<PetDetailsCubit>.value(value: cubit),
+              BlocProvider<SubscriptionCubit>.value(value: _FakeSubscriptionCubit()),
+            ],
+            child: const PetPage(),
+          ),
+        ),
+        GoRoute(
+          path: '/pet/carnet/:petId',
+          builder: (_, state) {
+            pushedPath = state.uri.path;
+            return const Scaffold(body: SizedBox.shrink());
+          },
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Remplir le carnet'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Création du carnet de santé'), findsOneWidget);
-
-    await cubit.close();
+    expect(pushedPath, startsWith('/pet/carnet/'));
   });
 
   // NAN-082: a lapsed premium owner keeps every animal, read only.

@@ -11,10 +11,12 @@ class HealthDiaryCache {
   late String healthDiaryId;
 
   bool? isSterilized;
+  DateTime? sterilizedAt;
   bool? isChipped;
   String? chipNumber;
   DateTime? lastDeworming;
   DateTime? lastVetAppointment;
+  int? dewormingIntervalMonths;
 
   @Index(unique: true)
   late String petId;
@@ -26,6 +28,7 @@ class HealthDiaryCache {
     return HealthDiaryCache()
       ..healthDiaryId = json['id_health_diary'] as String
       ..isSterilized = json['is_sterilized'] as bool?
+      ..sterilizedAt = json['sterilized_at'] != null ? DateTime.parse(json['sterilized_at'] as String) : null
       ..isChipped = json['is_chipped'] as bool?
       ..chipNumber = json['chip_number'] as String?
       ..lastDeworming = json['last_deworming_at'] != null
@@ -34,6 +37,7 @@ class HealthDiaryCache {
       ..lastVetAppointment = json['last_vet_appointment'] != null
           ? DateTime.parse(json['last_vet_appointment'] as String)
           : null
+      ..dewormingIntervalMonths = json['deworming_interval_months'] as int?
       ..petId = json['pet_id'] as String;
   }
 
@@ -42,10 +46,12 @@ class HealthDiaryCache {
     return HealthDiaryCache()
       ..healthDiaryId = model.healthDiaryId
       ..isSterilized = model.isSterilized
+      ..sterilizedAt = model.sterilizedAt
       ..isChipped = model.isChipped
       ..chipNumber = model.chipNumber
       ..lastDeworming = model.lastDeworming
       ..lastVetAppointment = model.lastVetAppointment
+      ..dewormingIntervalMonths = model.dewormingIntervalMonths
       ..petId = model.petId;
   }
 
@@ -54,10 +60,12 @@ class HealthDiaryCache {
     return HealthDiaryModel(
       healthDiaryId: healthDiaryId,
       isSterilized: isSterilized,
+      sterilizedAt: sterilizedAt,
       isChipped: isChipped,
       chipNumber: chipNumber,
       lastDeworming: lastDeworming,
       lastVetAppointment: lastVetAppointment,
+      dewormingIntervalMonths: dewormingIntervalMonths,
       petId: petId,
     );
   }

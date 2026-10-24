@@ -42,5 +42,8 @@ class ModalRouteObserver extends NavigatorObserver {
     _sync();
   }
 
+  /// Closes every sheet and dialog, e.g. before a notification navigates.
+  void closeAll() => navigator?.popUntil((route) => !_isModal(route));
+
   void dispose() => isModalOpen.dispose();
 }

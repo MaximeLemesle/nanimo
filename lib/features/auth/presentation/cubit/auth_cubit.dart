@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:nanimo/core/analytics/analytics.dart';
 import 'package:nanimo/core/analytics/analytics_events.dart';
+import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/core/isar/database/sync_service.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
 
@@ -62,6 +63,7 @@ class AuthCubit extends Cubit<AuthState> {
       await _repository.login(email, password);
       _trackAuth(AnalyticsEvents.authCompleted, AuthMethod.email);
     } catch (e) {
+      _trackFailure(AuthMethod.email, e);
       emit(state.copyWith(
         isSubmitting: false,
         errorMessage: _formatError(e),
@@ -77,6 +79,7 @@ class AuthCubit extends Cubit<AuthState> {
       _trackAuth(AnalyticsEvents.accountCreated, AuthMethod.email);
       _trackAuth(AnalyticsEvents.authCompleted, AuthMethod.email);
     } catch (e) {
+      _trackFailure(AuthMethod.email, e);
       emit(state.copyWith(
         isSubmitting: false,
         errorMessage: _formatError(e),
@@ -88,9 +91,11 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> loginWithGoogle() async {
     emit(state.copyWith(isSubmitting: true, clearError: true));
     try {
-      await _repository.signInWithGoogle();
+      final isNewAccount = await _repository.signInWithGoogle();
+      if (isNewAccount) _trackAuth(AnalyticsEvents.accountCreated, AuthMethod.google);
       _trackAuth(AnalyticsEvents.authCompleted, AuthMethod.google);
     } catch (e) {
+      _trackFailure(AuthMethod.google, e);
       emit(state.copyWith(
         isSubmitting: false,
         errorMessage: _formatError(e),
@@ -102,9 +107,11 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> loginWithApple() async {
     emit(state.copyWith(isSubmitting: true, clearError: true));
     try {
-      await _repository.signInWithApple();
+      final isNewAccount = await _repository.signInWithApple();
+      if (isNewAccount) _trackAuth(AnalyticsEvents.accountCreated, AuthMethod.apple);
       _trackAuth(AnalyticsEvents.authCompleted, AuthMethod.apple);
     } catch (e) {
+      _trackFailure(AuthMethod.apple, e);
       emit(state.copyWith(
         isSubmitting: false,
         errorMessage: _formatError(e),
@@ -123,11 +130,37 @@ class AuthCubit extends Cubit<AuthState> {
 
   /// Signs out the current user
   Future<void> logout() async {
+    analytics.capture(AnalyticsEvents.signedOut);
     await _repository.logout();
   }
 
   void _trackAuth(String event, String method) {
     analytics.capture(event, properties: {AnalyticsProperties.method: method});
+    if (event == AnalyticsEvents.authCompleted) {
+      analytics.setPersonProperties({AnalyticsProperties.authMethod: method});
+    }
+  }
+
+  /// The reason is a fixed vocabulary: raw messages can echo the e-mail typed.
+  void _trackFailure(String method, Object error) {
+    analytics.capture(AnalyticsEvents.authFailed, properties: {
+      AnalyticsProperties.method: method,
+      AnalyticsProperties.reason: _failureReason(error),
+    });
+  }
+
+  static String _failureReason(Object error) {
+    if (error is RepositoryException) {
+      if (error.message.toLowerCase().contains('annulée')) return 'cancelled';
+      return error is RepositoryNetworkException ? 'network' : 'server';
+    }
+    if (error is supabase.AuthException) {
+      final key = error.message.toLowerCase();
+      return _supabaseErrorMessages.containsKey(key)
+          ? key.replaceAll(RegExp(r'[^a-z]+'), '_')
+          : 'auth_${error.statusCode ?? 'unknown'}';
+    }
+    return 'unknown';
   }
 
   /// Clears the current error message (called when user edits a field)

@@ -1,5 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:nanimo/core/analytics/analytics.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
+import 'package:nanimo/core/analytics/analytics_service.dart';
 import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:nanimo/data/models/referential/pet_icon_model.dart';
 import 'package:nanimo/data/models/referential/pet_race_model.dart';
@@ -7,6 +10,8 @@ import 'package:nanimo/data/models/referential/pet_species_model.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
+
+import '../../core/analytics/recording_analytics_service.dart';
 
 class _MockReferentialRepository extends Mock
     implements ReferentialRepository {}
@@ -244,6 +249,40 @@ void main() {
       cubit.reset();
 
       expect(cubit.state, const OnboardingState());
+      await cubit.close();
+    });
+  });
+
+  group('onboarding_started', () {
+    late RecordingAnalyticsService recorder;
+
+    setUp(() {
+      recorder = RecordingAnalyticsService();
+      analytics = recorder;
+    });
+
+    tearDown(() => analytics = const NoopAnalyticsService());
+
+    test('is tagged onboarding before the account exists', () async {
+      final cubit = OnboardingCubit(referentialRepository: referentialRepo);
+      cubit.trackStarted(inApp: false);
+      expect(recorder.lastOf(AnalyticsEvents.onboardingStarted)!.properties[AnalyticsProperties.source], OnboardingSource.onboarding);
+      await cubit.close();
+    });
+
+    test('is tagged add_pet from the app', () async {
+      final cubit = OnboardingCubit(referentialRepository: referentialRepo);
+      cubit.trackStarted(inApp: true);
+      expect(recorder.lastOf(AnalyticsEvents.onboardingStarted)!.properties[AnalyticsProperties.source], OnboardingSource.addPet);
+      await cubit.close();
+    });
+
+    test('is no longer sent by a species fetch', () async {
+      when(() => referentialRepo.fetchSpecies()).thenAnswer((_) async => [_species]);
+      when(() => referentialRepo.fetchIcons()).thenAnswer((_) async => _icons);
+      final cubit = OnboardingCubit(referentialRepository: referentialRepo);
+      await cubit.fetchSpecies();
+      expect(recorder.names, isNot(contains(AnalyticsEvents.onboardingStarted)));
       await cubit.close();
     });
   });

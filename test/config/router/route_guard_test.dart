@@ -35,19 +35,19 @@ void main() {
   });
 
   group('protected routes', () {
-    test('sends an anonymous visitor on /home to the login', () {
+    test('sends an anonymous visitor on /home to the welcome screen', () {
       expect(
         redirect(RouteNames.home, AuthStatus.unauthenticated),
-        RouteNames.login,
+        RouteNames.onboarding,
       );
     });
 
     /// The pet edit page lives at the root, outside the /home subtree, so it
     /// has to be guarded by name rather than inherited from it.
-    test('sends an anonymous visitor on the pet edit page to the login', () {
+    test('sends an anonymous visitor on the pet edit page to the welcome screen', () {
       expect(
         redirect('${RouteNames.editPet}/p1', AuthStatus.unauthenticated),
-        RouteNames.login,
+        RouteNames.onboarding,
       );
     });
 

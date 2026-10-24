@@ -10,6 +10,7 @@ import 'package:nanimo/features/auth/data/auth_repository.dart';
 import 'package:nanimo/features/subscription/data/models/paywall_offer_model.dart';
 import 'package:nanimo/features/subscription/data/purchase_repository.dart';
 import 'package:nanimo/features/subscription/data/subscription_restorer.dart';
+import 'package:nanimo/features/subscription/data/trial_end_watcher.dart';
 
 part 'paywall_state.dart';
 
@@ -78,6 +79,7 @@ class PaywallCubit extends Cubit<PaywallState> {
 
       /// From here the money is taken. Nothing below may emit an error state.
       emit(state.copyWith(status: PaywallStatus.confirming, clearError: true));
+      unawaited(trialEndWatcher.refresh());
 
       final confirmed = await _restorer.awaitPremiumConfirmation();
       analytics.capture(AnalyticsEvents.purchaseCompleted, properties: {

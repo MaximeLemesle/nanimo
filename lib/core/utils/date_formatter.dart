@@ -1,3 +1,5 @@
+import 'package:nanimo/core/utils/calendar_days.dart';
+
 class DateFormatter {
   static const List<String> _frenchMonths = [
     'janvier',
@@ -86,6 +88,17 @@ class DateFormatter {
       return months == 1 ? '1 mois' : '$months mois';
     }
     return years == 1 ? '1 an' : '$years ans';
+  }
+
+  /// « aujourd'hui », « hier », then « il y a 12 jours », « il y a 3 mois ».
+  static String elapsed(DateTime date, {DateTime? now}) {
+    final reference = now ?? DateTime.now();
+    final days = calendarDaysBetween(date, reference);
+    if (days <= 0) return 'aujourd\'hui';
+    if (days == 1) return 'hier';
+    // Non-breaking spaces: « il y / a 3 mois » must never split at a line end.
+    final span = days < 31 ? '$days jours' : age(date, now: reference);
+    return 'il y a $span'.replaceAll(' ', '\u00A0');
   }
 
   /// Under a month, days say more than « moins d'un mois ».

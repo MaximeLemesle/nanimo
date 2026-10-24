@@ -48,6 +48,7 @@ app.*.map.json
 .fvm/
 
 .env
+env/*.env
 
 # Clés de signature Apple
 *.p8
@@ -72,3 +73,6 @@ coverage/
 # Supabase CLI local state and hand-made dumps, both machine-specific
 supabase/.temp/
 supabase/backups/
+
+# PostHog tracking plan and dashboard import, kept local
+docs/analytics/

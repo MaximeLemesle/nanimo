@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nanimo/features/health/data/models/health_diary_vaccine_model.dart';
+import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/subscription/presentation/page/paywall_page.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
@@ -34,7 +36,8 @@ import 'package:nanimo/features/subscription/data/purchase_repository.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:nanimo/features/home/data/article_repository.dart';
 
-class _MockReferentialRepository extends Mock implements ReferentialRepository {}
+class _MockReferentialRepository extends Mock
+    implements ReferentialRepository {}
 
 class _MockPetRepository extends Mock implements PetRepository {}
 
@@ -169,6 +172,16 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(
+        const HealthDiaryModel(healthDiaryId: 'fallback', petId: 'fallback'));
+    registerFallbackValue(const HealthDiaryVaccineModel(
+      healthDiaryVaccineId: 'fallback',
+      vaccineName: 'fallback',
+      recurrence: 0,
+      doseNumber: 1,
+      totalDoseNumber: 1,
+      healthDiaryId: 'fallback',
+    ));
+    registerFallbackValue(
       PetModel(
         petId: 'fallback',
         petName: 'fallback',
@@ -193,24 +206,42 @@ void main() {
         .thenAnswer((_) => Stream.value(null));
 
     /// Home streams: empty journal/health caches and no cached user.
-    when(() => eventRepo.watchEvents()).thenAnswer((_) => Stream.value(const []));
-    when(() => eventRepo.watchPetEvents()).thenAnswer((_) => Stream.value(const {}));
-    when(() => eventRepo.watchAllImages()).thenAnswer((_) => Stream.value(const {}));
-    when(() => healthRepo.watchAllDiaries()).thenAnswer((_) => Stream.value(const []));
-    when(() => healthRepo.watchAllVaccines()).thenAnswer((_) => Stream.value(const []));
-    when(() => healthRepo.watchAllVetVisits()).thenAnswer((_) => Stream.value(const []));
-    when(() => authRepo.watchCurrentUser()).thenAnswer((_) => Stream.value(null));
+    when(() => eventRepo.watchEvents())
+        .thenAnswer((_) => Stream.value(const []));
+    when(() => eventRepo.watchPetEvents())
+        .thenAnswer((_) => Stream.value(const {}));
+    when(() => eventRepo.watchAllImages())
+        .thenAnswer((_) => Stream.value(const {}));
+    when(() => healthRepo.watchAllDiaries())
+        .thenAnswer((_) => Stream.value(const []));
+    when(() => healthRepo.watchAllVaccines())
+        .thenAnswer((_) => Stream.value(const []));
+    when(() => healthRepo.watchAllVetVisits())
+        .thenAnswer((_) => Stream.value(const []));
+    when(() => authRepo.watchCurrentUser())
+        .thenAnswer((_) => Stream.value(null));
     petsController = StreamController<List<PetModel>>.broadcast();
     lastPets = const [];
 
-    when(() => healthRepo.watchDiaryForPet(any())).thenAnswer((_) => Stream.value(null));
-    when(() => healthRepo.getWeightLogsForPet(any())).thenAnswer((_) => Stream.value(const <HealthDiaryWeightLogModel>[]));
-    when(() => healthRepo.getVetVisitsForPet(any())).thenAnswer((_) => Stream.value(const <VetVisitModel>[]));
+    when(() => healthRepo.watchDiaryForPet(any()))
+        .thenAnswer((_) => Stream.value(null));
+    when(() => healthRepo.getWeightLogsForPet(any()))
+        .thenAnswer((_) => Stream.value(const <HealthDiaryWeightLogModel>[]));
+    when(() => healthRepo.getVetVisitsForPet(any()))
+        .thenAnswer((_) => Stream.value(const <VetVisitModel>[]));
 
-    when(() => referentialRepo.fetchSpecies()).thenAnswer((_) async => [_chat, _chien]);
-    when(() => referentialRepo.fetchIcons()).thenAnswer((_) async => [_maineCoonIcon]);
-    when(() => referentialRepo.fetchRacesBySpecies(_chat.petSpeciesId)).thenAnswer((_) async => [_maineCoon]);
-    when(() => referentialRepo.fetchRacesBySpecies(_chien.petSpeciesId)).thenAnswer((_) async => [_berger]);
+    when(() => referentialRepo.fetchSpecies())
+        .thenAnswer((_) async => [_chat, _chien]);
+    when(() => referentialRepo.fetchRecommendedVaccinesBySpecies(any()))
+        .thenAnswer((_) async => const []);
+    when(() => healthRepo.upsertDiary(any())).thenAnswer((_) async {});
+    when(() => healthRepo.addVaccine(any())).thenAnswer((_) async {});
+    when(() => referentialRepo.fetchIcons())
+        .thenAnswer((_) async => [_maineCoonIcon]);
+    when(() => referentialRepo.fetchRacesBySpecies(_chat.petSpeciesId))
+        .thenAnswer((_) async => [_maineCoon]);
+    when(() => referentialRepo.fetchRacesBySpecies(_chien.petSpeciesId))
+        .thenAnswer((_) async => [_berger]);
     // Replay the latest pets to any late subscriber (cubits scoped to the
     // shell route subscribe only once Home mounts, after emissions may have
     // fired), mirroring a real Isar `watch` that seeds the current rows.
@@ -222,7 +253,8 @@ void main() {
     /// The splash redirect lands an authenticated user on the create-event
     /// page, whose cubit loads pets and event types on init.
     when(() => petRepo.getPets()).thenAnswer((_) async => const <PetModel>[]);
-    when(() => referentialRepo.fetchEventTypes()).thenAnswer((_) async => const <EventTypeModel>[]);
+    when(() => referentialRepo.fetchEventTypes())
+        .thenAnswer((_) async => const <EventTypeModel>[]);
 
     /// Mimics the write-through cache: a created pet lands in the pets stream.
     when(() => petRepo.createPet(any())).thenAnswer((invocation) async {
@@ -296,16 +328,25 @@ void main() {
   }
 
   /// Cold start → welcome → 3 steps → lands on the signup page.
-  Future<void> goThroughOnboarding(WidgetTester tester, {String? expectedAvatarAsset}) async {
+  Future<void> goThroughOnboarding(WidgetTester tester,
+      {String? expectedAvatarAsset}) async {
     await pumpApp(tester);
     expect(find.byKey(const Key('splash_page')), findsOneWidget);
 
     authCubit.sessionNotFound();
     await tester.pump(const Duration(seconds: 2));
     await tester.pumpAndSettle();
-    expect(find.text('Commencer'), findsOneWidget);
+    expect(find.text('Découvrir'), findsOneWidget);
 
-    await tester.tap(find.text('Commencer'));
+    /// NAN-114: four slides before the pet. The last one animates for ever,
+    /// so these pumps are bounded.
+    await tester.tap(find.text('Découvrir'));
+    await tester.pumpAndSettle();
+    for (var index = 0; index < 3; index++) {
+      await tester.drag(find.byType(PageView).first, const Offset(-800, 0));
+      await tester.pumpAndSettle();
+    }
+    await tester.tap(find.text('Continuer'));
     await tester.pumpAndSettle();
 
     // Step 1: species grid loaded from the referential.
@@ -350,20 +391,19 @@ void main() {
       expectedAvatarAsset ?? _maineCoonIcon.assetPath,
     );
 
+    /// NAN-114: no vaccine step any more, the account is asked right away.
     await tester.tap(find.text('Créer mon compte'));
     await tester.pumpAndSettle();
 
-    /// NAN-093: the offer is shown before the account is asked for. Dismissing
-    /// it is the "not now" path and lands on the signup all the same.
-    expect(find.byType(PaywallPage), findsOneWidget);
-    await tester.tap(find.byTooltip('Fermer'));
-    await tester.pumpAndSettle();
-
+    /// NAN-113: the account comes first, the trial is offered after it.
+    expect(find.byType(PaywallPage), findsNothing);
     expect(find.text('Inscription'), findsOneWidget);
   }
 
   group('Onboarding flow', () {
-    testWidgets('cold start: splash → welcome → 3 steps → email signup → home shows Milo', (tester) async {
+    testWidgets(
+        'cold start: splash → welcome → 3 steps → email signup → home shows Milo',
+        (tester) async {
       await goThroughOnboarding(tester);
 
       await tester.enterText(_textFieldWithLabel('Prénom'), 'Maxime');
@@ -381,7 +421,24 @@ void main() {
       expect(find.text('Milo'), findsOneWidget);
     });
 
-    testWidgets('failed post-signup insert shows a retry banner that re-inserts the pet', (tester) async {
+    testWidgets('the onboarding creates the pet and no health entry',
+        (tester) async {
+      await goThroughOnboarding(tester);
+
+      await tester.enterText(_textFieldWithLabel('Prénom'), 'Maxime');
+      await tester.enterText(_textFieldWithLabel('Email'), 'milo@nanimo.fr');
+      await tester.enterText(_textFieldWithLabel('Mot de passe'), 'azerty1');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Créer mon compte'));
+      await tester.pumpAndSettle();
+
+      verify(() => petRepo.createPet(any())).called(1);
+      verifyNever(() => healthRepo.addVaccine(any()));
+    });
+
+    testWidgets(
+        'failed post-signup insert shows a retry banner that re-inserts the pet',
+        (tester) async {
       // The first insert fails (e.g. the users_pets FK race after signup),
       // the retry succeeds.
       var attempts = 0;
@@ -422,7 +479,8 @@ void main() {
       expect(find.text('Milo'), findsOneWidget);
     });
 
-    testWidgets('SSO Google signup inserts the pending pet and shows home', (tester) async {
+    testWidgets('SSO Google signup inserts the pending pet and shows home',
+        (tester) async {
       await goThroughOnboarding(tester);
 
       await tester.tap(find.text('Continuer avec Google'));
@@ -434,12 +492,19 @@ void main() {
       expect(find.text('Milo'), findsOneWidget);
     });
 
-    testWidgets('backtrack: changing species on step 1 resets the race', (tester) async {
+    testWidgets('backtrack: changing species on step 1 resets the race',
+        (tester) async {
       await pumpApp(tester);
       authCubit.sessionNotFound();
       await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Commencer'));
+      await tester.tap(find.text('Découvrir'));
+      await tester.pumpAndSettle();
+      for (var index = 0; index < 3; index++) {
+        await tester.drag(find.byType(PageView).first, const Offset(-800, 0));
+        await tester.pumpAndSettle();
+      }
+      await tester.tap(find.text('Continuer'));
       await tester.pumpAndSettle();
 
       // Step 1 → step 2 with Chat + Maine Coon selected.
@@ -491,7 +556,8 @@ void main() {
       );
     });
 
-    testWidgets('existing user logs in via /login without touching onboarding', (tester) async {
+    testWidgets('existing user logs in via /login without touching onboarding',
+        (tester) async {
       await pumpApp(tester);
       authCubit.sessionNotFound();
       await tester.pumpAndSettle();
@@ -528,7 +594,32 @@ void main() {
       expect(onboardingCubit.state, const OnboardingState());
     });
 
-    testWidgets('warm start: restored session goes from splash straight to home', (tester) async {
+    testWidgets(
+        'successful account deletion replays the splash before welcoming a new account',
+        (tester) async {
+      await pumpApp(tester);
+      authCubit.sessionRestored();
+      emitPets(const []);
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pumpAndSettle();
+
+      when(() => authRepo.accountDeletedAt).thenReturn(DateTime(2026, 10, 19));
+      authCubit.sessionNotFound();
+      await tester.pump();
+      for (var i = 0; i < 16; i++) {
+        await tester.pump(const Duration(milliseconds: 25));
+      }
+      expect(find.byKey(const Key('splash_page')), findsOneWidget);
+      expect(find.text('Se connecter'), findsNothing);
+
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pumpAndSettle();
+      expect(find.text('Découvrir'), findsOneWidget);
+    });
+
+    testWidgets(
+        'warm start: restored session goes from splash straight to home',
+        (tester) async {
       await pumpApp(tester);
       expect(find.byKey(const Key('splash_page')), findsOneWidget);
 

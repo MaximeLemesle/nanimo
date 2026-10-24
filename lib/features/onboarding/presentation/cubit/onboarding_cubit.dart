@@ -14,6 +14,7 @@ import 'package:nanimo/features/pet/data/models/pet_model.dart';
 
 part 'onboarding_state.dart';
 
+
 class OnboardingCubit extends Cubit<OnboardingState> {
   final ReferentialRepository _referentialRepository;
 
@@ -57,6 +58,9 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     } else if (state.currentStep == 2 && state.canGoToStep3) {
       _trackStepCompleted(2);
       emit(state.copyWith(currentStep: 3));
+    } else if (state.currentStep == 3 && state.canFinish) {
+      /// Last step: counted here, the page then hands the pet to the signup.
+      _trackStepCompleted(3);
     }
   }
 
@@ -73,6 +77,16 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     }
   }
 
+  /// Called once per opening of the creation flow, not on each species fetch.
+  void trackStarted({required bool inApp}) {
+    analytics.capture(
+      AnalyticsEvents.onboardingStarted,
+      properties: {
+        AnalyticsProperties.source: inApp ? OnboardingSource.addPet : OnboardingSource.onboarding,
+      },
+    );
+  }
+
   void reset() {
     emit(const OnboardingState());
   }
@@ -82,7 +96,6 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     if (state.speciesStatus == ReferentialStatus.loading || state.speciesStatus == ReferentialStatus.loaded) {
       return;
     }
-    analytics.capture(AnalyticsEvents.onboardingStarted);
     emit(state.copyWith(
       speciesStatus: ReferentialStatus.loading,
       clearSpeciesError: true,

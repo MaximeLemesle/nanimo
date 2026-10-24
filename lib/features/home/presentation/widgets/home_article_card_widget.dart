@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
+import 'package:nanimo/core/analytics/analytics.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
 import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/core/widgets/rounded_border_widget.dart';
 import 'package:nanimo/features/home/data/models/article_model.dart';
@@ -28,6 +30,9 @@ class HomeArticleCardWidget extends StatelessWidget {
   List<String> get _paragraphs => article?.paragraphs ?? _fallbackParagraphs;
 
   void _openArticle(BuildContext context) {
+    analytics.capture(AnalyticsEvents.articleOpened, properties: {
+      AnalyticsProperties.item: article?.articleId ?? 'fallback',
+    });
     BottomSheetWidget.show<void>(
       context,
       _ArticleBottomSheet(title: _title, paragraphs: _paragraphs),

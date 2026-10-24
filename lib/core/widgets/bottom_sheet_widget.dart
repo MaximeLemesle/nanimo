@@ -26,7 +26,13 @@ class BottomSheetWidget extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
       ),
-      builder: (_) => child,
+      builder: (sheetContext) => AnimatedPadding(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        padding: EdgeInsets.only(
+            bottom: MediaQuery.viewInsetsOf(sheetContext).bottom),
+        child: SafeArea(top: false, child: child),
+      ),
     );
   }
 
@@ -53,7 +59,9 @@ class BottomSheetWidget extends StatelessWidget {
         top: AppSpacing.lg,
         bottom: AppSpacing.xxl,
       ),
-      child: scrollable ? SingleChildScrollView(child: column) : column,
+      child: scrollable || MediaQuery.viewInsetsOf(context).bottom > 0
+          ? SingleChildScrollView(child: column)
+          : column,
     );
   }
 }

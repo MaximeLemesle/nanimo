@@ -130,6 +130,22 @@ class PurchaseRepository {
     }
   }
 
+  /// End of a running free trial that will turn into a paid plan, null
+  /// otherwise: a cancelled trial charges nothing, so there is nothing to warn of.
+  Future<DateTime?> trialEndsAt() async {
+    try {
+      final entitlement = (await _client.getCustomerInfo()).entitlements.active[premiumEntitlement];
+      if (entitlement == null || entitlement.periodType != PeriodType.trial || !entitlement.willRenew) {
+        return null;
+      }
+      final expiration = entitlement.expirationDate;
+      return expiration == null ? null : DateTime.parse(expiration).toLocal();
+    } catch (e, st) {
+      developer.log('trial end read failed', name: 'purchase', error: e, stackTrace: st);
+      return null;
+    }
+  }
+
   Future<Package> _findPackage(String packageId) async {
     final Offerings offerings;
     try {
@@ -160,6 +176,7 @@ class PurchaseRepository {
       packageId: package.identifier,
       period: _periodOf(package.packageType),
       priceLabel: product.priceString,
+      price: product.price,
       trialDays: _trialDaysOf(product),
     );
   }

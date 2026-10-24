@@ -8,23 +8,30 @@ import 'package:nanimo/core/widgets/bottom_bar_widget/bottom_bar_menu_widget.dar
 import 'package:nanimo/core/widgets/bottom_bar_widget/bottom_bar_widget.dart';
 import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
-import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
+import 'package:nanimo/features/pet/presentation/pet_creation_flow.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_bottom_sheet/add_weight_bottom_sheet_widget.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:nanimo/features/subscription/presentation/quota_upsell.dart';
-import 'package:nanimo/features/subscription/presentation/pending_premium_intent.dart';
+import 'package:nanimo/core/analytics/analytics.dart';
 import 'package:nanimo/core/analytics/analytics_events.dart';
+import 'package:nanimo/core/notifications/notification_priming_sheet.dart';
+import 'package:nanimo/core/notifications/notifications.dart';
+import 'package:nanimo/core/notifications/reminder_planner.dart';
 
 class AppShell extends StatefulWidget {
   final Widget child;
   final ValueListenable<bool> isModalOpen;
 
+  /// A sheet left open stays under the pages a tapped notification opens.
+  final VoidCallback? closeModals;
+
   const AppShell({
     super.key,
     required this.child,
     required this.isModalOpen,
+    this.closeModals,
   });
 
   @override
@@ -33,18 +40,87 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   bool _isCreateMenuOpen = false;
-  bool _onboardingPaywallPending = false;
+  bool _notificationNavigationScheduled = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    pendingNotificationTap.addListener(_openTappedReminder);
+    notificationPriming.offer.addListener(_showPriming);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _openTappedReminder());
   }
 
   @override
   void dispose() {
+    pendingNotificationTap.removeListener(_openTappedReminder);
+    notificationPriming.offer.removeListener(_showPriming);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  /// Waits for the add sheet to close before opening its own.
+  Future<void> _showPriming() async {
+    final offer = notificationPriming.offer.value;
+    if (offer == null || !mounted) return;
+    final accepted = await BottomSheetWidget.show<bool>(
+        context, NotificationPrimingSheet(offer: offer));
+    if (accepted == true) {
+      await notificationPriming.accept();
+    } else {
+      await notificationPriming.postpone();
+    }
+  }
+
+  /// Keeps cold-start taps until the shell and its cached animals are ready.
+  void _openTappedReminder() {
+    if (!mounted ||
+        pendingNotificationTap.value == null ||
+        _notificationNavigationScheduled) {
+      return;
+    }
+    _notificationNavigationScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _notificationNavigationScheduled = false;
+      if (!mounted) return;
+      final payload = pendingNotificationTap.value;
+      if (payload == null) return;
+      final reminder = parseReminderPayload(payload);
+      if (reminder == null) {
+        pendingNotificationTap.value = null;
+        return;
+      }
+      final petDetails = context.read<PetDetailsCubit>();
+      if (reminder.kind != ReminderKind.trialEnd) {
+        if (petDetails.state.status == PetDetailsStatus.loading ||
+            petDetails.state.pets.isEmpty) {
+          return;
+        }
+        if (!petDetails.state.pets.any((pet) => pet.petId == reminder.petId)) {
+          pendingNotificationTap.value = null;
+          context.go(RouteNames.home);
+          _showSnackBar('Cet animal n’est plus disponible.');
+          return;
+        }
+      }
+      pendingNotificationTap.value = null;
+      widget.closeModals?.call();
+      analytics.capture(AnalyticsEvents.notificationOpened,
+          properties: {AnalyticsProperties.kind: reminder.kind.name});
+      if (reminder.kind == ReminderKind.trialEnd) {
+        context.go(RouteNames.settings);
+        return;
+      }
+      petDetails.selectPet(reminder.petId);
+      if (reminder.kind == ReminderKind.birthday) {
+        context.go(Uri(
+            path: RouteNames.createEvent,
+            queryParameters: {'petId': reminder.petId}).toString());
+      } else {
+        context.go(RouteNames.healthDiary);
+      }
+    });
+    WidgetsBinding.instance.ensureVisualUpdate();
   }
 
   @override
@@ -67,7 +143,8 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     var index = 0;
     var routeLength = -1;
     for (var i = 0; i < _tabRoutes.length; i++) {
-      if (location.startsWith(_tabRoutes[i]) && _tabRoutes[i].length > routeLength) {
+      if (location.startsWith(_tabRoutes[i]) &&
+          _tabRoutes[i].length > routeLength) {
         index = i;
         routeLength = _tabRoutes[i].length;
       }
@@ -104,7 +181,9 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
         portraits: petDetails.state.portraits,
         initialPetId: petDetails.state.selectedPetId,
         birthdate: petDetails.state.selectedPet?.birthdate,
-        onSubmit: (weight, loggedAt, {petId}) => petDetails.addWeightLog(weight, loggedAt, petId: petId),
+        onSubmit: (weight, loggedAt, {petId}) =>
+            petDetails.addWeightLog(weight, loggedAt,
+                petId: petId, source: WeightSource.createMenu),
       ),
     );
   }
@@ -123,9 +202,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       return;
     }
 
-    /// Start the create-pet flow from a clean step 1
-    context.read<OnboardingCubit>().reset();
-    context.push(RouteNames.createPet);
+    PetCreationFlow.open(context);
   }
 
   @override
@@ -134,16 +211,15 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
 
     return MultiBlocListener(
       listeners: [
+        BlocListener<PetDetailsCubit, PetDetailsState>(
+          listenWhen: (previous, current) =>
+              previous.pets != current.pets ||
+              previous.status != current.status,
+          listener: (_, __) => _openTappedReminder(),
+        ),
         BlocListener<PetCreationCubit, PetCreationState>(
           listenWhen: (previous, current) => previous.status != current.status,
           listener: _onPetCreationChanged,
-        ),
-
-        /// The plan loads in parallel with the signup and may land after the
-        /// pet, so the paywall waits for it instead of being skipped.
-        BlocListener<SubscriptionCubit, SubscriptionState>(
-          listenWhen: (previous, current) => previous.isLoaded != current.isLoaded,
-          listener: (context, _) => _showOnboardingPaywall(context),
         ),
       ],
       child: _buildScaffold(context, index),
@@ -151,12 +227,6 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   }
 
   void _onPetCreationChanged(BuildContext context, PetCreationState state) {
-    if (state.status == PetCreationStatus.success &&
-        state.createdDuringOnboarding) {
-      _onboardingPaywallPending = true;
-      _showOnboardingPaywall(context);
-      return;
-    }
     if (state.status != PetCreationStatus.error) return;
     ScaffoldMessenger.of(context)
       ..clearSnackBars()
@@ -171,38 +241,20 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       );
   }
 
-  /// Pushed once, right after the onboarding pet lands. No persistence: the
-  /// onboarding runs once, so nothing can call this a second time.
-  void _showOnboardingPaywall(BuildContext context) {
-    if (!_onboardingPaywallPending) return;
-    if (!pendingPremiumIntent.isPending) {
-      _onboardingPaywallPending = false;
-      return;
-    }
-
-    final subscription = context.read<SubscriptionCubit>().state;
-    if (!subscription.isLoaded) return;
-
-    _onboardingPaywallPending = false;
-    if (subscription.isPremium) {
-      pendingPremiumIntent.clear();
-      return;
-    }
-
-    QuotaUpsell.openPaywall(context, PaywallTrigger.onboarding);
-  }
-
   /// Only a free user whose plan is known and already full gets the marker:
   /// a premium user has nothing to buy, an unknown plan tells us nothing.
   bool _isAddPetPremiumLocked(SubscriptionState subscription, int petCount) =>
-      QuotaUpsell.offersUpgrade(subscription) && !subscription.canCreatePet(petCount);
+      QuotaUpsell.offersUpgrade(subscription) &&
+      !subscription.canCreatePet(petCount);
 
   Widget _buildCreateMenu() {
     return BlocBuilder<SubscriptionCubit, SubscriptionState>(
-      builder: (context, subscription) => BlocBuilder<PetDetailsCubit, PetDetailsState>(
+      builder: (context, subscription) =>
+          BlocBuilder<PetDetailsCubit, PetDetailsState>(
         builder: (context, petDetails) => BottomBarMenuWidget(
           isOpen: _isCreateMenuOpen,
-          isAddPetPremiumLocked: _isAddPetPremiumLocked(subscription, petDetails.pets.length),
+          isAddPetPremiumLocked:
+              _isAddPetPremiumLocked(subscription, petDetails.pets.length),
           onAddWeight: _onAddWeight,
           onAddEvent: _onAddEvent,
           onAddPet: _onAddPet,
@@ -258,7 +310,8 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
             currentIndex: index,
             isCreateMenuOpen: _isCreateMenuOpen,
             onTabSelected: (i) => _onTabSelected(context, i),
-            onCreateTap: () => setState(() => _isCreateMenuOpen = !_isCreateMenuOpen),
+            onCreateTap: () =>
+                setState(() => _isCreateMenuOpen = !_isCreateMenuOpen),
           ),
         ),
       ),

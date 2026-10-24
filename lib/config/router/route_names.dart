@@ -10,6 +10,7 @@ class RouteNames {
   static const editEvent = '/home/edit-event';
   static const pet = '/home/pet';
   static const editPet = '/pet/edit';
+  static const healthDiaryWizard = '/pet/carnet';
   static const healthDiary = '/home/pet/health-diary';
   static const settings = '/home/settings';
   static const paywall = '/paywall';

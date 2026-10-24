@@ -46,14 +46,18 @@ class AddWeightBottomSheetWidget extends StatefulWidget {
   });
 
   @override
-  State<AddWeightBottomSheetWidget> createState() => _AddWeightBottomSheetWidgetState();
+  State<AddWeightBottomSheetWidget> createState() =>
+      _AddWeightBottomSheetWidgetState();
 }
 
-class _AddWeightBottomSheetWidgetState extends State<AddWeightBottomSheetWidget> {
+class _AddWeightBottomSheetWidgetState
+    extends State<AddWeightBottomSheetWidget> {
   late final TextEditingController _controller;
   late DateTime _loggedAt;
   late bool _isValid;
-  late String? _petId = widget.initial?.petId ?? widget.initialPetId ?? (widget.pets.isNotEmpty ? widget.pets.first.petId : null);
+  late String? _petId = widget.initial?.petId ??
+      widget.initialPetId ??
+      (widget.pets.isNotEmpty ? widget.pets.first.petId : null);
 
   /// An existing log already belongs to a pet, there is nothing left to pick.
   bool get _showPetPicker => widget.initial == null && widget.pets.length > 1;
@@ -104,7 +108,8 @@ class _AddWeightBottomSheetWidgetState extends State<AddWeightBottomSheetWidget>
     final confirmed = await confirmDeletion(
       context,
       title: 'Supprimer cette pesée ?',
-      message: 'La pesée disparaîtra du carnet de santé et de la courbe de poids, et ne pourra pas être récupérée.',
+      message:
+          'La pesée disparaîtra du carnet de santé et de la courbe de poids, et ne pourra pas être récupérée.',
     );
     if (!confirmed || !mounted) return;
     widget.onDelete!();
@@ -114,6 +119,7 @@ class _AddWeightBottomSheetWidgetState extends State<AddWeightBottomSheetWidget>
   @override
   Widget build(BuildContext context) {
     return BottomSheetWidget(
+      scrollable: true,
       title: widget.initial == null ? 'Ajouter une pesée' : 'Modifier la pesée',
       action: Column(
         children: [

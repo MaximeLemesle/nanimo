@@ -1,3 +1,5 @@
+import 'package:nanimo/core/analytics/analytics.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
 import 'package:nanimo/core/utils/pet_icon_resolver.dart';
 import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:nanimo/data/models/referential/pet_icon_model.dart';
@@ -84,13 +86,19 @@ class JournalCubit extends Cubit<JournalState> {
 
   void togglePetFilter(String petId) {
     final next = Set<String>.from(state.selectedPetIds);
-    if (!next.remove(petId)) next.add(petId);
+    if (!next.remove(petId)) {
+      next.add(petId);
+      _trackFilter('pet');
+    }
     emit(state.copyWith(selectedPetIds: next));
   }
 
   void toggleTypeFilter(String typeId) {
     final next = Set<String>.from(state.selectedTypeIds);
-    if (!next.remove(typeId)) next.add(typeId);
+    if (!next.remove(typeId)) {
+      next.add(typeId);
+      _trackFilter('type');
+    }
     emit(state.copyWith(selectedTypeIds: next));
   }
 
@@ -101,7 +109,16 @@ class JournalCubit extends Cubit<JournalState> {
     ));
   }
 
+  void _trackFilter(String filter) {
+    analytics.capture(AnalyticsEvents.journalFilterApplied,
+        properties: {AnalyticsProperties.filter: filter});
+  }
+
   void setViewMode(JournalViewMode viewMode) {
+    if (viewMode != state.viewMode) {
+      analytics.capture(AnalyticsEvents.journalViewSwitched,
+          properties: {AnalyticsProperties.viewMode: viewMode.name});
+    }
     emit(state.copyWith(viewMode: viewMode));
   }
 
@@ -132,6 +149,7 @@ class JournalCubit extends Cubit<JournalState> {
   Future<String?> deleteEvent(String eventId) async {
     try {
       await _eventRepository.deleteEvent(eventId);
+      analytics.capture(AnalyticsEvents.memoryDeleted);
       return null;
     } on RepositoryException catch (e) {
       return e.message;

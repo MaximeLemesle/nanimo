@@ -74,14 +74,11 @@ void main() {
       var tapped = false;
       await pumpCard(tester, const [], onAddPressed: () => tapped = true);
 
-      expect(
-        find.text('Aucune visite chez le vétérinaire de prévue'),
-        findsOneWidget,
-      );
-      expect(find.text('Ajouter une visite à venir'), findsOneWidget);
+      expect(find.text(HomeVetVisitCardWidget.emptyMessage), findsOneWidget);
+      expect(find.text('Ajouter une visite'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
-      await tester.tap(find.text('Ajouter une visite à venir'));
+      await tester.tap(find.text('Ajouter une visite'));
       await tester.pumpAndSettle();
       expect(tapped, isTrue);
     });
@@ -117,6 +114,17 @@ void main() {
       expect(tapped, isTrue);
     });
 
+    // NAN-111: the reason for the visit is what the owner reads first.
+    testWidgets('wraps a long title instead of cutting it', (tester) async {
+      const title = 'Dobby au contrôle annuel et rappel de vaccin';
+      await pumpCard(tester, [_entry('v1', title, 1)]);
+
+      final text = tester.widget<Text>(find.text(title));
+      expect(text.maxLines, isNull);
+      expect(text.overflow, isNot(TextOverflow.ellipsis));
+      expect(tester.getSize(find.text(title)).height, greaterThan(30));
+    });
+
     testWidgets('drops the missing fields from the subtitle', (tester) async {
       await pumpCard(tester, [_entry('v1', 'Contrôle', 3)]);
 
@@ -137,4 +145,31 @@ void main() {
       expect(tappedPetId, 'p1');
     });
   });
+
+  // NAN-115: nothing booked, but the owner still sees when each pet was last seen.
+  testWidgets('without a booking, tells when each pet last saw the vet', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: HomeVetVisitCardWidget(
+          visits: const [],
+          lastVisits: [
+            (pet: _pet('p1', 'Dobby'), at: DateTime(2026, 9, 4)),
+            (pet: _pet('p2', 'Yummy'), at: DateTime(2026, 5, 10)),
+          ],
+          portraits: const {},
+          now: _now,
+        ),
+      ),
+    ));
+
+    expect(_spoken('Dernière visite pour Dobby il y a 12 jours'), findsOneWidget);
+    expect(_spoken('Dernière visite pour Yummy il y a 4 mois'), findsOneWidget);
+    expect(find.text(HomeVetVisitCardWidget.emptyMessage), findsNothing);
+    expect(find.text('Ajouter une visite'), findsOneWidget);
+  });
 }
+
+/// Matches a label whose spaces may be non-breaking.
+Finder _spoken(String text) => find.byWidgetPredicate(
+      (widget) => widget is Text && widget.data?.replaceAll('\u00A0', ' ') == text,
+    );

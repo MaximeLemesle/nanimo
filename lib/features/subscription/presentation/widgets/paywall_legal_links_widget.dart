@@ -8,30 +8,35 @@ import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/features/subscription/presentation/paywall_content.dart';
 
+/// Terms, privacy and, once an account exists, the restore that guideline
+/// 3.1.1 asks for, on one line under the offer.
 class PaywallLegalLinksWidget extends StatelessWidget {
   final Future<bool> Function(Uri url)? onOpen;
+  final VoidCallback? onRestore;
 
-  const PaywallLegalLinksWidget({super.key, this.onOpen});
+  const PaywallLegalLinksWidget({super.key, this.onOpen, this.onRestore});
 
   @override
   Widget build(BuildContext context) {
+    final separator = Text(
+      '  ·  ',
+      style: AppTextStyles.textSmall.copyWith(color: AppColors.textSecondary),
+    );
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _link(context, 'Conditions d’utilisation', termsUrl),
-        Text(
-          '  ·  ',
-          style: AppTextStyles.textSmall.copyWith(color: AppColors.textSecondary),
-        ),
-        _link(context, 'Politique de confidentialité', privacyUrl),
+        _link('Conditions', () => _open(context, termsUrl)),
+        separator,
+        _link('Confidentialité', () => _open(context, privacyUrl)),
+        if (onRestore != null) ...[separator, _link('Restaurer', onRestore!)],
       ],
     );
   }
 
-  Widget _link(BuildContext context, String label, String url) {
+  Widget _link(String label, VoidCallback onTap) {
     return Flexible(
       child: GestureDetector(
-        onTap: () => _open(context, url),
+        onTap: onTap,
         child: Padding(
           // Keeps the tap target reachable without pushing the links apart.
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),

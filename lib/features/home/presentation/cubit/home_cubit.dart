@@ -4,7 +4,10 @@ import 'package:nanimo/data/models/referential/pet_icon_model.dart';
 import 'dart:async';
 
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nanimo/core/analytics/analytics.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
 import 'package:nanimo/core/utils/vaccine_status.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
@@ -77,10 +80,12 @@ class HomeCubit extends Cubit<HomeState> {
   /// Refreshes the pet list on change
   void _onPetsChanged(List<PetModel> pets) {
     emit(state.copyWith(status: HomeStatus.loaded, pets: pets));
+    _syncPersonProperties();
   }
 
   void _onEventsChanged(List<EventModel> events) {
     emit(state.copyWith(events: events));
+    _syncPersonProperties();
   }
 
   void _onPetEventsChanged(Map<String, List<String>> petIdsByEvent) {
@@ -97,6 +102,28 @@ class HomeCubit extends Cubit<HomeState> {
 
   void _onVaccinesChanged(List<HealthDiaryVaccineModel> vaccines) {
     emit(state.copyWith(vaccines: vaccines));
+    _syncPersonProperties();
+  }
+
+  Map<String, Object>? _lastPersonProperties;
+
+  /// Sent only when a value changes: every stream tick would flood PostHog.
+  void _syncPersonProperties() {
+    if (state.status != HomeStatus.loaded) return;
+    final species = {
+      for (final pet in state.pets)
+        if (state.iconsKey[pet.petSpeciesId] case final key?) speciesCode(key),
+    }.toList()
+      ..sort();
+    final properties = <String, Object>{
+      AnalyticsProperties.petCount: state.pets.length,
+      AnalyticsProperties.hasVaccine: state.vaccines.isNotEmpty,
+      AnalyticsProperties.memoryCount: memoryCountBucket(state.events.length),
+      if (species.isNotEmpty) AnalyticsProperties.species: species.join(','),
+    };
+    if (mapEquals(_lastPersonProperties, properties)) return;
+    _lastPersonProperties = properties;
+    analytics.setPersonProperties(properties);
   }
 
   void _onArticleChanged(ArticleModel? article) {
@@ -123,6 +150,7 @@ class HomeCubit extends Cubit<HomeState> {
           for (final s in species) s.petSpeciesId: s.iconKey,
         },
       ));
+      _syncPersonProperties();
     } catch (_) {}
     await _loadPetIcons();
   }

@@ -17,6 +17,10 @@ class AuthRepository {
   final Isar _isar;
   final String? _googleIosClientId;
   final String? _googleWebClientId;
+  DateTime? _accountDeletedAt;
+
+  /// Changes only after the server confirms account deletion.
+  DateTime? get accountDeletedAt => _accountDeletedAt;
 
   AuthRepository(
     this._supabase,
@@ -35,7 +39,8 @@ class AuthRepository {
     } catch (e, st) {
       throw mapRepositoryError(e, st,
           operation: 'login',
-          networkMessage: 'Une connexion internet est requise pour se connecter.',
+          networkMessage:
+              'Une connexion internet est requise pour se connecter.',
           serverMessage: 'Impossible de vous connecter pour le moment.');
     }
   }
@@ -54,7 +59,8 @@ class AuthRepository {
     } catch (e, st) {
       throw mapRepositoryError(e, st,
           operation: 'register',
-          networkMessage: 'Une connexion internet est requise pour créer un compte.',
+          networkMessage:
+              'Une connexion internet est requise pour créer un compte.',
           serverMessage: 'Impossible de créer le compte pour le moment.');
     }
   }
@@ -71,7 +77,6 @@ class AuthRepository {
     if (id == null) return;
 
     try {
-
       final rows = await _supabase
           .from('users')
           .update({'user_name': userName})
@@ -91,13 +96,27 @@ class AuthRepository {
     } catch (e, st) {
       throw mapRepositoryError(e, st,
           operation: 'updateUserName',
-          networkMessage: 'Une connexion internet est requise pour modifier votre prénom.',
+          networkMessage:
+              'Une connexion internet est requise pour modifier votre prénom.',
           serverMessage: 'Impossible de modifier votre prénom pour le moment.');
     }
   }
 
-  /// Signs in with Google
-  Future<void> signInWithGoogle() async {
+  /// Supabase has no "new user" flag on an id-token sign-in. A first sign-in
+  /// is the one where the account was created moments before.
+  static bool isFirstSignIn(User? user,
+      {Duration tolerance = const Duration(seconds: 60)}) {
+    if (user == null) return false;
+    final created = DateTime.tryParse(user.createdAt);
+    final lastSignIn = user.lastSignInAt == null
+        ? null
+        : DateTime.tryParse(user.lastSignInAt!);
+    if (created == null || lastSignIn == null) return false;
+    return lastSignIn.difference(created).abs() <= tolerance;
+  }
+
+  /// Signs in with Google. Returns true when the account was just created.
+  Future<bool> signInWithGoogle() async {
     if (_googleIosClientId == null || _googleWebClientId == null) {
       throw const RepositoryNetworkException(
         'Configuration Google manquante.',
@@ -116,11 +135,12 @@ class AuthRepository {
       if (idToken == null) {
         throw const RepositoryNetworkException('Token Google introuvable.');
       }
-      await _supabase.auth.signInWithIdToken(
+      final response = await _supabase.auth.signInWithIdToken(
         provider: OAuthProvider.google,
         idToken: idToken,
         nonce: rawNonce,
       );
+      return isFirstSignIn(response.user);
     } on GoogleSignInException catch (error) {
       if (error.code == GoogleSignInExceptionCode.canceled) {
         throw const RepositoryNetworkException('Connexion Google annulée.');
@@ -133,13 +153,15 @@ class AuthRepository {
     } catch (e, st) {
       throw mapRepositoryError(e, st,
           operation: 'signInWithGoogle',
-          networkMessage: 'Une connexion internet est requise pour se connecter avec Google.',
-          serverMessage: 'Impossible de vous connecter avec Google pour le moment.');
+          networkMessage:
+              'Une connexion internet est requise pour se connecter avec Google.',
+          serverMessage:
+              'Impossible de vous connecter avec Google pour le moment.');
     }
   }
 
-  /// Signs in with Apple
-  Future<void> signInWithApple() async {
+  /// Signs in with Apple. Returns true when the account was just created.
+  Future<bool> signInWithApple() async {
     try {
       final rawNonce = _supabase.auth.generateRawNonce();
       final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
@@ -154,11 +176,12 @@ class AuthRepository {
       if (idToken == null) {
         throw const RepositoryNetworkException('Token Apple introuvable.');
       }
-      await _supabase.auth.signInWithIdToken(
+      final response = await _supabase.auth.signInWithIdToken(
         provider: OAuthProvider.apple,
         idToken: idToken,
         nonce: rawNonce,
       );
+      return isFirstSignIn(response.user);
     } on SignInWithAppleAuthorizationException catch (error) {
       if (error.code == AuthorizationErrorCode.canceled) {
         throw const RepositoryNetworkException('Connexion Apple annulée.');
@@ -171,8 +194,10 @@ class AuthRepository {
     } catch (e, st) {
       throw mapRepositoryError(e, st,
           operation: 'signInWithApple',
-          networkMessage: 'Une connexion internet est requise pour se connecter avec Apple.',
-          serverMessage: 'Impossible de vous connecter avec Apple pour le moment.');
+          networkMessage:
+              'Une connexion internet est requise pour se connecter avec Apple.',
+          serverMessage:
+              'Impossible de vous connecter avec Apple pour le moment.');
     }
   }
 
@@ -184,11 +209,14 @@ class AuthRepository {
   Future<void> deleteAccount() async {
     try {
       await _supabase.rpc('delete_account');
+      _accountDeletedAt = DateTime.now();
     } catch (e, st) {
       throw mapRepositoryError(e, st,
           operation: 'deleteAccount',
-          networkMessage: 'Une connexion internet est requise pour supprimer votre compte.',
-          serverMessage: 'Impossible de supprimer votre compte pour le moment.');
+          networkMessage:
+              'Une connexion internet est requise pour supprimer votre compte.',
+          serverMessage:
+              'Impossible de supprimer votre compte pour le moment.');
     }
 
     try {
@@ -233,7 +261,8 @@ class AuthRepository {
     final id = currentUserId;
     if (id == null) return null;
 
-    final data = await _supabase.from('users').select().eq('id_user', id).single();
+    final data =
+        await _supabase.from('users').select().eq('id_user', id).single();
     final cache = UserCache.fromJson(data);
     await _isar.writeTxn(() async {
       await _isar.userCaches.putByUserId(cache);
@@ -250,7 +279,8 @@ class AuthRepository {
     if (cached != null) return cached.toModel();
 
     try {
-      final data = await _supabase.from('users').select().eq('id_user', id).single();
+      final data =
+          await _supabase.from('users').select().eq('id_user', id).single();
       final cache = UserCache.fromJson(data);
       await _isar.writeTxn(() async {
         await _isar.userCaches.putByUserId(cache);

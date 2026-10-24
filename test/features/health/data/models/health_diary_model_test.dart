@@ -70,4 +70,28 @@ void main() {
       expect(roundTripped.lastVetAppointment, original.lastVetAppointment);
     });
   });
+
+  group('deworming', () {
+    test('the next one falls three months after the last by default', () {
+      final diary = HealthDiaryModel(healthDiaryId: 'd1', petId: 'p1', lastDeworming: DateTime(2026, 11, 30));
+      expect(diary.dewormingInterval, 3);
+      expect(diary.nextDeworming, DateTime(2027, 2, 28));
+      expect(diary.toJson().containsKey('deworming_interval_months'), isFalse);
+    });
+
+    test('a chosen interval is read, sent and applied', () {
+      final diary = HealthDiaryModel.fromJson(const {
+        'id_health_diary': 'd1',
+        'pet_id': 'p1',
+        'last_deworming_at': '2026-10-01',
+        'deworming_interval_months': 1,
+      });
+      expect(diary.nextDeworming, DateTime(2026, 11, 1));
+      expect(diary.toJson()['deworming_interval_months'], 1);
+    });
+
+    test('nothing is due without a last deworming', () {
+      expect(const HealthDiaryModel(healthDiaryId: 'd1', petId: 'p1', dewormingIntervalMonths: 1).nextDeworming, isNull);
+    });
+  });
 }

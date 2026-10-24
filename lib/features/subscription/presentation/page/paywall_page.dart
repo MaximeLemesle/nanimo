@@ -6,9 +6,10 @@ import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
+import 'package:nanimo/core/analytics/analytics.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/features/subscription/data/models/paywall_offer_model.dart';
-import 'package:nanimo/features/subscription/presentation/pending_premium_intent.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/paywall_cubit.dart';
 import 'package:nanimo/features/subscription/presentation/paywall_content.dart';
 import 'package:nanimo/features/subscription/presentation/widgets/paywall_confirming_widget.dart';
@@ -18,12 +19,14 @@ import 'package:nanimo/features/subscription/presentation/widgets/paywall_offer_
 
 class PaywallPage extends StatefulWidget {
   final Future<bool> Function(Uri url)? onOpenLegalLink;
-  final bool isPreview;
+
+  /// At the end of onboarding, closing the standard paywall reaches the home.
+  final bool isOnboarding;
 
   const PaywallPage({
     super.key,
     this.onOpenLegalLink,
-    this.isPreview = false,
+    this.isOnboarding = false,
   });
 
   @override
@@ -31,38 +34,13 @@ class PaywallPage extends StatefulWidget {
 }
 
 class _PaywallPageState extends State<PaywallPage> {
-  bool _intentReplayed = false;
-
-  bool get _isPreview => widget.isPreview;
-
-  /// The owner asked to subscribe a few screens ago and now has an account.
-  /// Apple's own sheet is the confirmation, so nothing is taken silently.
-  void _replayPendingIntent(BuildContext context, PaywallState state) {
-    if (_intentReplayed || _isPreview || !state.isLoaded) return;
-    if (!pendingPremiumIntent.isPending) return;
-
-    final packageId = pendingPremiumIntent.take();
-    if (packageId == null) return;
-    _intentReplayed = true;
-
-    final cubit = context.read<PaywallCubit>();
-    cubit.selectOffer(packageId);
-    cubit.purchase();
-  }
-
-  void _rememberAndSignUp(BuildContext context, PaywallState state) {
-    final packageId = state.selectedPackageId;
-    if (packageId != null) pendingPremiumIntent.remember(packageId);
-    context.go(RouteNames.signup);
-  }
+  bool get _isOnboarding => widget.isOnboarding;
 
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<PaywallCubit, PaywallState>(
       listenWhen: (previous, current) => previous.errorMessage != current.errorMessage || previous.status != current.status,
       listener: (context, state) {
-        _replayPendingIntent(context, state);
-
         if (state.errorMessage != null && state.status != PaywallStatus.error) {
           ScaffoldMessenger.of(context)
             ..clearSnackBars()
@@ -77,7 +55,7 @@ class _PaywallPageState extends State<PaywallPage> {
             ..showSnackBar(
               const SnackBar(content: Text('Ton abonnement a été restauré.')),
             );
-          Navigator.of(context).maybePop();
+          _leave(context);
         }
 
         /// Replaces the paywall instead of stacking on it, so the back gesture
@@ -95,9 +73,7 @@ class _PaywallPageState extends State<PaywallPage> {
           child: Scaffold(
             backgroundColor: AppColors.background,
             body: SafeArea(
-              child: state.isCompletingPurchase
-                  ? const PaywallConfirmingWidget()
-                  : _body(context, state),
+              child: state.isCompletingPurchase ? const PaywallConfirmingWidget() : _body(context, state),
             ),
           ),
         );
@@ -105,16 +81,31 @@ class _PaywallPageState extends State<PaywallPage> {
     );
   }
 
-  /// In preview the paywall was pushed over the onboarding, which the owner is
-  /// leaving either way: dismissing it means "not now", not "go back a step".
-  void _close(BuildContext context) {
-    if (_isPreview) {
-      pendingPremiumIntent.clear();
-      context.go(RouteNames.signup);
+  /// The onboarding flow sits on top of the home page: leaving it for good
+  /// means the app, not the trial screens under it.
+  void _leave(BuildContext context) {
+    if (_isOnboarding) {
+      context.go(RouteNames.home);
       return;
     }
     Navigator.of(context).maybePop();
   }
+
+  void _dismiss(BuildContext context, String reason) {
+    analytics.capture(AnalyticsEvents.paywallDismissed, properties: {
+      AnalyticsProperties.reason: reason,
+      if (_isOnboarding) AnalyticsProperties.trigger: PaywallTrigger.onboarding,
+    });
+    _leave(context);
+  }
+
+  Widget _topButton(BuildContext context) => IconButton(
+        padding: EdgeInsets.zero,
+        icon: const Icon(Icons.close_rounded),
+        color: AppColors.textPrimary,
+        tooltip: 'Fermer',
+        onPressed: () => _dismiss(context, 'close'),
+      );
 
   Widget _body(BuildContext context, PaywallState state) {
     if (state.status == PaywallStatus.loading) {
@@ -141,75 +132,72 @@ class _PaywallPageState extends State<PaywallPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: IconButton(
-                      padding: EdgeInsets.zero,
-                      icon: const Icon(Icons.close_rounded),
-                      color: AppColors.textPrimary,
-                      tooltip: 'Fermer',
-                      onPressed: () => _close(context),
-                    ),
-                  ),
+                  Align(alignment: Alignment.centerRight, child: _topButton(context)),
                   const PaywallMemoriesWidget(isAnimated: true),
                   const Spacer(),
-                  Text(paywallTitle, style: AppTextStyles.title02),
-                  Text(
-                    paywallTagline,
-                    style: AppTextStyles.text.copyWith(color: AppColors.textSecondary),
-                  ),
+                  _title(state.offers),
                   const SizedBox(height: AppSpacing.md),
-                  ...paywallBenefits.map(
-                    (benefit) => Padding(
+                  for (final line in [
+                    ...paywallLines,
+                    if (state.offers.any((offer) => offer.hasTrial)) paywallTrialReminder,
+                  ])
+                    Padding(
                       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                      child: Text.rich(
-                        TextSpan(
-                          text: '- ${benefit.subtitle} ',
-                          style: AppTextStyles.text.copyWith(color: AppColors.textSecondary),
-                          children: [
-                            TextSpan(
-                              text: benefit.title,
-                              style: AppTextStyles.textBold,
-                            ),
-                          ],
-                        ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(line.icon, style: AppTextStyles.text),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Text.rich(TextSpan(
+                              text: line.text,
+                              style: AppTextStyles.text,
+                              children: [
+                                TextSpan(text: line.bold, style: AppTextStyles.textBold),
+                              ],
+                            )),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
                   const Spacer(),
-                  ...state.offers.map(
+                  const SizedBox(height: AppSpacing.md),
+                  ..._annualFirst(state.offers).map(
                     (offer) => Padding(
                       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                       child: PaywallOfferCardWidget(
                         offer: offer,
+                        monthly: _monthly(state.offers),
                         isSelected: offer.packageId == state.selectedPackageId,
                         onTap: () => context.read<PaywallCubit>().selectOffer(offer.packageId),
                       ),
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(height: AppSpacing.sm),
                   ButtonWidget(
                     label: _ctaLabel(state.selectedOffer),
                     fullWidth: true,
                     isLoading: state.isPurchasing,
                     state: state.isBusy ? ButtonState.disabled : ButtonState.normal,
-                    onPressed: state.isBusy
-                        ? null
-                        : () => _isPreview
-                            ? _rememberAndSignUp(context, state)
-                            : context.read<PaywallCubit>().purchase(),
+                    onPressed: state.isBusy ? null : () => context.read<PaywallCubit>().purchase(),
                   ),
-                  _restoreLink(context, state),
-                  Text(
-                    paywallLegalNotice,
-                    textAlign: TextAlign.center,
-                    style: AppTextStyles.textSmall.copyWith(
-                      fontSize: 10,
-                      height: 1.35,
-                      color: AppColors.textSecondary,
+                  const SizedBox(height: AppSpacing.md),
+                  SizedBox(
+                    height: _legalHeight(context, state.offers, constraints.maxWidth - AppSpacing.lg * 2),
+                    child: _legalNotice(state.selectedOffer),
+                  ),
+                  if (state.isRestoring)
+                    const Padding(
+                      padding: EdgeInsets.all(AppSpacing.sm),
+                      child: Center(
+                        child: SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                      ),
+                    )
+                  else
+                    PaywallLegalLinksWidget(
+                      onOpen: widget.onOpenLegalLink,
+                      onRestore: state.isBusy ? null : () => context.read<PaywallCubit>().restore(),
                     ),
-                  ),
-                  PaywallLegalLinksWidget(onOpen: widget.onOpenLegalLink),
                 ],
               ),
             ),
@@ -219,44 +207,71 @@ class _PaywallPageState extends State<PaywallPage> {
     );
   }
 
-  /// Apple wants the restore reachable from any screen that sells. Without an
-  /// account there is nothing to restore onto yet, so it leads to the login.
-  Widget _restoreLink(BuildContext context, PaywallState state) {
-    if (_isPreview) {
-      return TextButton(
-        onPressed: () => context.go(RouteNames.login),
-        child: Text(
-          'J\'ai déjà un abonnement',
-          style: AppTextStyles.textSmall.copyWith(color: AppColors.textSecondary),
-        ),
-      );
-    }
-
-    return TextButton(
-      onPressed: state.isBusy ? null : () => context.read<PaywallCubit>().restore(),
-      child: state.isRestoring
-          ? const SizedBox(
-              height: 16,
-              width: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : Text(
-              'Restaurer mes achats',
-              style: AppTextStyles.textSmall.copyWith(color: AppColors.textSecondary),
+  Widget _title(List<PaywallOfferModel> offers) {
+    final trial = offers.where((offer) => offer.hasTrial).firstOrNull;
+    return Text.rich(
+      TextSpan(
+        text: trial == null ? paywallTitle : paywallTrialTitleStart,
+        children: [
+          if (trial != null)
+            TextSpan(
+              text: paywallTrialTitleDays(trial.trialDays),
+              style: const TextStyle(color: AppColors.primary),
             ),
+        ],
+      ),
+      textAlign: TextAlign.center,
+      style: AppTextStyles.title02,
     );
   }
+
+  List<PaywallOfferModel> _annualFirst(List<PaywallOfferModel> offers) => [
+        ...offers.where((offer) => offer.period == PaywallPeriod.annual),
+        ...offers.where((offer) => offer.period != PaywallPeriod.annual),
+      ];
+
+  PaywallOfferModel? _monthly(List<PaywallOfferModel> offers) {
+    for (final offer in offers) {
+      if (offer.period == PaywallPeriod.monthly) return offer;
+    }
+    return null;
+  }
+
+  double _legalHeight(BuildContext context, List<PaywallOfferModel> offers, double width) {
+    var height = 0.0;
+    for (final offer in offers) {
+      final painter = TextPainter(
+        text: TextSpan(text: paywallLegalNotice(offer), style: _legalStyle),
+        textDirection: Directionality.of(context),
+        textScaler: MediaQuery.textScalerOf(context),
+      )..layout(maxWidth: width);
+      if (painter.height > height) height = painter.height;
+      painter.dispose();
+    }
+    return height.ceilToDouble() + 2;
+  }
+
+  TextStyle get _legalStyle => AppTextStyles.textSmall.copyWith(fontSize: 10, height: 1.35, color: AppColors.textSecondary);
+
+  Widget _legalNotice(PaywallOfferModel? offer) => Text(
+        paywallLegalNotice(offer),
+        textAlign: TextAlign.center,
+        style: _legalStyle,
+      );
+
+  String _ctaLabel(PaywallOfferModel? offer) =>
+      offer?.hasTrial == true ? 'Essayer ${offer!.trialDays} jours gratuitement' : 'Passer premium';
 
   Widget _errorView(BuildContext context, PaywallState state) {
     return Stack(
       children: [
         Align(
-          alignment: Alignment.topLeft,
+          alignment: Alignment.topRight,
           child: IconButton(
             icon: const Icon(Icons.close_rounded),
             color: AppColors.textPrimary,
             tooltip: 'Fermer',
-            onPressed: () => _close(context),
+            onPressed: () => _dismiss(context, 'close'),
           ),
         ),
         Center(
@@ -281,12 +296,5 @@ class _PaywallPageState extends State<PaywallPage> {
         ),
       ],
     );
-  }
-
-  /// A trial changes what the button promises: the user is not paying today.
-  String _ctaLabel(PaywallOfferModel? offer) {
-    if (offer == null) return 'Passer premium';
-    if (offer.hasTrial) return 'Essayer ${offer.trialDays} jours gratuitement';
-    return 'Passer premium';
   }
 }

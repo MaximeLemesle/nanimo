@@ -31,11 +31,12 @@ class RevenueCatPurchaseClient implements PurchaseClient {
   }
 
   /// RevenueCat throws when logging in the id it already holds, on every relaunch.
+  /// `$posthogUserId` lets the RevenueCat → PostHog integration land on the same person.
   @override
   Future<void> logIn(String appUserId) async {
     final current = await Purchases.appUserID;
-    if (current == appUserId) return;
-    await Purchases.logIn(appUserId);
+    if (current != appUserId) await Purchases.logIn(appUserId);
+    await Purchases.setAttributes({r'$posthogUserId': appUserId});
   }
 
   @override

@@ -1,4 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nanimo/core/analytics/analytics.dart';
+import 'package:nanimo/core/analytics/analytics_events.dart';
+import 'package:nanimo/core/analytics/analytics_service.dart';
+import 'package:nanimo/core/notifications/notification_priming.dart';
+import 'package:nanimo/core/notifications/notifications.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nanimo/data/models/referential/pet_race_model.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
@@ -12,6 +17,9 @@ import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
+
+import '../../../../core/analytics/recording_analytics_service.dart';
+import '../../../../core/notifications/fake_notification_client.dart';
 
 class _MockPetRepository extends Mock implements PetRepository {}
 
@@ -183,6 +191,23 @@ void main() {
     await cubit.close();
   });
 
+  test('a saved weight is tracked with where it was typed', () async {
+    final recorder = RecordingAnalyticsService();
+    analytics = recorder;
+    addTearDown(() => analytics = const NoopAnalyticsService());
+    final cubit = createCubit();
+    await settle();
+
+    await cubit.addWeightLog(4.5, DateTime(2026, 6, 21));
+    await cubit.addWeightLog(4.6, DateTime(2026, 6, 22), source: WeightSource.createMenu);
+
+    expect(
+      recorder.events.map((e) => e.properties[AnalyticsProperties.source]),
+      [WeightSource.petPage, WeightSource.createMenu],
+    );
+    await cubit.close();
+  });
+
   test('addWeightLog targets petId without moving the selection', () async {
     final cubit = createCubit();
     await settle();
@@ -255,6 +280,35 @@ void main() {
     expect(captured.vaccineName, 'Rage');
     expect(captured.healthDiaryId, 'd1');
 
+    await cubit.close();
+  });
+
+  /// NAN-107: a booster ahead is the moment to offer notifications.
+  test('addVaccine with a booster ahead offers the reminders', () async {
+    final previous = notificationPriming;
+    notificationPriming = NotificationPriming(client: () => FakeNotificationClient(), store: MemoryPrimingStore());
+    addTearDown(() => notificationPriming = previous);
+    final cubit = createCubit();
+    await settle();
+
+    await cubit.addVaccine(vaccineName: 'Rage', nextDate: DateTime.now().add(const Duration(days: 30)));
+    await pumpEventQueue();
+
+    expect(notificationPriming.offer.value?.isVetVisit, isFalse);
+    expect(notificationPriming.offer.value?.petName, isNotEmpty);
+    await cubit.close();
+  });
+
+  test('addVaccine reports vaccine_created from the health diary', () async {
+    final recorder = RecordingAnalyticsService();
+    analytics = recorder;
+    addTearDown(() => analytics = const NoopAnalyticsService());
+    final cubit = createCubit();
+    await settle();
+
+    await cubit.addVaccine(vaccineName: 'Rage', nextDate: DateTime(2027, 1, 1));
+
+    expect(recorder.lastOf(AnalyticsEvents.vaccineCreated)!.properties[AnalyticsProperties.source], HealthEntrySource.healthDiary);
     await cubit.close();
   });
 
@@ -505,9 +559,33 @@ void main() {
       expect(state.hasHealthData, isTrue);
     });
 
+    test('is true once a diary exists, even with every answer skipped', () {
+      const state = PetDetailsState(
+        diary: HealthDiaryModel(healthDiaryId: 'd1', petId: 'p1'),
+      );
+      expect(state.hasHealthData, isTrue);
+    });
+
     test('is true when weight logs exist', () {
       final state = PetDetailsState(weightLogs: _weightLogs);
       expect(state.hasHealthData, isTrue);
     });
+  });
+  test('recordDeworming keeps the rest of another animal\'s diary', () async {
+    final other = HealthDiaryModel(
+        healthDiaryId: 'd2', petId: 'p2', isChipped: true, chipNumber: '999', lastDeworming: DateTime(2026, 1, 1), dewormingIntervalMonths: 6);
+    when(() => healthRepo.getDiaryForPet('p2')).thenAnswer((_) async => other);
+
+    final cubit = createCubit();
+    await settle();
+
+    final previous = await cubit.recordDeworming('p2', lastDeworming: DateTime(2026, 10, 22));
+
+    final saved = verify(() => healthRepo.upsertDiary(captureAny())).captured.last as HealthDiaryModel;
+    expect(saved.healthDiaryId, 'd2');
+    expect(saved.chipNumber, '999');
+    expect(saved.lastDeworming, DateTime(2026, 10, 22));
+    expect(saved.dewormingIntervalMonths, 6);
+    expect(previous?.lastDeworming, DateTime(2026, 1, 1));
   });
 }

@@ -1,3 +1,27 @@
+import 'package:nanimo/features/subscription/data/models/paywall_offer_model.dart';
+
+const String paywallTitle = 'Nanimo Premium';
+
+/// The title when a trial is on offer: "Commence tes" + "14 jours gratuits".
+const String paywallTrialTitleStart = 'Commence tes ';
+String paywallTrialTitleDays(int days) => '$days jours gratuits';
+
+/// A line under the title: its icon apart, so the text wraps under the text.
+class PaywallLine {
+  final String icon;
+  final String text;
+  final String bold;
+
+  const PaywallLine({required this.icon, required this.text, this.bold = ''});
+
+  String get plainText => '$text$bold';
+}
+
+const List<PaywallLine> paywallLines = [
+  PaywallLine(icon: '✔️', text: 'Complète tes souvenirs ', bold: 'avec 5 photos'),
+  PaywallLine(icon: '✔️', text: 'Agrandis ta famille ', bold: 'jusqu’à 10 animaux'),
+];
+
 class PaywallBenefit {
   final String subtitle;
   final String title;
@@ -8,9 +32,9 @@ class PaywallBenefit {
   });
 }
 
-const String paywallTitle = 'Nanimo Premium';
 const String paywallTagline = 'Toute la place que mérite ta famille';
 
+/// Shown on the premium welcome page.
 const List<PaywallBenefit> paywallBenefits = [
   PaywallBenefit(
     subtitle: 'Ne rate aucun instant',
@@ -22,12 +46,30 @@ const List<PaywallBenefit> paywallBenefits = [
   ),
 ];
 
+/// Only true while a trial is on offer: the reminder is scheduled at purchase.
+const PaywallLine paywallTrialReminder = PaywallLine(
+  icon: '🔔',
+  text: 'Une notification te sera envoyée 2 jours avant la fin de ton essai',
+);
+
 const String termsUrl = 'https://plain-ant-39c.notion.site/Conditions-g-n-rales-d-utilisation-de-Nanimo-5ee8fef1b0fc83f59a4101c2099fb2b9';
 
 const String privacyUrl = 'https://plain-ant-39c.notion.site/Politique-de-confidentialit-de-Nanimo-d308fef1b0fc82aeab2181cb868647b3';
 
-const String paywallLegalNotice =
-    'Ton abonnement est renouvelé automatiquement à chaque échéance. Tu peux le résilier à tout moment depuis les réglages de ton compte App Store ou Google Play, au plus tard 24 h avant la fin de la période en cours.';
+const String _cancellationNotice =
+    'Renouvelé automatiquement, résiliable à tout moment depuis les réglages de ton compte App Store ou Google Play, au plus tard 24 h avant la fin de la période en cours.';
+
+/// What the selected plan will charge and when, as the stores require it.
+String paywallLegalNotice(PaywallOfferModel? offer) {
+  if (offer == null) return _cancellationNotice;
+  final price = '${offer.priceLabel} ${offer.periodLabel}'.trim();
+  if (offer.hasTrial) return '${offer.trialDays} jours gratuits, puis $price. $_cancellationNotice';
+  return '$price. $_cancellationNotice';
+}
+
+/// The CTA promises nothing the card does not already say.
+const String paywallCta = 'Continuer';
+const String paywallNoThanks = 'Non merci';
 
 /// Shown while the webhook makes its way to Supabase
 const String premiumConfirmingTitle = 'On active ton abonnement';

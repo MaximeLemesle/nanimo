@@ -73,12 +73,12 @@ class _PetVetVisitDiaryCardWidgetState extends State<PetVetVisitDiaryCardWidget>
                 onTap: _isSelecting ? () => _editVisit(context, visit) : null,
               ),
           ],
-          emptyLabel: 'Aucune visite vétérinaire enregistrée pour le moment.',
+          emptyLabel: 'Note ses visites chez le vétérinaire, passées ou à venir. On te rappellera les prochaines la veille.',
         ),
         if (!widget.readOnly) ...[
           const SizedBox(height: AppSpacing.md),
           ButtonWidget(
-            label: 'Ajouter une visite',
+            label: widget.visits.isEmpty ? 'Prévoir une visite' : 'Ajouter une visite',
             type: ButtonType.secondary,
             icon: Icons.add,
             iconPosition: ButtonIcon.left,

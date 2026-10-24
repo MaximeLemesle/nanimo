@@ -7,14 +7,21 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:nanimo/config/app_environment.dart';
 import 'package:nanimo/config/router/app_router.dart';
 import 'package:nanimo/config/theme/app_theme.dart';
 import 'package:nanimo/core/analytics/analytics.dart';
 import 'package:nanimo/core/analytics/analytics_factory.dart';
+import 'package:nanimo/core/analytics/posthog_analytics_service.dart';
 import 'package:nanimo/core/monitoring/error_reporter.dart';
+import 'package:nanimo/core/notifications/local_notification_client.dart';
+import 'package:nanimo/core/notifications/notification_priming.dart';
+import 'package:nanimo/core/notifications/notifications.dart';
+import 'package:nanimo/core/notifications/reminder_scheduler.dart';
 import 'package:nanimo/core/monitoring/monitoring_factory.dart';
 import 'package:nanimo/core/isar/database/isar_service.dart';
 import 'package:nanimo/core/isar/database/sync_service.dart';
+import 'package:nanimo/core/widgets/environment_banner.dart';
 import 'package:nanimo/core/widgets/keyboard_dismiss_wrapper.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
@@ -27,16 +34,26 @@ import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
 import 'package:nanimo/features/settings/data/settings_repository.dart';
 import 'package:nanimo/features/subscription/data/purchase_client.dart';
 import 'package:nanimo/features/subscription/data/purchase_repository.dart';
+import 'package:nanimo/features/subscription/data/trial_end_watcher.dart';
+import 'package:nanimo/core/notifications/diary_follow_up_store.dart';
 import 'package:nanimo/features/subscription/data/subscription_repository.dart';
 import 'package:nanimo/features/subscription/data/subscription_reconciler.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:nanimo/features/home/data/article_repository.dart';
+import 'package:nanimo/features/home/presentation/widgets/home_birthday_card_widget.dart';
+import 'package:nanimo/features/home/presentation/widgets/home_first_steps_card_widget.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await dotenv.load(fileName: ".env");
+  final environment = AppEnvironment.current;
+  try {
+    await dotenv.load(fileName: environment.dotenvFile);
+  } catch (_) {
+    throw Exception(
+        'Missing ${environment.dotenvFile}: copy its .example next to it and fill it in');
+  }
   final String? url = dotenv.env['SUPABASE_URL'];
   final String? anonKey = dotenv.env['SUPABASE_ANON_KEY'];
   final String? iosClientId = dotenv.env['GOOGLE_IOS_CLIENT_ID'];
@@ -58,6 +75,7 @@ void main() async {
     dsn: dotenv.env['SENTRY_DSN'],
     appVersion: '${packageInfo.version}+${packageInfo.buildNumber}',
     isReleaseBuild: kReleaseMode,
+    environment: environment.reportingName,
   );
 
   /// Lets the repository layer and the router reach the reporter without
@@ -68,6 +86,7 @@ void main() async {
     apiKey: dotenv.env['POSTHOG_API_KEY'],
     host: dotenv.env['POSTHOG_HOST'],
     isReleaseBuild: kReleaseMode,
+    environment: environment.reportingName,
   );
 
   await Supabase.initialize(url: url, anonKey: anonKey);
@@ -102,7 +121,9 @@ void main() async {
   authCubit.stream.listen((auth) {
     final userId = authRepository.currentUserId;
     if (auth.isAuthenticated && userId != null) {
-      purchaseRepository.identify(userId);
+      purchaseRepository
+          .identify(userId)
+          .then((_) => trialEndWatcher.refresh());
     } else if (auth.isUnauthenticated) {
       purchaseRepository.forget();
     }
@@ -123,6 +144,31 @@ void main() async {
     subscriptionRepository: subscriptionRepository,
   );
 
+  await _initNotifications();
+  firstStepsStore = SharedPreferencesFirstStepsStore(
+      userId: () => authRepository.currentUserId);
+  birthdayCelebrationStore = SharedPreferencesBirthdayCelebrationStore();
+  notificationPriming = NotificationPriming(
+    client: () => notifications,
+    store: SharedPreferencesPrimingStore(),
+    onGranted: () async {
+      final prefs = await settingsRepository.watchNotificationPrefs().first;
+      if (!prefs.pushEnabled) {
+        await settingsRepository
+            .saveNotificationPrefs(prefs.copyWith(pushEnabled: true));
+      }
+    },
+  );
+  trialEndWatcher = TrialEndWatcher(purchaseRepository.trialEndsAt);
+  ReminderScheduler(
+    client: notifications,
+    trialEnd: trialEndWatcher.watch,
+    followUps: diaryFollowUpStore.watch,
+    petRepository: petRepository,
+    healthRepository: healthRepository,
+    settingsRepository: settingsRepository,
+  ).bind(authCubit);
+
   final onboardingCubit = OnboardingCubit(
     referentialRepository: referentialRepository,
   );
@@ -131,6 +177,15 @@ void main() async {
     authCubit: authCubit,
     petRepository: petRepository,
   );
+
+  /// NAN-100: once the onboarding pet is in, its answers must not prefill
+  /// the next creation. Lives here because the shell mounts after the insert.
+  petCreationCubit.stream.listen((creation) {
+    if (creation.status == PetCreationStatus.success &&
+        creation.createdDuringOnboarding) {
+      onboardingCubit.reset();
+    }
+  });
 
   /// Account id only, never the e-mail.
   authCubit.stream.listen((auth) {
@@ -161,12 +216,29 @@ void main() async {
       )));
 }
 
+/// Local reminders (NAN-106). A plugin failure leaves the app without
+/// reminders, never without a start.
+Future<void> _initNotifications() async {
+  final client = FlutterLocalNotificationClient();
+  try {
+    await client.initialize(
+        onTap: (payload) => pendingNotificationTap.value = payload);
+    notifications = client;
+    pendingNotificationTap.value ??= await client.launchPayload();
+  } catch (e, st) {
+    developer.log('local notifications unavailable',
+        name: 'notifications', error: e, stackTrace: st);
+  }
+}
+
 /// Boots RevenueCat when a key is available for the current platform.
 ///
 /// A missing key is not fatal, but it must swap the client out: calling the
 /// unconfigured SDK raises a native error no Dart catch can intercept.
 Future<PurchaseRepository> _buildPurchaseRepository() async {
-  final key = Platform.isIOS ? dotenv.env['REVENUECAT_IOS_API_KEY'] : dotenv.env['REVENUECAT_ANDROID_API_KEY'];
+  final key = Platform.isIOS
+      ? dotenv.env['REVENUECAT_IOS_API_KEY']
+      : dotenv.env['REVENUECAT_ANDROID_API_KEY'];
 
   if (key == null || key.isEmpty) {
     developer.log(
@@ -181,7 +253,8 @@ Future<PurchaseRepository> _buildPurchaseRepository() async {
     await repository.configure(key);
     return repository;
   } catch (e, st) {
-    developer.log('RevenueCat setup failed, purchases are disabled', name: 'purchase', error: e, stackTrace: st);
+    developer.log('RevenueCat setup failed, purchases are disabled',
+        name: 'purchase', error: e, stackTrace: st);
     return PurchaseRepository(DisabledPurchaseClient());
   }
 }
@@ -252,29 +325,34 @@ class _MyAppState extends State<MyApp> {
         BlocProvider.value(value: widget.subscriptionCubit),
         BlocProvider.value(value: widget.petCreationCubit),
       ],
-      child: MaterialApp.router(
-        title: 'Nanimo',
-        theme: AppTheme.light,
-        locale: const Locale('fr'),
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [Locale('fr')],
-        builder: (context, child) => KeyboardDismissWrapper(
-          child: child ?? const SizedBox.shrink(),
-        ),
-        routerConfig: createRouter(
-          widget.authCubit,
-          authRepository: widget.authRepository,
-          eventRepository: widget.eventRepository,
-          referentialRepository: widget.referentialRepository,
-          petRepository: widget.petRepository,
-          healthRepository: widget.healthRepository,
-          articleRepository: widget.articleRepository,
-          settingsRepository: widget.settingsRepository,
-          purchaseRepository: widget.purchaseRepository,
+      child: AnalyticsReplayRoot(
+        child: MaterialApp.router(
+          title: 'Nanimo',
+          theme: AppTheme.light,
+          locale: const Locale('fr'),
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('fr')],
+          builder: (context, child) => EnvironmentBanner(
+            environment: AppEnvironment.current,
+            child: KeyboardDismissWrapper(
+              child: child ?? const SizedBox.shrink(),
+            ),
+          ),
+          routerConfig: createRouter(
+            widget.authCubit,
+            authRepository: widget.authRepository,
+            eventRepository: widget.eventRepository,
+            referentialRepository: widget.referentialRepository,
+            petRepository: widget.petRepository,
+            healthRepository: widget.healthRepository,
+            articleRepository: widget.articleRepository,
+            settingsRepository: widget.settingsRepository,
+            purchaseRepository: widget.purchaseRepository,
+          ),
         ),
       ),
     );

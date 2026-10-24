@@ -24,6 +24,7 @@ import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
 import 'package:nanimo/features/event/presentation/page/edit_event_page.dart';
 import 'package:nanimo/features/journal/presentation/cubit/journal_cubit.dart';
 import 'package:nanimo/features/journal/presentation/page/journal_page.dart';
+import 'package:nanimo/features/pet/presentation/pet_creation_flow.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/pet/presentation/cubit/edit_pet_cubit.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
@@ -38,6 +39,7 @@ import 'package:nanimo/features/subscription/presentation/cubit/paywall_cubit.da
 import 'package:nanimo/features/subscription/presentation/page/paywall_page.dart';
 import 'package:nanimo/features/subscription/presentation/page/premium_welcome_page.dart';
 import 'package:nanimo/features/onboarding/presentation/page/onboarding_page.dart';
+import 'package:nanimo/features/pet/presentation/page/health_diary_wizard_page.dart';
 import 'package:nanimo/features/onboarding/presentation/page/splash_page.dart';
 import 'package:nanimo/features/pet/presentation/page/edit_pet_page.dart';
 import 'package:nanimo/features/pet/presentation/page/pet_page.dart';
@@ -85,7 +87,16 @@ GoRouter createRouter(
 }) {
   /// Flips to true after the splash display duration
   final splashElapsed = ValueNotifier(false);
-  Timer(const Duration(milliseconds: 1200), () => splashElapsed.value = true);
+  Timer? splashTimer;
+  DateTime? lastDeletion;
+  void restartSplash() {
+    splashTimer?.cancel();
+    splashElapsed.value = false;
+    splashTimer = Timer(
+        const Duration(milliseconds: 1200), () => splashElapsed.value = true);
+  }
+
+  restartSplash();
 
   final modalRouteObserver = ModalRouteObserver();
 
@@ -99,6 +110,20 @@ GoRouter createRouter(
     ]),
     debugLogDiagnostics: true,
     redirect: (context, state) {
+      final deletion = authRepository.accountDeletedAt;
+      if (deletion != null &&
+          deletion != lastDeletion &&
+          authCubit.state.isUnauthenticated) {
+        lastDeletion = deletion;
+        restartSplash();
+      }
+      if (lastDeletion != null &&
+          !splashElapsed.value &&
+          authCubit.state.isUnauthenticated) {
+        return state.matchedLocation == RouteNames.splash
+            ? null
+            : RouteNames.splash;
+      }
       return handleRedirect(
         state,
         authCubit.state.status,
@@ -127,7 +152,11 @@ GoRouter createRouter(
         pageBuilder: (_, state) => _fadePage(state, const SignupPage()),
       ),
       ShellRoute(
-        observers: [modalRouteObserver, BreadcrumbRouteObserver(), ScreenViewRouteObserver()],
+        observers: [
+          modalRouteObserver,
+          BreadcrumbRouteObserver(),
+          ScreenViewRouteObserver()
+        ],
         pageBuilder: (context, state, child) => _fadePage(
           state,
           MultiBlocProvider(
@@ -160,6 +189,7 @@ GoRouter createRouter(
             ],
             child: AppShell(
               isModalOpen: modalRouteObserver.isModalOpen,
+              closeModals: modalRouteObserver.closeAll,
               child: child,
             ),
           ),
@@ -178,7 +208,7 @@ GoRouter createRouter(
                       eventRepository: eventRepository,
                       referentialRepository: referentialRepository,
                       petRepository: petRepository,
-                    )..load(),
+                    )..load(initialPetId: state.uri.queryParameters['petId']),
                     child: const CreateEventPage(),
                   ),
                 ),
@@ -199,7 +229,8 @@ GoRouter createRouter(
               ),
               GoRoute(
                 path: 'journal',
-                pageBuilder: (_, state) => _fadePage(state, const JournalPage()),
+                pageBuilder: (_, state) =>
+                    _fadePage(state, const JournalPage()),
               ),
               GoRoute(
                 path: 'pet',
@@ -207,7 +238,8 @@ GoRouter createRouter(
                 routes: [
                   GoRoute(
                     path: 'health-diary',
-                    pageBuilder: (_, state) => _fadePage(state, const PetHealthDiaryPage()),
+                    pageBuilder: (_, state) =>
+                        _fadePage(state, const PetHealthDiaryPage()),
                   ),
                 ],
               ),
@@ -232,8 +264,25 @@ GoRouter createRouter(
           ),
         ],
       ),
+
       /// Outside the ShellRoute so the bottom bar leaves the form alone, the
       /// same reason the paywall lives at the root.
+      GoRoute(
+        path: '${RouteNames.healthDiaryWizard}/:petId',
+        pageBuilder: (_, state) => _fadePage(
+          state,
+
+          /// Its own instance: the shell's cubit is not above a root route.
+          BlocProvider(
+            create: (_) => PetDetailsCubit(
+              petRepository: petRepository,
+              healthRepository: healthRepository,
+              referentialRepository: referentialRepository,
+            ),
+            child: HealthDiaryWizardPage(petId: state.pathParameters['petId']!),
+          ),
+        ),
+      ),
       GoRoute(
         path: '${RouteNames.editPet}/:petId',
         pageBuilder: (_, state) => _fadePage(
@@ -259,20 +308,17 @@ GoRouter createRouter(
               authRepository: authRepository,
             )..loadOffers(),
             child: PaywallPage(
-              isPreview: state.uri.queryParameters['preview'] == '1',
+              isOnboarding: state.uri.queryParameters['onboarding'] == '1',
             ),
           ),
         ),
       ),
-
-      /// Reached by `pushReplacement` from the paywall, so it takes the
-      /// paywall's slot rather than sitting on top of it.
       GoRoute(
         path: RouteNames.premiumWelcome,
         pageBuilder: (context, state) => _fadePage(
           state,
           PremiumWelcomePage(
-            onPrimary: () => context.pushReplacement(RouteNames.createPet),
+            onPrimary: () => PetCreationFlow.open(context, replace: true),
             onSecondary: () => context.go(RouteNames.home),
           ),
         ),

@@ -6,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nanimo/config/router/app_router.dart';
+import 'package:nanimo/config/router/route_names.dart';
+import 'package:nanimo/core/notifications/notifications.dart';
 import 'package:nanimo/core/widgets/bottom_bar_widget/bottom_bar_widget.dart';
 import 'package:nanimo/data/models/referential/pet_race_model.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
@@ -28,7 +30,8 @@ import 'package:nanimo/features/subscription/data/purchase_repository.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:nanimo/features/home/data/article_repository.dart';
 
-class _MockReferentialRepository extends Mock implements ReferentialRepository {}
+class _MockReferentialRepository extends Mock
+    implements ReferentialRepository {}
 
 class _MockPetRepository extends Mock implements PetRepository {}
 
@@ -116,6 +119,7 @@ void main() {
   late PetDetailsCubit petDetailsCubit;
   late _FakeSubscriptionCubit subscriptionCubit;
   late GoRouter router;
+  StreamController<List<PetModel>>? delayedPets;
 
   setUp(() {
     authCubit = _FakeAuthCubit();
@@ -128,14 +132,22 @@ void main() {
     when(() => articleRepo.watchCurrentArticle())
         .thenAnswer((_) => Stream.value(null));
 
-    when(() => eventRepo.watchEvents()).thenAnswer((_) => Stream.value(const []));
-    when(() => eventRepo.watchPetEvents()).thenAnswer((_) => Stream.value(const {}));
-    when(() => eventRepo.watchAllImages()).thenAnswer((_) => Stream.value(const {}));
-    when(() => healthRepo.watchAllDiaries()).thenAnswer((_) => Stream.value(const []));
-    when(() => healthRepo.watchAllVaccines()).thenAnswer((_) => Stream.value(const []));
-    when(() => healthRepo.watchAllVetVisits()).thenAnswer((_) => Stream.value(const []));
-    when(() => authRepo.watchCurrentUser()).thenAnswer((_) => Stream.value(null));
-    when(() => healthRepo.watchDiaryForPet(any())).thenAnswer((_) => Stream.value(null));
+    when(() => eventRepo.watchEvents())
+        .thenAnswer((_) => Stream.value(const []));
+    when(() => eventRepo.watchPetEvents())
+        .thenAnswer((_) => Stream.value(const {}));
+    when(() => eventRepo.watchAllImages())
+        .thenAnswer((_) => Stream.value(const {}));
+    when(() => healthRepo.watchAllDiaries())
+        .thenAnswer((_) => Stream.value(const []));
+    when(() => healthRepo.watchAllVaccines())
+        .thenAnswer((_) => Stream.value(const []));
+    when(() => healthRepo.watchAllVetVisits())
+        .thenAnswer((_) => Stream.value(const []));
+    when(() => authRepo.watchCurrentUser())
+        .thenAnswer((_) => Stream.value(null));
+    when(() => healthRepo.watchDiaryForPet(any()))
+        .thenAnswer((_) => Stream.value(null));
     when(() => healthRepo.getWeightLogsForPet(any()))
         .thenAnswer((_) => Stream.value(const <HealthDiaryWeightLogModel>[]));
     when(() => healthRepo.getVetVisitsForPet(any()))
@@ -152,6 +164,10 @@ void main() {
   });
 
   tearDown(() async {
+    pendingNotificationTap.value = null;
+    await delayedPets?.close();
+    delayedPets = null;
+    router.dispose();
     await subscriptionCubit.close();
     await petCreationCubit.close();
     await homeCubit.close();
@@ -205,7 +221,6 @@ void main() {
           BlocProvider<OnboardingCubit>.value(value: onboardingCubit),
           BlocProvider<PetCreationCubit>.value(value: petCreationCubit),
           BlocProvider<HomeCubit>.value(value: homeCubit),
-          BlocProvider<PetDetailsCubit>.value(value: petDetailsCubit),
           BlocProvider<SubscriptionCubit>.value(value: subscriptionCubit),
         ],
         child: MaterialApp.router(routerConfig: router),
@@ -226,6 +241,86 @@ void main() {
     );
     return opacity.opacity;
   }
+
+  testWidgets(
+      'a cold notification waits for pets then opens the intended animal',
+      (tester) async {
+    delayedPets = StreamController<List<PetModel>>.broadcast();
+    when(() => petRepo.watchPets()).thenAnswer((_) async* {
+      yield <PetModel>[];
+      yield* delayedPets!.stream;
+    });
+    pendingNotificationTap.value = 'vaccine|p2';
+    await pumpHome(tester);
+    expect(pendingNotificationTap.value, 'vaccine|p2');
+    final second = PetModel(
+        petId: 'p2',
+        petName: 'Nala',
+        birthdate: _milo.birthdate,
+        gender: _milo.gender,
+        createdAt: _milo.createdAt,
+        petRaceId: _milo.petRaceId,
+        petSpeciesId: _milo.petSpeciesId);
+    delayedPets!.add([_milo, second]);
+    await tester.pumpAndSettle();
+    expect(pendingNotificationTap.value, isNull);
+    expect(
+        router.routeInformationProvider.value.uri.path, RouteNames.healthDiary);
+    final pageContext = tester.element(find.text('Carnet de santé').first);
+    expect(pageContext.read<PetDetailsCubit>().state.selectedPetId, 'p2');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+      'a warm birthday notification opens a memory for the right animal',
+      (tester) async {
+    await pumpHome(tester);
+    when(() => referentialRepo.fetchEventTypes()).thenAnswer((_) async => [
+          const EventTypeModel(
+              eventTypeId: 'type1',
+              name: 'Balade',
+              code: 'balade',
+              isPremium: false)
+        ]);
+    pendingNotificationTap.value = 'birthday|p1';
+    await tester.pumpAndSettle();
+    expect(
+        router.routeInformationProvider.value.uri.path, RouteNames.createEvent);
+    expect(router.routeInformationProvider.value.uri.queryParameters['petId'],
+        'p1');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a removed animal notification falls back to the home',
+      (tester) async {
+    await pumpHome(tester);
+    pendingNotificationTap.value = 'vaccine|deleted-pet';
+    await tester.pumpAndSettle();
+    expect(router.routeInformationProvider.value.uri.path, RouteNames.home);
+    expect(find.text('Cet animal n’est plus disponible.'), findsOneWidget);
+    expect(pendingNotificationTap.value, isNull);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a notification tapped over an open sheet closes it first',
+      (tester) async {
+    await pumpHome(tester);
+    await tester.tap(find.text('Lire la suite'));
+    await tester.pumpAndSettle();
+    expect(barOpacity(tester), 0);
+
+    pendingNotificationTap.value = 'vaccine|p1';
+    await tester.pumpAndSettle();
+    expect(
+        router.routeInformationProvider.value.uri.path, RouteNames.healthDiary);
+    expect(barOpacity(tester), 1);
+
+    router.pop();
+    await tester.pumpAndSettle();
+    expect(router.routeInformationProvider.value.uri.path, RouteNames.pet);
+    expect(barOpacity(tester), 1);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('nav bar is visible on the home page', (tester) async {
     await pumpHome(tester);

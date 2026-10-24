@@ -254,9 +254,8 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(find.widgetWithText(TextField, 'Motif de la visite'), 'Rappel vaccin');
+    /// The wheel unfolds inside the sheet and fills the date on opening.
     await tester.tap(find.text('Sélectionner une date'));
-    await tester.pumpAndSettle();
-    await tester.tapAt(const Offset(400, 50));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Enregistrer'));

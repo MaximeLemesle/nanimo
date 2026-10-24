@@ -46,6 +46,7 @@ void main() {
                     required bool isChipped,
                     String? chipNumber,
                     DateTime? lastDeworming,
+                    int? dewormingIntervalMonths,
                   }) {
                     submitted = true;
                     capturedSterilized = isSterilized;

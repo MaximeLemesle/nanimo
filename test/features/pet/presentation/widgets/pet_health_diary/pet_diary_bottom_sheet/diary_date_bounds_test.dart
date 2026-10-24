@@ -78,45 +78,25 @@ void main() {
     });
   });
 
-  group('vaccine dates', () {
-    Widget sheet({bool upcomingOnly = false}) => AddVaccineBottomSheetWidget(
+  group('vaccine date', () {
+    /// NAN-096: one field, a past booster or one to come.
+    testWidgets('starts at the birthdate and stays open ahead', (tester) async {
+      final picker = await openPicker(
+        tester,
+        AddVaccineBottomSheetWidget(
           birthdate: _birthdate,
-          upcomingOnly: upcomingOnly,
           onSubmit: ({
             required String vaccineName,
             DateTime? lastDate,
-            required DateTime nextDate,
+            DateTime? nextDate,
+            required int recurrence,
             String? petId,
           }) {},
-        );
-
-    // The defect found while framing the ticket: it accepted 2056.
-    testWidgets('the last booster is a past event and stops today',
-        (tester) async {
-      final picker = await openPicker(tester, sheet(), 'Dernier rappel');
-
-      expectSameDay(picker.minimumDate!, _birthdate);
-      expectSameDay(picker.maximumDate!, DateTime.now());
-    });
-
-    testWidgets('the next booster is scheduled and stays open ahead',
-        (tester) async {
-      final picker = await openPicker(tester, sheet(), 'Prochain rappel');
-
-      expectSameDay(picker.minimumDate!, _birthdate);
-      expect(picker.maximumDate!.isAfter(DateTime.now()), isTrue);
-    });
-
-    /// Booked from the home, a booster already gone is not one to come.
-    testWidgets('booked ahead, the next booster floors at today',
-        (tester) async {
-      final picker = await openPicker(
-        tester,
-        sheet(upcomingOnly: true),
-        'Prochain rappel',
+        ),
+        'Date du vaccin',
       );
 
-      expectSameDay(picker.minimumDate!, DateTime.now());
+      expectSameDay(picker.minimumDate!, _birthdate);
       expect(picker.maximumDate!.isAfter(DateTime.now()), isTrue);
     });
   });

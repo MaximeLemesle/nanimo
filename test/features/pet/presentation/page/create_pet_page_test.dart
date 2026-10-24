@@ -52,9 +52,10 @@ void main() {
     return cubit;
   }
 
-  Widget buildPage(OnboardingCubit cubit) {
+  Widget buildPage(OnboardingCubit cubit, {bool inApp = false}) {
     final authCubit = _MockAuthCubit();
-    when(() => authCubit.state).thenReturn(const AuthState.unauthenticated());
+    when(() => authCubit.state)
+        .thenReturn(inApp ? const AuthState.authenticated() : const AuthState.unauthenticated());
     when(() => authCubit.stream)
         .thenAnswer((_) => const Stream<AuthState>.empty());
 
@@ -85,8 +86,21 @@ void main() {
     expect(cubit.state.currentStep, 3);
     expect(find.byType(PetCreationStepThreeWidget), findsOneWidget);
     expect(find.text('Félicitations !'), findsOneWidget);
+    // NAN-114: the celebration is the last step, the account comes next.
     expect(find.text('Créer mon compte'), findsOneWidget);
 
+    await cubit.close();
+  });
+
+  testWidgets('adding a pet from the app ends on « Créer »', (tester) async {
+    final cubit = await seededCubitOnStepTwo();
+    await tester.pumpWidget(buildPage(cubit, inApp: true));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Continuer'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Créer'), findsOneWidget);
     await cubit.close();
   });
 
