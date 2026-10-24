@@ -59,9 +59,14 @@ class BottomSheetWidget extends StatelessWidget {
         top: AppSpacing.lg,
         bottom: AppSpacing.xxl,
       ),
-      child: scrollable || MediaQuery.viewInsetsOf(context).bottom > 0
-          ? SingleChildScrollView(child: column)
-          : column,
+      // Always the same tree: swapping it when the keyboard opens would
+      // recreate the focused field and close the keyboard (NAN-118).
+      child: SingleChildScrollView(
+        physics: scrollable || MediaQuery.viewInsetsOf(context).bottom > 0
+            ? null
+            : const NeverScrollableScrollPhysics(),
+        child: column,
+      ),
     );
   }
 }
