@@ -13,13 +13,14 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_bottom_
 const _screen = Size(393, 852);
 const _homeIndicator = 34.0;
 const _keyboard = 336.0;
+const _statusBar = 47.0;
 
 void _iphone(WidgetTester tester) {
   tester.view
     ..devicePixelRatio = 3
     ..physicalSize = _screen * 3
-    ..padding = const FakeViewPadding(bottom: _homeIndicator * 3)
-    ..viewPadding = const FakeViewPadding(bottom: _homeIndicator * 3);
+    ..padding = const FakeViewPadding(top: _statusBar * 3, bottom: _homeIndicator * 3)
+    ..viewPadding = const FakeViewPadding(top: _statusBar * 3, bottom: _homeIndicator * 3);
   addTearDown(tester.view.reset);
 }
 
@@ -27,13 +28,13 @@ void _iphone(WidgetTester tester) {
 void _keyboardUp(WidgetTester tester) {
   tester.view
     ..viewInsets = const FakeViewPadding(bottom: _keyboard * 3)
-    ..padding = FakeViewPadding.zero;
+    ..padding = const FakeViewPadding(top: _statusBar * 3);
 }
 
 void _keyboardDown(WidgetTester tester) {
   tester.view
     ..viewInsets = FakeViewPadding.zero
-    ..padding = const FakeViewPadding(bottom: _homeIndicator * 3);
+    ..padding = const FakeViewPadding(top: _statusBar * 3, bottom: _homeIndicator * 3);
 }
 
 Future<void> _open(WidgetTester tester, Widget sheet) async {
@@ -50,6 +51,30 @@ Future<void> _open(WidgetTester tester, Widget sheet) async {
   await tester.tap(find.text('open'));
   await tester.pumpAndSettle();
 }
+
+/// The app opens sheets from a tab, inside the shell's nested navigator and
+/// under its Scaffold, which has a bottom bar and resizes for the keyboard.
+Future<void> _openFromTab(WidgetTester tester, Widget sheet) async {
+  await tester.pumpWidget(MaterialApp(
+    home: Scaffold(
+      extendBody: true,
+      bottomNavigationBar: const SizedBox(height: 90),
+      body: Navigator(
+        onGenerateRoute: (_) => MaterialPageRoute<void>(
+          builder: (context) => TextButton(
+            onPressed: () => BottomSheetWidget.show<void>(context, sheet),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    ),
+  ));
+  await tester.tap(find.text('open'));
+  await tester.pumpAndSettle();
+}
+
+Rect _cta(WidgetTester tester) =>
+    tester.getRect(find.ancestor(of: find.text('Enregistrer'), matching: find.byType(ButtonWidget)));
 
 void main() {
   final birthdate = DateTime(2020, 1, 1);
@@ -70,16 +95,14 @@ void main() {
   };
 
   for (final MapEntry(key: name, value: sheet) in sheets.entries) {
-    testWidgets('$name sits right on top of the keyboard', (tester) async {
+    testWidgets('$name: CTA lg above the keyboard', (tester) async {
       _iphone(tester);
       await _open(tester, sheet);
       await tester.tap(find.byType(TextField).first);
       _keyboardUp(tester);
       await tester.pumpAndSettle();
 
-      final save = tester.getRect(find.ancestor(of: find.text('Enregistrer'), matching: find.byType(ButtonWidget)));
-      final keyboardTop = _screen.height - _keyboard;
-      expect(keyboardTop - save.bottom, inInclusiveRange(0, AppSpacing.md));
+      expect(_cta(tester).bottom, _screen.height - _keyboard - AppSpacing.lg);
     });
 
     testWidgets('$name follows the keyboard down with no delay', (tester) async {
@@ -96,6 +119,27 @@ void main() {
 
       expect(firstFrame, tester.getRect(find.byType(BottomSheetWidget)),
           reason: 'sheet content still animating down after the keyboard closed');
+    });
+  }
+
+  for (final MapEntry(key: name, value: sheet) in sheets.entries) {
+    testWidgets('$name from a tab: CTA at the bottom, lg above the home indicator', (tester) async {
+      _iphone(tester);
+      await _openFromTab(tester, sheet);
+
+      expect(_cta(tester).bottom, _screen.height - _homeIndicator - AppSpacing.lg);
+    });
+
+    testWidgets('$name from a tab: CTA whole, lg above the keyboard', (tester) async {
+      _iphone(tester);
+      await _openFromTab(tester, sheet);
+      await tester.tap(find.byType(TextField).first);
+      _keyboardUp(tester);
+      await tester.pumpAndSettle();
+
+      expect(_cta(tester).bottom, _screen.height - _keyboard - AppSpacing.lg);
+      expect(tester.getRect(find.byType(BottomSheet)).top, greaterThanOrEqualTo(_statusBar),
+          reason: 'sheet runs under the status bar');
     });
   }
 
