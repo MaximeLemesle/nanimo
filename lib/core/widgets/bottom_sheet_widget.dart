@@ -20,55 +20,70 @@ class BottomSheetWidget extends StatelessWidget {
 
   /// [safeArea] false lets a scrolling sheet run under the home indicator;
   /// it then pads its own content with `MediaQuery.paddingOf`.
-  static Future<T?> show<T>(BuildContext context, Widget child, {bool safeArea = true}) {
+  static Future<T?> show<T>(BuildContext context, Widget child,
+      {bool safeArea = true}) {
     return showModalBottomSheet<T>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: AppColors.backgroundSurface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
       ),
-      // The keyboard inset is already animated by iOS: following it frame by
-      // frame keeps the sheet glued to the keyboard, as a native sheet is.
-      builder: (sheetContext) => Padding(
-        padding: EdgeInsets.only(
-            bottom: MediaQuery.viewInsetsOf(sheetContext).bottom),
-        child: SafeArea(top: false, bottom: safeArea, child: child),
-      ),
+      builder: (sheetContext) {
+        // Under the tab bar's Scaffold the inherited insets are the bar's and a
+        // body already lifted over the keyboard: the view's own are the truth.
+        final view = MediaQueryData.fromView(View.of(sheetContext));
+        final inherited = MediaQuery.of(sheetContext);
+        // The keyboard inset is already animated by iOS: following it frame by
+        // frame keeps the sheet glued to the keyboard, as a native sheet is.
+        return Padding(
+          padding: EdgeInsets.only(bottom: inherited.viewInsets.bottom),
+          child: MediaQuery(
+            data: inherited.copyWith(
+              viewInsets: view.viewInsets,
+              padding: inherited.padding.copyWith(bottom: view.padding.bottom),
+            ),
+            child: SafeArea(top: false, bottom: safeArea, child: child),
+          ),
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
-    final column = Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: AppTextStyles.title02),
-        const SizedBox(height: AppSpacing.lg),
-        ...children,
-        if (action != null) ...[
-          const SizedBox(height: AppSpacing.lg),
-          action!,
-        ],
-      ],
-    );
 
     return Padding(
-      padding: EdgeInsets.only(
-        left: AppSpacing.lg,
-        right: AppSpacing.lg,
-        top: AppSpacing.lg,
-        bottom: keyboardOpen ? AppSpacing.md : AppSpacing.xxl,
-      ),
-      // Always the same tree: swapping it when the keyboard opens would
-      // recreate the focused field and close the keyboard (NAN-118).
-      child: SingleChildScrollView(
-        physics: scrollable || keyboardOpen
-            ? null
-            : const NeverScrollableScrollPhysics(),
-        child: column,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Always the same tree: swapping it when the keyboard opens would
+          // recreate the focused field and close the keyboard (NAN-118).
+          Flexible(
+            child: SingleChildScrollView(
+              physics: scrollable || keyboardOpen
+                  ? null
+                  : const NeverScrollableScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: AppTextStyles.title02),
+                  const SizedBox(height: AppSpacing.lg),
+                  ...children,
+                ],
+              ),
+            ),
+          ),
+          // Outside the scroll view: the fields scroll, the action stays whole.
+          if (action != null) ...[
+            const SizedBox(height: AppSpacing.lg),
+            action!,
+          ],
+        ],
       ),
     );
   }

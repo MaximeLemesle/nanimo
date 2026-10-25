@@ -4,7 +4,7 @@ import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 
 void main() {
-  testWidgets('adds the device safe area to its bottom padding', (tester) async {
+  testWidgets('keeps an lg bottom padding under its action (NAN-122)', (tester) async {
     const safeAreaBottom = 34.0;
 
     await tester.pumpWidget(
@@ -39,7 +39,7 @@ void main() {
         left: AppSpacing.lg,
         top: AppSpacing.lg,
         right: AppSpacing.lg,
-        bottom: AppSpacing.xxl,
+        bottom: AppSpacing.lg,
       ),
     );
   });
