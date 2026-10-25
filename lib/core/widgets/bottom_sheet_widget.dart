@@ -18,7 +18,9 @@ class BottomSheetWidget extends StatelessWidget {
     this.scrollable = false,
   });
 
-  static Future<T?> show<T>(BuildContext context, Widget child) {
+  /// [safeArea] false lets a scrolling sheet run under the home indicator;
+  /// it then pads its own content with `MediaQuery.paddingOf`.
+  static Future<T?> show<T>(BuildContext context, Widget child, {bool safeArea = true}) {
     return showModalBottomSheet<T>(
       context: context,
       isScrollControlled: true,
@@ -26,18 +28,19 @@ class BottomSheetWidget extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
       ),
-      builder: (sheetContext) => AnimatedPadding(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOut,
+      // The keyboard inset is already animated by iOS: following it frame by
+      // frame keeps the sheet glued to the keyboard, as a native sheet is.
+      builder: (sheetContext) => Padding(
         padding: EdgeInsets.only(
             bottom: MediaQuery.viewInsetsOf(sheetContext).bottom),
-        child: SafeArea(top: false, child: child),
+        child: SafeArea(top: false, bottom: safeArea, child: child),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     final column = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,12 +60,12 @@ class BottomSheetWidget extends StatelessWidget {
         left: AppSpacing.lg,
         right: AppSpacing.lg,
         top: AppSpacing.lg,
-        bottom: AppSpacing.xxl,
+        bottom: keyboardOpen ? AppSpacing.md : AppSpacing.xxl,
       ),
       // Always the same tree: swapping it when the keyboard opens would
       // recreate the focused field and close the keyboard (NAN-118).
       child: SingleChildScrollView(
-        physics: scrollable || MediaQuery.viewInsetsOf(context).bottom > 0
+        physics: scrollable || keyboardOpen
             ? null
             : const NeverScrollableScrollPhysics(),
         child: column,
