@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:nanimo/core/notifications/notification_priming.dart';
+import 'package:nanimo/core/notifications/notifications.dart';
+import 'package:nanimo/features/home/presentation/widgets/home_first_steps_card_widget.dart';
 import 'package:nanimo/core/widgets/pet_avatar_widget.dart';
 import 'package:nanimo/data/models/referential/pet_species_model.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
@@ -27,6 +30,8 @@ import 'package:nanimo/features/home/data/article_repository.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart'
     hide SubscriptionStatus;
 import 'package:nanimo/features/subscription/data/models/subscription_config_model.dart';
+
+import '../../../../core/notifications/fake_notification_client.dart';
 
 class _MockPetRepository extends Mock implements PetRepository {}
 
@@ -456,6 +461,44 @@ void main() {
     expect(rows, findsOneWidget);
     expect(find.text('Vermifuge'), findsOneWidget);
     expect(find.text('Leucose'), findsNothing);
+    await cubit.close();
+  });
+
+  // NAN-121: scrolling back up must move the page by the drag, not jump.
+  testWidgets('keeps its scroll position steady with the first steps card', (tester) async {
+    tester.view
+      ..devicePixelRatio = 3
+      ..physicalSize = const Size(393, 600) * 3;
+    addTearDown(tester.view.reset);
+    final previousPriming = notificationPriming;
+    final previousStore = firstStepsStore;
+    notificationPriming =
+        NotificationPriming(client: () => FakeNotificationClient(), store: MemoryPrimingStore());
+    firstStepsStore = MemoryFirstStepsStore();
+    addTearDown(() {
+      notificationPriming = previousPriming;
+      firstStepsStore = previousStore;
+    });
+
+    final cubit = buildCubit();
+    await tester.pumpWidget(buildPage(cubit));
+    petsController.add([_milo]);
+    await tester.pumpAndSettle();
+    expect(find.text('Premiers pas'), findsOneWidget);
+
+    final scrollable = find.byType(Scrollable).first;
+    ScrollPosition position() => tester.state<ScrollableState>(scrollable).position;
+
+    position().jumpTo(position().maxScrollExtent);
+    await tester.pumpAndSettle();
+    final bottom = position().pixels;
+    expect(bottom, greaterThan(0));
+
+    for (var target = bottom - 100; target > 0; target -= 100) {
+      position().jumpTo(target);
+      await tester.pumpAndSettle();
+      expect(position().pixels, closeTo(target, 1), reason: 'page jumped while scrolling up to $target');
+    }
     await cubit.close();
   });
 }

@@ -51,119 +51,133 @@ class HomePage extends StatelessWidget {
             final anniversary = state.anniversaryEvent(now: now);
             final memory = anniversary ?? state.latestEvent;
 
-            return ListView(
+            // Not a lazy ListView: a card scrolled off would be rebuilt empty
+            // on the way back up and make the page jump (NAN-121).
+            return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.lg,
                 0,
                 AppSpacing.lg,
                 AppSpacing.bottomBarInset,
               ),
-              children: [
-                HomeHeaderWidget(
-                  userName: state.userName,
-                  now: now,
-                  onSettingsTap: () => context.push(RouteNames.settings),
-                ),
-                const SizedBox(height: AppSpacing.xl),
-
-                for (final birthday in state.birthdays(now: now))
-                  HomeBirthdayCardWidget(
-                    key: ValueKey('birthday:${birthday.pet.petId}'),
-                    petId: birthday.pet.petId,
-                    petName: birthday.pet.petName,
-                    age: birthday.age,
-                    portrait: state.portraits[birthday.pet.petId],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  HomeHeaderWidget(
+                    userName: state.userName,
                     now: now,
-                    onAddMemory: () {
-                      _trackCard(HomeCard.birthday);
-                      context.push(Uri(
-                          path: RouteNames.createEvent,
-                          queryParameters: {'petId': birthday.pet.petId}).toString());
-                    },
+                    onSettingsTap: () => context.push(RouteNames.settings),
                   ),
+                  const SizedBox(height: AppSpacing.xl),
 
-                if (state.pets.isNotEmpty)
-                  HomeFirstStepsCardWidget(
-                    petName: state.pets.first.petName,
-                    hasDiary: state.diaries.any((diary) => diary.petId == state.pets.first.petId),
-                    hasMemory: state.events.isNotEmpty,
-                    onCompleteDiary: () => _completeDiary(context, state.pets.first.petId),
-                    onAddMemory: () => context.push(RouteNames.createEvent),
-                    onCompleted: () => _onFirstStepsCompleted(context),
-                  ),
+                  for (final birthday in state.birthdays(now: now))
+                    HomeBirthdayCardWidget(
+                      key: ValueKey('birthday:${birthday.pet.petId}'),
+                      petId: birthday.pet.petId,
+                      petName: birthday.pet.petName,
+                      age: birthday.age,
+                      portrait: state.portraits[birthday.pet.petId],
+                      now: now,
+                      onAddMemory: () {
+                        _trackCard(HomeCard.birthday);
+                        context.push(Uri(
+                                path: RouteNames.createEvent,
+                                queryParameters: {'petId': birthday.pet.petId})
+                            .toString());
+                      },
+                    ),
 
-                /// Display the last memory or the remember "X years ago"
-                if (memory != null) ...[
-                  HomeMemoryPolaroidWidget(
-                    event: memory,
-                    yearsAgo: anniversary == null ? null : state.yearsAgo(anniversary, now: now),
-                    imagePaths: state.imagePathsByEvent[memory.eventId] ?? const [],
-                    urlResolver: context.read<HomeCubit>().imageUrl,
-                    onTap: () {
-                      _trackCard(HomeCard.memory);
-                      JournalEventDetailBottomSheetWidget.show(
-                        context,
-                        event: memory,
-                        onEdit: () => context.push('${RouteNames.editEvent}/${memory.eventId}'),
-                      );
+                  if (state.pets.isNotEmpty)
+                    HomeFirstStepsCardWidget(
+                      petName: state.pets.first.petName,
+                      hasDiary: state.diaries.any(
+                          (diary) => diary.petId == state.pets.first.petId),
+                      hasMemory: state.events.isNotEmpty,
+                      onCompleteDiary: () =>
+                          _completeDiary(context, state.pets.first.petId),
+                      onAddMemory: () => context.push(RouteNames.createEvent),
+                      onCompleted: () => _onFirstStepsCompleted(context),
+                    ),
+
+                  /// Display the last memory or the remember "X years ago"
+                  if (memory != null) ...[
+                    HomeMemoryPolaroidWidget(
+                      event: memory,
+                      yearsAgo: anniversary == null
+                          ? null
+                          : state.yearsAgo(anniversary, now: now),
+                      imagePaths:
+                          state.imagePathsByEvent[memory.eventId] ?? const [],
+                      urlResolver: context.read<HomeCubit>().imageUrl,
+                      onTap: () {
+                        _trackCard(HomeCard.memory);
+                        JournalEventDetailBottomSheetWidget.show(
+                          context,
+                          event: memory,
+                          onEdit: () => context.push(
+                              '${RouteNames.editEvent}/${memory.eventId}'),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                  ],
+
+                  /// List of the user's pets
+                  HomePetListWidget(
+                    pets: state.pets,
+                    portraits: state.portraits,
+                    lockedPetIds: PetLock.lockedPetIds(
+                      state.pets,
+                      context.watch<SubscriptionCubit>().state,
+                    ),
+                    onPetTap: (petId) {
+                      _trackCard(HomeCard.pet);
+                      context.read<PetDetailsCubit>().selectPet(petId);
+                      context.push(RouteNames.pet);
                     },
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                ],
 
-                /// List of the user's pets
-                HomePetListWidget(
-                  pets: state.pets,
-                  portraits: state.portraits,
-                  lockedPetIds: PetLock.lockedPetIds(
-                    state.pets,
-                    context.watch<SubscriptionCubit>().state,
+                  /// Booked vet appointments
+                  HomeVetVisitCardWidget(
+                    visits: state.upcomingVetVisits(now: now),
+                    lastVisits: state.lastVetVisits(now: now),
+                    portraits: state.portraits,
+                    now: now,
+                    onVisitTap: (petId) {
+                      _trackCard(HomeCard.vetVisit);
+                      context.read<PetDetailsCubit>().selectPet(petId);
+                      context.push(RouteNames.healthDiary);
+                    },
+                    onAddPressed: () => _addVetVisit(context, state),
                   ),
-                  onPetTap: (petId) {
-                    _trackCard(HomeCard.pet);
-                    context.read<PetDetailsCubit>().selectPet(petId);
-                    context.push(RouteNames.pet);
-                  },
-                ),
-                const SizedBox(height: AppSpacing.xl),
+                  const SizedBox(height: AppSpacing.xl),
 
-                /// Booked vet appointments
-                HomeVetVisitCardWidget(
-                  visits: state.upcomingVetVisits(now: now),
-                  lastVisits: state.lastVetVisits(now: now),
-                  portraits: state.portraits,
-                  now: now,
-                  onVisitTap: (petId) {
-                    _trackCard(HomeCard.vetVisit);
-                    context.read<PetDetailsCubit>().selectPet(petId);
-                    context.push(RouteNames.healthDiary);
-                  },
-                  onAddPressed: () => _addVetVisit(context, state),
-                ),
-                const SizedBox(height: AppSpacing.xl),
+                  /// Boosters and dewormings of the user's pets
+                  HomeHealthCardWidget(
+                    alerts: state.vaccineAlerts(now: now),
+                    dewormings: state.dewormingAlerts(now: now),
+                    petsWithoutDeworming: state.petsWithoutDeworming,
+                    onDewormingTap: (petId) =>
+                        _editDeworming(context, state, petId),
+                    onDewormingDone: (petId) =>
+                        _markDewormed(context, state, petId),
+                    lastVaccinations: state.lastVaccinations(now: now),
+                    portraits: state.portraits,
+                    now: now,
+                    onAlertTap: (petId) {
+                      _trackCard(HomeCard.health);
+                      context.read<PetDetailsCubit>().selectPet(petId);
+                      context.push(RouteNames.healthDiary);
+                    },
+                    onAddPressed: () => _addVaccine(context, state),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
 
-                /// Boosters and dewormings of the user's pets
-                HomeHealthCardWidget(
-                  alerts: state.vaccineAlerts(now: now),
-                  dewormings: state.dewormingAlerts(now: now),
-                  petsWithoutDeworming: state.petsWithoutDeworming,
-                  onDewormingTap: (petId) => _editDeworming(context, state, petId),
-                  onDewormingDone: (petId) => _markDewormed(context, state, petId),
-                  lastVaccinations: state.lastVaccinations(now: now),
-                  portraits: state.portraits,
-                  now: now,
-                  onAlertTap: (petId) {
-                    _trackCard(HomeCard.health);
-                    context.read<PetDetailsCubit>().selectPet(petId);
-                    context.push(RouteNames.healthDiary);
-                  },
-                  onAddPressed: () => _addVaccine(context, state),
-                ),
-                const SizedBox(height: AppSpacing.xl),
-
-                /// Display the latest article
-                HomeArticleCardWidget(article: state.article),
-              ],
+                  /// Display the latest article
+                  HomeArticleCardWidget(article: state.article),
+                ],
+              ),
             );
           },
         ),
@@ -254,27 +268,34 @@ class HomePage extends StatelessWidget {
 
   void _editDeworming(BuildContext context, HomeState state, String petId) {
     final pet = state.pets.firstWhere((pet) => pet.petId == petId);
-    final diary = state.diaries.where((diary) => diary.petId == petId).firstOrNull;
+    final diary =
+        state.diaries.where((diary) => diary.petId == petId).firstOrNull;
     final petDetails = context.read<PetDetailsCubit>();
     BottomSheetWidget.show<void>(
       context,
       DewormingBottomSheetWidget(
         petName: pet.petName,
         lastDeworming: diary?.lastDeworming,
-        intervalMonths: diary?.dewormingInterval ?? HealthDiaryModel.defaultDewormingIntervalMonths,
-        onSubmit: ({required DateTime lastDeworming, required int intervalMonths}) =>
-            petDetails.recordDeworming(petId, lastDeworming: lastDeworming, intervalMonths: intervalMonths),
+        intervalMonths: diary?.dewormingInterval ??
+            HealthDiaryModel.defaultDewormingIntervalMonths,
+        onSubmit: (
+                {required DateTime lastDeworming,
+                required int intervalMonths}) =>
+            petDetails.recordDeworming(petId,
+                lastDeworming: lastDeworming, intervalMonths: intervalMonths),
       ),
     );
   }
 
   /// One tap, with an undo: the next one is counted from today.
-  Future<void> _markDewormed(BuildContext context, HomeState state, String petId) async {
+  Future<void> _markDewormed(
+      BuildContext context, HomeState state, String petId) async {
     final pet = state.pets.firstWhere((pet) => pet.petId == petId);
     final petDetails = context.read<PetDetailsCubit>();
     final messenger = ScaffoldMessenger.of(context);
     final now = DateTime.now();
-    final previous = await petDetails.recordDeworming(petId, lastDeworming: DateTime(now.year, now.month, now.day));
+    final previous = await petDetails.recordDeworming(petId,
+        lastDeworming: DateTime(now.year, now.month, now.day));
     if (previous == null) return;
     messenger
       ..clearSnackBars()
@@ -282,7 +303,8 @@ class HomePage extends StatelessWidget {
         content: Text('Vermifuge de ${pet.petName} noté'),
         action: SnackBarAction(
           label: 'Annuler',
-          onPressed: () => petDetails.recordDeworming(petId, lastDeworming: previous.lastDeworming),
+          onPressed: () => petDetails.recordDeworming(petId,
+              lastDeworming: previous.lastDeworming),
         ),
       ));
   }
