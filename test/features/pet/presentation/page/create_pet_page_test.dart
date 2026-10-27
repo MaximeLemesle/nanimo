@@ -92,6 +92,20 @@ void main() {
     await cubit.close();
   });
 
+  /// NAN-123: « premier » only holds during the onboarding.
+  testWidgets('step 1 says « premier » during the onboarding only', (tester) async {
+    for (final inApp in [false, true]) {
+      final cubit = OnboardingCubit(referentialRepository: referentialRepo);
+      await tester.pumpWidget(buildPage(cubit, inApp: inApp));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Ajoute ton premier Nanimo'), inApp ? findsNothing : findsOneWidget);
+      expect(find.text('Ajoute un nouveau Nanimo'), inApp ? findsOneWidget : findsNothing);
+      await tester.pumpWidget(const SizedBox());
+      await cubit.close();
+    }
+  });
+
   testWidgets('adding a pet from the app ends on « Créer »', (tester) async {
     final cubit = await seededCubitOnStepTwo();
     await tester.pumpWidget(buildPage(cubit, inApp: true));

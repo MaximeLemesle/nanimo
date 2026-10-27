@@ -350,7 +350,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Step 1: species grid loaded from the referential.
-    expect(find.text('Faisons connaissance'), findsOneWidget);
+    expect(find.text('Ajoute ton premier Nanimo'), findsOneWidget);
     expect(find.text('Chat'), findsOneWidget);
     expect(find.text('Chien'), findsOneWidget);
 

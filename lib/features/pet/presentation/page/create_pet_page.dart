@@ -146,7 +146,7 @@ class _CreatePetPageState extends State<CreatePetPage> {
                       controller: _pageController,
                       physics: const NeverScrollableScrollPhysics(),
                       children: [
-                        const PetCreationStepOneWidget(),
+                        PetCreationStepOneWidget(isFirstPet: !_isInApp(context)),
                         const PetCreationStepTwoWidget(),
                         const PetCreationStepThreeWidget(),
                       ],
