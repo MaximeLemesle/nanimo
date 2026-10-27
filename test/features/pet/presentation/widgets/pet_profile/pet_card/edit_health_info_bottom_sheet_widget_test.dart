@@ -12,6 +12,7 @@ void main() {
   late bool? capturedChipped;
   late String? capturedChipNumber;
   late DateTime? capturedDeworming;
+  late DateTime? capturedSterilizedAt;
 
   setUp(() {
     submitted = false;
@@ -19,6 +20,7 @@ void main() {
     capturedChipped = null;
     capturedChipNumber = null;
     capturedDeworming = null;
+    capturedSterilizedAt = null;
   });
 
   Future<void> pumpSheet(
@@ -40,11 +42,13 @@ void main() {
                 isScrollControlled: true,
                 builder: (_) => EditHealthInfoBottomSheetWidget(
                   gender: gender,
+                  birthdate: DateTime(2021, 8, 20),
                   diary: diary,
                   onSubmit: ({
                     required bool isSterilized,
                     required bool isChipped,
                     String? chipNumber,
+                    DateTime? sterilizedAt,
                     DateTime? lastDeworming,
                     int? dewormingIntervalMonths,
                   }) {
@@ -52,6 +56,7 @@ void main() {
                     capturedSterilized = isSterilized;
                     capturedChipped = isChipped;
                     capturedChipNumber = chipNumber;
+                    capturedSterilizedAt = sterilizedAt;
                     capturedDeworming = lastDeworming;
                   },
                 ),
@@ -69,6 +74,7 @@ void main() {
 
   HealthDiaryModel diary({
     bool? isSterilized,
+    DateTime? sterilizedAt,
     bool? isChipped,
     String? chipNumber,
     DateTime? lastDeworming,
@@ -77,11 +83,30 @@ void main() {
         healthDiaryId: 'diary-1',
         petId: 'pet-1',
         isSterilized: isSterilized,
+        sterilizedAt: sterilizedAt,
         isChipped: isChipped,
         chipNumber: chipNumber,
         lastDeworming: lastDeworming,
         lastVetAppointment: DateTime(2026, 1, 1),
       );
+
+  /// NAN-125: the castration date could only be set in the guided diary.
+  testWidgets('shows the castration date and sends it back, dropped once off', (tester) async {
+    await pumpSheet(tester, diary(isSterilized: true, sterilizedAt: DateTime(2022, 3, 27)));
+    expect(find.text('27/03/2022'), findsOneWidget);
+
+    await tester.tap(find.text('Enregistrer'));
+    await tester.pumpAndSettle();
+    expect(capturedSterilizedAt, DateTime(2022, 3, 27));
+
+    await pumpSheet(tester, diary(isSterilized: true, sterilizedAt: DateTime(2022, 3, 27)));
+    await tester.tap(find.byType(CupertinoSwitch).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Enregistrer'));
+    await tester.pumpAndSettle();
+    expect(capturedSterilized, isFalse);
+    expect(capturedSterilizedAt, isNull);
+  });
 
   testWidgets('opens pre-filled with the recorded values', (tester) async {
     await pumpSheet(

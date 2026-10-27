@@ -11,7 +11,6 @@ import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/config/theme/app_text_styles.dart';
 import 'package:nanimo/core/notifications/diary_follow_up_store.dart';
 import 'package:nanimo/core/notifications/notification_permission_dialog.dart';
-import 'package:nanimo/core/utils/chip_number.dart';
 import 'package:nanimo/core/utils/date_formatter.dart';
 import 'package:nanimo/core/utils/pet_portrait.dart';
 import 'package:nanimo/core/utils/weight_formatter.dart';
@@ -82,8 +81,7 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
         1 => WeightFormatter.parseWeight(_weight.text) != null,
         2 => _isSterilized != null &&
             _isChipped != null &&
-            (_isSterilized == false || _sterilizedAt != null) &&
-            (_isChipped == false || ChipNumber.isComplete(_chip.text)),
+            (_isSterilized == false || _sterilizedAt != null),
         _ => true,
       };
 
