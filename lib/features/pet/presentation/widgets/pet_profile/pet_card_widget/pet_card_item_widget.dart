@@ -12,6 +12,9 @@ class PetCardItemWidget extends StatelessWidget {
   final bool isChecked;
   final ValueChanged<bool?>? onCheckChanged;
 
+  /// Makes the item a row that opens something, marked by a chevron.
+  final VoidCallback? onTap;
+
   const PetCardItemWidget({
     super.key,
     required this.label,
@@ -21,10 +24,24 @@ class PetCardItemWidget extends StatelessWidget {
     this.showCheckbox = false,
     this.isChecked = false,
     this.onCheckChanged,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (onTap == null) return _content();
+    return InkWell(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Expanded(child: _content()),
+          const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+        ],
+      ),
+    );
+  }
+
+  Widget _content() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

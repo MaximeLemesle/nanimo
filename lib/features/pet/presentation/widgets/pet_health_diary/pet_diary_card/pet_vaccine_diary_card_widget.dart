@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/core/utils/date_formatter.dart';
-import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/features/health/data/models/health_diary_vaccine_model.dart';
-import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
-import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/add_vaccine_bottom_sheet_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card_widget/pet_diary_card_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card_widget/pet_diary_edit_button_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card_widget/pet_diary_selection_hint_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card_widget/pet_diary_table_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/vaccine_sheets.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/vaccine_status_badge_widget.dart';
 
 class PetVaccineDiaryCardWidget extends StatefulWidget {
@@ -88,22 +85,7 @@ class _PetVaccineDiaryCardWidgetState extends State<PetVaccineDiaryCardWidget> {
             icon: Icons.add,
             iconPosition: ButtonIcon.left,
             fullWidth: true,
-            onPressed: () {
-              BottomSheetWidget.show<void>(
-                context,
-                AddVaccineBottomSheetWidget(
-                  birthdate: widget.birthdate,
-                  onSubmit: ({required String vaccineName, DateTime? lastDate, DateTime? nextDate, required int recurrence, String? petId}) {
-                    context.read<PetDetailsCubit>().addVaccine(
-                          vaccineName: vaccineName,
-                          lastDate: lastDate,
-                          nextDate: nextDate,
-                          recurrence: recurrence,
-                        );
-                  },
-                ),
-              );
-            },
+            onPressed: () => VaccineSheets.add(context, birthdate: widget.birthdate),
           ),
         ],
       ],
@@ -123,29 +105,7 @@ class _PetVaccineDiaryCardWidgetState extends State<PetVaccineDiaryCardWidget> {
   }
 
   void _editVaccine(BuildContext context, HealthDiaryVaccineModel vaccine) {
-    final cubit = context.read<PetDetailsCubit>();
     setState(() => _isSelecting = false);
-    BottomSheetWidget.show<void>(
-      context,
-      AddVaccineBottomSheetWidget(
-        birthdate: widget.birthdate,
-        initial: vaccine,
-        onDelete: () => cubit.deleteVaccine(vaccine.healthDiaryVaccineId),
-        onSubmit: ({required String vaccineName, DateTime? lastDate, DateTime? nextDate, required int recurrence, String? petId}) {
-          cubit.updateVaccine(
-            HealthDiaryVaccineModel(
-              healthDiaryVaccineId: vaccine.healthDiaryVaccineId,
-              vaccineName: vaccineName,
-              lastDate: lastDate,
-              nextDate: nextDate,
-              recurrence: recurrence,
-              doseNumber: vaccine.doseNumber,
-              totalDoseNumber: vaccine.totalDoseNumber,
-              healthDiaryId: vaccine.healthDiaryId,
-            ),
-          );
-        },
-      ),
-    );
+    VaccineSheets.edit(context, birthdate: widget.birthdate, vaccine: vaccine);
   }
 }

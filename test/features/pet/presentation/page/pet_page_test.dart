@@ -150,6 +150,61 @@ void main() {
     await cubit.close();
   });
 
+  /// NAN-126: the vaccine list was read-only on the pet page.
+  testWidgets('adds a vaccine from the vaccine list', (tester) async {
+    final cubit = PetDetailsCubit(
+      petRepository: petRepo,
+      healthRepository: healthRepo,
+      referentialRepository: refRepo,
+    );
+    await tester.pumpWidget(buildPage(cubit));
+    await tester.pumpAndSettle();
+
+    final add = find.text('Ajouter un vaccin');
+    await tester.ensureVisible(add);
+    await tester.pumpAndSettle();
+    await tester.tap(add);
+    await tester.pumpAndSettle();
+    expect(find.text('Ajouter un vaccin'), findsWidgets);
+    expect(find.text('Supprimer le vaccin'), findsNothing);
+
+    await cubit.close();
+  });
+
+  testWidgets('a vaccine of the list opens its edit sheet, which can delete it', (tester) async {
+    const typhus = HealthDiaryVaccineModel(
+      healthDiaryVaccineId: 'v1',
+      vaccineName: 'Typhus',
+      recurrence: 12,
+      doseNumber: 1,
+      totalDoseNumber: 1,
+      healthDiaryId: 'd1',
+    );
+    when(() => healthRepo.getVaccinesForDiary(any())).thenAnswer((_) => Stream.value(const [typhus]));
+    when(() => healthRepo.deleteVaccine(any())).thenAnswer((_) async {});
+    final cubit = PetDetailsCubit(
+      petRepository: petRepo,
+      healthRepository: healthRepo,
+      referentialRepository: refRepo,
+    );
+    await tester.pumpWidget(buildPage(cubit));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Typhus'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Typhus'));
+    await tester.pumpAndSettle();
+    expect(find.text('Modifier le vaccin'), findsOneWidget);
+
+    await tester.tap(find.text('Supprimer le vaccin'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Supprimer').last);
+    await tester.pumpAndSettle();
+    verify(() => healthRepo.deleteVaccine('v1')).called(1);
+
+    await cubit.close();
+  });
+
   testWidgets('carries the edit pencil inside the identity card',
       (tester) async {
     final cubit = PetDetailsCubit(
