@@ -294,7 +294,9 @@ void main() {
       ]),
     );
     // Stubs required by the JournalCubit backing the detail sheet.
-    when(() => petRepo.getPets()).thenAnswer((_) async => [_milo]);
+    var petStreams = 0;
+    when(() => petRepo.watchPets())
+        .thenAnswer((_) => petStreams++ == 0 ? petsController.stream : Stream.value([_milo]));
     when(() => referentialRepo.fetchEventTypes()).thenAnswer((_) async => const []);
 
     final cubit = buildCubit();

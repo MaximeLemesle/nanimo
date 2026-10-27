@@ -48,6 +48,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
 
   void _onPetsChanged(List<PetModel> pets) {
     final currentId = state.selectedPetId;
+    final previousRaceId = state.selectedPet?.petRaceId;
     final stillExists = pets.any((p) => p.petId == currentId);
     final selectedId =
         stillExists ? currentId : (pets.isNotEmpty ? pets.first.petId : null);
@@ -60,6 +61,9 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
 
     if (selectedId != null && selectedId != currentId) {
       _subscribeToPet(selectedId);
+    } else if (selectedId != null &&
+        state.selectedPet?.petRaceId != previousRaceId) {
+      _loadRaceName(selectedId);
     }
   }
 

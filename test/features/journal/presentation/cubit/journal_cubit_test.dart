@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nanimo/core/errors/repository_exception.dart';
@@ -101,7 +102,7 @@ void main() {
         'e1': ['path/a.jpg'],
       }),
     );
-    when(() => petRepo.getPets()).thenAnswer((_) async => [_pet1, _pet2]);
+    when(() => petRepo.watchPets()).thenAnswer((_) => Stream.value([_pet1, _pet2]));
     when(() => refRepo.fetchEventTypes()).thenAnswer((_) async => [_walkType, _hugType]);
     when(() => refRepo.fetchSpecies()).thenAnswer((_) async => _species);
   });
@@ -113,6 +114,23 @@ void main() {
       );
 
   Future<void> settle() => Future<void>.delayed(const Duration(milliseconds: 20));
+
+  /// NAN-127: the journal read the pets once, so an edited race kept its old icon.
+  test('follows the pets as they are edited', () async {
+    final pets = StreamController<List<PetModel>>();
+    when(() => petRepo.watchPets()).thenAnswer((_) => pets.stream);
+    final cubit = createCubit();
+    pets.add([_pet1, _pet2]);
+    await settle();
+
+    final edited = _pet1.copyWith(petRaceId: 'r9', petIconId: 'icon-r9');
+    pets.add([edited, _pet2]);
+    await settle();
+    expect(cubit.state.pets.first.petIconId, 'icon-r9');
+
+    await cubit.close();
+    await pets.close();
+  });
 
   test('loads events, links, images, pets and icons', () async {
     final cubit = createCubit();
