@@ -57,6 +57,8 @@ class HealthDiaryWizardPage extends StatefulWidget {
 class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
   final PageController _pages = PageController();
   final TextEditingController _weight = TextEditingController();
+  final TextEditingController _birthWeight = TextEditingController();
+  bool _showBirthWeight = false;
   final TextEditingController _chip = TextEditingController();
 
   int _step = 1;
@@ -92,6 +94,7 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
     _pages.dispose();
     _weight.removeListener(_onWeightChanged);
     _weight.dispose();
+    _birthWeight.dispose();
     _chip.dispose();
     super.dispose();
   }
@@ -123,7 +126,8 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
     final birthdate =
         _petOf(context.read<PetDetailsCubit>().state.pets)?.birthdate;
     await context.read<PetDetailsCubit>().createHealthDiary(
-          birthWeight: WeightFormatter.parseWeight(_weight.text),
+          currentWeight: WeightFormatter.parseWeight(_weight.text),
+          birthWeight: _showBirthWeight ? WeightFormatter.parseWeight(_birthWeight.text) : null,
           birthWeightDate: birthdate,
           isSterilized: _isSterilized,
           sterilizedAt: _sterilizedAt,
@@ -294,6 +298,8 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
                           fullWidth: true,
                           onPressed: () {
                             _weight.clear();
+                            _birthWeight.clear();
+                            setState(() => _showBirthWeight = false);
                             FocusScope.of(context).unfocus();
                             _goTo(2);
                           },
@@ -355,9 +361,11 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
   List<String> _highlights(PetModel pet) {
     final female = pet.gender == Gender.female;
     final weight = WeightFormatter.parseWeight(_weight.text);
+    final birthWeight = _showBirthWeight ? WeightFormatter.parseWeight(_birthWeight.text) : null;
     String count(int n, String word) => '$n $word${n > 1 ? 's' : ''}';
     return [
-      if (weight != null) '${_weight.text.trim()} kg à la naissance',
+      if (weight != null) "${_weight.text.trim()} kg aujourd'hui",
+      if (birthWeight != null) '${_birthWeight.text.trim()} kg à la naissance',
       if (_isSterilized == true)
         switch (pet.gender) {
           Gender.male => 'Castré',
@@ -395,30 +403,34 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
   Widget _weightStep(PetModel pet) {
     final weighed = pet.gender == Gender.female ? 'pesée' : 'pesé';
     return _Question(
-      title: 'Poids de ${pet.petName} à sa naissance',
+      title: "Poids de ${pet.petName} aujourd'hui",
       children: [
-        Text('Le ${DateFormatter.date(pet.birthdate)}, $weighed :',
-            style: AppTextStyles.textBold),
-        const SizedBox(height: AppSpacing.sm),
-        TextFieldWidget(
-          controller: _weight,
-          label: null,
-          hint: '0,0',
-          suffixText: 'kg',
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))
-          ],
-        ),
-        const SizedBox(height: AppSpacing.md),
-        ButtonWidget(
-          label: 'Modifier la date de naissance',
-          type: ButtonType.secondary,
-          icon: Icons.edit_calendar_rounded,
-          iconPosition: ButtonIcon.left,
-          fullWidth: true,
-          onPressed: () => _editBirthdate(pet),
-        ),
+        _WeightField(controller: _weight),
+        const SizedBox(height: AppSpacing.lg),
+        if (!_showBirthWeight)
+          ButtonWidget(
+            label: 'Ajouter son poids de naissance',
+            type: ButtonType.secondary,
+            icon: Icons.add,
+            iconPosition: ButtonIcon.left,
+            fullWidth: true,
+            onPressed: () => setState(() => _showBirthWeight = true),
+          )
+        else ...[
+          Text('Le ${DateFormatter.date(pet.birthdate)}, $weighed :',
+              style: AppTextStyles.textBold),
+          const SizedBox(height: AppSpacing.sm),
+          _WeightField(controller: _birthWeight),
+          const SizedBox(height: AppSpacing.md),
+          ButtonWidget(
+            label: 'Modifier la date de naissance',
+            type: ButtonType.secondary,
+            icon: Icons.edit_calendar_rounded,
+            iconPosition: ButtonIcon.left,
+            fullWidth: true,
+            onPressed: () => _editBirthdate(pet),
+          ),
+        ],
       ],
     );
   }
@@ -832,6 +844,24 @@ class _HighlightChip extends StatelessWidget {
                   AppTextStyles.textSmallBold.copyWith(color: AppColors.primary800)),
         ],
       ),
+    );
+  }
+}
+
+class _WeightField extends StatelessWidget {
+  final TextEditingController controller;
+
+  const _WeightField({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFieldWidget(
+      controller: controller,
+      label: null,
+      hint: '0,0',
+      suffixText: 'kg',
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
     );
   }
 }

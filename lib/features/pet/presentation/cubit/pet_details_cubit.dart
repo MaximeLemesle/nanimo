@@ -113,6 +113,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
   }
 
   Future<void> createHealthDiary({
+    double? currentWeight,
     double? birthWeight,
     DateTime? birthWeightDate,
     bool? isSterilized,
@@ -153,6 +154,17 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
         dewormingIntervalMonths: state.diary?.dewormingIntervalMonths,
       );
       await _healthRepository.upsertDiary(diary);
+
+      if (currentWeight != null) {
+        await _healthRepository.addWeightLog(
+          HealthDiaryWeightLogModel(
+            healthDiaryWeightLogId: const Uuid().v4(),
+            weight: currentWeight,
+            loggedAt: DateTime.now(),
+            petId: petId,
+          ),
+        );
+      }
 
       if (birthWeight != null) {
         await _healthRepository.addWeightLog(

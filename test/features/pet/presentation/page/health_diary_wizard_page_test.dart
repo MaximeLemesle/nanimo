@@ -138,7 +138,7 @@ void main() {
 
   /// The first two screens need their answers before « Continuer ».
   Future<void> answerFirstSteps(WidgetTester tester) async {
-    await tester.enterText(find.byType(TextField), '0,4');
+    await tester.enterText(find.byType(TextField), '4,2');
     await tester.pump();
     await tapAndSettle(tester, find.text('Continuer'));
     await tapAndSettle(tester, find.text('Non').first);
@@ -150,11 +150,11 @@ void main() {
       .widget<ButtonWidget>(find.widgetWithText(ButtonWidget, 'Continuer'))
       .state;
 
-  testWidgets('« Continuer » waits for the birth weight, then both answers',
+  testWidgets('« Continuer » waits for today\'s weight, then both answers',
       (tester) async {
     await pumpWizard(tester);
     expect(continueState(tester), ButtonState.disabled);
-    await tester.enterText(find.byType(TextField), '0,4');
+    await tester.enterText(find.byType(TextField), '4,2');
     await tester.pump();
     expect(continueState(tester), ButtonState.normal);
     await tapAndSettle(tester, find.text('Continuer'));
@@ -180,7 +180,29 @@ void main() {
     expect(continueState(tester), ButtonState.normal);
   });
 
-  testWidgets('« Je ne sais pas » skips the birth weight', (tester) async {
+  /// NAN-124: few owners know the birth weight, it comes second and optional.
+  testWidgets('saves today\'s weight and, when added, the birth weight', (tester) async {
+    await pumpWizard(tester);
+    await tester.enterText(find.byType(TextField), '4,2');
+    await tapAndSettle(tester, find.text('Ajouter son poids de naissance'));
+    expect(find.text('Le 02/03/2024, pesé :'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).last, '0,1');
+    await tester.pump();
+    await tapAndSettle(tester, find.text('Continuer'));
+    await tapAndSettle(tester, find.text('Non').first);
+    await tapAndSettle(tester, find.text('Non').last);
+    await tapAndSettle(tester, find.text('Continuer'));
+    await tapAndSettle(tester, find.text('Continuer'));
+    await tapAndSettle(tester, find.text('Valider le carnet'));
+
+    final logs = verify(() => healthRepo.addWeightLog(captureAny())).captured.cast<HealthDiaryWeightLogModel>();
+    expect(logs.map((log) => log.weight), unorderedEquals([4.2, 0.1]));
+    expect(logs.firstWhere((log) => log.weight == 0.1).loggedAt, _dobby.birthdate);
+    expect(find.text('4,2 kg aujourd\'hui'), findsOneWidget);
+    expect(find.text('0,1 kg à la naissance'), findsOneWidget);
+  });
+
+  testWidgets('« Je ne sais pas » skips the weights', (tester) async {
     await pumpWizard(tester);
     await tapAndSettle(tester, find.text('Je ne sais pas'));
     expect(find.text('Est-ce que Dobby est castré ?'), findsOneWidget);
@@ -192,7 +214,7 @@ void main() {
     await tapAndSettle(tester, find.text('Continuer'));
     await tapAndSettle(tester, find.text('Valider le carnet'));
     expect(find.text('Le carnet de Dobby est créé !'), findsOneWidget);
-    expect(find.text('0,4 kg à la naissance'), findsOneWidget);
+    expect(find.text('4,2 kg aujourd\'hui'), findsOneWidget);
 
     await tapAndSettle(tester, find.text('Terminer'));
     expect(find.text('open'), findsOneWidget);
@@ -203,9 +225,10 @@ void main() {
       (tester) async {
     await pumpWizard(tester);
 
-    expect(find.text('Poids de Dobby à sa naissance'), findsOneWidget);
-    expect(find.text('Le 02/03/2024, pesé :'), findsOneWidget);
-    await tester.enterText(find.byType(TextField), '0,4');
+    expect(find.text('Poids de Dobby aujourd\'hui'), findsOneWidget);
+    expect(find.text('Le 02/03/2024, pesé :'), findsNothing,
+        reason: 'NAN-124: the birth weight waits behind its button');
+    await tester.enterText(find.byType(TextField), '4,2');
     await tester.pump();
     await tapAndSettle(tester, find.text('Continuer'));
 
@@ -232,8 +255,8 @@ void main() {
     final weight = verify(() => healthRepo.addWeightLog(captureAny()))
         .captured
         .single as HealthDiaryWeightLogModel;
-    expect(weight.weight, 0.4);
-    expect(weight.loggedAt, _dobby.birthdate);
+    expect(weight.weight, 4.2);
+    expect(DateUtils.isSameDay(weight.loggedAt, DateTime.now()), isTrue);
     expect(find.text('Le carnet de Dobby est créé !'), findsOneWidget);
   });
 
@@ -241,7 +264,9 @@ void main() {
       'corrects the birthdate from the first step without losing its draft',
       (tester) async {
     await pumpWizard(tester);
-    await tester.enterText(find.byType(TextField), '0,4');
+    await tester.enterText(find.byType(TextField), '4,2');
+    await tapAndSettle(tester, find.text('Ajouter son poids de naissance'));
+    await tester.enterText(find.byType(TextField).last, '0,4');
     await tapAndSettle(tester, find.text('Modifier la date de naissance'));
     expect(find.byType(CupertinoDatePicker), findsOneWidget);
     tester
