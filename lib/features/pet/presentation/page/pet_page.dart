@@ -169,7 +169,7 @@ class PetPage extends StatelessWidget {
                           onFillPressed: () => context.push(RouteNames.healthDiary),
                           onEditPressed: state.diary == null || isLocked
                               ? null
-                              : () => _editHealthInfo(context, pet.gender, state.diary!),
+                              : () => _editHealthInfo(context, pet.gender, pet.birthdate, state.diary!),
                         ),
 
                         /// Vaccines card
@@ -213,17 +213,19 @@ class PetPage extends StatelessWidget {
     );
   }
 
-  void _editHealthInfo(BuildContext context, Gender gender, HealthDiaryModel diary) {
+  void _editHealthInfo(BuildContext context, Gender gender, DateTime birthdate, HealthDiaryModel diary) {
     final cubit = context.read<PetDetailsCubit>();
     BottomSheetWidget.show<void>(
       context,
       EditHealthInfoBottomSheetWidget(
         gender: gender,
+        birthdate: birthdate,
         diary: diary,
         onSubmit: ({
           required bool isSterilized,
           required bool isChipped,
           String? chipNumber,
+          DateTime? sterilizedAt,
           DateTime? lastDeworming,
           int? dewormingIntervalMonths,
         }) {
@@ -231,6 +233,7 @@ class PetPage extends StatelessWidget {
             isSterilized: isSterilized,
             isChipped: isChipped,
             chipNumber: chipNumber,
+            sterilizedAt: sterilizedAt,
             lastDeworming: lastDeworming,
             dewormingIntervalMonths: dewormingIntervalMonths,
           );

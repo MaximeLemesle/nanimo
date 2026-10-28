@@ -213,6 +213,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     required bool isSterilized,
     required bool isChipped,
     String? chipNumber,
+    DateTime? sterilizedAt,
     DateTime? lastDeworming,
     int? dewormingIntervalMonths,
   }) async {
@@ -224,7 +225,7 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
         healthDiaryId: current?.healthDiaryId ?? const Uuid().v4(),
         petId: petId,
         isSterilized: isSterilized,
-        sterilizedAt: isSterilized ? current?.sterilizedAt : null,
+        sterilizedAt: isSterilized ? (sterilizedAt ?? current?.sterilizedAt) : null,
         isChipped: isChipped,
         chipNumber: isChipped ? chipNumber : null,
         lastDeworming: lastDeworming,

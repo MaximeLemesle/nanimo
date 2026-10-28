@@ -15,19 +15,22 @@ typedef EditHealthInfoSubmit = void Function({
   required bool isSterilized,
   required bool isChipped,
   String? chipNumber,
+  DateTime? sterilizedAt,
   DateTime? lastDeworming,
   int? dewormingIntervalMonths,
 });
 
-/// Edits the three facts shown on the health card: sterilisation, chip, deworming.
+/// Edits the facts shown on the health card: sterilisation and its date, chip, deworming.
 class EditHealthInfoBottomSheetWidget extends StatefulWidget {
   final Gender gender;
+  final DateTime birthdate;
   final HealthDiaryModel diary;
   final EditHealthInfoSubmit onSubmit;
 
   const EditHealthInfoBottomSheetWidget({
     super.key,
     required this.gender,
+    required this.birthdate,
     required this.diary,
     required this.onSubmit,
   });
@@ -42,6 +45,7 @@ class _EditHealthInfoBottomSheetWidgetState
   late final TextEditingController _chipController;
 
   late bool _isSterilized;
+  DateTime? _sterilizedAt;
   late bool _isChipped;
   late bool _isDewormed;
   DateTime? _lastDeworming;
@@ -53,6 +57,7 @@ class _EditHealthInfoBottomSheetWidgetState
     final diary = widget.diary;
     _chipController = TextEditingController(text: diary.chipNumber ?? '');
     _isSterilized = diary.isSterilized ?? false;
+    _sterilizedAt = diary.sterilizedAt;
     _isChipped = diary.isChipped ?? false;
 
     /// No dewormed flag in the model: the date is the only evidence.
@@ -67,6 +72,8 @@ class _EditHealthInfoBottomSheetWidgetState
     super.dispose();
   }
 
+  bool get _canSave => !_isSterilized || _sterilizedAt != null;
+
   void _submit() {
     final chipNumber = _chipController.text.trim();
 
@@ -74,6 +81,7 @@ class _EditHealthInfoBottomSheetWidgetState
       isSterilized: _isSterilized,
       isChipped: _isChipped,
       chipNumber: _isChipped && chipNumber.isNotEmpty ? chipNumber : null,
+      sterilizedAt: _isSterilized ? _sterilizedAt : null,
       lastDeworming: _isDewormed ? (_lastDeworming ?? DateTime.now()) : null,
       dewormingIntervalMonths: _dewormingInterval,
     );
@@ -88,13 +96,21 @@ class _EditHealthInfoBottomSheetWidgetState
       action: ButtonWidget(
         label: 'Enregistrer',
         fullWidth: true,
-        onPressed: _submit,
+        state: _canSave ? ButtonState.normal : ButtonState.disabled,
+        onPressed: _canSave ? _submit : null,
       ),
       children: [
         HealthDiarySectionWidget(
           label: GenderFormatter.neuteringLabel(widget.gender),
           value: _isSterilized,
           onChanged: (value) => setState(() => _isSterilized = value),
+          child: DateFieldWidget(
+            label: widget.gender == Gender.male ? 'Date de la castration' : 'Date de la stérilisation',
+            value: _sterilizedAt,
+            firstDate: widget.birthdate,
+            lastDate: DateTime.now(),
+            onChanged: (date) => setState(() => _sterilizedAt = date),
+          ),
         ),
         const SizedBox(height: AppSpacing.sm),
         HealthDiarySectionWidget(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nanimo/core/utils/chip_number.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -167,18 +168,15 @@ void main() {
         reason: 'no castration date nor chip number yet');
 
     await tapAndSettle(tester, find.text('Date de la castration'));
-    expect(continueState(tester), ButtonState.disabled,
-        reason: 'the chip number is still missing');
+    expect(continueState(tester), ButtonState.normal,
+        reason: 'NAN-125: the chip number is optional');
 
     await tester.enterText(
         find.byType(TextField).last, '25026');
     await tester.pump();
-    expect(continueState(tester), ButtonState.disabled,
-        reason: 'an incomplete chip number');
-    await tester.enterText(
-        find.byType(TextField).last, '250269801234567');
-    await tester.pump();
-    expect(continueState(tester), ButtonState.normal);
+    expect(continueState(tester), ButtonState.normal,
+        reason: 'an incomplete number is signalled, never refused');
+    expect(find.text(ChipNumber.incompleteMessage), findsOneWidget);
   });
 
   /// NAN-124: today's weight first, older weighings only if the owner has them.

@@ -3,7 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
+import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/home/presentation/widgets/home_article_card_widget.dart';
+import 'package:nanimo/features/pet/data/models/pet_model.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/edit_health_info_bottom_sheet_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/add_vaccine_bottom_sheet_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/add_vet_visit_bottom_sheet_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_bottom_sheet/add_weight_bottom_sheet_widget.dart';
@@ -142,6 +145,59 @@ void main() {
           reason: 'sheet runs under the status bar');
     });
   }
+
+  /// NAN-125: every section open, the sheet ran under the status bar.
+  final healthInfo = EditHealthInfoBottomSheetWidget(
+    gender: Gender.male,
+    birthdate: DateTime(2021, 8, 20),
+    diary: HealthDiaryModel(
+      healthDiaryId: 'd1',
+      petId: 'p1',
+      isSterilized: true,
+      sterilizedAt: DateTime(2022, 3, 27),
+      isChipped: true,
+      lastDeworming: DateTime(2026, 10, 27),
+    ),
+    onSubmit: ({required isSterilized, required isChipped, chipNumber, sterilizedAt, lastDeworming, dewormingIntervalMonths}) {},
+  );
+
+  for (final (screen, statusBar, indicator) in const [(Size(375, 812), 44.0, 34.0), (Size(375, 667), 20.0, 0.0)]) {
+    testWidgets('health info from a tab on $screen: below the status bar, CTA at the bottom', (tester) async {
+      tester.view
+        ..devicePixelRatio = 3
+        ..physicalSize = screen * 3
+        ..padding = FakeViewPadding(top: statusBar * 3, bottom: indicator * 3)
+        ..viewPadding = FakeViewPadding(top: statusBar * 3, bottom: indicator * 3);
+      addTearDown(tester.view.reset);
+      await _openFromTab(tester, healthInfo);
+
+      expect(_cta(tester).bottom, screen.height - indicator - AppSpacing.lg);
+      expect(tester.getRect(find.byType(BottomSheet)).top, greaterThanOrEqualTo(statusBar),
+          reason: 'sheet runs under the status bar');
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('health info from a tab: chip field typed, CTA whole above the keyboard', (tester) async {
+    _iphone(tester);
+    await _openFromTab(tester, healthInfo);
+    await tester.ensureVisible(find.byType(TextField).last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(TextField).last);
+    _keyboardUp(tester);
+    await tester.pumpAndSettle();
+
+    expect(_cta(tester).bottom, _screen.height - _keyboard - AppSpacing.lg);
+    expect(tester.getRect(find.byType(BottomSheet)).top, greaterThanOrEqualTo(_statusBar),
+        reason: 'sheet runs under the status bar');
+  });
+
+  testWidgets('health info edits the castration date', (tester) async {
+    _iphone(tester);
+    await _openFromTab(tester, healthInfo);
+    expect(find.text('Date de la castration'), findsOneWidget);
+    expect(find.text('27/03/2022'), findsOneWidget);
+  });
 
   testWidgets('article text scrolls down to the bottom edge', (tester) async {
     _iphone(tester);
