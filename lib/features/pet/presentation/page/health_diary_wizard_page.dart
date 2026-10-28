@@ -57,6 +57,7 @@ class HealthDiaryWizardPage extends StatefulWidget {
 class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
   final PageController _pages = PageController();
   final TextEditingController _weight = TextEditingController();
+  DateTime _weighedAt = DateUtils.dateOnly(DateTime.now());
   final List<_Weighing> _previousWeighings = [];
   final TextEditingController _chip = TextEditingController();
 
@@ -127,7 +128,7 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
     final today = WeightFormatter.parseWeight(_weight.text);
     await context.read<PetDetailsCubit>().createHealthDiary(
           weights: [
-            if (today != null) (weight: today, loggedAt: DateTime.now()),
+            if (today != null) (weight: today, loggedAt: _weighedAt),
             ..._completeWeighings,
           ],
           isSterilized: _isSterilized,
@@ -364,7 +365,10 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
     final previous = _completeWeighings.length;
     String count(int n, String word) => '$n $word${n > 1 ? 's' : ''}';
     return [
-      if (weight != null) "${_weight.text.trim()} kg aujourd'hui",
+      if (weight != null)
+        DateUtils.isSameDay(_weighedAt, DateTime.now())
+            ? "${_weight.text.trim()} kg aujourd'hui"
+            : '${_weight.text.trim()} kg le ${DateFormatter.date(_weighedAt)}',
       if (previous > 0)
         '$previous ${previous > 1 ? 'pesées précédentes' : 'pesée précédente'}',
       if (_isSterilized == true)
@@ -403,8 +407,15 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
     return _Question(
       title: 'Poids de ${pet.petName}',
       children: [
-        _WeightField(
-            controller: _weight, label: 'Le ${DateFormatter.calendarDay(now)}'),
+        DateFieldWidget(
+          label: 'Date de la pesée',
+          value: _weighedAt,
+          firstDate: pet.birthdate,
+          lastDate: now,
+          onChanged: (date) => setState(() => _weighedAt = date),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        _WeightField(controller: _weight),
         for (final weighing in _previousWeighings) ...[
           const SizedBox(height: AppSpacing.lg),
           Row(
@@ -865,15 +876,14 @@ class _Weighing {
 
 class _WeightField extends StatelessWidget {
   final TextEditingController controller;
-  final String? label;
 
-  const _WeightField({required this.controller, this.label});
+  const _WeightField({required this.controller});
 
   @override
   Widget build(BuildContext context) {
     return TextFieldWidget(
       controller: controller,
-      label: label,
+      label: null,
       hint: '0,0',
       suffixText: 'kg',
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
