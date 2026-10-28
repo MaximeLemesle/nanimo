@@ -93,29 +93,8 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     }
   }
 
-  /// Corrects the birthdate without leaving the diary draft or creating a diary.
-  Future<bool> updateBirthdate(DateTime birthdate) async {
-    final pet = state.selectedPet;
-    if (pet == null) return false;
-    try {
-      final updated = pet.copyWith(birthdate: birthdate);
-      await _petRepository.updatePet(updated);
-      if (isClosed) return false;
-      emit(state.copyWith(pets: [
-        for (final current in state.pets)
-          if (current.petId == pet.petId) updated else current,
-      ]));
-      return true;
-    } catch (err) {
-      if (!isClosed) emit(state.copyWith(error: err.toString()));
-      return false;
-    }
-  }
-
   Future<void> createHealthDiary({
-    double? currentWeight,
-    double? birthWeight,
-    DateTime? birthWeightDate,
+    List<({double weight, DateTime loggedAt})> weights = const [],
     bool? isSterilized,
     DateTime? sterilizedAt,
     bool? isChipped,
@@ -155,23 +134,12 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
       );
       await _healthRepository.upsertDiary(diary);
 
-      if (currentWeight != null) {
+      for (final log in weights) {
         await _healthRepository.addWeightLog(
           HealthDiaryWeightLogModel(
             healthDiaryWeightLogId: const Uuid().v4(),
-            weight: currentWeight,
-            loggedAt: DateTime.now(),
-            petId: petId,
-          ),
-        );
-      }
-
-      if (birthWeight != null) {
-        await _healthRepository.addWeightLog(
-          HealthDiaryWeightLogModel(
-            healthDiaryWeightLogId: const Uuid().v4(),
-            weight: birthWeight,
-            loggedAt: birthWeightDate ?? DateTime.now(),
+            weight: log.weight,
+            loggedAt: log.loggedAt,
             petId: petId,
           ),
         );

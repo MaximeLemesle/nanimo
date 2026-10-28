@@ -393,8 +393,7 @@ void main() {
     await settle();
 
     await cubit.createHealthDiary(
-      birthWeight: 0.3,
-      birthWeightDate: DateTime(2024, 1, 1),
+      weights: [(weight: 0.3, loggedAt: DateTime(2024, 1, 1))],
       isSterilized: false,
       isChipped: true,
       chipNumber: '250269',
