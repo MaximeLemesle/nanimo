@@ -72,6 +72,8 @@ class _EditHealthInfoBottomSheetWidgetState
     super.dispose();
   }
 
+  bool get _canSave => !_isSterilized || _sterilizedAt != null;
+
   void _submit() {
     final chipNumber = _chipController.text.trim();
 
@@ -94,7 +96,8 @@ class _EditHealthInfoBottomSheetWidgetState
       action: ButtonWidget(
         label: 'Enregistrer',
         fullWidth: true,
-        onPressed: _submit,
+        state: _canSave ? ButtonState.normal : ButtonState.disabled,
+        onPressed: _canSave ? _submit : null,
       ),
       children: [
         HealthDiarySectionWidget(
