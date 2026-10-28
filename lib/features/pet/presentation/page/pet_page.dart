@@ -11,6 +11,7 @@ import 'package:nanimo/core/utils/gender_formatter.dart';
 import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/vaccine_sheets.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card_widget/pet_card_item_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_profile/pet_card_widget/pet_card_widget.dart';
 import 'package:nanimo/features/health/data/models/health_diary_model.dart';
@@ -191,9 +192,22 @@ class PetPage extends StatelessWidget {
                                           ? 'Rappel à programmer'
                                           : 'Prochain rappel : ${DateFormatter.date(vaccine.nextDate!)}',
                                       value: vaccine.vaccineName,
+                                      onTap: isLocked
+                                          ? null
+                                          : () => VaccineSheets.edit(context, birthdate: pet.birthdate, vaccine: vaccine),
                                     ),
                                   )
                                   .toList(),
+                          button: isLocked
+                              ? null
+                              : ButtonWidget(
+                                  label: 'Ajouter un vaccin',
+                                  type: ButtonType.secondary,
+                                  icon: Icons.add,
+                                  iconPosition: ButtonIcon.left,
+                                  fullWidth: true,
+                                  onPressed: () => VaccineSheets.add(context, birthdate: pet.birthdate),
+                                ),
                         ),
 
                         ButtonWidget(

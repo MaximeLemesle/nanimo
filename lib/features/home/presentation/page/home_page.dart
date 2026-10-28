@@ -301,6 +301,7 @@ class HomePage extends StatelessWidget {
       ..clearSnackBars()
       ..showSnackBar(SnackBar(
         content: Text('Vermifuge de ${pet.petName} noté'),
+        persist: false,
         action: SnackBarAction(
           label: 'Annuler',
           onPressed: () => petDetails.recordDeworming(petId,
