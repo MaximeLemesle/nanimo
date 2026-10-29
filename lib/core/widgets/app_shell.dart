@@ -138,7 +138,8 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   ];
 
   int _currentIndex(BuildContext context) {
-    final location = GoRouterState.of(context).matchedLocation;
+    // GoRouterState stays on the base route after a push, the stack does not.
+    final location = GoRouter.of(context).routerDelegate.currentConfiguration.last.matchedLocation;
 
     var index = 0;
     var routeLength = -1;

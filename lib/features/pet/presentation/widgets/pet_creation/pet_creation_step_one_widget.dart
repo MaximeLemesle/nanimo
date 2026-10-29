@@ -7,7 +7,9 @@ import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.d
 import 'package:nanimo/features/pet/presentation/widgets/pet_creation/pet_attribute_selector/pet_species_selector_widget.dart';
 
 class PetCreationStepOneWidget extends StatefulWidget {
-  const PetCreationStepOneWidget({super.key});
+  final bool isFirstPet;
+
+  const PetCreationStepOneWidget({super.key, this.isFirstPet = true});
 
   @override
   State<PetCreationStepOneWidget> createState() =>
@@ -48,7 +50,9 @@ class _PetCreationStepOneWidgetState extends State<PetCreationStepOneWidget> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Faisons connaissance',
+            widget.isFirstPet
+                ? 'Ajoute ton premier Nanimo'
+                : 'Ajoute un nouveau Nanimo',
             style: textTheme.displaySmall,
           ),
           const SizedBox(height: AppSpacing.xl),

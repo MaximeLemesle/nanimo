@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nanimo/core/analytics/analytics.dart';
 import 'package:nanimo/core/analytics/analytics_events.dart';
@@ -148,6 +149,27 @@ void main() {
 
   Future<void> settle() =>
       Future<void>.delayed(const Duration(milliseconds: 20));
+
+  /// NAN-127: the race name was only read when another pet was selected.
+  test('shows the new race once the selected pet is edited', () async {
+    final pets = StreamController<List<PetModel>>();
+    when(() => petRepo.watchPets()).thenAnswer((_) => pets.stream);
+    when(() => refRepo.fetchRacesBySpecies(any())).thenAnswer((_) async => const [
+          PetRaceModel(petRaceId: 'r1', raceName: 'Européen', petSpeciesId: 's1'),
+          PetRaceModel(petRaceId: 'r2', raceName: 'Bengal', petSpeciesId: 's1'),
+        ]);
+    final cubit = createCubit();
+    pets.add([_pet1, _pet2]);
+    await settle();
+    expect(cubit.state.raceName, 'Européen');
+
+    pets.add([_pet1.copyWith(petRaceId: 'r2'), _pet2]);
+    await settle();
+    expect(cubit.state.raceName, 'Bengal');
+
+    await cubit.close();
+    await pets.close();
+  });
 
   test('selects the first pet by default and loads its details', () async {
     final cubit = createCubit();
@@ -393,8 +415,7 @@ void main() {
     await settle();
 
     await cubit.createHealthDiary(
-      birthWeight: 0.3,
-      birthWeightDate: DateTime(2024, 1, 1),
+      weights: [(weight: 0.3, loggedAt: DateTime(2024, 1, 1))],
       isSterilized: false,
       isChipped: true,
       chipNumber: '250269',

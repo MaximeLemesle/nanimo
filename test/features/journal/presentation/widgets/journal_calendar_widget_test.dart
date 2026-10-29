@@ -88,7 +88,7 @@ void main() {
           'e1': ['p1']
         }));
     when(() => eventRepo.watchAllImages()).thenAnswer((_) => Stream.value({}));
-    when(() => petRepo.getPets()).thenAnswer((_) async => [_saiko]);
+    when(() => petRepo.watchPets()).thenAnswer((_) => Stream.value([_saiko]));
     when(() => refRepo.fetchEventTypes()).thenAnswer((_) async => [_walkType]);
     when(() => refRepo.fetchSpecies()).thenAnswer((_) async => _species);
   });

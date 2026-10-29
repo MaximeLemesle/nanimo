@@ -14,6 +14,12 @@ import 'package:nanimo/core/widgets/step_indicator_widget.dart';
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
 
+  static const slideTitles = [
+    'Le carnet de santé de ton animal\u00A0!',
+    'Tous tes animaux au même endroit\u00A0!',
+    'Ajoute tous tes souvenirs.',
+    "N'oublie plus rien\u00A0!",
+  ];
   static const slideCount = 4;
 
   @override
@@ -121,11 +127,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
               setState(() => _stage = index + 1);
               _trackSlide(index + 1);
             },
-            children: const [
-              _Slide(title: Text('Le carnet de santé de ton animal !'), visual: _SlideImage('health')),
-              _Slide(title: Text('Tout tes animaux au même endroit !'), visual: _SlideImage('multi_pet', scale: 1.10)),
-              _Slide(title: Text('Ajoute tous tes souvenirs.'), visual: _SlideImage('memories', scale: 1.20)),
-              _Slide(title: Text("N'oublie plus rien !"), visual: _SlideImage('reminders')),
+            children: [
+              _Slide(title: Text(OnboardingPage.slideTitles[0]), visual: const _SlideImage('health')),
+              _Slide(title: Text(OnboardingPage.slideTitles[1]), visual: const _SlideImage('multi_pet', scale: 1.10)),
+              _Slide(title: Text(OnboardingPage.slideTitles[2]), visual: const _SlideImage('memories', scale: 1.20)),
+              _Slide(title: Text(OnboardingPage.slideTitles[3]), visual: const _SlideImage('reminders')),
             ],
           ),
         ),

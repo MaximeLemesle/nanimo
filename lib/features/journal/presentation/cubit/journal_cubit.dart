@@ -25,6 +25,7 @@ class JournalCubit extends Cubit<JournalState> {
   StreamSubscription<List<EventModel>>? _eventsSubscription;
   StreamSubscription<Map<String, List<String>>>? _petEventsSubscription;
   StreamSubscription<Map<String, List<String>>>? _imagesSubscription;
+  StreamSubscription<List<PetModel>>? _petsSubscription;
 
   JournalCubit({
     required EventRepository eventRepository,
@@ -37,11 +38,13 @@ class JournalCubit extends Cubit<JournalState> {
     _eventsSubscription = _eventRepository.watchEvents().listen(_onEventsChanged);
     _petEventsSubscription = _eventRepository.watchPetEvents().listen(_onPetEventsChanged);
     _imagesSubscription = _eventRepository.watchAllImages().listen(_onImagesChanged);
+    _petsSubscription = _petRepository.watchPets().listen(_onPetsChanged);
     _load();
   }
 
   void _onEventsChanged(List<EventModel> events) {
-    emit(state.copyWith(status: JournalStatus.loaded, events: events));
+    final status = state.status == JournalStatus.error ? JournalStatus.error : JournalStatus.loaded;
+    emit(state.copyWith(status: status, events: events));
   }
 
   void _onPetEventsChanged(Map<String, List<String>> petIdsByEvent) {
@@ -52,10 +55,11 @@ class JournalCubit extends Cubit<JournalState> {
     emit(state.copyWith(imagePathsByEvent: imagePathsByEvent));
   }
 
-  Future<void> _load() async {
-    final pets = await _petRepository.getPets();
+  void _onPetsChanged(List<PetModel> pets) {
     emit(state.copyWith(pets: pets));
+  }
 
+  Future<void> _load() async {
     try {
       final types = await _referentialRepository.fetchEventTypes();
       final species = await _referentialRepository.fetchSpecies();
@@ -163,6 +167,7 @@ class JournalCubit extends Cubit<JournalState> {
     _eventsSubscription?.cancel();
     _petEventsSubscription?.cancel();
     _imagesSubscription?.cancel();
+    _petsSubscription?.cancel();
     return super.close();
   }
 }

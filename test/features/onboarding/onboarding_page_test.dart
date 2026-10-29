@@ -56,18 +56,14 @@ void main() {
     await pumpOnboarding(tester);
     await next(tester, 'Découvrir');
     await next(tester, 'Suivant');
-    expect(find.text('Tout tes animaux au même endroit !'), findsOneWidget);
+    expect(find.text(OnboardingPage.slideTitles[1]), findsOneWidget);
+    expect(OnboardingPage.slideTitles[1], startsWith('Tous tes animaux'));
   });
 
   testWidgets('swipes the four slides and only the last has a continue button', (tester) async {
     await pumpOnboarding(tester);
     await next(tester, 'Découvrir');
-    final titles = [
-      'Le carnet de santé de ton animal !',
-      'Tout tes animaux au même endroit !',
-      'Ajoute tous tes souvenirs.',
-      "N'oublie plus rien !",
-    ];
+    const titles = OnboardingPage.slideTitles;
     for (var index = 0; index < titles.length; index++) {
       expect(find.text(titles[index]), findsOneWidget);
       expect(find.text('Continuer'), index == 3 ? findsOneWidget : findsNothing);

@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:nanimo/core/errors/repository_exception.dart';
 import 'package:nanimo/core/isar/cache/schemas/user_cache.dart';
 import 'package:nanimo/features/auth/data/models/user_model.dart';
+import 'package:nanimo/features/auth/data/sso_first_name.dart';
 
 /// Auth flows always need the network and surface a [RepositoryNetworkException]
 /// on failure. Reads of the current [UserModel] are cache-first via Isar, with
@@ -140,6 +141,7 @@ class AuthRepository {
         idToken: idToken,
         nonce: rawNonce,
       );
+      await _adoptSsoFirstName(response.user, googleGivenName(idToken));
       return isFirstSignIn(response.user);
     } on GoogleSignInException catch (error) {
       if (error.code == GoogleSignInExceptionCode.canceled) {
@@ -181,6 +183,7 @@ class AuthRepository {
         idToken: idToken,
         nonce: rawNonce,
       );
+      await _adoptSsoFirstName(response.user, credential.givenName);
       return isFirstSignIn(response.user);
     } on SignInWithAppleAuthorizationException catch (error) {
       if (error.code == AuthorizationErrorCode.canceled) {
@@ -198,6 +201,24 @@ class AuthRepository {
               'Une connexion internet est requise pour se connecter avec Apple.',
           serverMessage:
               'Impossible de vous connecter avec Apple pour le moment.');
+    }
+  }
+
+  Future<void> _adoptSsoFirstName(User? user, String? givenName) async {
+    if (user == null || givenName == null) return;
+    try {
+      final row = await _supabase.from('users').select('user_name').eq('id_user', user.id).maybeSingle();
+      final stored = row?['user_name'] as String?;
+      if (stored == null) return;
+      final firstName = ssoFirstNameToStore(
+        storedName: stored,
+        givenName: givenName,
+        metadata: user.userMetadata ?? const {},
+        email: user.email,
+      );
+      if (firstName != null) await updateUserName(firstName);
+    } catch (_) {
+      // Cosmetic: a failure here must not fail the sign-in.
     }
   }
 

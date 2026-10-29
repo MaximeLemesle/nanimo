@@ -25,6 +25,7 @@ import 'package:nanimo/features/journal/presentation/cubit/journal_cubit.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
+import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/vaccine_status_badge_widget.dart';
 import 'package:nanimo/features/home/data/article_repository.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart'
@@ -105,6 +106,9 @@ void main() {
   late _MockAuthRepository authRepo;
   late _MockArticleRepository articleRepo;
   late StreamController<List<PetModel>> petsController;
+
+  setUpAll(() => registerFallbackValue(
+      const HealthDiaryModel(healthDiaryId: 'f', petId: 'f')));
 
   setUp(() {
     petRepo = _MockPetRepository();
@@ -294,7 +298,9 @@ void main() {
       ]),
     );
     // Stubs required by the JournalCubit backing the detail sheet.
-    when(() => petRepo.getPets()).thenAnswer((_) async => [_milo]);
+    var petStreams = 0;
+    when(() => petRepo.watchPets())
+        .thenAnswer((_) => petStreams++ == 0 ? petsController.stream : Stream.value([_milo]));
     when(() => referentialRepo.fetchEventTypes()).thenAnswer((_) async => const []);
 
     final cubit = buildCubit();
@@ -461,6 +467,42 @@ void main() {
     expect(rows, findsOneWidget);
     expect(find.text('Vermifuge'), findsOneWidget);
     expect(find.text('Leucose'), findsNothing);
+    await cubit.close();
+  });
+
+  /// NAN-126: a snack bar with an action persists by default since Flutter 3.32.
+  testWidgets('the « C’est fait » confirmation leaves on its own', (tester) async {
+    tester.view.physicalSize = const Size(1080, 2340);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.reset);
+    final overdue = HealthDiaryModel(
+        healthDiaryId: 'd1', petId: 'p1', lastDeworming: DateTime(2025, 1, 1));
+    when(() => healthRepo.watchAllDiaries()).thenAnswer((_) => Stream.value([overdue]));
+    when(() => healthRepo.getDiaryForPet('p1')).thenAnswer((_) async => overdue);
+    when(() => healthRepo.upsertDiary(any())).thenAnswer((_) async {});
+    final detailsPets = _MockPetRepository();
+    when(() => detailsPets.watchPets()).thenAnswer((_) => const Stream.empty());
+    when(() => referentialRepo.fetchIcons()).thenAnswer((_) async => []);
+    final details = PetDetailsCubit(
+        petRepository: detailsPets,
+        healthRepository: healthRepo,
+        referentialRepository: referentialRepo);
+    addTearDown(details.close);
+
+    final cubit = buildCubit();
+    await tester.pumpWidget(BlocProvider<PetDetailsCubit>.value(
+        value: details, child: buildPage(cubit)));
+    petsController.add([_milo]);
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('C’est fait'));
+    await tester.tap(find.text('C’est fait'));
+    await tester.pumpAndSettle();
+    expect(find.text('Vermifuge de Milo noté'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    expect(find.text('Vermifuge de Milo noté'), findsNothing);
     await cubit.close();
   });
 

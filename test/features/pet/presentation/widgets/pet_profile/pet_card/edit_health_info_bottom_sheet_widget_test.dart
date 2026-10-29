@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:nanimo/core/widgets/button_widget.dart';
 import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/edit_health_info_bottom_sheet_widget.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
@@ -12,6 +13,7 @@ void main() {
   late bool? capturedChipped;
   late String? capturedChipNumber;
   late DateTime? capturedDeworming;
+  late DateTime? capturedSterilizedAt;
 
   setUp(() {
     submitted = false;
@@ -19,6 +21,7 @@ void main() {
     capturedChipped = null;
     capturedChipNumber = null;
     capturedDeworming = null;
+    capturedSterilizedAt = null;
   });
 
   Future<void> pumpSheet(
@@ -40,11 +43,13 @@ void main() {
                 isScrollControlled: true,
                 builder: (_) => EditHealthInfoBottomSheetWidget(
                   gender: gender,
+                  birthdate: DateTime(2021, 8, 20),
                   diary: diary,
                   onSubmit: ({
                     required bool isSterilized,
                     required bool isChipped,
                     String? chipNumber,
+                    DateTime? sterilizedAt,
                     DateTime? lastDeworming,
                     int? dewormingIntervalMonths,
                   }) {
@@ -52,6 +57,7 @@ void main() {
                     capturedSterilized = isSterilized;
                     capturedChipped = isChipped;
                     capturedChipNumber = chipNumber;
+                    capturedSterilizedAt = sterilizedAt;
                     capturedDeworming = lastDeworming;
                   },
                 ),
@@ -69,6 +75,7 @@ void main() {
 
   HealthDiaryModel diary({
     bool? isSterilized,
+    DateTime? sterilizedAt,
     bool? isChipped,
     String? chipNumber,
     DateTime? lastDeworming,
@@ -77,11 +84,47 @@ void main() {
         healthDiaryId: 'diary-1',
         petId: 'pet-1',
         isSterilized: isSterilized,
+        sterilizedAt: sterilizedAt,
         isChipped: isChipped,
         chipNumber: chipNumber,
         lastDeworming: lastDeworming,
         lastVetAppointment: DateTime(2026, 1, 1),
       );
+
+  /// NAN-125: the castration date could only be set in the guided diary.
+  testWidgets('shows the castration date and sends it back, dropped once off', (tester) async {
+    await pumpSheet(tester, diary(isSterilized: true, sterilizedAt: DateTime(2022, 3, 27)));
+    expect(find.text('27/03/2022'), findsOneWidget);
+
+    await tester.tap(find.text('Enregistrer'));
+    await tester.pumpAndSettle();
+    expect(capturedSterilizedAt, DateTime(2022, 3, 27));
+
+    await pumpSheet(tester, diary(isSterilized: true, sterilizedAt: DateTime(2022, 3, 27)));
+    await tester.tap(find.byType(CupertinoSwitch).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Enregistrer'));
+    await tester.pumpAndSettle();
+    expect(capturedSterilized, isFalse);
+    expect(capturedSterilizedAt, isNull);
+  });
+
+  testWidgets('« Enregistrer » waits for the castration date once it is on', (tester) async {
+    await pumpSheet(tester, diary(isSterilized: false));
+    ButtonState save() => tester.widget<ButtonWidget>(find.widgetWithText(ButtonWidget, 'Enregistrer')).state;
+    expect(save(), ButtonState.normal);
+
+    await tester.tap(find.byType(CupertinoSwitch).first);
+    await tester.pumpAndSettle();
+    expect(save(), ButtonState.disabled);
+    await tester.tap(find.text('Enregistrer'));
+    await tester.pumpAndSettle();
+    expect(submitted, isFalse);
+
+    await tester.tap(find.text('Date de la stérilisation'));
+    await tester.pumpAndSettle();
+    expect(save(), ButtonState.normal);
+  });
 
   testWidgets('opens pre-filled with the recorded values', (tester) async {
     await pumpSheet(
@@ -111,7 +154,7 @@ void main() {
   testWidgets('hands back the untouched values on save', (tester) async {
     await pumpSheet(
       tester,
-      diary(isSterilized: true, isChipped: true, chipNumber: '250269'),
+      diary(isSterilized: true, sterilizedAt: DateTime(2022, 3, 27), isChipped: true, chipNumber: '250269'),
     );
 
     await tester.tap(find.text('Enregistrer'));

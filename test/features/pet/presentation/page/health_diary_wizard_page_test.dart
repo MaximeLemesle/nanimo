@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nanimo/core/utils/chip_number.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nanimo/core/notifications/diary_follow_up_store.dart';
 import 'package:nanimo/core/notifications/notification_priming.dart';
 import 'package:nanimo/core/notifications/notifications.dart';
+import 'package:nanimo/core/utils/date_formatter.dart';
 import '../../../../core/notifications/fake_notification_client.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/health/data/health_repository.dart';
@@ -138,7 +140,7 @@ void main() {
 
   /// The first two screens need their answers before « Continuer ».
   Future<void> answerFirstSteps(WidgetTester tester) async {
-    await tester.enterText(find.byType(TextField), '0,4');
+    await tester.enterText(find.byType(TextField), '4,2');
     await tester.pump();
     await tapAndSettle(tester, find.text('Continuer'));
     await tapAndSettle(tester, find.text('Non').first);
@@ -150,11 +152,11 @@ void main() {
       .widget<ButtonWidget>(find.widgetWithText(ButtonWidget, 'Continuer'))
       .state;
 
-  testWidgets('« Continuer » waits for the birth weight, then both answers',
+  testWidgets('« Continuer » waits for today\'s weight, then both answers',
       (tester) async {
     await pumpWizard(tester);
     expect(continueState(tester), ButtonState.disabled);
-    await tester.enterText(find.byType(TextField), '0,4');
+    await tester.enterText(find.byType(TextField), '4,2');
     await tester.pump();
     expect(continueState(tester), ButtonState.normal);
     await tapAndSettle(tester, find.text('Continuer'));
@@ -166,21 +168,93 @@ void main() {
         reason: 'no castration date nor chip number yet');
 
     await tapAndSettle(tester, find.text('Date de la castration'));
-    expect(continueState(tester), ButtonState.disabled,
-        reason: 'the chip number is still missing');
+    expect(continueState(tester), ButtonState.normal,
+        reason: 'NAN-125: the chip number is optional');
 
     await tester.enterText(
         find.byType(TextField).last, '25026');
     await tester.pump();
-    expect(continueState(tester), ButtonState.disabled,
-        reason: 'an incomplete chip number');
-    await tester.enterText(
-        find.byType(TextField).last, '250269801234567');
-    await tester.pump();
-    expect(continueState(tester), ButtonState.normal);
+    expect(continueState(tester), ButtonState.normal,
+        reason: 'an incomplete number is signalled, never refused');
+    expect(find.text(ChipNumber.incompleteMessage), findsOneWidget);
   });
 
-  testWidgets('« Je ne sais pas » skips the birth weight', (tester) async {
+  /// NAN-124: today's weight first, older weighings only if the owner has them.
+  testWidgets('saves today\'s weight and the previous weighings added',
+      (tester) async {
+    await pumpWizard(tester);
+    final now = DateTime.now();
+    expect(find.text('Poids de Dobby'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), '4,2');
+
+    await tapAndSettle(tester, find.text('Ajouter une pesée précédente'));
+    await tapAndSettle(tester, find.text('Date de la pesée').last);
+    tester
+        .widget<CupertinoDatePicker>(find.byType(CupertinoDatePicker))
+        .onDateTimeChanged(DateTime(2025, 6, 1));
+    await tester.enterText(find.byType(TextField).at(1), '3,8');
+    await tapAndSettle(tester, find.text('Ajouter une pesée précédente'));
+    await tester.pump();
+    expect(find.byType(TextField), findsNWidgets(3));
+
+    await tapAndSettle(tester, find.text('Continuer'));
+    await tapAndSettle(tester, find.text('Non').first);
+    await tapAndSettle(tester, find.text('Non').last);
+    await tapAndSettle(tester, find.text('Continuer'));
+    await tapAndSettle(tester, find.text('Continuer'));
+    await tapAndSettle(tester, find.text('Valider le carnet'));
+
+    final logs = verify(() => healthRepo.addWeightLog(captureAny()))
+        .captured
+        .cast<HealthDiaryWeightLogModel>();
+    expect(logs.map((log) => log.weight), unorderedEquals([4.2, 3.8]),
+        reason: 'the empty weighing is left out');
+    expect(logs.firstWhere((log) => log.weight == 3.8).loggedAt,
+        DateTime(2025, 6, 1));
+    expect(
+        DateUtils.isSameDay(
+            logs.firstWhere((log) => log.weight == 4.2).loggedAt, now),
+        isTrue);
+    expect(find.text('4,2 kg aujourd\'hui'), findsOneWidget);
+    expect(find.text('1 pesée précédente'), findsOneWidget);
+  });
+
+  testWidgets('the first weighing is dated today by default, and can be redated',
+      (tester) async {
+    await pumpWizard(tester);
+    final now = DateTime.now();
+    expect(find.text(DateFormatter.date(now)), findsOneWidget);
+    await tester.enterText(find.byType(TextField), '4,2');
+    await tapAndSettle(tester, find.text('Date de la pesée').first);
+    tester
+        .widget<CupertinoDatePicker>(find.byType(CupertinoDatePicker))
+        .onDateTimeChanged(DateTime(2026, 10, 1));
+    await tester.pump();
+
+    await tapAndSettle(tester, find.text('Continuer'));
+    await tapAndSettle(tester, find.text('Non').first);
+    await tapAndSettle(tester, find.text('Non').last);
+    await tapAndSettle(tester, find.text('Continuer'));
+    await tapAndSettle(tester, find.text('Continuer'));
+    await tapAndSettle(tester, find.text('Valider le carnet'));
+
+    final log = verify(() => healthRepo.addWeightLog(captureAny()))
+        .captured
+        .single as HealthDiaryWeightLogModel;
+    expect(log.loggedAt, DateTime(2026, 10, 1));
+    expect(find.text('4,2 kg le 01/10/2026'), findsOneWidget);
+  });
+
+  testWidgets('a previous weighing can be removed before saving',
+      (tester) async {
+    await pumpWizard(tester);
+    await tapAndSettle(tester, find.text('Ajouter une pesée précédente'));
+    expect(find.text('Pesée précédente'), findsOneWidget);
+    await tapAndSettle(tester, find.byTooltip('Retirer'));
+    expect(find.text('Pesée précédente'), findsNothing);
+  });
+
+  testWidgets('« Je ne sais pas » skips the weights', (tester) async {
     await pumpWizard(tester);
     await tapAndSettle(tester, find.text('Je ne sais pas'));
     expect(find.text('Est-ce que Dobby est castré ?'), findsOneWidget);
@@ -192,7 +266,7 @@ void main() {
     await tapAndSettle(tester, find.text('Continuer'));
     await tapAndSettle(tester, find.text('Valider le carnet'));
     expect(find.text('Le carnet de Dobby est créé !'), findsOneWidget);
-    expect(find.text('0,4 kg à la naissance'), findsOneWidget);
+    expect(find.text('4,2 kg aujourd\'hui'), findsOneWidget);
 
     await tapAndSettle(tester, find.text('Terminer'));
     expect(find.text('open'), findsOneWidget);
@@ -203,9 +277,10 @@ void main() {
       (tester) async {
     await pumpWizard(tester);
 
-    expect(find.text('Poids de Dobby à sa naissance'), findsOneWidget);
-    expect(find.text('Le 02/03/2024, pesé :'), findsOneWidget);
-    await tester.enterText(find.byType(TextField), '0,4');
+    expect(find.text('Poids de Dobby'), findsOneWidget);
+    expect(find.text('Pesée précédente'), findsNothing,
+        reason: 'NAN-124: older weighings wait behind their button');
+    await tester.enterText(find.byType(TextField), '4,2');
     await tester.pump();
     await tapAndSettle(tester, find.text('Continuer'));
 
@@ -232,29 +307,9 @@ void main() {
     final weight = verify(() => healthRepo.addWeightLog(captureAny()))
         .captured
         .single as HealthDiaryWeightLogModel;
-    expect(weight.weight, 0.4);
-    expect(weight.loggedAt, _dobby.birthdate);
+    expect(weight.weight, 4.2);
+    expect(DateUtils.isSameDay(weight.loggedAt, DateTime.now()), isTrue);
     expect(find.text('Le carnet de Dobby est créé !'), findsOneWidget);
-  });
-
-  testWidgets(
-      'corrects the birthdate from the first step without losing its draft',
-      (tester) async {
-    await pumpWizard(tester);
-    await tester.enterText(find.byType(TextField), '0,4');
-    await tapAndSettle(tester, find.text('Modifier la date de naissance'));
-    expect(find.byType(CupertinoDatePicker), findsOneWidget);
-    tester
-        .widget<CupertinoDatePicker>(find.byType(CupertinoDatePicker))
-        .onDateTimeChanged(DateTime(2024, 3, 1));
-    Navigator.of(tester.element(find.byType(CupertinoDatePicker))).pop();
-    await tester.pumpAndSettle();
-    final saved = verify(() => petRepo.updatePet(captureAny())).captured.single
-        as PetModel;
-    expect(saved.birthdate, DateTime(2024, 3, 1));
-    expect(find.text('Le 01/03/2024, pesé :'), findsOneWidget);
-    expect(find.text('0,4'), findsOneWidget);
-    verifyNever(() => healthRepo.upsertDiary(any()));
   });
 
   testWidgets('refusing notifications never promises a follow-up',

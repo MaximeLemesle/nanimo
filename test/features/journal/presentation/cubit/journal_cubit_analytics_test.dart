@@ -32,7 +32,7 @@ void main() {
     when(() => eventRepo.watchEvents()).thenAnswer((_) => Stream.value(const []));
     when(() => eventRepo.watchPetEvents()).thenAnswer((_) => Stream.value(const {}));
     when(() => eventRepo.watchAllImages()).thenAnswer((_) => Stream.value(const {}));
-    when(() => petRepo.getPets()).thenAnswer((_) async => []);
+    when(() => petRepo.watchPets()).thenAnswer((_) => Stream.value([]));
     when(() => refRepo.fetchEventTypes()).thenAnswer((_) async => []);
     when(() => refRepo.fetchSpecies()).thenAnswer((_) async => []);
 
