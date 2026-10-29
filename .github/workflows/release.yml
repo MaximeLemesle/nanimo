@@ -16,6 +16,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      # ubuntu-latest now ships Java 25, which Gradle 8.11 cannot run on.
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
       - name: Setup Flutter
         uses: ./.github/actions/setup-flutter
 
