@@ -241,7 +241,7 @@ class _PaywallPageState extends State<PaywallPage> {
     var height = 0.0;
     for (final offer in offers) {
       final painter = TextPainter(
-        text: TextSpan(text: paywallLegalNotice(offer), style: _legalStyle),
+        text: TextSpan(text: paywallLegalNotice(offer), style: DefaultTextStyle.of(context).style.merge(_legalStyle)),
         textDirection: Directionality.of(context),
         textScaler: MediaQuery.textScalerOf(context),
       )..layout(maxWidth: width);
