@@ -29,6 +29,8 @@ import 'package:nanimo/features/settings/data/settings_repository.dart';
 import 'package:nanimo/features/subscription/data/purchase_repository.dart';
 import 'package:nanimo/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:nanimo/features/home/data/article_repository.dart';
+import 'package:nanimo/features/home/presentation/widgets/home_pet_list_widget.dart';
+import 'package:nanimo/features/pet/presentation/page/pet_page.dart';
 
 class _MockReferentialRepository extends Mock
     implements ReferentialRepository {}
@@ -319,6 +321,36 @@ void main() {
     await tester.pumpAndSettle();
     expect(router.routeInformationProvider.value.uri.path, RouteNames.pet);
     expect(barOpacity(tester), 1);
+    expect(tester.takeException(), isNull);
+  });
+
+  int activeTab(WidgetTester tester) => tester.widget<BottomBarWidget>(find.byType(BottomBarWidget)).currentIndex;
+
+  /// NAN-130: the home pushed the pet page, and the bar kept the home tab lit.
+  testWidgets('the bar lights the tab of the page shown, whatever opened it', (tester) async {
+    await pumpHome(tester);
+    expect(activeTab(tester), 0);
+
+    final petCard = find.descendant(of: find.byType(HomePetListWidget), matching: find.text('Milo'));
+    await tester.ensureVisible(petCard);
+    await tester.pumpAndSettle();
+    await tester.tap(petCard);
+    await tester.pumpAndSettle();
+    expect(find.byType(PetPage), findsOneWidget);
+    expect(activeTab(tester), 2);
+
+    router.pop();
+    await tester.pumpAndSettle();
+    expect(activeTab(tester), 0);
+
+    await tester.tap(petCard);
+    await tester.pumpAndSettle();
+    expect(activeTab(tester), 2);
+
+    pendingNotificationTap.value = 'vaccine|p1';
+    await tester.pumpAndSettle();
+    expect(router.routeInformationProvider.value.uri.path, RouteNames.healthDiary);
+    expect(activeTab(tester), 2);
     expect(tester.takeException(), isNull);
   });
 
