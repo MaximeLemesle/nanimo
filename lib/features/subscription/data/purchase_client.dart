@@ -49,8 +49,8 @@ class RevenueCatPurchaseClient implements PurchaseClient {
   Future<Offerings> getOfferings() => Purchases.getOfferings();
 
   @override
-  Future<CustomerInfo> purchasePackage(Package package) =>
-      Purchases.purchasePackage(package);
+  Future<CustomerInfo> purchasePackage(Package package) async =>
+      (await Purchases.purchase(PurchaseParams.package(package))).customerInfo;
 
   @override
   Future<CustomerInfo> restorePurchases() => Purchases.restorePurchases();
