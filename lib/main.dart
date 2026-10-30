@@ -26,6 +26,7 @@ import 'package:nanimo/core/widgets/keyboard_dismiss_wrapper.dart';
 import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/auth/data/auth_repository.dart';
 import 'package:nanimo/features/event/data/event_repository.dart';
+import 'package:nanimo/features/auth/presentation/auth_identity_sync.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nanimo/features/health/data/health_repository.dart';
 import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
@@ -187,17 +188,12 @@ void main() async {
     }
   });
 
-  /// Account id only, never the e-mail.
-  authCubit.stream.listen((auth) {
-    final userId = authRepository.currentUserId;
-    if (auth.isAuthenticated && userId != null) {
-      monitoring.identifyUser(userId);
-      analytics.identifyUser(userId);
-    } else if (auth.isUnauthenticated) {
-      monitoring.forgetUser();
-      analytics.forgetUser();
-    }
-  });
+  final identitySync = AuthIdentitySync(
+    analytics: analytics,
+    monitoring: monitoring,
+    currentUserId: () => authRepository.currentUserId,
+  );
+  authCubit.stream.listen(identitySync.onAuthChanged);
 
   await monitoring.start(() => runApp(MyApp(
         authCubit: authCubit,
