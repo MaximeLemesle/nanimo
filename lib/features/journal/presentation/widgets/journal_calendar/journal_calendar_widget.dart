@@ -131,6 +131,12 @@ class _JournalCalendarWidgetState extends State<JournalCalendarWidget> {
     );
     if (!context.mounted || selectedEvent == null) return;
 
+    final visit = context.read<JournalCubit>().state.vetVisitFor(selectedEvent);
+    if (visit != null) {
+      await context.push('${RouteNames.vetVisit}/${visit.vetVisitId}');
+      return;
+    }
+
     await JournalEventDetailBottomSheetWidget.show(
       context,
       event: selectedEvent,

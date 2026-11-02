@@ -19,6 +19,9 @@ class JournalState extends Equatable {
   final DateTime? selectedCalendarDay;
   final String? error;
 
+  /// Visits are events too (NAN-133), keyed by the shared id.
+  final Map<String, VetVisitModel> vetVisits;
+
   const JournalState({
     this.status = JournalStatus.loading,
     this.viewMode = JournalViewMode.timeline,
@@ -33,7 +36,17 @@ class JournalState extends Equatable {
     this.selectedTypeIds = const {},
     this.selectedCalendarDay,
     this.error,
+    this.vetVisits = const {},
   });
+
+  VetVisitModel? vetVisitFor(EventModel event) => vetVisits[event.eventId];
+
+  String? petNameOf(String petId) {
+    for (final pet in pets) {
+      if (pet.petId == petId) return pet.petName;
+    }
+    return null;
+  }
 
   bool get hasActiveFilters =>
       selectedPetIds.isNotEmpty || selectedTypeIds.isNotEmpty;
@@ -135,6 +148,7 @@ class JournalState extends Equatable {
     DateTime? selectedCalendarDay,
     bool clearSelectedCalendarDay = false,
     String? error,
+    Map<String, VetVisitModel>? vetVisits,
   }) {
     return JournalState(
       status: status ?? this.status,
@@ -152,6 +166,7 @@ class JournalState extends Equatable {
           ? null
           : selectedCalendarDay ?? this.selectedCalendarDay,
       error: error ?? this.error,
+      vetVisits: vetVisits ?? this.vetVisits,
     );
   }
 
@@ -170,5 +185,6 @@ class JournalState extends Equatable {
         selectedTypeIds,
         selectedCalendarDay,
         error,
+        vetVisits,
       ];
 }

@@ -12,6 +12,8 @@ import 'package:nanimo/data/repositories/referential_repository.dart';
 import 'package:nanimo/features/event/data/event_repository.dart';
 import 'package:nanimo/features/event/data/models/event_model.dart';
 import 'package:nanimo/features/event/data/models/event_type_model.dart';
+import 'package:nanimo/features/health/data/health_repository.dart';
+import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 
@@ -26,8 +28,11 @@ class JournalCubit extends Cubit<JournalState> {
   StreamSubscription<Map<String, List<String>>>? _petEventsSubscription;
   StreamSubscription<Map<String, List<String>>>? _imagesSubscription;
   StreamSubscription<List<PetModel>>? _petsSubscription;
+  StreamSubscription<List<VetVisitModel>>? _vetVisitsSubscription;
 
+  /// Optional so a journal without health data still works, as in its tests.
   JournalCubit({
+    HealthRepository? healthRepository,
     required EventRepository eventRepository,
     required PetRepository petRepository,
     required ReferentialRepository referentialRepository,
@@ -39,6 +44,7 @@ class JournalCubit extends Cubit<JournalState> {
     _petEventsSubscription = _eventRepository.watchPetEvents().listen(_onPetEventsChanged);
     _imagesSubscription = _eventRepository.watchAllImages().listen(_onImagesChanged);
     _petsSubscription = _petRepository.watchPets().listen(_onPetsChanged);
+    _vetVisitsSubscription = healthRepository?.watchAllVetVisits().listen(_onVetVisitsChanged);
     _load();
   }
 
@@ -57,6 +63,10 @@ class JournalCubit extends Cubit<JournalState> {
 
   void _onPetsChanged(List<PetModel> pets) {
     emit(state.copyWith(pets: pets));
+  }
+
+  void _onVetVisitsChanged(List<VetVisitModel> visits) {
+    emit(state.copyWith(vetVisits: {for (final visit in visits) visit.vetVisitId: visit}));
   }
 
   Future<void> _load() async {
@@ -168,6 +178,7 @@ class JournalCubit extends Cubit<JournalState> {
     _petEventsSubscription?.cancel();
     _imagesSubscription?.cancel();
     _petsSubscription?.cancel();
+    _vetVisitsSubscription?.cancel();
     return super.close();
   }
 }

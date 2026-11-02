@@ -18,7 +18,7 @@ void main() {
     ),
     'add vet visit': AddVetVisitBottomSheetWidget(
       birthdate: birthdate,
-      onSubmit: ({required title, required visitedAt, vetName, clinicName, petId}) {},
+      onSubmit: (_) {},
     ),
     'add weight': AddWeightBottomSheetWidget(
       birthdate: birthdate,

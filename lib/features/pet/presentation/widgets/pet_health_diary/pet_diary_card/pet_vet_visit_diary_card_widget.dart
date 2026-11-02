@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:nanimo/config/router/route_names.dart';
 import 'package:nanimo/config/theme/app_colors.dart';
 import 'package:nanimo/config/theme/app_spacing.dart';
 import 'package:nanimo/core/utils/date_formatter.dart';
@@ -12,6 +14,7 @@ import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_di
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card_widget/pet_diary_edit_button_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card_widget/pet_diary_selection_hint_widget.dart';
 import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_card_widget/pet_diary_table_widget.dart';
+import 'package:nanimo/features/pet/presentation/widgets/vet_visit/vet_visit_status_widget.dart';
 
 class PetVetVisitDiaryCardWidget extends StatefulWidget {
   final List<VetVisitModel> visits;
@@ -69,8 +72,10 @@ class _PetVetVisitDiaryCardWidgetState extends State<PetVetVisitDiaryCardWidget>
                 ].join(' - '),
                 trailing: _isSelecting
                     ? const Icon(Icons.chevron_right_rounded, color: AppColors.primary)
-                    : null,
-                onTap: _isSelecting ? () => _editVisit(context, visit) : null,
+                    : VetVisitStatusWidget(visit: visit),
+                onTap: _isSelecting
+                    ? () => _editVisit(context, visit)
+                    : () => context.push('${RouteNames.vetVisit}/${visit.vetVisitId}'),
               ),
           ],
           emptyLabel: 'Note ses visites chez le vétérinaire, passées ou à venir. On te rappellera les prochaines la veille.',
@@ -88,14 +93,7 @@ class _PetVetVisitDiaryCardWidgetState extends State<PetVetVisitDiaryCardWidget>
                 context,
                 AddVetVisitBottomSheetWidget(
                   birthdate: widget.birthdate,
-                  onSubmit: ({required String title, required DateTime visitedAt, String? vetName, String? clinicName, String? petId}) {
-                    context.read<PetDetailsCubit>().addVetVisit(
-                          title: title,
-                          visitedAt: visitedAt,
-                          vetName: vetName,
-                          clinicName: clinicName,
-                        );
-                  },
+                  onSubmit: context.read<PetDetailsCubit>().addVetVisitDraft,
                 ),
               );
             },
@@ -114,18 +112,7 @@ class _PetVetVisitDiaryCardWidgetState extends State<PetVetVisitDiaryCardWidget>
         birthdate: widget.birthdate,
         initial: visit,
         onDelete: () => cubit.deleteVetVisit(visit.vetVisitId),
-        onSubmit: ({required String title, required DateTime visitedAt, String? vetName, String? clinicName, String? petId}) {
-          cubit.updateVetVisit(
-            VetVisitModel(
-              vetVisitId: visit.vetVisitId,
-              title: title,
-              visitedAt: visitedAt,
-              vetName: vetName,
-              clinicName: clinicName,
-              petId: visit.petId,
-            ),
-          );
-        },
+        onSubmit: (draft) => cubit.updateVetVisit(draft.applyTo(visit)),
       ),
     );
   }

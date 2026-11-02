@@ -59,11 +59,18 @@ class HomeState extends Equatable {
     this.vetVisits = const [],
   });
 
+  /// Souvenirs only: a vet visit is an event too (NAN-133) but not a memory.
+  List<EventModel> get memories {
+    if (vetVisits.isEmpty) return events;
+    final visitIds = {for (final visit in vetVisits) visit.vetVisitId};
+    return [for (final event in events) if (!visitIds.contains(event.eventId)) event];
+  }
+
   /// Events whose entry date falls within the last 7 days.
   List<EventModel> weekEvents({DateTime? now}) {
     final reference = now ?? DateTime.now();
     final weekAgo = reference.subtract(const Duration(days: 7));
-    return events.where((event) {
+    return memories.where((event) {
       final date = event.entryDate?.toLocal();
       if (date == null) return false;
       return date.isAfter(weekAgo) && !date.isAfter(reference);
@@ -82,7 +89,7 @@ class HomeState extends Equatable {
   EventModel? anniversaryEvent({DateTime? now}) {
     final reference = now ?? DateTime.now();
     EventModel? best;
-    for (final event in events) {
+    for (final event in memories) {
       final date = event.entryDate?.toLocal();
       if (date == null) continue;
       if (date.day != reference.day || date.month != reference.month) continue;
@@ -101,7 +108,10 @@ class HomeState extends Equatable {
   }
 
   /// Latest event, used as fallback when no anniversary memory exists.
-  EventModel? get latestEvent => events.isEmpty ? null : events.first;
+  EventModel? get latestEvent {
+    final souvenirs = memories;
+    return souvenirs.isEmpty ? null : souvenirs.first;
+  }
 
   Map<String, String> get _petIdByDiaryId => {for (final diary in diaries) diary.healthDiaryId: diary.petId};
 

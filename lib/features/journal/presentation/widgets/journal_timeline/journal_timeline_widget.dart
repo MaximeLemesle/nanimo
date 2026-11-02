@@ -8,6 +8,7 @@ import 'package:nanimo/features/journal/presentation/cubit/journal_cubit.dart';
 import 'package:nanimo/features/journal/presentation/widgets/journal_empty_state_widget.dart';
 import 'package:nanimo/features/journal/presentation/widgets/journal_event_detail/journal_event_detail_bottom_sheet_widget.dart';
 import 'package:nanimo/features/journal/presentation/widgets/journal_timeline/journal_timeline_event_card_widget.dart';
+import 'package:nanimo/features/journal/presentation/widgets/journal_timeline/journal_vet_visit_card_widget.dart';
 
 class JournalTimelineWidget extends StatelessWidget {
   final JournalState state;
@@ -40,6 +41,14 @@ class JournalTimelineWidget extends StatelessWidget {
         itemCount: events.length,
         itemBuilder: (context, index) {
           final event = events[index];
+          final visit = state.vetVisitFor(event);
+          if (visit != null) {
+            return JournalVetVisitCardWidget(
+              visit: visit,
+              petName: state.petNameOf(visit.petId),
+              onTap: () => context.push('${RouteNames.vetVisit}/${visit.vetVisitId}'),
+            );
+          }
           return JournalTimelineEventCardWidget(
             event: event,
             imagePaths: state.imagePathsByEvent[event.eventId] ?? const [],

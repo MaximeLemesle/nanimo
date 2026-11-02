@@ -1,13 +1,17 @@
 import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:nanimo/core/errors/repository_exception.dart';
+import 'package:nanimo/core/isar/cache/schemas/event_cache.dart';
+import 'package:nanimo/core/isar/cache/schemas/event_image_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_vaccine_cache.dart';
+import 'package:nanimo/core/isar/cache/schemas/pet_event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/vet_visit_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/weight_log_cache.dart';
 import 'package:nanimo/features/health/data/models/health_diary_model.dart';
 import 'package:nanimo/features/health/data/models/health_diary_vaccine_model.dart';
 import 'package:nanimo/features/health/data/models/health_diary_weight_log_model.dart';
+import 'package:nanimo/features/event/data/models/event_model.dart';
 import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
 
 class HealthRepository {
@@ -245,10 +249,20 @@ class HealthRepository {
           serverMessage: 'Impossible d’ajouter la visite vétérinaire pour le moment.');
     }
 
-    await _isar.writeTxn(() async {
-      await _isar.vetVisitCaches
-          .putByVetVisitId(VetVisitCache.fromModel(visit));
-    });
+    await _isar.writeTxn(() => _cacheVetVisit(visit));
+  }
+
+  Future<VetVisitModel?> getVetVisit(String vetVisitId) async {
+    final row = await _isar.vetVisitCaches.getByVetVisitId(vetVisitId);
+    return row?.toModel();
+  }
+
+  Stream<VetVisitModel?> watchVetVisit(String vetVisitId) {
+    return _isar.vetVisitCaches
+        .filter()
+        .vetVisitIdEqualTo(vetVisitId)
+        .watch(fireImmediately: true)
+        .map((rows) => rows.isEmpty ? null : rows.first.toModel());
   }
 
   Future<void> updateVetVisit(VetVisitModel visit) async {
@@ -264,13 +278,11 @@ class HealthRepository {
           serverMessage: 'Impossible de modifier la visite vétérinaire pour le moment.');
     }
 
-    await _isar.writeTxn(() async {
-      await _isar.vetVisitCaches
-          .putByVetVisitId(VetVisitCache.fromModel(visit));
-    });
+    await _isar.writeTxn(() => _cacheVetVisit(visit));
   }
 
   Future<void> deleteVetVisit(String vetVisitId) async {
+    await _removeVetDocumentFiles(vetVisitId);
     try {
       await _supabase
           .from('vet_visits')
@@ -285,6 +297,46 @@ class HealthRepository {
 
     await _isar.writeTxn(() async {
       await _isar.vetVisitCaches.deleteByVetVisitId(vetVisitId);
+      await _isar.eventCaches.deleteByEventId(vetVisitId);
+      await _isar.eventImageCaches.filter().eventIdEqualTo(vetVisitId).deleteAll();
+      await _isar.petEventCaches.filter().eventIdEqualTo(vetVisitId).deleteAll();
     });
+  }
+
+  /// The document rows cascade with the visit, their files would not.
+  Future<void> _removeVetDocumentFiles(String vetVisitId) async {
+    final cached = await _isar.vetVisitCaches.getByVetVisitId(vetVisitId);
+    if (cached != null && cached.documentCount == 0) return;
+    try {
+      final rows = await _supabase
+          .from('event_documents')
+          .select('storage_path')
+          .eq('event_id', vetVisitId);
+      final paths = [for (final row in rows) row['storage_path'] as String];
+      if (paths.isNotEmpty) {
+        await _supabase.storage.from('health-documents').remove(paths);
+      }
+    } catch (_) {}
+  }
+
+  /// The visit is a journal event too (NAN-133): both caches move together.
+  Future<void> _cacheVetVisit(VetVisitModel visit) async {
+    final existing = await _isar.vetVisitCaches.getByVetVisitId(visit.vetVisitId);
+    final cache = VetVisitCache.fromModel(visit);
+    if (existing != null) cache.documentCount = existing.documentCount;
+    await _isar.vetVisitCaches.putByVetVisitId(cache);
+
+    final event = await _isar.eventCaches.getByEventId(visit.vetVisitId);
+    await _isar.eventCaches.putByEventId(EventCache.fromModel(EventModel(
+      eventId: visit.vetVisitId,
+      title: visit.title,
+      createdAt: event?.createdAt ?? DateTime.now(),
+      entryDate: visit.visitedAt,
+      eventTypeId: '',
+    )));
+    await _isar.petEventCaches.filter().eventIdEqualTo(visit.vetVisitId).deleteAll();
+    await _isar.petEventCaches.putByPetEventId(
+      PetEventCache.fromIds(petId: visit.petId, eventId: visit.vetVisitId),
+    );
   }
 }

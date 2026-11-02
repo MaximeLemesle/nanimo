@@ -5,7 +5,8 @@ import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/settings/data/models/notification_prefs_model.dart';
 
-enum ReminderKind { vaccine, vetVisit, birthday, adoption, trialEnd, diaryFollowUp, deworming }
+/// Append only: [ReminderKind.name] is written into delivered payloads.
+enum ReminderKind { vaccine, vetVisit, birthday, adoption, trialEnd, diaryFollowUp, deworming, vetVisitFollowUp }
 
 /// One local notification to schedule. [key] is stable across runs, so the
 /// same reminder always gets the same platform id.
@@ -17,6 +18,9 @@ class PlannedReminder {
   final String body;
   final String petId;
 
+  /// What the tap opens beyond the animal, such as a vet visit.
+  final String? targetId;
+
   const PlannedReminder({
     required this.key,
     required this.kind,
@@ -24,12 +28,13 @@ class PlannedReminder {
     required this.title,
     required this.body,
     required this.petId,
+    this.targetId,
   });
 
   int get id => notificationIdFor(key);
 
-  /// What a tap carries back: the kind, then the animal.
-  String get payload => '${kind.name}|$petId';
+  /// What a tap carries back: the kind, the animal, then the target if any.
+  String get payload => targetId == null ? '${kind.name}|$petId' : '${kind.name}|$petId|$targetId';
 
   @override
   String toString() => '$key @ $when';
@@ -45,12 +50,13 @@ int notificationIdFor(String key) {
   return hash & 0x7fffffff;
 }
 
-({ReminderKind kind, String petId})? parseReminderPayload(String? payload) {
+({ReminderKind kind, String petId, String? targetId})? parseReminderPayload(String? payload) {
   if (payload == null) return null;
   final parts = payload.split('|');
-  if (parts.length != 2 || parts[1].isEmpty) return null;
+  if (parts.length < 2 || parts.length > 3 || parts[1].isEmpty) return null;
+  final targetId = parts.length == 3 && parts[2].isNotEmpty ? parts[2] : null;
   for (final kind in ReminderKind.values) {
-    if (kind.name == parts[0]) return (kind: kind, petId: parts[1]);
+    if (kind.name == parts[0]) return (kind: kind, petId: parts[1], targetId: targetId);
   }
   return null;
 }
@@ -61,7 +67,13 @@ abstract final class ReminderPlanner {
   static const maxPending = 60;
   static const hour = 10;
   static const vaccineLeadDays = [7, 1];
-  static const vetVisitLeadDays = [1];
+
+  /// A visit without a time is called the evening before (NAN-133).
+  static const vetVisitEveHour = 19;
+
+  /// Evening of the visit: « complète ta visite », unless already filled in.
+  static const vetFollowUpHour = 19;
+  static const vetFollowUpAfterVisit = Duration(hours: 1);
 
   /// Promised on the trial screen: two days before the first charge.
   static const trialEndLeadDays = 2;
@@ -126,23 +138,34 @@ abstract final class ReminderPlanner {
       for (final visit in vetVisits) {
         final pet = petsById[visit.petId];
         if (pet == null) continue;
-        for (final lead in vetVisitLeadDays) {
-          planned.add(PlannedReminder(
-            key: 'vet:${visit.vetVisitId}:$lead',
-            kind: ReminderKind.vetVisit,
-            when: _at(visit.visitedAt, lead),
-            title: '🩺 Visite chez le vétérinaire',
-            body: '${visit.title} pour ${pet.petName} ${_inDays(lead)}',
-            petId: pet.petId,
-          ));
-        }
+        planned.add(visit.hasTime
+            ? PlannedReminder(
+                key: 'vet:${visit.vetVisitId}:0',
+                kind: ReminderKind.vetVisit,
+                when: sameDayCall(visit.visitedAt),
+                title: '🩺 Visite chez le vétérinaire',
+                body: '${visit.title} pour ${pet.petName} ${_todayAt(visit.visitedAt)}',
+                petId: pet.petId,
+                targetId: visit.vetVisitId,
+              )
+            : PlannedReminder(
+                key: 'vet:${visit.vetVisitId}:1',
+                kind: ReminderKind.vetVisit,
+                when: _eve(visit.visitedAt),
+                title: '🩺 Visite chez le vétérinaire',
+                body: '${visit.title} pour ${pet.petName} demain',
+                petId: pet.petId,
+                targetId: visit.vetVisitId,
+              ));
+        if (visit.isCompleted) continue;
         planned.add(PlannedReminder(
-          key: 'vet:${visit.vetVisitId}:0',
-          kind: ReminderKind.vetVisit,
-          when: sameDayCall(visit.visitedAt),
-          title: '🩺 Visite chez le vétérinaire',
-          body: '${visit.title} pour ${pet.petName} ${_todayAt(visit.visitedAt)}',
+          key: 'vet-follow-up:${visit.vetVisitId}',
+          kind: ReminderKind.vetVisitFollowUp,
+          when: followUpCall(visit),
+          title: '📎 Complète la visite de ${pet.petName}',
+          body: 'Ajoute le compte-rendu ou l\'ordonnance de « ${visit.title} », tu les retrouveras dans son carnet.',
           petId: pet.petId,
+          targetId: visit.vetVisitId,
         ));
       }
     }
@@ -214,6 +237,20 @@ abstract final class ReminderPlanner {
   static List<PlannedReminder> nearest(List<PlannedReminder> planned, {required DateTime now}) {
     final upcoming = planned.where((r) => r.when.isAfter(now)).toList()..sort((a, b) => a.when.compareTo(b.when));
     return upcoming.length > maxPending ? upcoming.sublist(0, maxPending) : upcoming;
+  }
+
+  /// 19:00 on the day, or an hour after a visit booked later than that.
+  static DateTime followUpCall(VetVisitModel visit) {
+    final local = visit.visitedAt.toLocal();
+    final evening = DateTime(local.year, local.month, local.day, vetFollowUpHour);
+    if (!visit.hasTime) return evening;
+    final afterVisit = local.add(vetFollowUpAfterVisit);
+    return afterVisit.isAfter(evening) ? afterVisit : evening;
+  }
+
+  static DateTime _eve(DateTime visit) {
+    final local = visit.toLocal();
+    return DateTime(local.year, local.month, local.day - 1, vetVisitEveHour);
   }
 
   /// A visit saved without a time (midnight) is called at 8:00.

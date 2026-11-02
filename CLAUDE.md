@@ -83,7 +83,10 @@ lib/
 | `health_diary`          | id_health_diary (UUID PK), is_sterilized, is_chipped, chip_number, last_deworming_at, last_vet_appointment, pet_id FK (UNIQUE 1:1)           | Lié au pet                       |
 | `health_diary_vaccines` | id_health_diary_vaccine (UUID PK), vaccine_name, last_date, next_date, recurrence (days), dose_number, total_dose_number, health_diary_id FK | Historique vaccins               |
 | `health_diary_weight_log` | id_health_diary_weight_log (UUID PK), weight (DECIMAL), logged_at (TIMESTAMPTZ), pet_id FK                                                 | Graphique 6 mois                 |
-| `vet_visits`            | id_vet_visit (UUID PK), title, visited_at (DATE), vet_name, clinic_name, pet_id FK (CASCADE)                                                 | Timeline visites véto (carnet)   |
+| `vet_visits`            | **Vue** (NAN-133) : id_vet_visit (= id_event), title, visited_at (DATE), vet_name, clinic_name, pet_id, visit_at (TIMESTAMPTZ), has_time, reason, report, document_count | Une visite est un événement. Triggers `INSTEAD OF` : les v1.2.x y lisent et écrivent encore. Ancienne table gardée en `vet_visits_legacy` |
+| `event_vet_details`     | event_id (PK, FK events CASCADE), pet_id FK, has_time, reason, report, vet_name, clinic_name                                                 | Ce qui fait d'un événement une visite (pas de `event_type` dédié). RLS via `users_pets` |
+| `event_documents`       | id_event_document (UUID PK), event_id FK, storage_path, file_name, mime_type, size_bytes (≤ 10 Mo), doc_type, source                      | 10 par visite (trigger). Fichiers dans `health-documents/{event_id}/`, supprimés par l'app avant la visite |
+| `app_config`            | key (PK), value                                                                                                                              | `min_supported_version`, `store_url_ios`, `store_url_android`. Lue au lancement par `MinVersionGate`, échec = on laisse passer |
 | `notifications`         | id_notification (UUID PK), type (enum), title, description, sending_at (TIMESTAMPTZ), id_pet FK                                              | Push Firebase FCM _(table prête, feature V2)_ |
 | `subscription_config`   | id_subscription_config (UUID PK), plan_name (UNIQUE: freemium/premium), max_images_per_event, max_pets                    | Quotas freemium. Résolu en joignant `plan_name` sur `users.subscription_status` (cf. §7). Icônes premium = `is_premium` (event_type/pet_icons) croisé au `subscription_status` de l'user, pas une colonne de config |
 
@@ -99,7 +102,7 @@ lib/
 - RLS activé sur toutes les tables
 - ON DELETE CASCADE pour FK liées à pets
 - Indexes sur : entry_date, next_date, sending_at, pet_id
-- Buckets Storage : `pet-avatars` (public), `journal-media` (privé), `documents` (privé)
+- Buckets Storage : `pet-avatars` (public), `journal-media` (privé), `documents` (privé), `health-documents` (privé, NAN-133, policy par l'animal de la visite)
 - **Schéma versionné** dans `supabase/migrations/` (tables, RLS, triggers de quotas, RPC `create_event`, RPC `delete_account`) — cf. `supabase/README.md`
 
 ---
