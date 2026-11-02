@@ -39,13 +39,7 @@ void main() {
         tester,
         AddVetVisitBottomSheetWidget(
           birthdate: _birthdate,
-          onSubmit: ({
-            required String title,
-            required DateTime visitedAt,
-            String? vetName,
-            String? clinicName,
-            String? petId,
-          }) {},
+          onSubmit: (_) {},
         ),
         'Date de la visite',
       );
@@ -62,13 +56,7 @@ void main() {
         AddVetVisitBottomSheetWidget(
           birthdate: _birthdate,
           upcomingOnly: true,
-          onSubmit: ({
-            required String title,
-            required DateTime visitedAt,
-            String? vetName,
-            String? clinicName,
-            String? petId,
-          }) {},
+          onSubmit: (_) {},
         ),
         'Date de la visite',
       );

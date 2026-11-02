@@ -13,12 +13,16 @@ class BottomBarMenuWidget extends StatelessWidget {
   final VoidCallback onAddEvent;
   final VoidCallback onAddPet;
 
+  /// Hidden when null, so a caller without the health feature keeps 3 rows.
+  final VoidCallback? onAddVetVisit;
+
   const BottomBarMenuWidget({
     super.key,
     required this.isOpen,
     required this.onAddWeight,
     required this.onAddEvent,
     required this.onAddPet,
+    this.onAddVetVisit,
     this.isAddPetPremiumLocked = false,
   });
 
@@ -66,6 +70,14 @@ class BottomBarMenuWidget extends StatelessWidget {
                     icon: AppIcons.addCalendar,
                     onTap: onAddEvent,
                   ),
+                  if (onAddVetVisit != null) ...[
+                    const SizedBox(height: AppSpacing.lg),
+                    _MenuActionRowWidget(
+                      label: 'Ajouter une visite véto',
+                      icon: AppIcons.vaccine,
+                      onTap: onAddVetVisit!,
+                    ),
+                  ],
                   const SizedBox(height: AppSpacing.lg),
                   _MenuActionRowWidget(
                     label: 'Ajouter un animal',

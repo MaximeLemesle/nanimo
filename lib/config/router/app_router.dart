@@ -20,6 +20,7 @@ import 'package:nanimo/features/event/presentation/cubit/edit_event_cubit.dart';
 import 'package:nanimo/features/event/presentation/cubit/event_creation_cubit.dart';
 import 'package:nanimo/features/event/presentation/page/create_event_page.dart';
 import 'package:nanimo/features/health/data/health_repository.dart';
+import 'package:nanimo/features/health/data/vet_document_repository.dart';
 import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
 import 'package:nanimo/features/event/presentation/page/edit_event_page.dart';
 import 'package:nanimo/features/journal/presentation/cubit/journal_cubit.dart';
@@ -44,6 +45,8 @@ import 'package:nanimo/features/onboarding/presentation/page/splash_page.dart';
 import 'package:nanimo/features/pet/presentation/page/edit_pet_page.dart';
 import 'package:nanimo/features/pet/presentation/page/pet_page.dart';
 import 'package:nanimo/features/pet/presentation/page/pet_health_diary_page.dart';
+import 'package:nanimo/features/pet/presentation/cubit/vet_visit_cubit.dart';
+import 'package:nanimo/features/pet/presentation/page/vet_visit_page.dart';
 import 'package:nanimo/features/home/data/article_repository.dart';
 
 CustomTransitionPage<void> _fadePage(GoRouterState state, Widget child) {
@@ -81,6 +84,7 @@ GoRouter createRouter(
   required ReferentialRepository referentialRepository,
   required PetRepository petRepository,
   required HealthRepository healthRepository,
+  required VetDocumentRepository vetDocumentRepository,
   required ArticleRepository articleRepository,
   required SettingsRepository settingsRepository,
   required PurchaseRepository purchaseRepository,
@@ -181,6 +185,7 @@ GoRouter createRouter(
               ),
               BlocProvider(
                 create: (_) => JournalCubit(
+                  healthRepository: healthRepository,
                   eventRepository: eventRepository,
                   petRepository: petRepository,
                   referentialRepository: referentialRepository,
@@ -224,6 +229,21 @@ GoRouter createRouter(
                       petRepository: petRepository,
                     )..load(state.pathParameters['eventId']!),
                     child: const EditEventPage(),
+                  ),
+                ),
+              ),
+              GoRoute(
+                path: 'vet-visit/:visitId',
+                pageBuilder: (_, state) => _fadePage(
+                  state,
+                  BlocProvider(
+                    create: (_) => VetVisitCubit(
+                      healthRepository: healthRepository,
+                      documentRepository: vetDocumentRepository,
+                      petRepository: petRepository,
+                      fromNotification: state.uri.queryParameters['from'] == 'notification',
+                    )..load(state.pathParameters['visitId']!),
+                    child: const VetVisitPage(),
                   ),
                 ),
               ),

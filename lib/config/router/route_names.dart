@@ -13,6 +13,7 @@ class RouteNames {
   static const healthDiaryWizard = '/pet/carnet';
   static const healthDiary = '/home/pet/health-diary';
   static const settings = '/home/settings';
+  static const vetVisit = '/home/vet-visit';
   static const paywall = '/paywall';
   static const premiumWelcome = '/premium/bienvenue';
 }

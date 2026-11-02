@@ -321,21 +321,7 @@ class HomePage extends StatelessWidget {
         initialPetId: petDetails.state.selectedPetId ?? state.pets.first.petId,
         birthdate: state.pets.first.birthdate,
         upcomingOnly: true,
-        onSubmit: ({
-          required String title,
-          required DateTime visitedAt,
-          String? vetName,
-          String? clinicName,
-          String? petId,
-        }) {
-          petDetails.addVetVisit(
-            title: title,
-            visitedAt: visitedAt,
-            vetName: vetName,
-            clinicName: clinicName,
-            petId: petId,
-          );
-        },
+        onSubmit: petDetails.addVetVisitDraft,
       ),
     );
   }

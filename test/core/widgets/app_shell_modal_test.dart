@@ -17,6 +17,7 @@ import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nanimo/features/event/data/event_repository.dart';
 import 'package:nanimo/features/event/data/models/event_type_model.dart';
 import 'package:nanimo/features/health/data/health_repository.dart';
+import 'package:nanimo/features/health/data/vet_document_repository.dart';
 import 'package:nanimo/features/health/data/models/health_diary_weight_log_model.dart';
 import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
 import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
@@ -36,6 +37,7 @@ class _MockReferentialRepository extends Mock
     implements ReferentialRepository {}
 
 class _MockPetRepository extends Mock implements PetRepository {}
+class _MockVetDocumentRepository extends Mock implements VetDocumentRepository {}
 
 class _MockHealthRepository extends Mock implements HealthRepository {}
 
@@ -211,6 +213,7 @@ void main() {
       referentialRepository: referentialRepo,
       petRepository: petRepo,
       healthRepository: healthRepo,
+      vetDocumentRepository: _MockVetDocumentRepository(),
       articleRepository: articleRepo,
       settingsRepository: _MockSettingsRepository(),
       purchaseRepository: _MockPurchaseRepository(),

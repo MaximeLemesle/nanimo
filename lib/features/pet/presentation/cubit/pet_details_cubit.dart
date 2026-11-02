@@ -16,6 +16,7 @@ import 'package:nanimo/features/health/data/models/health_diary_vaccine_model.da
 import 'package:nanimo/features/health/data/models/health_diary_weight_log_model.dart';
 import 'package:nanimo/features/health/data/models/recommended_vaccines_model.dart';
 import 'package:nanimo/features/health/data/models/vet_visit_model.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/add_vet_visit_bottom_sheet_widget.dart';
 import 'package:nanimo/features/pet/data/models/pet_model.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:uuid/uuid.dart';
@@ -330,6 +331,10 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     String? vetName,
     String? clinicName,
     String? petId,
+    bool hasTime = false,
+    String? reason,
+    String? report,
+    String source = HealthEntrySource.healthDiary,
   }) async {
     final targetId = petId ?? state.selectedPetId;
     if (targetId == null) return;
@@ -341,9 +346,12 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
         vetName: vetName,
         clinicName: clinicName,
         petId: targetId,
+        hasTime: hasTime,
+        reason: reason,
+        report: report,
       );
       await _healthRepository.addVetVisit(visit);
-      _trackVetVisitCreated(visitedAt, HealthEntrySource.healthDiary);
+      _trackVetVisitCreated(visitedAt, source, hasTime: hasTime);
       _offerReminders(targetId, visitedAt, isVetVisit: true);
     } catch (err) {
       if (isClosed) return;
@@ -371,13 +379,29 @@ class PetDetailsCubit extends Cubit<PetDetailsState> {
     );
   }
 
-  void _trackVetVisitCreated(DateTime visitedAt, String source) {
+  void _trackVetVisitCreated(DateTime visitedAt, String source, {bool hasTime = false}) {
     analytics.capture(
       AnalyticsEvents.vetVisitCreated,
       properties: {
         AnalyticsProperties.source: source,
         AnalyticsProperties.upcoming: visitedAt.isAfter(DateTime.now()),
+        AnalyticsProperties.hasTime: hasTime,
       },
+    );
+  }
+
+  /// Same form from the journal, the home and the record: one entry point here.
+  Future<void> addVetVisitDraft(VetVisitDraft draft, {String source = HealthEntrySource.healthDiary}) {
+    return addVetVisit(
+      title: draft.title,
+      visitedAt: draft.visitedAt,
+      vetName: draft.vetName,
+      clinicName: draft.clinicName,
+      petId: draft.petId,
+      hasTime: draft.hasTime,
+      reason: draft.reason,
+      report: draft.report,
+      source: source,
     );
   }
 

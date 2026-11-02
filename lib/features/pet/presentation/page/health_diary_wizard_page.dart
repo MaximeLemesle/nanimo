@@ -210,17 +210,12 @@ class _HealthDiaryWizardPageState extends State<HealthDiaryWizardPage> {
       context,
       AddVetVisitBottomSheetWidget(
         birthdate: birthdate,
-        onSubmit: (
-            {required String title,
-            required DateTime visitedAt,
-            String? vetName,
-            String? clinicName,
-            String? petId}) {
+        onSubmit: (draft) {
           created = (
-            title: title,
-            visitedAt: visitedAt,
-            vetName: vetName,
-            clinicName: clinicName
+            title: draft.title,
+            visitedAt: draft.visitedAt,
+            vetName: draft.vetName,
+            clinicName: draft.clinicName
           );
         },
       ),

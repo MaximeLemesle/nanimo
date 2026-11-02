@@ -266,7 +266,12 @@ create policy "app_config readable by all" on public.app_config
 grant select on public.app_config to anon, authenticated;
 
 -- Le minimum reste bas tant que des v1.2.x tournent : la vue les sert.
-insert into public.app_config (key, value) values ('min_supported_version', '1.0.0')
+-- store_url_ios : à remplir avec le lien App Store de Nanimo. Vide, l'écran de
+-- mise à jour s'affiche sans bouton.
+insert into public.app_config (key, value) values
+  ('min_supported_version', '1.0.0'),
+  ('store_url_android', 'https://play.google.com/store/apps/details?id=com.nanimo.nanimo'),
+  ('store_url_ios', '')
 on conflict (key) do nothing;
 
 commit;

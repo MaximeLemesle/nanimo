@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
+import 'package:nanimo/features/pet/presentation/widgets/pet_health_diary/pet_diary_bottom_sheet/add_vet_visit_bottom_sheet_widget.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nanimo/config/router/route_names.dart';
@@ -112,6 +113,13 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
         return;
       }
       petDetails.selectPet(reminder.petId);
+      final visitId = reminder.targetId;
+      if (visitId != null &&
+          (reminder.kind == ReminderKind.vetVisit || reminder.kind == ReminderKind.vetVisitFollowUp)) {
+        final from = reminder.kind == ReminderKind.vetVisitFollowUp ? '?from=notification' : '';
+        context.go('${RouteNames.vetVisit}/$visitId$from');
+        return;
+      }
       if (reminder.kind == ReminderKind.birthday) {
         context.go(Uri(
             path: RouteNames.createEvent,
@@ -189,6 +197,26 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     );
   }
 
+  /// Same form as the record, with its own animal selector (NAN-133).
+  void _onAddVetVisit() {
+    _closeCreateMenu();
+    final petDetails = context.read<PetDetailsCubit>();
+    if (petDetails.state.pets.isEmpty) {
+      _showSnackBar('Ajoutez d\'abord un animal.');
+      return;
+    }
+    BottomSheetWidget.show(
+      context,
+      AddVetVisitBottomSheetWidget(
+        pets: petDetails.state.pets,
+        portraits: petDetails.state.portraits,
+        initialPetId: petDetails.state.selectedPetId,
+        birthdate: petDetails.state.selectedPet?.birthdate,
+        onSubmit: (draft) => petDetails.addVetVisitDraft(draft, source: HealthEntrySource.journal),
+      ),
+    );
+  }
+
   void _onAddEvent() {
     _closeCreateMenu();
     context.push(RouteNames.createEvent);
@@ -258,6 +286,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
               _isAddPetPremiumLocked(subscription, petDetails.pets.length),
           onAddWeight: _onAddWeight,
           onAddEvent: _onAddEvent,
+          onAddVetVisit: _onAddVetVisit,
           onAddPet: _onAddPet,
         ),
       ),

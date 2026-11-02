@@ -31,8 +31,14 @@ HealthDiaryVaccineModel _vaccine(String id, DateTime? next, {String diaryId = 'd
       healthDiaryId: diaryId,
     );
 
-VetVisitModel _visit(String id, DateTime at, {String petId = 'p1'}) =>
-    VetVisitModel(vetVisitId: id, title: 'Contrôle annuel', visitedAt: at, petId: petId);
+VetVisitModel _visit(String id, DateTime at, {String petId = 'p1', bool? hasTime, String? report}) => VetVisitModel(
+      vetVisitId: id,
+      title: 'Contrôle annuel',
+      visitedAt: at,
+      petId: petId,
+      hasTime: hasTime ?? (at.hour != 0 || at.minute != 0),
+      report: report,
+    );
 
 List<PlannedReminder> _plan({
   List<HealthDiaryVaccineModel> vaccines = const [],
@@ -59,16 +65,43 @@ void main() {
     expect(plan.first.petId, 'p1');
   });
 
-  test('a vet visit rings the day before at 10:00 and two hours before', () {
+  test('a visit with a time rings two hours before, then asks for its report at 19:00', () {
     final plan = _plan(visits: [_visit('w1', DateTime(2026, 10, 20, 17, 30))]);
 
-    expect(plan.map((r) => r.when), [DateTime(2026, 10, 19, 10), DateTime(2026, 10, 20, 15, 30)]);
-    expect(plan.first.body, 'Contrôle annuel pour Saïko demain');
-    expect(plan.last.body, "Contrôle annuel pour Saïko aujourd'hui à 17h30");
+    expect(plan.map((r) => r.when), [DateTime(2026, 10, 20, 15, 30), DateTime(2026, 10, 20, 19)]);
+    expect(plan.first.body, "Contrôle annuel pour Saïko aujourd'hui à 17h30");
+    expect(plan.first.kind, ReminderKind.vetVisit);
+    expect(plan.last.kind, ReminderKind.vetVisitFollowUp);
+    expect(plan.last.title, '📎 Complète la visite de Saïko');
+    expect(plan.map((r) => r.targetId).toSet(), {'w1'});
   });
 
-  // NAN-112: booked in the evening for tomorrow, the eve call is already past.
-  test('a visit booked after 10:00 for tomorrow is still called on the day', () {
+  test('a visit without a time rings the evening before at 19:00', () {
+    final plan = _plan(visits: [_visit('w1', DateTime(2026, 10, 20))]);
+
+    expect(plan.map((r) => r.when), [DateTime(2026, 10, 19, 19), DateTime(2026, 10, 20, 19)]);
+    expect(plan.first.body, 'Contrôle annuel pour Saïko demain');
+    expect(plan.first.key, 'vet:w1:1');
+  });
+
+  test('a visit booked after 18:00 is followed up an hour after it', () {
+    final plan = _plan(visits: [_visit('w1', DateTime(2026, 10, 20, 19, 30))]);
+
+    expect(plan.last.when, DateTime(2026, 10, 20, 20, 30));
+  });
+
+  test('a visit already filled in gets no follow-up', () {
+    final withReport = _plan(visits: [_visit('w1', DateTime(2026, 10, 20, 17, 30), report: 'RAS')]);
+    final withDocument = _plan(visits: [
+      _visit('w2', DateTime(2026, 10, 20, 17, 30)).copyWith(documentCount: 1),
+    ]);
+
+    expect(withReport.map((r) => r.kind), [ReminderKind.vetVisit]);
+    expect(withDocument.map((r) => r.kind), [ReminderKind.vetVisit]);
+  });
+
+  // NAN-112: booked in the evening for tomorrow, the call still comes on the day.
+  test('a visit booked in the evening for tomorrow morning is still called on the day', () {
     final plan = ReminderPlanner.plan(
       pets: [_saiko],
       diaries: const [_diary],
@@ -78,21 +111,13 @@ void main() {
       now: DateTime(2026, 10, 16, 19, 32),
     );
 
-    expect(plan.single.when, DateTime(2026, 10, 17, 8));
-    expect(plan.single.key, 'vet:w1:0');
+    expect(plan.first.when, DateTime(2026, 10, 17, 8));
+    expect(plan.first.key, 'vet:w1:0');
   });
 
-  test('the same-day call never rings before 7:00, and at 8:00 without a time', () {
+  test('the same-day call never rings before 7:00, and at 8:00 at midnight', () {
     expect(ReminderPlanner.sameDayCall(DateTime(2026, 10, 20, 8)), DateTime(2026, 10, 20, 7));
     expect(ReminderPlanner.sameDayCall(DateTime(2026, 10, 20)), DateTime(2026, 10, 20, 8));
-    expect(ReminderPlanner.plan(
-      pets: [_saiko],
-      diaries: const [_diary],
-      vaccines: const [],
-      vetVisits: [_visit('w1', DateTime(2026, 10, 20))],
-      prefs: const NotificationPrefsModel(anniversaryReminders: false),
-      now: _now,
-    ).last.body, "Contrôle annuel pour Saïko aujourd'hui");
   });
 
   test('nothing is planned in the past', () {
@@ -120,7 +145,7 @@ void main() {
     expect(_plan(vaccines: vaccines, visits: visits, prefs: const NotificationPrefsModel(pushEnabled: false)), isEmpty);
     expect(
       _plan(vaccines: vaccines, visits: visits, prefs: const NotificationPrefsModel(vaccineReminders: false)).map((r) => r.kind).toSet(),
-      {ReminderKind.vetVisit, ReminderKind.birthday},
+      {ReminderKind.vetVisit, ReminderKind.vetVisitFollowUp, ReminderKind.birthday},
     );
     expect(
       _plan(vaccines: vaccines, visits: visits, prefs: const NotificationPrefsModel(vetReminders: false, anniversaryReminders: false))
@@ -143,8 +168,13 @@ void main() {
 
     expect(reminder.id, notificationIdFor('vaccine:v1:7'));
     expect(reminder.id, greaterThanOrEqualTo(0));
-    expect(parseReminderPayload(reminder.payload), (kind: ReminderKind.vaccine, petId: 'p1'));
+    expect(parseReminderPayload(reminder.payload), (kind: ReminderKind.vaccine, petId: 'p1', targetId: null));
     expect(parseReminderPayload('garbage'), isNull);
+    expect(parseReminderPayload('vetVisit|p1|w1|extra'), isNull);
+
+    final visit = _plan(visits: [_visit('w1', DateTime(2026, 10, 20, 17, 30))]).last;
+    expect(visit.payload, 'vetVisitFollowUp|p1|w1');
+    expect(parseReminderPayload(visit.payload), (kind: ReminderKind.vetVisitFollowUp, petId: 'p1', targetId: 'w1'));
   });
 
   group('birthdays (NAN-007)', () {

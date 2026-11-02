@@ -29,6 +29,8 @@ import 'package:nanimo/features/event/data/event_repository.dart';
 import 'package:nanimo/features/auth/presentation/auth_identity_sync.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nanimo/features/health/data/health_repository.dart';
+import 'package:nanimo/features/health/data/vet_document_repository.dart';
+import 'package:nanimo/core/version/min_version_gate.dart';
 import 'package:nanimo/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:nanimo/features/pet/data/pet_repository.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
@@ -106,6 +108,8 @@ void main() async {
   final referentialRepository = ReferentialRepository(supabase, isar);
   final petRepository = PetRepository(supabase, isar);
   final healthRepository = HealthRepository(supabase, isar);
+  final vetDocumentRepository = VetDocumentRepository(supabase, isar);
+  final minVersionCheck = MinVersionCheck(supabase, currentVersion: packageInfo.version);
   final eventRepository = EventRepository(supabase, isar);
   final articleRepository = ArticleRepository(isar);
   final settingsRepository = SettingsRepository(supabase, isar);
@@ -205,6 +209,8 @@ void main() async {
         referentialRepository: referentialRepository,
         petRepository: petRepository,
         healthRepository: healthRepository,
+        vetDocumentRepository: vetDocumentRepository,
+        minVersionCheck: minVersionCheck,
         articleRepository: articleRepository,
         settingsRepository: settingsRepository,
         purchaseRepository: purchaseRepository,
@@ -265,6 +271,8 @@ class MyApp extends StatefulWidget {
   final ReferentialRepository referentialRepository;
   final PetRepository petRepository;
   final HealthRepository healthRepository;
+  final VetDocumentRepository vetDocumentRepository;
+  final MinVersionCheck? minVersionCheck;
   final ArticleRepository articleRepository;
   final SettingsRepository settingsRepository;
   final PurchaseRepository purchaseRepository;
@@ -280,6 +288,8 @@ class MyApp extends StatefulWidget {
     required this.referentialRepository,
     required this.petRepository,
     required this.healthRepository,
+    required this.vetDocumentRepository,
+    this.minVersionCheck,
     required this.articleRepository,
     required this.settingsRepository,
     required this.purchaseRepository,
@@ -335,7 +345,12 @@ class _MyAppState extends State<MyApp> {
           builder: (context, child) => EnvironmentBanner(
             environment: AppEnvironment.current,
             child: KeyboardDismissWrapper(
-              child: child ?? const SizedBox.shrink(),
+              child: widget.minVersionCheck == null
+                  ? child ?? const SizedBox.shrink()
+                  : MinVersionGate(
+                      requiredUpdate: widget.minVersionCheck!.requiredUpdate,
+                      child: child ?? const SizedBox.shrink(),
+                    ),
             ),
           ),
           routerConfig: createRouter(
@@ -345,6 +360,7 @@ class _MyAppState extends State<MyApp> {
             referentialRepository: widget.referentialRepository,
             petRepository: widget.petRepository,
             healthRepository: widget.healthRepository,
+            vetDocumentRepository: widget.vetDocumentRepository,
             articleRepository: widget.articleRepository,
             settingsRepository: widget.settingsRepository,
             purchaseRepository: widget.purchaseRepository,
