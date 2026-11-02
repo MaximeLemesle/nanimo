@@ -1,7 +1,11 @@
+import 'package:isar/isar.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nanimo/core/errors/repository_exception.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:nanimo/core/isar/cache/schemas/event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/health_diary_vaccine_cache.dart';
+import 'package:nanimo/core/isar/cache/schemas/pet_event_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/vet_visit_cache.dart';
 import 'package:nanimo/core/isar/cache/schemas/weight_log_cache.dart';
 import 'package:nanimo/features/health/data/health_repository.dart';
@@ -258,6 +262,28 @@ void main() {
       await expectLater(repo.addVetVisit(buildVisit('v1')), throwsException);
       expect(await harness.isar.vetVisitCaches.getByVetVisitId('v1'), isNull);
     });
+    // NAN-133: the visit is a journal event, it shows there at once.
+    test('also caches the journal event and its animal', () async {
+      stubInsert(supabase, 'vet_visits', resolver: () => null);
+
+      await repo.addVetVisit(buildVisit('v1', petId: 'pet-2'));
+
+      final event = await harness.isar.eventCaches.getByEventId('v1');
+      final links = await harness.isar.petEventCaches.filter().eventIdEqualTo('v1').findAll();
+      expect(event!.title, 'Bilan annuel');
+      expect(event.eventTypeId, '');
+      expect(links.map((link) => link.petId), ['pet-2']);
+    });
+  });
+
+  group('watchVetVisit', () {
+    test('follows one visit and emits null once it is gone', () async {
+      await seedVisit(buildVisit('v1'));
+
+      expect((await repo.watchVetVisit('v1').first)!.vetVisitId, 'v1');
+      expect(await repo.watchVetVisit('nope').first, isNull);
+      expect((await repo.getVetVisit('v1'))!.title, 'Bilan annuel');
+    });
   });
 
   group('deleteVetVisit', () {
@@ -267,6 +293,38 @@ void main() {
 
       await repo.deleteVetVisit('v1');
 
+      expect(await harness.isar.vetVisitCaches.getByVetVisitId('v1'), isNull);
+    });
+
+    test('drops the journal event with it', () async {
+      stubInsert(supabase, 'vet_visits', resolver: () => null);
+      await repo.addVetVisit(buildVisit('v1'));
+      stubDelete(supabase, 'vet_visits', resolver: () => null);
+
+      await repo.deleteVetVisit('v1');
+
+      expect(await harness.isar.eventCaches.getByEventId('v1'), isNull);
+      expect(await harness.isar.petEventCaches.filter().eventIdEqualTo('v1').count(), 0);
+    });
+
+    test('removes the document files first, the rows cascade on their own', () async {
+      await seedVisit(VetVisitModel(
+        vetVisitId: 'v1',
+        title: 'Bilan',
+        visitedAt: DateTime(2026, 1, 14),
+        petId: 'pet-1',
+        documentCount: 2,
+      ));
+      stubSelect(supabase, 'event_documents', resolver: () => [
+            {'storage_path': 'v1/a.pdf'},
+            {'storage_path': 'v1/b.jpg'},
+          ]);
+      final fileApi = stubStorageRemove(supabase, 'health-documents', resolver: () {});
+      stubDelete(supabase, 'vet_visits', resolver: () => null);
+
+      await repo.deleteVetVisit('v1');
+
+      verify(() => fileApi.remove(['v1/a.pdf', 'v1/b.jpg'])).called(1);
       expect(await harness.isar.vetVisitCaches.getByVetVisitId('v1'), isNull);
     });
 
@@ -467,6 +525,21 @@ void main() {
         cached!.visitedAt.isAtSameMomentAs(DateTime.utc(2027, 2, 2)),
         isTrue,
       );
+    });
+
+    test('keeps the cached document count the form does not carry', () async {
+      await seedVisit(VetVisitModel(
+        vetVisitId: 'v1',
+        title: 'Bilan',
+        visitedAt: DateTime(2026, 1, 14),
+        petId: 'pet-1',
+        documentCount: 3,
+      ));
+      stubUpdate(supabase, 'vet_visits', resolver: () => null);
+
+      await repo.updateVetVisit(buildVisit('v1'));
+
+      expect((await harness.isar.vetVisitCaches.getByVetVisitId('v1'))!.documentCount, 3);
     });
 
     test('throws when Supabase fails', () async {

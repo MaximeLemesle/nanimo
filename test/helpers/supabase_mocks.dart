@@ -126,6 +126,13 @@ class FakeSelectChain extends Fake
       this;
 
   @override
+  PostgrestFilterBuilder<List<Map<String, dynamic>>> inFilter(
+    String column,
+    List<dynamic> values,
+  ) =>
+      this;
+
+  @override
   PostgrestTransformBuilder<List<Map<String, dynamic>>> order(
     String column, {
     bool ascending = false,

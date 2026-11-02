@@ -22,28 +22,48 @@ const VetVisitCacheSchema = CollectionSchema(
       name: r'clinicName',
       type: IsarType.string,
     ),
-    r'petId': PropertySchema(
+    r'documentCount': PropertySchema(
       id: 1,
+      name: r'documentCount',
+      type: IsarType.long,
+    ),
+    r'hasTime': PropertySchema(
+      id: 2,
+      name: r'hasTime',
+      type: IsarType.bool,
+    ),
+    r'petId': PropertySchema(
+      id: 3,
       name: r'petId',
       type: IsarType.string,
     ),
+    r'reason': PropertySchema(
+      id: 4,
+      name: r'reason',
+      type: IsarType.string,
+    ),
+    r'report': PropertySchema(
+      id: 5,
+      name: r'report',
+      type: IsarType.string,
+    ),
     r'title': PropertySchema(
-      id: 2,
+      id: 6,
       name: r'title',
       type: IsarType.string,
     ),
     r'vetName': PropertySchema(
-      id: 3,
+      id: 7,
       name: r'vetName',
       type: IsarType.string,
     ),
     r'vetVisitId': PropertySchema(
-      id: 4,
+      id: 8,
       name: r'vetVisitId',
       type: IsarType.string,
     ),
     r'visitedAt': PropertySchema(
-      id: 5,
+      id: 9,
       name: r'visitedAt',
       type: IsarType.dateTime,
     )
@@ -115,6 +135,18 @@ int _vetVisitCacheEstimateSize(
     }
   }
   bytesCount += 3 + object.petId.length * 3;
+  {
+    final value = object.reason;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.report;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.title.length * 3;
   {
     final value = object.vetName;
@@ -133,11 +165,15 @@ void _vetVisitCacheSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeString(offsets[0], object.clinicName);
-  writer.writeString(offsets[1], object.petId);
-  writer.writeString(offsets[2], object.title);
-  writer.writeString(offsets[3], object.vetName);
-  writer.writeString(offsets[4], object.vetVisitId);
-  writer.writeDateTime(offsets[5], object.visitedAt);
+  writer.writeLong(offsets[1], object.documentCount);
+  writer.writeBool(offsets[2], object.hasTime);
+  writer.writeString(offsets[3], object.petId);
+  writer.writeString(offsets[4], object.reason);
+  writer.writeString(offsets[5], object.report);
+  writer.writeString(offsets[6], object.title);
+  writer.writeString(offsets[7], object.vetName);
+  writer.writeString(offsets[8], object.vetVisitId);
+  writer.writeDateTime(offsets[9], object.visitedAt);
 }
 
 VetVisitCache _vetVisitCacheDeserialize(
@@ -148,12 +184,16 @@ VetVisitCache _vetVisitCacheDeserialize(
 ) {
   final object = VetVisitCache();
   object.clinicName = reader.readStringOrNull(offsets[0]);
+  object.documentCount = reader.readLong(offsets[1]);
+  object.hasTime = reader.readBool(offsets[2]);
   object.id = id;
-  object.petId = reader.readString(offsets[1]);
-  object.title = reader.readString(offsets[2]);
-  object.vetName = reader.readStringOrNull(offsets[3]);
-  object.vetVisitId = reader.readString(offsets[4]);
-  object.visitedAt = reader.readDateTime(offsets[5]);
+  object.petId = reader.readString(offsets[3]);
+  object.reason = reader.readStringOrNull(offsets[4]);
+  object.report = reader.readStringOrNull(offsets[5]);
+  object.title = reader.readString(offsets[6]);
+  object.vetName = reader.readStringOrNull(offsets[7]);
+  object.vetVisitId = reader.readString(offsets[8]);
+  object.visitedAt = reader.readDateTime(offsets[9]);
   return object;
 }
 
@@ -167,14 +207,22 @@ P _vetVisitCacheDeserializeProp<P>(
     case 0:
       return (reader.readStringOrNull(offset)) as P;
     case 1:
-      return (reader.readString(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 2:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 3:
-      return (reader.readStringOrNull(offset)) as P;
-    case 4:
       return (reader.readString(offset)) as P;
+    case 4:
+      return (reader.readStringOrNull(offset)) as P;
     case 5:
+      return (reader.readStringOrNull(offset)) as P;
+    case 6:
+      return (reader.readString(offset)) as P;
+    case 7:
+      return (reader.readStringOrNull(offset)) as P;
+    case 8:
+      return (reader.readString(offset)) as P;
+    case 9:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -678,6 +726,72 @@ extension VetVisitCacheQueryFilter
     });
   }
 
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      documentCountEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'documentCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      documentCountGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'documentCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      documentCountLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'documentCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      documentCountBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'documentCount',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      hasTimeEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'hasTime',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition> idEqualTo(
       Id value) {
     return QueryBuilder.apply(this, (query) {
@@ -863,6 +977,314 @@ extension VetVisitCacheQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'petId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      reasonIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'reason',
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      reasonIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'reason',
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      reasonEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'reason',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      reasonGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'reason',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      reasonLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'reason',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      reasonBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'reason',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      reasonStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'reason',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      reasonEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'reason',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      reasonContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'reason',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      reasonMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'reason',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      reasonIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'reason',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      reasonIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'reason',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      reportIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'report',
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      reportIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'report',
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      reportEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'report',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      reportGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'report',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      reportLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'report',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      reportBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'report',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      reportStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'report',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      reportEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'report',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      reportContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'report',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      reportMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'report',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      reportIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'report',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterFilterCondition>
+      reportIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'report',
         value: '',
       ));
     });
@@ -1372,6 +1794,32 @@ extension VetVisitCacheQuerySortBy
     });
   }
 
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterSortBy>
+      sortByDocumentCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'documentCount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterSortBy>
+      sortByDocumentCountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'documentCount', Sort.desc);
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterSortBy> sortByHasTime() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasTime', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterSortBy> sortByHasTimeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasTime', Sort.desc);
+    });
+  }
+
   QueryBuilder<VetVisitCache, VetVisitCache, QAfterSortBy> sortByPetId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'petId', Sort.asc);
@@ -1381,6 +1829,30 @@ extension VetVisitCacheQuerySortBy
   QueryBuilder<VetVisitCache, VetVisitCache, QAfterSortBy> sortByPetIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'petId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterSortBy> sortByReason() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reason', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterSortBy> sortByReasonDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reason', Sort.desc);
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterSortBy> sortByReport() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'report', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterSortBy> sortByReportDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'report', Sort.desc);
     });
   }
 
@@ -1450,6 +1922,32 @@ extension VetVisitCacheQuerySortThenBy
     });
   }
 
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterSortBy>
+      thenByDocumentCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'documentCount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterSortBy>
+      thenByDocumentCountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'documentCount', Sort.desc);
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterSortBy> thenByHasTime() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasTime', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterSortBy> thenByHasTimeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasTime', Sort.desc);
+    });
+  }
+
   QueryBuilder<VetVisitCache, VetVisitCache, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -1471,6 +1969,30 @@ extension VetVisitCacheQuerySortThenBy
   QueryBuilder<VetVisitCache, VetVisitCache, QAfterSortBy> thenByPetIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'petId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterSortBy> thenByReason() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reason', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterSortBy> thenByReasonDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reason', Sort.desc);
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterSortBy> thenByReport() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'report', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QAfterSortBy> thenByReportDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'report', Sort.desc);
     });
   }
 
@@ -1534,10 +2056,37 @@ extension VetVisitCacheQueryWhereDistinct
     });
   }
 
+  QueryBuilder<VetVisitCache, VetVisitCache, QDistinct>
+      distinctByDocumentCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'documentCount');
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QDistinct> distinctByHasTime() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'hasTime');
+    });
+  }
+
   QueryBuilder<VetVisitCache, VetVisitCache, QDistinct> distinctByPetId(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'petId', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QDistinct> distinctByReason(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'reason', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<VetVisitCache, VetVisitCache, QDistinct> distinctByReport(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'report', caseSensitive: caseSensitive);
     });
   }
 
@@ -1583,9 +2132,33 @@ extension VetVisitCacheQueryProperty
     });
   }
 
+  QueryBuilder<VetVisitCache, int, QQueryOperations> documentCountProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'documentCount');
+    });
+  }
+
+  QueryBuilder<VetVisitCache, bool, QQueryOperations> hasTimeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'hasTime');
+    });
+  }
+
   QueryBuilder<VetVisitCache, String, QQueryOperations> petIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'petId');
+    });
+  }
+
+  QueryBuilder<VetVisitCache, String?, QQueryOperations> reasonProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'reason');
+    });
+  }
+
+  QueryBuilder<VetVisitCache, String?, QQueryOperations> reportProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'report');
     });
   }
 

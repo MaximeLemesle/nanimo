@@ -30,6 +30,9 @@ class AnalyticsEvents {
 
   static const vaccineCreated = 'vaccine_created';
   static const vetVisitCreated = 'vet_visit_created';
+  static const vetVisitCompleted = 'vet_visit_completed';
+  static const vetDocumentAdded = 'vet_document_added';
+  static const vetDocumentShared = 'vet_document_shared';
   static const weightLogged = 'weight_logged';
   static const reminderScheduled = 'reminder_scheduled';
   static const notificationOpened = 'notification_opened';
@@ -76,6 +79,10 @@ class AnalyticsProperties {
   static const restored = 'restored';
   static const source = 'source';
   static const upcoming = 'upcoming';
+  static const hasTime = 'has_time';
+  static const fromNotification = 'from_notification';
+  static const docType = 'doc_type';
+  static const mimeType = 'mime_type';
   static const item = 'item';
   static const result = 'result';
   static const kind = 'kind';
@@ -115,6 +122,7 @@ class HealthEntrySource {
   static const healthDiary = 'health_diary';
   static const diaryCreation = 'diary_creation';
   static const onboarding = 'onboarding';
+  static const journal = 'journal';
 }
 
 /// What blocked the user right before the paywall opened. This is the property
