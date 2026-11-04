@@ -20,6 +20,10 @@ if (!hasReleaseKeystore) {
     logger.lifecycle("[nanimo] No upload keystore found, release builds will be signed with the debug key. Do not publish these artifacts.")
 }
 
+// A store-ready id needs ENV=prod: a forgotten flag builds an app Play cannot accept (NAN-134).
+def dartDefines = project.findProperty('dart-defines')?.split(',')?.collect { new String(it.decodeBase64(), 'UTF-8') } ?: []
+def isProd = dartDefines.contains('ENV=prod')
+
 android {
     namespace = "com.nanimo.nanimo"
     compileSdk = flutter.compileSdkVersion
@@ -37,8 +41,8 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.nanimo.nanimo"
+        applicationId = isProd ? "com.nanimo.nanimo" : "com.nanimo.nanimo.dev"
+        manifestPlaceholders += [appLabel: isProd ? "nanimo" : "Nanimo Dev"]
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

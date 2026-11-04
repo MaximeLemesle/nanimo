@@ -60,7 +60,7 @@ jobs:
           EOF
 
       - name: Build APK
-        run: flutter build apk --release
+        run: flutter build apk --release --dart-define=ENV=prod
 
       - name: Verify the APK is not debug-signed
         run: |
@@ -74,7 +74,20 @@ jobs:
           rm signer-certs.txt
 
       - name: Build App Bundle
-        run: flutter build appbundle --release
+        run: flutter build appbundle --release --dart-define=ENV=prod
+
+      - name: Verify both artifacts target production
+        run: |
+          unzip -p build/app/outputs/flutter-apk/app-release.apk \
+            lib/arm64-v8a/libapp.so > libapp-apk.so
+          unzip -p build/app/outputs/bundle/release/app-release.aab \
+            base/lib/arm64-v8a/libapp.so > libapp-aab.so
+          scripts/check_binary_env.sh libapp-apk.so prod
+          scripts/check_binary_env.sh libapp-aab.so prod
+          rm libapp-apk.so libapp-aab.so
+          aapt=$(ls "$ANDROID_HOME"/build-tools/*/aapt | sort -V | tail -1)
+          "$aapt" dump badging build/app/outputs/flutter-apk/app-release.apk \
+            | grep -q "package: name='com.nanimo.nanimo' "
 
       # upload-artifact roots the archive at the least common ancestor of its
       # paths, so a flat directory is required to keep the download predictable.

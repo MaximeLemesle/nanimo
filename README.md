@@ -28,18 +28,35 @@ cp .env.example .env
 > Ne mettez que des valeurs **publiques** dans `.env` : il est embarqué dans les
 > assets et donc présent en clair dans l'app livrée.
 
-### Environnement de développement
+### Environnements
 
-Un build sans option parle à la production via `.env`. Pour travailler sur le
-projet Supabase de développement (`nanimo-dev`) :
+**Un build sans option part sur dev**, sous une app distincte. La prod se demande
+explicitement, et toute autre valeur que `dev` ou `prod` fait échouer le démarrage.
+
+| Cible | Commande | Config lue | Identifiant | Nom |
+| --- | --- | --- | --- | --- |
+| dev | `flutter run` | `env/dev.env` | `com.nanimo.nanimo.dev` | Nanimo Dev |
+| prod iOS | `flutter build ios --flavor prod --dart-define=ENV=prod` | `.env` | `com.nanimo.nanimo` | Nanimo |
+| prod Android | `flutter build appbundle --dart-define=ENV=prod` | `.env` | `com.nanimo.nanimo` | nanimo |
 
 ```bash
 cp env/dev.env.example env/dev.env   # puis remplir avec les clés de nanimo-dev
-flutter run --dart-define=ENV=dev
+flutter run
 ```
 
-Un bandeau « DEV » s'affiche alors sur tous les écrans, et Sentry comme PostHog
-reçoivent `environment: development`. `env/dev.env` est gitignoré.
+`env/dev.env` est gitignoré et n'est pas requis pour compiler : sans lui, un
+build dev compile et l'app s'arrête au démarrage en indiquant quoi faire. Sur
+dev, un bandeau « DEV » s'affiche sur tous les écrans, et Sentry comme PostHog
+reçoivent `environment: development`.
+
+**Garde-fous** — le binaire compilé embarque `nanimo-env-prod` ou `nanimo-env-dev`,
+lu par `scripts/check_binary_env.sh` :
+
+- iOS : la build phase « Match binary environment to bundle id » fait échouer tout
+  build Release dont le binaire ne correspond pas à l'identifiant, depuis Xcode
+  comme en ligne de commande. Le schéma `Runner` construit dev, le schéma `prod`
+  construit la prod. Xcode reprend les defines du dernier `flutter build`.
+- Android : l'identifiant suit `ENV`, et `release.yml` vérifie binaire et identifiant.
 
 Mise en place du projet de dev, une seule fois : créer le projet Supabase,
 appliquer les migrations de `supabase/migrations` dessus (`supabase link` sur
