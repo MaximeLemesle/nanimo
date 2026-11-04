@@ -1,0 +1,6 @@
+#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release-prod.xcconfig"
+#include "Generated.xcconfig"
+
+APP_ENV=prod
+APP_BUNDLE_ID=com.nanimo.nanimo
+APP_DISPLAY_NAME=Nanimo

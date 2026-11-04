@@ -52,9 +52,9 @@ void main() async {
   try {
     await dotenv.load(fileName: environment.dotenvFile);
   } catch (_) {
-    throw Exception(
-        'Missing ${environment.dotenvFile}: copy its .example next to it and fill it in');
+    throw Exception(environment.missingConfigMessage);
   }
+  developer.log(AppEnvironment.compiledMarker, name: 'environment');
   final String? url = dotenv.env['SUPABASE_URL'];
   final String? anonKey = dotenv.env['SUPABASE_ANON_KEY'];
   final String? iosClientId = dotenv.env['GOOGLE_IOS_CLIENT_ID'];

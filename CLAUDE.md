@@ -311,6 +311,8 @@ git config core.hooksPath .githooks
 flutter run
 ```
 
+**Environnements (NAN-134)** : sans flag, un build vise dev (`env/dev.env`, identifiant `com.nanimo.nanimo.dev`, nom « Nanimo Dev »). Toute valeur d'`ENV` hors `dev`/`prod` lève une erreur au démarrage. iOS : schéma `prod` + configuration `Release-prod` (`--flavor prod --dart-define=ENV=prod`) pour `com.nanimo.nanimo`, schéma `Runner` pour dev ; pas de flavors Android, `build.gradle` lit `ENV` dans les `dart-defines` et choisit l'identifiant, ce qui garde les chemins d'artefacts de la CI. `AppEnvironment.compiledMarker` n'embarque que `nanimo-env-prod` ou `nanimo-env-dev` : `scripts/check_binary_env.sh` le cherche dans le binaire, pour `release.yml` et pour la build phase Xcode qui fait échouer tout build Release où binaire et identifiant divergent.
+
 **Convention de commit** : `<type>(<scope>): <description> NAN-<id>` (ex : `feat(subscription): add cubit NAN-008`). Types autorisés : `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `perf`, `ci`, `build`, `revert`. Le hook `commit-msg` bloque les messages non conformes en local ; la CI le revérifie sur chaque PR.
 
 ## 9. Tests
