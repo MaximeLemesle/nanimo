@@ -5,7 +5,11 @@ import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:nanimo/core/push/push_client.dart';
+import 'package:nanimo/core/push/push_token_repository.dart';
+import 'package:nanimo/core/push/push_token_sync.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:nanimo/config/app_environment.dart';
 import 'package:nanimo/config/router/app_router.dart';
@@ -107,14 +111,16 @@ void main() async {
   final petRepository = PetRepository(supabase, isar);
   final healthRepository = HealthRepository(supabase, isar);
   final eventRepository = EventRepository(supabase, isar);
-  final articleRepository = ArticleRepository(isar);
+  final articleRepository = ArticleRepository(isar, supabase);
   final settingsRepository = SettingsRepository(supabase, isar);
 
   final purchaseRepository = await _buildPurchaseRepository();
 
+  late final PushTokenSync pushTokenSync;
   final authCubit = AuthCubit(
     repository: authRepository,
     syncService: SyncService(supabase, isar),
+    beforeLogout: () => pushTokenSync.unregister(),
   );
 
   /// Keeps the RevenueCat account aligned with the Supabase user, so the
@@ -160,6 +166,13 @@ void main() async {
       }
     },
   );
+  pushTokenSync = PushTokenSync(
+    client: await _initPush(),
+    repository: PushTokenRepository(supabase),
+    settingsRepository: settingsRepository,
+    isPermissionGranted: () => notifications.isPermissionGranted(),
+    permissionChanges: notificationPriming.permission,
+  )..bind(authCubit);
   trialEndWatcher = TrialEndWatcher(purchaseRepository.trialEndsAt);
   ReminderScheduler(
     client: notifications,
@@ -224,6 +237,29 @@ Future<void> _initNotifications() async {
   } catch (e, st) {
     developer.log('local notifications unavailable',
         name: 'notifications', error: e, stackTrace: st);
+  }
+}
+
+/// Server pushes (NAN-135). Missing keys or a plugin failure leave the app
+/// without pushes, never without a start.
+Future<PushClient> _initPush() async {
+  final options = firebaseOptionsFrom(dotenv.env, isIOS: Platform.isIOS);
+  if (options == null) {
+    developer.log('Firebase keys missing, pushes are disabled', name: 'push');
+    return const NoopPushClient();
+  }
+  try {
+    await Firebase.initializeApp(options: options);
+    final client = FirebasePushClient();
+    await client.initialize(
+      onTap: (payload) => pendingNotificationTap.value = payload,
+      showForeground: (title, body, payload) =>
+          notifications.showArticle(title: title, body: body, payload: payload),
+    );
+    return client;
+  } catch (e, st) {
+    developer.log('pushes unavailable', name: 'push', error: e, stackTrace: st);
+    return const NoopPushClient();
   }
 }
 

@@ -59,7 +59,7 @@ lib/
     └── subscription/     # SubscriptionCubit + quotas freemium
 ```
 
-> Les notifications push (FCM) restent prévues en V2 — seules les **préférences** existent déjà (feature `settings/`, stockage local Isar).
+> Push serveur : un seul usage pour l'instant, les nouveaux articles (NAN-135, cf. §6). Le reste des notifications est local (`flutter_local_notifications`).
 
 **Pattern** : Cubit pour états simples, repositories = source de vérité
 **Navigation** : Go Router avec deep linking + redirection auth conditionnelle  
@@ -84,6 +84,7 @@ lib/
 | `health_diary_vaccines` | id_health_diary_vaccine (UUID PK), vaccine_name, last_date, next_date, recurrence (days), dose_number, total_dose_number, health_diary_id FK | Historique vaccins               |
 | `health_diary_weight_log` | id_health_diary_weight_log (UUID PK), weight (DECIMAL), logged_at (TIMESTAMPTZ), pet_id FK                                                 | Graphique 6 mois                 |
 | `vet_visits`            | id_vet_visit (UUID PK), title, visited_at (DATE), vet_name, clinic_name, pet_id FK (CASCADE)                                                 | Timeline visites véto (carnet)   |
+| `push_tokens`           | token (PK), user_id FK (CASCADE), platform, articles_enabled, updated_at                                                                     | Un jeton FCM par appareil. Écriture par RPC `register_push_token`, un appareil repris par un autre compte change de propriétaire |
 | `notifications`         | id_notification (UUID PK), type (enum), title, description, sending_at (TIMESTAMPTZ), id_pet FK                                              | Push Firebase FCM _(table prête, feature V2)_ |
 | `subscription_config`   | id_subscription_config (UUID PK), plan_name (UNIQUE: freemium/premium), max_images_per_event, max_pets                    | Quotas freemium. Résolu en joignant `plan_name` sur `users.subscription_status` (cf. §7). Icônes premium = `is_premium` (event_type/pet_icons) croisé au `subscription_status` de l'user, pas une colonne de config |
 
@@ -258,6 +259,16 @@ Splash → Welcome → Create Pet (3 étapes) → Auth → Home
 - Visites véto : timeline
 - Graphique poids : min/max/actuel
 - Export PDF (premium, grisé en free)
+
+### Push nouveaux articles (NAN-135)
+
+- **Envoi** : pg_cron (toutes les 5 min, seulement si un article attend) → Edge Function `send-article-push` → FCM HTTP v1. `claim_due_articles()` pose `articles.notified_at` **avant** l'envoi : un échec perd un envoi, il n'en double jamais un. Le fonds déjà publié est marqué notifié à la migration.
+- **Firebase sans fichier de config** : pas de `GoogleService-Info.plist` ni de `google-services.json`, `Firebase.initializeApp` reçoit ses options depuis les clés `FIREBASE_*` du dotenv. Dev et prod ne diffèrent donc que par leur `.env`. Clés vides : `NoopPushClient`, l'app tourne sans push.
+- **Jeton** : `PushTokenSync` aligne la ligne `push_tokens` de l'appareil sur la session, la permission système et les réglages. Aucune demande de permission : `FirebasePushClient.token()` n'est appelé qu'une fois la permission accordée par le parcours existant, et son `requestPermission` ne sert qu'à inscrire iOS auprès d'APNs. Suppression avant déconnexion (`AuthCubit.beforeLogout`), car la RLS ne laisse supprimer que le propriétaire.
+- **Interrupteur** : « Nouveaux articles » dans Paramètres, stocké en local (`newArticles`) et reporté sur `push_tokens.articles_enabled`. Le master « Tous les rappels » coupe aussi les articles.
+- **Tap** : payload `article|<id>` dans `pendingNotificationTap`, comme les rappels. `AppShell` revient sur la home et ouvre l'article, lu dans Isar ou à défaut en base, le push pouvant précéder la sync.
+- **Premier plan** : iOS affiche le push lui-même, Android passe par `showArticle` (canal `articles`).
+- `firebase_messaging` 17 déprécie `getToken` au profit de `register()`, qui rend un identifiant d'installation : on garde `getToken`, dont le jeton est ce que FCM v1 attend dans `message.token`.
 
 ### Paramètres (NAN-030)
 

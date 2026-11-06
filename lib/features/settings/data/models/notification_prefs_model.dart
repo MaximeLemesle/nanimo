@@ -6,6 +6,7 @@ class NotificationPrefsModel extends Equatable {
   final bool vetReminders;
   final bool dewormingReminders;
   final bool anniversaryReminders;
+  final bool newArticles;
 
   const NotificationPrefsModel({
     this.pushEnabled = true,
@@ -13,6 +14,7 @@ class NotificationPrefsModel extends Equatable {
     this.vetReminders = true,
     this.dewormingReminders = true,
     this.anniversaryReminders = true,
+    this.newArticles = true,
   });
 
   static const defaults = NotificationPrefsModel();
@@ -23,6 +25,7 @@ class NotificationPrefsModel extends Equatable {
     bool? vetReminders,
     bool? dewormingReminders,
     bool? anniversaryReminders,
+    bool? newArticles,
   }) {
     return NotificationPrefsModel(
       pushEnabled: pushEnabled ?? this.pushEnabled,
@@ -30,6 +33,7 @@ class NotificationPrefsModel extends Equatable {
       vetReminders: vetReminders ?? this.vetReminders,
       dewormingReminders: dewormingReminders ?? this.dewormingReminders,
       anniversaryReminders: anniversaryReminders ?? this.anniversaryReminders,
+      newArticles: newArticles ?? this.newArticles,
     );
   }
 
@@ -40,5 +44,6 @@ class NotificationPrefsModel extends Equatable {
         vetReminders,
         dewormingReminders,
         anniversaryReminders,
+        newArticles,
       ];
 }

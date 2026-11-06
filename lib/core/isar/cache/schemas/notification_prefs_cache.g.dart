@@ -28,23 +28,28 @@ const NotificationPrefsCacheSchema = CollectionSchema(
       name: r'dewormingReminders',
       type: IsarType.bool,
     ),
-    r'pushEnabled': PropertySchema(
+    r'newArticles': PropertySchema(
       id: 2,
+      name: r'newArticles',
+      type: IsarType.bool,
+    ),
+    r'pushEnabled': PropertySchema(
+      id: 3,
       name: r'pushEnabled',
       type: IsarType.bool,
     ),
     r'userId': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'userId',
       type: IsarType.string,
     ),
     r'vaccineReminders': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'vaccineReminders',
       type: IsarType.bool,
     ),
     r'vetReminders': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'vetReminders',
       type: IsarType.bool,
     )
@@ -95,10 +100,11 @@ void _notificationPrefsCacheSerialize(
 ) {
   writer.writeBool(offsets[0], object.anniversaryReminders);
   writer.writeBool(offsets[1], object.dewormingReminders);
-  writer.writeBool(offsets[2], object.pushEnabled);
-  writer.writeString(offsets[3], object.userId);
-  writer.writeBool(offsets[4], object.vaccineReminders);
-  writer.writeBool(offsets[5], object.vetReminders);
+  writer.writeBool(offsets[2], object.newArticles);
+  writer.writeBool(offsets[3], object.pushEnabled);
+  writer.writeString(offsets[4], object.userId);
+  writer.writeBool(offsets[5], object.vaccineReminders);
+  writer.writeBool(offsets[6], object.vetReminders);
 }
 
 NotificationPrefsCache _notificationPrefsCacheDeserialize(
@@ -111,10 +117,11 @@ NotificationPrefsCache _notificationPrefsCacheDeserialize(
   object.anniversaryReminders = reader.readBool(offsets[0]);
   object.dewormingReminders = reader.readBool(offsets[1]);
   object.id = id;
-  object.pushEnabled = reader.readBool(offsets[2]);
-  object.userId = reader.readString(offsets[3]);
-  object.vaccineReminders = reader.readBool(offsets[4]);
-  object.vetReminders = reader.readBool(offsets[5]);
+  object.newArticles = reader.readBoolOrNull(offsets[2]);
+  object.pushEnabled = reader.readBool(offsets[3]);
+  object.userId = reader.readString(offsets[4]);
+  object.vaccineReminders = reader.readBool(offsets[5]);
+  object.vetReminders = reader.readBool(offsets[6]);
   return object;
 }
 
@@ -130,12 +137,14 @@ P _notificationPrefsCacheDeserializeProp<P>(
     case 1:
       return (reader.readBool(offset)) as P;
     case 2:
-      return (reader.readBool(offset)) as P;
+      return (reader.readBoolOrNull(offset)) as P;
     case 3:
-      return (reader.readString(offset)) as P;
-    case 4:
       return (reader.readBool(offset)) as P;
+    case 4:
+      return (reader.readString(offset)) as P;
     case 5:
+      return (reader.readBool(offset)) as P;
+    case 6:
       return (reader.readBool(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -418,6 +427,34 @@ extension NotificationPrefsCacheQueryFilter on QueryBuilder<
   }
 
   QueryBuilder<NotificationPrefsCache, NotificationPrefsCache,
+      QAfterFilterCondition> newArticlesIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'newArticles',
+      ));
+    });
+  }
+
+  QueryBuilder<NotificationPrefsCache, NotificationPrefsCache,
+      QAfterFilterCondition> newArticlesIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'newArticles',
+      ));
+    });
+  }
+
+  QueryBuilder<NotificationPrefsCache, NotificationPrefsCache,
+      QAfterFilterCondition> newArticlesEqualTo(bool? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'newArticles',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<NotificationPrefsCache, NotificationPrefsCache,
       QAfterFilterCondition> pushEnabledEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -623,6 +660,20 @@ extension NotificationPrefsCacheQuerySortBy
   }
 
   QueryBuilder<NotificationPrefsCache, NotificationPrefsCache, QAfterSortBy>
+      sortByNewArticles() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'newArticles', Sort.asc);
+    });
+  }
+
+  QueryBuilder<NotificationPrefsCache, NotificationPrefsCache, QAfterSortBy>
+      sortByNewArticlesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'newArticles', Sort.desc);
+    });
+  }
+
+  QueryBuilder<NotificationPrefsCache, NotificationPrefsCache, QAfterSortBy>
       sortByPushEnabled() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'pushEnabled', Sort.asc);
@@ -724,6 +775,20 @@ extension NotificationPrefsCacheQuerySortThenBy on QueryBuilder<
   }
 
   QueryBuilder<NotificationPrefsCache, NotificationPrefsCache, QAfterSortBy>
+      thenByNewArticles() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'newArticles', Sort.asc);
+    });
+  }
+
+  QueryBuilder<NotificationPrefsCache, NotificationPrefsCache, QAfterSortBy>
+      thenByNewArticlesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'newArticles', Sort.desc);
+    });
+  }
+
+  QueryBuilder<NotificationPrefsCache, NotificationPrefsCache, QAfterSortBy>
       thenByPushEnabled() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'pushEnabled', Sort.asc);
@@ -797,6 +862,13 @@ extension NotificationPrefsCacheQueryWhereDistinct
   }
 
   QueryBuilder<NotificationPrefsCache, NotificationPrefsCache, QDistinct>
+      distinctByNewArticles() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'newArticles');
+    });
+  }
+
+  QueryBuilder<NotificationPrefsCache, NotificationPrefsCache, QDistinct>
       distinctByPushEnabled() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'pushEnabled');
@@ -844,6 +916,13 @@ extension NotificationPrefsCacheQueryProperty on QueryBuilder<
       dewormingRemindersProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'dewormingReminders');
+    });
+  }
+
+  QueryBuilder<NotificationPrefsCache, bool?, QQueryOperations>
+      newArticlesProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'newArticles');
     });
   }
 

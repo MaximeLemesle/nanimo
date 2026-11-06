@@ -107,7 +107,7 @@ void main() {
         of: find.byType(SettingsNotificationSectionWidget),
         matching: find.byType(CupertinoSwitch),
       ),
-      findsNWidgets(4),
+      findsNWidgets(5),
     );
     expect(find.text('Confidentialité'), findsOneWidget);
     expect(find.text('Se déconnecter'), findsOneWidget);

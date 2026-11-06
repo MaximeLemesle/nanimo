@@ -126,6 +126,8 @@ class HomeCubit extends Cubit<HomeState> {
     analytics.setPersonProperties(properties);
   }
 
+  Future<ArticleModel?> findArticle(String articleId) => _articleRepository.findArticle(articleId);
+
   void _onArticleChanged(ArticleModel? article) {
     emit(state.copyWith(article: article));
   }

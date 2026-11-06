@@ -18,6 +18,9 @@ abstract class LocalNotificationClient {
 
   Future<void> schedule(PlannedReminder reminder);
 
+  /// Shows a push received while the app is open.
+  Future<void> showArticle({required String title, required String body, String? payload});
+
   /// Pending only: what is already shown in the notification centre stays.
   Future<void> cancelPending();
 
@@ -43,6 +46,9 @@ class NoopLocalNotificationClient implements LocalNotificationClient {
 
   @override
   Future<void> schedule(PlannedReminder reminder) async {}
+
+  @override
+  Future<void> showArticle({required String title, required String body, String? payload}) async {}
 
   @override
   Future<void> cancelPending() async {}
@@ -77,6 +83,15 @@ class FlutterLocalNotificationClient implements LocalNotificationClient {
     iOS: DarwinNotificationDetails(),
   );
 
+  static const articleChannelId = 'articles';
+  static const _articleChannel = AndroidNotificationChannel(
+    articleChannelId,
+    'Nouveaux articles',
+    description: 'Les nouveaux conseils de Nanimo',
+    importance: Importance.high,
+  );
+  static final _articleNotificationId = articleChannelId.hashCode;
+
   @override
   Future<void> initialize({required void Function(String? payload) onTap}) async {
     tz_data.initializeTimeZones();
@@ -99,6 +114,9 @@ class FlutterLocalNotificationClient implements LocalNotificationClient {
       ),
       onDidReceiveNotificationResponse: (response) => onTap(response.payload),
     );
+    await _plugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(_articleChannel);
   }
 
   @override
@@ -118,6 +136,18 @@ class FlutterLocalNotificationClient implements LocalNotificationClient {
         title: reminder.title,
         body: reminder.body,
         payload: reminder.payload,
+      );
+
+  @override
+  Future<void> showArticle({required String title, required String body, String? payload}) =>
+      _plugin.show(
+        id: _articleNotificationId,
+        title: title,
+        body: body,
+        payload: payload,
+        notificationDetails: NotificationDetails(
+          android: AndroidNotificationDetails(_articleChannel.id, _articleChannel.name),
+        ),
       );
 
   @override

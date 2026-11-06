@@ -45,6 +45,13 @@ int notificationIdFor(String key) {
   return hash & 0x7fffffff;
 }
 
+/// Article id of a push tap, null for any other payload.
+String? parseArticlePayload(String? payload) {
+  if (payload == null || !payload.startsWith('article|')) return null;
+  final id = payload.substring('article|'.length);
+  return id.isEmpty ? null : id;
+}
+
 ({ReminderKind kind, String petId})? parseReminderPayload(String? payload) {
   if (payload == null) return null;
   final parts = payload.split('|');
