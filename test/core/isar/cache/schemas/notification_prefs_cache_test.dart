@@ -23,6 +23,13 @@ void main() {
       expect(cache.anniversaryReminders, isFalse);
     });
 
+    test('a row written before the article toggle reads as enabled', () {
+      final cache = NotificationPrefsCache.fromModel('user-1', NotificationPrefsModel.defaults)
+        ..newArticles = null;
+
+      expect(cache.toModel().newArticles, isTrue);
+    });
+
     test('toModel round-trips fromModel', () {
       const model = NotificationPrefsModel(
         pushEnabled: false,

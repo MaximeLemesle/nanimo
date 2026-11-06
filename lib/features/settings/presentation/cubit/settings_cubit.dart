@@ -105,6 +105,7 @@ class SettingsCubit extends Cubit<SettingsState> {
       'vet': (before.vetReminders, after.vetReminders),
       'deworming': (before.dewormingReminders, after.dewormingReminders),
       'anniversary': (before.anniversaryReminders, after.anniversaryReminders),
+      'articles': (before.newArticles, after.newArticles),
     };
     for (final MapEntry(key: category, value: (was, now)) in changes.entries) {
       if (was == now) continue;

@@ -58,5 +58,10 @@ n'étaient pas posés.
 
 ## Les fonctions Edge
 
-`functions/revenuecat-webhook/` n'est pas concerné par ce qui précède. Il se
-déploie avec `supabase functions deploy`.
+`functions/` n'est pas concerné par ce qui précède : ses fonctions se déploient
+avec `supabase functions deploy`, toutes deux en `--no-verify-jwt`.
+
+- `revenuecat-webhook` : secret `REVENUECAT_WEBHOOK_TOKEN`
+- `send-article-push` (NAN-135) : secrets `PUSH_CRON_TOKEN` et
+  `FIREBASE_SERVICE_ACCOUNT` (clé JSON du compte de service Firebase). Appelée
+  par pg_cron, cf. `pending/NAN-135_push_new_article.sql`

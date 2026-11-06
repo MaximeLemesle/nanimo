@@ -14,13 +14,16 @@ part 'auth_state.dart';
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _repository;
   final SyncService _syncService;
+  final Future<void> Function()? _beforeLogout;
   late final StreamSubscription<supabase.AuthState> _authSubscription;
 
   AuthCubit({
     required AuthRepository repository,
     required SyncService syncService,
+    Future<void> Function()? beforeLogout,
   })  : _repository = repository,
         _syncService = syncService,
+        _beforeLogout = beforeLogout,
         super(const AuthState.unknown()) {
     _listenToAuthChanges();
   }
@@ -131,6 +134,7 @@ class AuthCubit extends Cubit<AuthState> {
   /// Signs out the current user
   Future<void> logout() async {
     analytics.capture(AnalyticsEvents.signedOut);
+    await _beforeLogout?.call();
     await _repository.logout();
   }
 

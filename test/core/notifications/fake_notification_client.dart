@@ -21,6 +21,9 @@ class FakeNotificationClient implements LocalNotificationClient {
   Future<void> schedule(PlannedReminder reminder) async => pending.add(reminder);
 
   @override
+  Future<void> showArticle({required String title, required String body, String? payload}) async {}
+
+  @override
   Future<void> cancelPending() async => pending.clear();
 
   @override

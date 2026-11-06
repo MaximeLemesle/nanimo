@@ -76,6 +76,14 @@ class SettingsNotificationSectionWidget extends StatelessWidget {
           update: (enabled) => prefs.copyWith(anniversaryReminders: enabled),
           requiresPush: true,
         ),
+        const SizedBox(height: AppSpacing.sm),
+        _toggleTile(
+          context,
+          title: 'Nouveaux articles',
+          isOn: prefs.newArticles,
+          update: (enabled) => prefs.copyWith(newArticles: enabled),
+          requiresPush: true,
+        ),
       ],
     );
   }

@@ -1,8 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nanimo/core/isar/cache/schemas/article_cache.dart';
 import 'package:nanimo/features/home/data/article_repository.dart';
+import 'package:nanimo/features/home/data/models/article_model.dart';
 
 import '../../../helpers/isar_test_helper.dart';
+import '../../../helpers/supabase_mocks.dart';
 
 void main() {
   final harness = IsarTestHarness();
@@ -10,7 +12,7 @@ void main() {
 
   setUp(() async {
     await harness.setUp();
-    repo = ArticleRepository(harness.isar);
+    repo = ArticleRepository(harness.isar, MockSupabaseClient());
   });
 
   tearDown(() => harness.tearDown());
@@ -68,5 +70,24 @@ void main() {
           .articleId,
       'scheduled',
     );
+  });
+
+  test('findArticle answers from the cache without touching the network', () async {
+    await harness.isar.writeTxn(() async {
+      await harness.isar.articleCaches.putByArticleId(
+        ArticleCache.fromModel(ArticleModel(
+          articleId: 'a1',
+          title: 'Mue',
+          paragraphs: const ['Un'],
+          publishedAt: DateTime(2026, 1, 1),
+        )),
+      );
+    });
+
+    expect((await repo.findArticle('a1'))?.title, 'Mue');
+  });
+
+  test('findArticle answers null when the database is unreachable', () async {
+    expect(await repo.findArticle('unknown'), isNull);
   });
 }

@@ -30,12 +30,19 @@ class HomeArticleCardWidget extends StatelessWidget {
   List<String> get _paragraphs => article?.paragraphs ?? _fallbackParagraphs;
 
   void _openArticle(BuildContext context) {
-    analytics.capture(AnalyticsEvents.articleOpened, properties: {
-      AnalyticsProperties.item: article?.articleId ?? 'fallback',
-    });
-    BottomSheetWidget.show<void>(
+    show(context, id: article?.articleId ?? 'fallback', title: _title, paragraphs: _paragraphs);
+  }
+
+  static Future<void> show(
+    BuildContext context, {
+    required String id,
+    required String title,
+    required List<String> paragraphs,
+  }) {
+    analytics.capture(AnalyticsEvents.articleOpened, properties: {AnalyticsProperties.item: id});
+    return BottomSheetWidget.show<void>(
       context,
-      _ArticleBottomSheet(title: _title, paragraphs: _paragraphs),
+      _ArticleBottomSheet(title: title, paragraphs: paragraphs),
       safeArea: false,
     );
   }

@@ -232,6 +232,21 @@ void main() {
     await cubit.close();
   });
 
+  test('logout runs its hook while the session still exists', () async {
+    final calls = <String>[];
+    when(() => repository.logout()).thenAnswer((_) async => calls.add('logout'));
+    final cubit = AuthCubit(
+      repository: repository,
+      syncService: syncService,
+      beforeLogout: () async => calls.add('hook'),
+    );
+
+    await cubit.logout();
+
+    expect(calls, ['hook', 'logout']);
+    await cubit.close();
+  });
+
   test('clearError removes the current error message', () async {
     when(() => repository.login('a@b.fr', 'bad')).thenThrow(const supabase.AuthException('Invalid login credentials'));
     final cubit = createCubit();

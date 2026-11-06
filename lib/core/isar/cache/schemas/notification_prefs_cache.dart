@@ -16,6 +16,9 @@ class NotificationPrefsCache {
   late bool dewormingReminders;
   late bool anniversaryReminders;
 
+  /// Nullable: rows written before NAN-135 must read as enabled, not false.
+  bool? newArticles;
+
   NotificationPrefsCache();
 
   factory NotificationPrefsCache.fromModel(
@@ -28,7 +31,8 @@ class NotificationPrefsCache {
       ..vaccineReminders = model.vaccineReminders
       ..vetReminders = model.vetReminders
       ..dewormingReminders = model.dewormingReminders
-      ..anniversaryReminders = model.anniversaryReminders;
+      ..anniversaryReminders = model.anniversaryReminders
+      ..newArticles = model.newArticles;
   }
 
   NotificationPrefsModel toModel() {
@@ -38,6 +42,7 @@ class NotificationPrefsCache {
       vetReminders: vetReminders,
       dewormingReminders: dewormingReminders,
       anniversaryReminders: anniversaryReminders,
+      newArticles: newArticles ?? true,
     );
   }
 }

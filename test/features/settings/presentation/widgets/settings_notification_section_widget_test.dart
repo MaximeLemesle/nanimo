@@ -48,7 +48,7 @@ void main() {
       tester.widgetList<CupertinoSwitch>(find.byType(CupertinoSwitch)).toList();
 
   /// NAN-106: local reminders exist, the toggles drive them for real.
-  testWidgets('shows the four live switches with the stored prefs', (tester) async {
+  testWidgets('shows the five live switches with the stored prefs', (tester) async {
     await pumpSection(tester);
 
     expect(find.text('Bientôt'), findsNothing);
@@ -57,8 +57,9 @@ void main() {
     expect(find.text('Vaccins et vermifuges'), findsOneWidget);
     expect(find.text('Visites vétérinaires'), findsOneWidget);
     expect(find.text('Anniversaires'), findsOneWidget);
+    expect(find.text('Nouveaux articles'), findsOneWidget);
     expect(find.text('Vermifuges'), findsNothing);
-    expect(switches(tester), hasLength(4));
+    expect(switches(tester), hasLength(5));
     expect(switches(tester).every((s) => s.value), isTrue);
   });
 

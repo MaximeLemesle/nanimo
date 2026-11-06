@@ -8,6 +8,8 @@ import 'package:nanimo/core/widgets/bottom_bar_widget/bottom_bar_menu_widget.dar
 import 'package:nanimo/core/widgets/bottom_bar_widget/bottom_bar_widget.dart';
 import 'package:nanimo/core/widgets/bottom_sheet_widget.dart';
 import 'package:nanimo/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:nanimo/features/home/presentation/cubit/home_cubit.dart';
+import 'package:nanimo/features/home/presentation/widgets/home_article_card_widget.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_creation_cubit.dart';
 import 'package:nanimo/features/pet/presentation/cubit/pet_details_cubit.dart';
 import 'package:nanimo/features/pet/presentation/pet_creation_flow.dart';
@@ -73,6 +75,21 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   }
 
   /// Keeps cold-start taps until the shell and its cached animals are ready.
+  Future<void> _openTappedArticle(String articleId) async {
+    widget.closeModals?.call();
+    analytics.capture(AnalyticsEvents.notificationOpened,
+        properties: {AnalyticsProperties.kind: 'article'});
+    context.go(RouteNames.home);
+    final article = await context.read<HomeCubit>().findArticle(articleId);
+    if (!mounted) return;
+    if (article == null) {
+      _showSnackBar('Cet article n’est plus disponible.');
+      return;
+    }
+    HomeArticleCardWidget.show(context,
+        id: article.articleId, title: article.title, paragraphs: article.paragraphs);
+  }
+
   void _openTappedReminder() {
     if (!mounted ||
         pendingNotificationTap.value == null ||
@@ -85,6 +102,12 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       if (!mounted) return;
       final payload = pendingNotificationTap.value;
       if (payload == null) return;
+      final articleId = parseArticlePayload(payload);
+      if (articleId != null) {
+        pendingNotificationTap.value = null;
+        _openTappedArticle(articleId);
+        return;
+      }
       final reminder = parseReminderPayload(payload);
       if (reminder == null) {
         pendingNotificationTap.value = null;

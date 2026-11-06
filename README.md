@@ -24,6 +24,7 @@ cp .env.example .env
 | `SUPABASE_URL` / `SUPABASE_ANON_KEY` | Connexion Supabase (publiques par design) |
 | `GOOGLE_IOS_CLIENT_ID` / `GOOGLE_WEB_CLIENT_ID` | SSO Google natif |
 | `APPLE_SERVICE_ID` | SSO Apple |
+| `FIREBASE_*` | Push serveur (NAN-135), valeurs client publiques. Vides : pas de push, l'app tourne |
 
 > Ne mettez que des valeurs **publiques** dans `.env` : il est embarqué dans les
 > assets et donc présent en clair dans l'app livrée.

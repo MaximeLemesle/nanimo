@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nanimo/features/home/data/models/article_model.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nanimo/config/router/app_router.dart';
@@ -243,6 +244,31 @@ void main() {
     );
     return opacity.opacity;
   }
+
+  testWidgets('a tapped article push opens the article on home', (tester) async {
+    when(() => articleRepo.findArticle('a1')).thenAnswer((_) async => ArticleModel(
+          articleId: 'a1',
+          title: 'La mue',
+          paragraphs: const ['Un paragraphe'],
+          publishedAt: DateTime(2026, 1, 1),
+        ));
+    pendingNotificationTap.value = 'article|a1';
+    await pumpHome(tester);
+    await tester.pumpAndSettle();
+
+    expect(pendingNotificationTap.value, isNull);
+    expect(router.routeInformationProvider.value.uri.path, RouteNames.home);
+    expect(find.text('Un paragraphe'), findsOneWidget);
+  });
+
+  testWidgets('a tapped push for a missing article says so', (tester) async {
+    when(() => articleRepo.findArticle('gone')).thenAnswer((_) async => null);
+    pendingNotificationTap.value = 'article|gone';
+    await pumpHome(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Cet article n’est plus disponible.'), findsOneWidget);
+  });
 
   testWidgets(
       'a cold notification waits for pets then opens the intended animal',
